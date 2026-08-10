@@ -7,9 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-mono);
-  --font-heading: var(--font-mono);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -81,6 +80,13 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Brand accents — see AGENTS.md section 5 (Design direction).
+     --brand-ice / --brand-sky: landing page only, section backgrounds & gradient moments.
+     --brand-accent: the single UI accent everywhere else (dashboard + mobile) — buttons, links, active states. */
+  --brand-ice: #caf4ff;
+  --brand-sky: #a0deff;
+  --brand-accent: #5ab2ff;
 }
 
 .dark {
@@ -122,9 +128,6 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-mono;
+    @apply bg-background text-foreground font-sans;
   }
 }
