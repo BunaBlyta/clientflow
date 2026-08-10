@@ -59,10 +59,18 @@ Left for next session:
 - **Run `npx prisma generate`, then the initial migration.** This is now the single
   biggest blocker to progress: the schema exists but no database tables do, so no
   API route can be written or tested yet. Everything the frontends show is mock data.
-- **There is still no seed script and no API routes.** Only two web routes exist,
-  `/` and `/dashboard`. The dashboard tables, table actions, product/detail page,
-  settings, notifications and the Stripe flow are not built on web yet — the mobile
-  app is much further along than the web app right now.
+- **There is still no seed script and no API routes.** Five web routes now exist:
+  `/`, `/dashboard`, `/dashboard/clients`, `/dashboard/projects`,
+  `/dashboard/invoices`. Still not built on web: the product/detail page, settings,
+  notifications, and the Stripe flow.
+- **Review the clients/projects/invoices dashboard pages before building on them.**
+  They appeared uncommitted in the web worktree partway through this consolidation
+  and were committed as `feat(web): staff dashboard clients, projects and invoices
+  pages`. They typecheck, lint and build cleanly, but the session that wrote them
+  never logged an entry here, so its assumptions are unrecorded and unreviewed.
+  Two unused imports (`PROJECT_STATUS_LABEL`, `PROJECT_STATUS_TONE`) are left in
+  place deliberately — they look like the start of unfinished work, so they were
+  not "cleaned up" in case that removes a hint about intent.
 - Decide whether to keep three separate worktree folders at all. Everything is
   merged and identical now, so working directly in `clientflow/` on `main` is
   simpler and is what caused none of this week's problems. See the note below.
