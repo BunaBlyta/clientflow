@@ -9,7 +9,11 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
+    // Prisma 7 only accepts `url` and `shadowDatabaseUrl` here. A `directUrl`
+    // key was set previously, which is not part of this type and broke the
+    // typecheck. If Neon's pooled connection ever causes trouble when running
+    // migrations, point DATABASE_URL at the direct (non-pooled) Neon URL for
+    // the migration command rather than re-adding `directUrl` here.
     url: process.env["DATABASE_URL"],
-    directUrl: process.env["DIRECT_URL"],
   },
 });
