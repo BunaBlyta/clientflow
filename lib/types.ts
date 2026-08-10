@@ -1,82 +1,99 @@
-// Shared entity types for the frontend (web + mobile build against these while
-// Codex CLI builds the real Prisma schema/API — see AGENTS.md section 4 for the
-// authoritative entity list these mirror). Once the real API exists, these
-// should match prisma/schema.prisma field-for-field; treat drift as a bug.
+/**
+ * Shared entity types for the dashboard + landing page, built against mock data
+ * while the Prisma schema is still being defined (see AGENTS.md section 4 for
+ * the entity list this was derived from). Field names/shapes here are what the
+ * frontend expects the real API to return — see STATUS.md for the note to Codex.
+ */
 
-export type UserRole = "staff" | "client";
+export type Role = "STAFF" | "CLIENT";
+
+export type ProjectStatus =
+  | "PENDING"
+  | "DISCOVERY"
+  | "DESIGN"
+  | "DEVELOPMENT"
+  | "REVIEW"
+  | "LAUNCHED"
+  | "CANCELLED"
+  | "ON_HOLD";
+
+export type RequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type InvoiceStatus =
+  | "DRAFT"
+  | "SENT"
+  | "PAYMENT_PENDING"
+  | "PAID"
+  | "FAILED"
+  | "VOIDED"
+  | "REFUNDED";
+
+export type InvoiceKind = "DEPOSIT" | "FINAL" | "EXTRA";
+
+export type NoteAuthorRole = "STAFF" | "CLIENT" | "SYSTEM";
+
+export type NotificationType =
+  | "REQUEST_SUBMITTED"
+  | "REQUEST_APPROVED"
+  | "REQUEST_REJECTED"
+  | "INVOICE_ISSUED"
+  | "PAYMENT_SUCCEEDED"
+  | "PAYMENT_FAILED"
+  | "PROJECT_STAGE_CHANGED"
+  | "NEW_NOTE"
+  | "EXTRA_CHARGE_CREATED";
 
 export interface User {
   id: string;
-  role: UserRole;
-  name: string;
   email: string;
+  name: string;
+  role: Role;
   avatarUrl?: string;
-  createdAt: string; // ISO date
+  createdAt: string;
 }
 
-export interface Client extends User {
-  role: "client";
-  company: string;
+export interface Client {
+  id: string;
+  userId: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone?: string;
+  createdAt: string;
 }
-
-export interface Staff extends User {
-  role: "staff";
-}
-
-export type PackageSlug = "landing-page" | "full-website" | "web-app-build";
 
 export interface Package {
   id: string;
-  slug: PackageSlug;
   name: string;
-  tagline: string;
-  priceUsd: number | null; // null = "custom pricing" (Web App Build)
-  isCustom: boolean; // true only for Web App Build
-  isMostPopular?: boolean;
+  slug: "landing-page" | "full-website" | "web-app-build";
+  priceCents: number | null; // null for the custom package (Web App Build) — "custom pricing"
+  isCustom: boolean;
+  description: string;
   features: string[];
-  turnaroundWeeks: [number, number]; // [min, max]
+  turnaroundDays: number;
 }
-
-export type ProjectRequestStatus = "Pending" | "Approved" | "Rejected";
 
 export interface ProjectRequest {
   id: string;
   packageId: string;
   prospectName: string;
   prospectEmail: string;
-  companyName: string;
-  notes: string;
-  status: ProjectRequestStatus;
+  prospectPhone?: string;
+  companyName?: string;
+  message?: string;
+  status: RequestStatus;
   createdAt: string;
-  decidedAt?: string;
+  reviewedAt?: string;
 }
 
 export interface ContactLead {
   id: string;
   name: string;
   email: string;
-  company: string;
+  companyName?: string;
   message: string;
   createdAt: string;
 }
-
-export type ProjectStatus =
-  | "Pending"
-  | "Discovery"
-  | "Design"
-  | "Development"
-  | "Review"
-  | "Launched"
-  | "On Hold"
-  | "Cancelled";
-
-export const PROJECT_STAGE_ORDER: ProjectStatus[] = [
-  "Discovery",
-  "Design",
-  "Development",
-  "Review",
-  "Launched",
-];
 
 export interface Project {
   id: string;
@@ -86,49 +103,30 @@ export interface Project {
   status: ProjectStatus;
   createdAt: string;
   updatedAt: string;
+  targetLaunchDate?: string;
 }
-
-export type InvoiceStatus =
-  | "Draft"
-  | "Sent"
-  | "Payment Pending"
-  | "Paid"
-  | "Failed"
-  | "Voided"
-  | "Refunded";
 
 export interface Invoice {
   id: string;
   projectId: string;
-  label: string; // e.g. "Deposit", "Final payment", "Extra: logo revisions"
-  amountUsd: number;
+  kind: InvoiceKind;
+  label: string;
+  amountCents: number;
   status: InvoiceStatus;
   dueDate?: string;
-  createdAt: string;
   paidAt?: string;
+  createdAt: string;
 }
-
-export type NoteAuthorRole = "staff" | "client" | "system";
 
 export interface Note {
   id: string;
   projectId: string;
-  authorRole: NoteAuthorRole;
+  authorId: string | null; // null for SYSTEM notes
   authorName: string;
+  authorRole: NoteAuthorRole;
   body: string;
   createdAt: string;
 }
-
-export type NotificationType =
-  | "request_submitted"
-  | "request_approved"
-  | "request_rejected"
-  | "invoice_issued"
-  | "payment_succeeded"
-  | "payment_failed"
-  | "project_stage_changed"
-  | "new_note"
-  | "extra_charge_created";
 
 export interface Notification {
   id: string;
@@ -138,5 +136,5 @@ export interface Notification {
   body: string;
   read: boolean;
   createdAt: string;
-  href?: string;
+  link?: string;
 }
