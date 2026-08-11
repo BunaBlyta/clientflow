@@ -31,27 +31,37 @@ things that are easy to get wrong, which this file deliberately does not repeat.
 
 ## One-line status per lane
 
-- **API** — essentially complete. 11 routes, seeded Neon database, auth,
-  verification codes, Stripe checkout + webhook **proven end to end on 11 Aug**
-  (verified in the database, not just in the logs). 7 tests across 3 files.
-- **Web** — 9 routes built. Login and `/dashboard` route protection work.
-  Only `/dashboard/projects` reads live data; **the other 7 dashboard screens
-  are still on `lib/mock-data.ts`.**
-- **Mobile** — project list and detail read live data. Notes, invoices,
-  notifications, verification codes and checkout are still fixtures, and
-  checkout is a fake `setTimeout`. **Never run on a simulator or a device** —
-  the largest untested area in the project.
+- **API** — 13 routes, seeded Neon database, auth, verification codes, Stripe
+  checkout + webhook. 9 tests across 4 files. **No write endpoints yet** outside
+  auth and Stripe.
+- **Web** — 12 page routes. Login and `/dashboard` protection work.
+  `/dashboard/projects` and `/dashboard/invoices` read live data; the other 6
+  dashboard screens are still on `lib/mock-data.ts`.
+- **Mobile** — login, projects and the full invoice + checkout flow read live
+  data. Notes, notifications and verification codes are still fixtures. Runs
+  under `expo start --web`; **still never run on a simulator or a device.**
 
-**The gap that matters:** the backend is no longer the bottleneck; the
-frontends still showing fake data are. A reviewer notices that first.
+## The payment loop works, end to end (11 Aug)
 
-## In flight — invoices, both platforms (started 11 Aug)
+A real Stripe test payment made from the mobile app moved inv-5 to `PAID` via
+the webhook, and it shows as Paid on the web staff dashboard. Client pays on
+mobile → staff sees it on web → the database connects them. Nothing in that
+chain is mocked. **This is the demo.**
 
-Briefs are in `status/briefs/2026-08-11-invoices-*.md`; start from the
-`LAUNCH` one. Agent A adds `/api/invoices`, then B and C wire the screens.
+## Missing against the assignment
 
-Picked because a Stripe payment already writes `PAID` to the database and **no
-screen anywhere shows it** — the best-working feature is currently invisible.
+- **Table actions** — no write endpoints exist, so every table is read-only.
+- **Email verification codes** — endpoints work, nothing calls them.
+
+## In flight — table actions (started 11 Aug)
+
+Briefs are in `status/briefs/2026-08-11-actions-*.md`. Agent A adds `PATCH`
+for invoice and project status, then Agent B restores the row actions for real.
+
+`prisma/invoice-state.ts` is a tested state machine nothing imports yet — it
+exists for this. It makes `PAID` unreachable except from `PAYMENT_PENDING`,
+which the Stripe webhook owns, so **"Mark as paid" cannot exist as a manual
+action.** That is deliberate, not a gap.
 
 ## The rule that matters
 
