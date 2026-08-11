@@ -93,3 +93,31 @@ The API calls the Prisma `type` field `kind`, converts the database amount
 from major currency units to integer cents, and supplies a label based on the
 invoice kind if `description` is null. Nullable dates are omitted. `CUSTOM` is
 returned as its own kind so each frontend can widen its local invoice union.
+
+## Table action write contracts
+
+`PATCH /api/invoices/:id` is staff-only and accepts:
+
+```json
+{ "status": "PAYMENT_PENDING" }
+```
+
+It returns the same serialized invoice object as `GET /api/invoices/:id`.
+Invalid status values return 400, missing invoices return 404, client sessions
+return 403, and illegal transitions return 409 with an error naming both states.
+Manual updates cannot target `PAID` or `REFUNDED`: Stripe's verified webhook is
+the only payment confirmation path, and refunds are intentionally out of scope.
+
+`PATCH /api/projects/:id` is also staff-only and accepts:
+
+```json
+{ "status": "DEVELOPMENT" }
+```
+
+It returns the same flat project object as `GET /api/projects/:id`. Valid
+statuses are the Prisma `ProjectStatus` values (`PENDING`, `DISCOVERY`,
+`DESIGN`, `DEVELOPMENT`, `REVIEW`, `LAUNCHED`, `CANCELLED`, and `ON_HOLD`).
+Each changed status creates an immutable system note such as `Status changed
+from Design to Development.` in the same database transaction as the project
+update. Invalid status values return 400, missing projects return 404, and
+client sessions return 403.
