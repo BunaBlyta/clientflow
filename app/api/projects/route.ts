@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { serializePackageSummary } from '@/app/api/packages/serialize';
 
 export const runtime = 'nodejs';
 
@@ -21,6 +22,14 @@ export async function GET(request: NextRequest) {
       id: true,
       clientId: true,
       packageId: true,
+      package: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          currency: true,
+        },
+      },
       name: true,
       status: true,
       createdAt: true,
@@ -35,6 +44,7 @@ export async function GET(request: NextRequest) {
       id: project.id,
       clientId: project.clientId,
       packageId: project.packageId,
+      package: project.package ? serializePackageSummary(project.package) : null,
       name: project.name,
       status: project.status,
       createdAt: project.createdAt.toISOString(),
@@ -45,4 +55,3 @@ export async function GET(request: NextRequest) {
     })),
   );
 }
-

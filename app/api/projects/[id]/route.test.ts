@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -20,12 +20,18 @@ vi.mock('@/app/api/_lib/prisma', () => ({
   },
 }));
 
-import { PATCH } from './route';
+import { GET, PATCH } from './route';
 
 const project = {
   id: 'proj-1',
   clientId: 'client-1',
   packageId: 'pkg-1',
+  package: {
+    id: 'pkg-1',
+    name: 'Full Website',
+    price: '3250.00',
+    currency: 'usd',
+  },
   name: 'Riverside Cafe — Full Website',
   status: 'DESIGN' as const,
   createdAt: new Date('2026-06-02T14:00:00.000Z'),
@@ -44,6 +50,33 @@ function request(status: string) {
 function params() {
   return { params: Promise.resolve({ id: 'proj-1' }) };
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe('GET /api/projects/:id', () => {
+  it('keeps packageId and adds the serialized package summary', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(project);
+
+    const response = await GET(
+      new Request('http://localhost/api/projects/proj-1') as unknown as NextRequest,
+      params(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      packageId: 'pkg-1',
+      package: {
+        id: 'pkg-1',
+        name: 'Full Website',
+        price: 3250,
+        currency: 'usd',
+      },
+    });
+  });
+});
 
 describe('PATCH /api/projects/:id', () => {
   it('refuses clients', async () => {

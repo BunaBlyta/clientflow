@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { serializePackageSummary } from '@/app/api/packages/serialize';
 import { ProjectStatus } from '@/lib/generated/prisma/enums';
 
 export const runtime = 'nodejs';
@@ -9,6 +10,14 @@ const projectSelect = {
   id: true,
   clientId: true,
   packageId: true,
+  package: {
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      currency: true,
+    },
+  },
   name: true,
   status: true,
   createdAt: true,
@@ -20,6 +29,12 @@ function serializeProject(project: {
   id: string;
   clientId: string;
   packageId: string | null;
+  package: {
+    id: string;
+    name: string;
+    price: number | string | { toString(): string };
+    currency: string;
+  } | null;
   name: string;
   status: string;
   createdAt: Date;
@@ -30,6 +45,7 @@ function serializeProject(project: {
     id: project.id,
     clientId: project.clientId,
     packageId: project.packageId,
+    package: project.package ? serializePackageSummary(project.package) : null,
     name: project.name,
     status: project.status,
     createdAt: project.createdAt.toISOString(),

@@ -21,7 +21,7 @@ Two frontends, one backend, one database. The Next.js web app serves the public 
 | Icon library is Lucide, not Hugeicons | Lucide was an explicit requirement in the mentor's assigned tech stack. A colleague's Hugeicons (stroke-rounded) recommendation was considered, but deviating from an assigned stack item in an evaluation meant to prove you can follow a brief was judged not worth it. | 2026-08-10 |
 | Codex CLI owns the backend (schema, API, Stripe/webhooks, auth logic, seed script); Claude Code owns all frontend on both platforms (web + mobile), parallelized via subagents | Matches the user's stated tool preference and gives each agent clean, non-overlapping file ownership — Codex touches `prisma/` and API routes only, Claude Code touches frontend directories only. | 2026-08-10 |
 | Stateless signed auth token, returned in JSON and set as an HTTP-only cookie | Web can use the secure cookie while Expo can store the same token and send it as `Authorization: Bearer <token>`, without adding a session table or making mobile cookie handling a dependency. | 2026-08-11 |
-| API dates are serialized as ISO 8601 strings and the first project response stays flat | Both frontend type files expect string dates and project IDs rather than nested Prisma relations; extra database fields are withheld until a screen needs them. | 2026-08-11 |
+| API dates are serialized as ISO 8601 strings and project responses keep top-level IDs while adding only the package summary needed by consuming screens | Both frontend type files expect string dates and project IDs; `packageId` remains top-level for compatibility, while the related package's name, price, and currency avoid a second lookup on project detail screens. | 2026-08-11 |
 | Design language pulls specifically from Linear, Attio, and Stripe | The user responded strongly to all three, and they share a describable philosophy (restraint, typography-led hierarchy, status communicated through layout rather than pill badges, dense-but-readable tables) that directly serves "premium, not a generic AI-template look" — see AGENTS.md section 5 for the full translation into typography/color/spacing rules. | 2026-08-10 |
 
 Keep this log even for decisions that seem obvious at the time — it's what stops an agent (or you, in three weeks) from "fixing" something that was deliberate.
@@ -49,13 +49,42 @@ accepts either the bearer token or cookie.
 module load if it is missing; local development may use the explicitly named
 development-only fallback with a warning.
 
-`GET /api/projects/:id` requires that session and returns one flat project:
+`GET /api/packages` is public and returns active packages ordered by `sortOrder`:
+
+```json
+[
+  {
+    "id": "pkg-full-website",
+    "name": "Full Website",
+    "slug": "full-website",
+    "description": "A complete multi-page marketing site.",
+    "price": 6500,
+    "currency": "usd",
+    "estimatedDuration": "6–8 weeks",
+    "sortOrder": 2
+  }
+]
+```
+
+`price` is serialized as a JSON number in major currency units rather than
+returning Prisma's `Decimal` object. `estimatedDuration` is nullable and is
+returned as `null` when a package has no estimate.
+
+`GET /api/projects` and `GET /api/projects/:id` require a session and retain
+their existing top-level project fields, including `packageId`, while adding
+the related package summary when one exists:
 
 ```json
 {
   "id": "proj-1",
   "clientId": "client-1",
   "packageId": "pkg-full-website",
+  "package": {
+    "id": "pkg-full-website",
+    "name": "Full Website",
+    "price": 6500,
+    "currency": "usd"
+  },
   "name": "Riverside Cafe — Full Website",
   "status": "DEVELOPMENT",
   "createdAt": "2026-06-02T14:00:00.000Z",
@@ -65,8 +94,9 @@ development-only fallback with a warning.
 ```
 
 `packageId` is intentionally `string | null` in the live database contract so
-custom projects can omit a package. `description`, `startedAt`, `launchedAt`,
-and Prisma relations are not returned until a consuming screen needs them.
+custom projects can omit a package; the additive `package` response field is
+`null` in that case. `description`, `startedAt`, `launchedAt`, and other Prisma
+relations are not returned until a consuming screen needs them.
 
 `GET /api/invoices` requires the same session and returns a flat array ordered
 newest first. `GET /api/invoices/:id` returns one invoice or 404. Staff can see
