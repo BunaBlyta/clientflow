@@ -4,7 +4,7 @@
 `components/` and `lib/` only. You are the only writer of this file. Overwrite it
 before you stop. Never edit another lane's CURRENT-*.md.**
 
-Last updated: 2026-08-11 by Claude (Cowork) — lane setup
+Last updated: 2026-08-11 by Codex — login and route protection
 
 ## Hard rule: you do not run installs
 
@@ -27,12 +27,20 @@ Three agents share this checkout and a concurrent install corrupts the lockfile.
   emits `data-orientation="horizontal"|"vertical"`. Every tab bar in the app was
   rendering as a broken vertical stack. Fixed by matching on the value.
 
-## The gap nobody flagged for two days
+- `/login` now has a complete staff sign-in form. It posts to the existing
+  `/api/auth/login` route, shows submitting and error states, rejects client
+  accounts from the staff dashboard, and preserves a safe internal return path.
+- `middleware.ts` now protects `/dashboard` and its nested routes. It validates
+  the signed, unexpired `clientflow_session` cookie before allowing access,
+  redirects signed-out visitors to `/login`, clears stale cookies, and sends
+  signed-in visitors away from the login page.
 
-**There is no login page on web, and `/dashboard` is publicly reachable.** No
-`middleware.ts`, no auth check anywhere. Anyone can open the dashboard and see
-everything. "Auth with email verification codes" is on the required feature list
-and the web side of it is at zero.
+## The next gap
+
+The web login and dashboard route protection are now covered. The next web task
+is converting one dashboard screen from mock data to Agent A's live API contract,
+with loading, error, and empty states, then showing that complete screen to Buna
+before moving on.
 
 ## Your job, in dependency order
 
@@ -42,6 +50,19 @@ and the web side of it is at zero.
    completely — loading, error and empty states — and show Buna before starting
    the next. The contract has never been exercised inside a real component.
 3. **Stripe UI last**, once the webhook side is real.
+
+## Verification for the login task
+
+- `npm run typecheck`: passed.
+- `npm run lint`: passed with the two pre-existing unused-import warnings in
+  `app/(dashboard)/dashboard/projects/page.tsx`.
+- `npm run test`: passed (5 tests).
+- `npm run verify`: the typecheck, lint, and test stages pass, but Next 16's
+  Turbopack build repeatedly fails in this environment while spawning its CSS
+  worker (`Operation not permitted`). The webpack fallback
+  (`npx next build --webpack`) passes and generates all 20 pages. Next also
+  prints its expected deprecation warning because the project contract still
+  requires `middleware.ts`.
 
 ## Known type mismatch to handle
 
