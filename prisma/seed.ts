@@ -16,7 +16,14 @@ const date = (value: string) => new Date(value);
 
 function passwordHash(password: string): string {
   const salt = randomBytes(16).toString('hex');
-  const hash = scryptSync(password, salt, 64).toString('hex');
+  // Keep the seed credentials aligned with auth.ts: Node's current defaults,
+  // explicitly recorded as N=16384, r=8, p=1, maxmem=32 MiB.
+  const hash = scryptSync(password, salt, 64, {
+    N: 16_384,
+    r: 8,
+    p: 1,
+    maxmem: 32 * 1024 * 1024,
+  }).toString('hex');
   return `scrypt:${salt}:${hash}`;
 }
 

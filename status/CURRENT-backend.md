@@ -7,26 +7,23 @@ Last updated: 2026-08-11 by Codex
 
 ## State
 
-- **Database is LIVE and seeded.** The new migration
-  `20260811084529_add_project_target_launch_date` is applied to Neon. The seed
-  now gives all four projects sensible target launch dates: three future dates
-  and 20 Mar 2026 for the launched project.
-- **The thin API slice exists:** `POST /api/auth/login` accepts email/password,
-  returns the user plus a signed stateless token, and sets the same token as an
-  HTTP-only cookie. `GET /api/projects/:id` accepts either that cookie or a
-  bearer token, authorizes the user, and returns a flat project shape.
-- **Real verification completed:** login succeeded with
-  `sam@clientflow.studio` / `clientflow-demo`, and an authenticated request for
-  `proj-1` returned the seeded project JSON with its target launch date.
-- **Verification:** typecheck, lint, and the 4 Vitest tests pass. `npm run verify`
-  reaches the build, but Next/Turbopack fails in this environment while trying
-  to bind an internal process during CSS processing (`Operation not permitted`).
+- **Session signing is hardened.** Production now fails at module load when
+  `SESSION_SECRET` is absent. Local development uses an explicitly named
+  development-only fallback and logs a warning; the ignored local `.env` now has
+  a generated `SESSION_SECRET`. Vercel must set its own secret before deploy.
+- **Wrong-key protection is tested.** The new auth test creates a token and
+  confirms decoding it with a different secret returns `null`. Scrypt cost
+  parameters are explicit and aligned between auth verification and seed data.
+- **The thin API slice remains live:** login returns a signed token and cookie;
+  the project route accepts cookie or bearer authentication.
+- **Verification:** 5 Vitest tests, typecheck, and lint pass. Full `npm run
+  verify` still reaches the build but Turbopack fails in this environment while
+  binding an internal process during CSS processing (`Operation not permitted`).
   The two existing dashboard lint warnings remain.
 
 ## Next, in order
 
-1. Wire one frontend screen to these real routes and reconcile its nullable
-   `packageId` type in the frontend lane.
+1. Wire one frontend screen to the authenticated routes.
 2. Add the remaining API routes for projects, invoices, notes, notifications,
    and requests.
 3. Build Stripe integration with signature verification, idempotency,

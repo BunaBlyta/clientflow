@@ -45,6 +45,10 @@ The token is also set as the `clientflow_session` HTTP-only cookie. Mobile store
 the response token and sends it as `Authorization: Bearer <token>`; the backend
 accepts either the bearer token or cookie.
 
+`SESSION_SECRET` is required in Vercel before deployment. Production fails at
+module load if it is missing; local development may use the explicitly named
+development-only fallback with a warning.
+
 `GET /api/projects/:id` requires that session and returns one flat project:
 
 ```json

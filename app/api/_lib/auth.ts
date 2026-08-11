@@ -8,7 +8,12 @@ import { prisma } from './prisma';
 
 export const SESSION_COOKIE = 'clientflow_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
-const DEVELOPMENT_SESSION_SECRET = 'clientflow-development-session-secret';
+const DEVELOPMENT_ONLY_SESSION_KEY = 'not-a-secret-development-fallback';
+let developmentFallbackWarningShown = false;
+
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET must be set in production');
+}
 
 type SessionPayload = {
   sub: string;
@@ -16,15 +21,24 @@ type SessionPayload = {
 };
 
 function sessionSecret(): string {
-  return process.env.SESSION_SECRET ?? DEVELOPMENT_SESSION_SECRET;
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+
+  if (!developmentFallbackWarningShown) {
+    console.warn(
+      'SESSION_SECRET is missing; using the development-only session key. Set SESSION_SECRET before deploying.',
+    );
+    developmentFallbackWarningShown = true;
+  }
+
+  return DEVELOPMENT_ONLY_SESSION_KEY;
 }
 
 function encode(value: string): string {
   return Buffer.from(value).toString('base64url');
 }
 
-function sign(value: string): string {
-  return createHmac('sha256', sessionSecret()).update(value).digest('base64url');
+function sign(value: string, secret = sessionSecret()): string {
+  return createHmac('sha256', secret).update(value).digest('base64url');
 }
 
 export function createSessionToken(userId: string): string {
@@ -36,11 +50,14 @@ export function createSessionToken(userId: string): string {
   return `${encodedPayload}.${sign(encodedPayload)}`;
 }
 
-function decodeSessionToken(token: string): SessionPayload | null {
+export function decodeSessionToken(
+  token: string,
+  secret = sessionSecret(),
+): SessionPayload | null {
   const [encodedPayload, signature] = token.split('.');
   if (!encodedPayload || !signature) return null;
 
-  const expectedSignature = sign(encodedPayload);
+  const expectedSignature = sign(encodedPayload, secret);
   const actualBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expectedSignature);
 
@@ -77,7 +94,14 @@ export function verifyPassword(password: string, storedHash: string | null): boo
   if (algorithm !== 'scrypt' || !salt || !expectedHash) return false;
 
   try {
-    const actualHash = scryptSync(password, salt, 64).toString('hex');
+    // Explicitly retain Node's current defaults: N=16384, r=8, p=1, maxmem=32 MiB.
+    // These cost parameters were considered and must stay aligned with seed.ts.
+    const actualHash = scryptSync(password, salt, 64, {
+      N: 16_384,
+      r: 8,
+      p: 1,
+      maxmem: 32 * 1024 * 1024,
+    }).toString('hex');
     const actualBuffer = Buffer.from(actualHash, 'hex');
     const expectedBuffer = Buffer.from(expectedHash, 'hex');
     return (
