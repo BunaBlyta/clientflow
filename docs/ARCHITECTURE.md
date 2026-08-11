@@ -117,7 +117,7 @@ the only payment confirmation path, and refunds are intentionally out of scope.
 It returns the same flat project object as `GET /api/projects/:id`. Valid
 statuses are the Prisma `ProjectStatus` values (`PENDING`, `DISCOVERY`,
 `DESIGN`, `DEVELOPMENT`, `REVIEW`, `LAUNCHED`, `CANCELLED`, and `ON_HOLD`).
-Each changed status creates an immutable system note such as `Status changed
+Each changed status creates an immutable system note such as `Project status changed
 from Design to Development.` in the same database transaction as the project
 update. Invalid status values return 400, missing projects return 404, and
 client sessions return 403.

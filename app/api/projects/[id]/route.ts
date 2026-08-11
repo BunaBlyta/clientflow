@@ -119,7 +119,7 @@ export async function PATCH(
     await transaction.note.create({
       data: {
         projectId: id,
-        content: `Status changed from ${formatProjectStatus(project.status)} to ${formatProjectStatus(nextStatus)}.`,
+        content: `Project status changed from ${formatProjectStatus(project.status)} to ${formatProjectStatus(nextStatus)}.`,
         isSystem: true,
       },
     });

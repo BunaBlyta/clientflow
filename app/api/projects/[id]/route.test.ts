@@ -76,7 +76,7 @@ describe('PATCH /api/projects/:id', () => {
     expect(mocks.createNote).toHaveBeenCalledWith({
       data: {
         projectId: 'proj-1',
-        content: 'Status changed from Design to Development.',
+        content: 'Project status changed from Design to Development.',
         isSystem: true,
       },
     });
