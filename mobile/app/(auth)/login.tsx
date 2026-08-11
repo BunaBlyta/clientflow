@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
-import { DEMO_PASSWORD, MOCK_CLIENT } from '../../lib/mock-data';
+import { MOCK_CLIENT } from '../../lib/mock-data';
 import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
 import { useAuthStore } from '../../store/auth-store';
 
@@ -25,20 +25,16 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleLogin() {
+  async function handleLogin() {
     setError('');
     if (!email.trim() || !password) {
       setError('Enter your email and password.');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      const ok = login(email, password);
-      setLoading(false);
-      if (!ok) {
-        setError('Invalid email or password.');
-      }
-    }, 400);
+    const ok = await login(email, password);
+    setLoading(false);
+    if (!ok) setError('Invalid email or password.');
   }
 
   return (
@@ -95,7 +91,7 @@ export default function LoginScreen() {
           <Button label="Log in" onPress={handleLogin} loading={loading} />
 
           <Text style={styles.demoHint}>
-            Demo credentials are pre-filled — password is “{DEMO_PASSWORD}”.
+            Use the email and password provided by your studio.
           </Text>
         </View>
 

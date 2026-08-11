@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { projectRequest } from '../lib/api';
 import {
   MOCK_INVOICES,
   MOCK_NOTES,
@@ -21,6 +22,7 @@ interface DataState {
   notesForProject: (projectId: string) => Note[];
   invoiceById: (invoiceId: string) => Invoice | undefined;
   projectById: (projectId: string) => Project | undefined;
+  refreshProject: (projectId: string, token: string) => Promise<void>;
 
   addNote: (projectId: string, body: string, authorName: string) => void;
 
@@ -56,6 +58,18 @@ export const useDataStore = create<DataState>((set, get) => ({
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1)),
   invoiceById: (invoiceId) => get().invoices.find((i) => i.id === invoiceId),
   projectById: (projectId) => get().projects.find((p) => p.id === projectId),
+  refreshProject: async (projectId, token) => {
+    try {
+      const project = await projectRequest(projectId, token);
+      set((state) => ({
+        projects: state.projects.some((item) => item.id === project.id)
+          ? state.projects.map((item) => (item.id === project.id ? project : item))
+          : [...state.projects, project],
+      }));
+    } catch {
+      // Keep the fixture visible when the local API is unavailable.
+    }
+  },
 
   addNote: (projectId, body, authorName) => {
     const note: Note = {

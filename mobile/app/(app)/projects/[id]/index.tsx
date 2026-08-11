@@ -8,15 +8,23 @@ import { Screen } from '../../../../components/ui/Screen';
 import { formatCurrency } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
 import { color, fontFamily, fontSize, spacing } from '../../../../lib/theme';
+import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
+import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
+  const refreshProject = useDataStore((s) => s.refreshProject);
   const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
+
+  useEffect(() => {
+    if (id && token) void refreshProject(id, token);
+  }, [id, refreshProject, token]);
 
   if (!project) {
     return (

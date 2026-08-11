@@ -1,65 +1,41 @@
 # CURRENT — mobile lane (Agent C)
 
-**You own `mobile/**` only — nothing outside it. You are the only writer of this
-file. Overwrite it before you stop. Never edit another lane's CURRENT-*.md.**
+Last updated: 2026-08-11 by Codex — real auth/session wiring
 
-Last updated: 2026-08-11 by Claude (Cowork) — lane setup
+## Completed
 
-Your lane is the safest of the three: `mobile/` is a separate project with its own
-`package.json` and its own types, so you physically cannot collide with the other
-agents. Stay inside it.
+- Replaced the demo-only login check with `POST /api/auth/login`.
+- Keeps the returned bearer token in the auth store and sends it on the real project-detail request, `GET /api/projects/:id`.
+- Restores the saved session before the router chooses the auth or app stack, and clears it on logout.
+- Refreshes project detail data from the API while keeping the existing fixture visible if the local API is unavailable.
+- Mobile TypeScript check passes.
 
-## Hard rule: you do not run installs
+## Storage note / blocker
 
-**Never run `npm install` or `npx expo install` yourself.** Print the command and
-stop — Buna runs it. Also: everything here needs **Node 22** (`nvm use 22`); Expo
-SDK 57 requires 22.13+ and the system default is older.
+The mobile project does not currently include a native persistence package. The
+new adapter persists in web `localStorage`, but native app restarts still need
+SecureStore. Buna must run this exact command (I did not run it):
 
-## What exists
+`cd mobile && npx expo install expo-secure-store`
 
-- **Feature-complete on mock data.** Login, invite-code verification, set
-  password, forgot password, request-status lookup, project list, project detail
-  with stage tracker, notes feed, invoice list and detail, fake checkout,
-  notifications with unread badge.
-- Plain StyleSheet plus `lib/theme.ts`, not NativeWind. Zustand stores in `store/`.
-- Runs in a browser (`npx expo start --web`). **Never run on a simulator or a real
-  device** — that remains the largest untested area.
-- Two bugs were fixed yesterday, both found only by running it: a missing root
-  route (`app/index.tsx`, now redirects based on auth state) and five Zustand
-  selectors that rebuilt arrays every render and caused infinite re-render loops
-  (all now wrapped in `useShallow`).
-- Demo data: `jordan@riversidecoffee.com` / `riverside123`, code `123456`
-  (`000000` triggers the expired-code state).
+After that dependency is installed, replace the native fallback in
+`mobile/lib/token-storage.ts` with SecureStore calls before shipping to a
+device. Never put the session token in plain native storage.
 
-## The honest state of auth here
+## API seam still pending
 
-The verification flow is **screens only**. `app/(auth)/verify-code.tsx` compares
-the typed code against the constant `DEMO_VALID_CODE` in `lib/mock-data.ts`. No
-email is ever sent. There is no network call anywhere in the mobile app. The
-"resend code" button runs a cooldown timer and nothing else.
+- The API currently exposes login and single-project detail only. The mobile
+  project list, notes, invoices, notifications, verification codes, and Stripe
+  checkout remain on fixture data until their routes land.
+- Set `EXPO_PUBLIC_API_URL` to the reachable web/API origin when running on a
+  physical device; the default `http://localhost:3000` only works on the host
+  machine or a simulator.
 
-Session does not persist across an app restart — no token storage.
+## Verification / run attempt
 
-## Your job, in dependency order
-
-1. **Wire to real endpoints as the API lane ships them.** The plan: swap the
-   Zustand store's initial state and actions for `fetch` calls with the same
-   shapes, so screens barely change. Login already exists — `POST /api/auth/login`
-   returns a token; send it as `Authorization: Bearer <token>`. Store it so login
-   survives a restart.
-2. **Real verification codes** once the API lane's send/check endpoints exist.
-3. **Real checkout** once the Stripe webhook is real. Keep the current screen's
-   shape — it already models the right behaviour (pay → PAYMENT_PENDING → confirmed
-   → PAID), it just fakes the confirmation.
-4. **Run it on a simulator or device.** Nobody has, once.
-
-## Flagged assumptions — correct if wrong
-
-- Request-status is reachable from the login screen, since a prospect with a
-  pending request has no password yet. SPEC.md does not specify this navigation.
-- Draft invoices are hidden from clients entirely. If the backend intends clients
-  to see them, remove the filter in `app/(app)/projects/[id]/invoices/index.tsx`.
-
-## Yours to touch
-
-`mobile/**` and this file. Nothing else, ever.
+- `npx tsc --noEmit` from `mobile/`: passed under Node 22.23.2.
+- Root `npm run verify`: typecheck, tests, and lint completed; Next build failed
+  because the sandbox could not create a process/bind a port for Turbopack.
+- iOS launch was attempted before code changes, but this machine has no usable
+  `simctl`/Xcode simulator toolchain. Expo web also could not be reached, and
+  no in-app browser was available, so no UI click-through was possible here.

@@ -429,6 +429,7 @@ export const MOCK_REQUESTS: ProjectRequest[] = [
   },
 ];
 
-export function getPackageById(id: string): Package | undefined {
+export function getPackageById(id: string | null): Package | undefined {
+  if (!id) return undefined;
   return MOCK_PACKAGES.find((p) => p.id === id);
 }

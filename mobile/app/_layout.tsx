@@ -19,6 +19,12 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
   });
+  const restoreSession = useAuthStore((s) => s.restoreSession);
+  const isRestoring = useAuthStore((s) => s.isRestoring);
+
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -26,7 +32,7 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) {
+  if ((!fontsLoaded && !fontError) || isRestoring) {
     return null;
   }
 

@@ -46,7 +46,7 @@ export interface Client {
 export interface Project {
   id: string;
   clientId: string;
-  packageId: string;
+  packageId: string | null;
   name: string;
   status: ProjectStatus;
   createdAt: string;
