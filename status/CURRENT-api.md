@@ -1,32 +1,31 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-11 by Agent A
+Last updated: 2026-08-11 by Agent A — invoice endpoints and seed data
 
-## Completed this session
+## Completed
 
-- Added verification-code send and check endpoints. Codes are stored as salted hashes, expire after ten minutes, are sent through Resend, and are cleared after successful verification.
-- Added authenticated list endpoints for projects, clients, notes, and notifications. Client requests are filtered to that client’s own records.
-- Added the staff-only project-request list endpoint needed by the dashboard.
-- Added Stripe Checkout creation and a signature-verified webhook. A confirmed payment is the only path that marks an invoice paid; a confirmed deposit moves a pending project to Discovery and writes the audit note. Repeated webhook deliveries do not duplicate payment notifications.
-- Added focused Stripe signature tests. The repository now has 7 passing tests across 3 test files.
+- Added authenticated `GET /api/invoices` and `GET /api/invoices/:id` routes.
+- Staff can see every invoice. Client sessions only see invoices for their own client; another client’s invoice returns 404 rather than revealing that it exists.
+- The list route accepts `?projectId=` and sorts newest first.
+- Both routes return this flat shape: `id`, `projectId`, `clientId`, `kind`, `label`, `amountCents`, `status`, `createdAt`, plus optional `dueDate` and `paidAt` ISO strings. `kind` preserves `CUSTOM`; `label` has a fallback when the database description is empty; amounts are converted from major currency units to cents.
+- Added tests for the amount conversion and nullable-description fallback. The repository now has 9 passing tests across 4 files.
+- Updated the seed with two additional client accounts, moved projects 3 and 4 (and their invoices) to those clients, added due dates to every invoice, and added two past-due `SENT` invoices. Riverside still owns projects 1 and 2.
 
 ## Verification
 
-- `npm run typecheck` — passed.
-- `npm run lint` — passed with the two pre-existing unused-constant warnings in the web projects page.
-- `npm run test` — passed, 7 tests.
-- `npm run verify` — typecheck, lint, and tests passed; `next build` could not complete because Turbopack is blocked in this environment when it tries to create a subprocess and bind a port. The same failure occurred in both sandboxed and approved escalated runs.
+- `npm run verify` — typecheck, lint, and all 9 tests passed. The required Turbopack build still fails in this sandbox because it cannot create a process and bind a port (`Operation not permitted`).
+- `npx next build --webpack` — passed; all 23 pages/routes, including both invoice routes, compiled successfully.
+- `git diff --check` — passed.
 
-## Contracts added
+## Seed demo accounts
 
-- `POST /api/auth/verification/send` accepts `{ email }` and returns `{ sent: true }`.
-- `POST /api/auth/verification/verify` accepts `{ email, code }` and returns `{ verified, user }`.
-- `GET /api/projects`, `/api/clients`, `/api/notes`, `/api/notifications`, and `/api/requests` return flat arrays with ISO date strings. Notes accept an optional `projectId` query parameter.
-- `POST /api/stripe/checkout` accepts `{ invoiceId }` and returns `{ checkoutSessionId, checkoutUrl }`.
-- `POST /api/stripe/webhook` requires a valid `stripe-signature` header and handles successful and failed payment events idempotently.
+- Riverside: `jordan@riversidecoffee.com` / `riverside123` — projects 1 and 2.
+- Northstar: `maya@northstarwellness.com` / `northstar123` — project 3.
+- Atelier Forma: `leo@atelierforma.com` / `atelier123` — project 4.
 
-## Blockers / handoff
+## Handoff / blockers
 
+- Frontend agents should widen their invoice kind union to include `CUSTOM` and consume `amountCents` rather than the database amount.
 - Buna should configure `RESEND_FROM_EMAIL` if the default Resend sender is not desired, and set `STRIPE_WEBHOOK_SECRET` for local/deployed webhook handling.
 - For local Stripe testing, run `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
-- No Prisma migration or package install was run. No migration is needed for the verification-code columns already present in the schema.
+- No Prisma migration or package install was run; the existing schema already contains all required columns.

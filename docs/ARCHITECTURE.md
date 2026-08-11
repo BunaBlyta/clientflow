@@ -67,3 +67,29 @@ development-only fallback with a warning.
 `packageId` is intentionally `string | null` in the live database contract so
 custom projects can omit a package. `description`, `startedAt`, `launchedAt`,
 and Prisma relations are not returned until a consuming screen needs them.
+
+`GET /api/invoices` requires the same session and returns a flat array ordered
+newest first. `GET /api/invoices/:id` returns one invoice or 404. Staff can see
+all invoices; client sessions are restricted to invoices belonging to their
+client, and an invoice belonging to another client is deliberately reported as
+404 rather than 403 so its existence is not disclosed.
+
+```json
+{
+  "id": "inv-1",
+  "projectId": "proj-1",
+  "clientId": "client-1",
+  "kind": "DEPOSIT",
+  "label": "Deposit — Full Website",
+  "amountCents": 325000,
+  "status": "PAID",
+  "dueDate": "2026-06-10T00:00:00.000Z",
+  "paidAt": "2026-06-03T08:20:00.000Z",
+  "createdAt": "2026-06-02T14:10:00.000Z"
+}
+```
+
+The API calls the Prisma `type` field `kind`, converts the database amount
+from major currency units to integer cents, and supplies a label based on the
+invoice kind if `description` is null. Nullable dates are omitted. `CUSTOM` is
+returned as its own kind so each frontend can widen its local invoice union.

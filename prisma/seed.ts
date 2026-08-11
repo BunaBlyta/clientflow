@@ -85,6 +85,80 @@ async function main() {
     },
   });
 
+  const clientTwoUser = await prisma.user.upsert({
+    where: { id: 'user-client-2' },
+    update: {
+      email: 'maya@northstarwellness.com',
+      name: 'Maya Patel',
+      role: 'CLIENT',
+      isActive: true,
+      emailVerifiedAt: date('2026-06-15T09:00:00.000Z'),
+    },
+    create: {
+      id: 'user-client-2',
+      email: 'maya@northstarwellness.com',
+      name: 'Maya Patel',
+      passwordHash: passwordHash('northstar123'),
+      role: 'CLIENT',
+      isActive: true,
+      emailVerifiedAt: date('2026-06-15T09:00:00.000Z'),
+    },
+  });
+
+  const clientTwo = await prisma.client.upsert({
+    where: { id: 'client-2' },
+    update: {
+      userId: clientTwoUser.id,
+      name: 'Maya Patel',
+      email: 'maya@northstarwellness.com',
+      companyName: 'Northstar Wellness',
+    },
+    create: {
+      id: 'client-2',
+      userId: clientTwoUser.id,
+      name: 'Maya Patel',
+      email: 'maya@northstarwellness.com',
+      companyName: 'Northstar Wellness',
+    },
+  });
+
+  const clientThreeUser = await prisma.user.upsert({
+    where: { id: 'user-client-3' },
+    update: {
+      email: 'leo@atelierforma.com',
+      name: 'Leo Martins',
+      role: 'CLIENT',
+      isActive: true,
+      emailVerifiedAt: date('2026-07-01T09:00:00.000Z'),
+    },
+    create: {
+      id: 'user-client-3',
+      email: 'leo@atelierforma.com',
+      name: 'Leo Martins',
+      passwordHash: passwordHash('atelier123'),
+      role: 'CLIENT',
+      isActive: true,
+      emailVerifiedAt: date('2026-07-01T09:00:00.000Z'),
+    },
+  });
+
+  const clientThree = await prisma.client.upsert({
+    where: { id: 'client-3' },
+    update: {
+      userId: clientThreeUser.id,
+      name: 'Leo Martins',
+      email: 'leo@atelierforma.com',
+      companyName: 'Atelier Forma',
+    },
+    create: {
+      id: 'client-3',
+      userId: clientThreeUser.id,
+      name: 'Leo Martins',
+      email: 'leo@atelierforma.com',
+      companyName: 'Atelier Forma',
+    },
+  });
+
   const packages = [
     {
       id: 'pkg-landing-page',
@@ -146,10 +220,11 @@ async function main() {
     },
     {
       id: 'proj-3',
+      clientId: clientTwo.id,
       packageId: 'pkg-landing-page',
-      name: 'Riverside Cafe — Brand Site Relaunch',
+      name: 'Northstar — Brand Site Relaunch',
       status: 'LAUNCHED' as const,
-      description: 'The launched brand site for the coffee company.',
+      description: 'The launched brand site for the wellness company.',
       createdAt: '2026-01-15T14:00:00.000Z',
       updatedAt: '2026-03-20T11:00:00.000Z',
       launchedAt: '2026-03-20T00:00:00.000Z',
@@ -157,8 +232,9 @@ async function main() {
     },
     {
       id: 'proj-4',
+      clientId: clientThree.id,
       packageId: 'pkg-web-app',
-      name: 'Riverside Cafe — Seasonal Menu Microsite',
+      name: 'Atelier Forma — Seasonal Menu Microsite',
       status: 'ON_HOLD' as const,
       description: 'A seasonal menu experience awaiting refreshed content.',
       createdAt: '2026-07-01T14:00:00.000Z',
@@ -170,35 +246,44 @@ async function main() {
   for (const project of projects) {
     await prisma.project.upsert({
       where: { id: project.id },
-      update: { ...project, clientId: client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt), targetLaunchDate: date(project.targetLaunchDate) },
-      create: { ...project, clientId: client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt), targetLaunchDate: date(project.targetLaunchDate) },
+      update: { ...project, clientId: project.clientId ?? client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt), targetLaunchDate: date(project.targetLaunchDate) },
+      create: { ...project, clientId: project.clientId ?? client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt), targetLaunchDate: date(project.targetLaunchDate) },
     });
   }
 
+  const projectClientIds: Record<string, string> = {
+    'proj-1': client.id,
+    'proj-2': client.id,
+    'proj-3': clientTwo.id,
+    'proj-4': clientThree.id,
+  };
+
   const invoices = [
-    ['inv-1', 'proj-1', 'DEPOSIT', 'Deposit — Full Website', '3250.00', 'PAID', '2026-06-02T14:10:00.000Z', '2026-06-03T08:20:00.000Z'],
-    ['inv-2', 'proj-1', 'EXTRA', 'Extra — Additional landing sections', '450.00', 'FAILED', '2026-08-01T10:00:00.000Z', undefined],
-    ['inv-3', 'proj-1', 'EXTRA', 'Extra — Rush timeline fee', '200.00', 'PAYMENT_PENDING', '2026-08-09T09:00:00.000Z', undefined],
-    ['inv-4', 'proj-2', 'DEPOSIT', 'Deposit — Landing Page Refresh', '1250.00', 'PAID', '2026-05-10T14:10:00.000Z', '2026-05-11T09:00:00.000Z'],
-    ['inv-5', 'proj-2', 'FINAL', 'Final payment — Landing Page Refresh', '1250.00', 'SENT', '2026-07-25T10:00:00.000Z', undefined],
-    ['inv-6', 'proj-3', 'DEPOSIT', 'Deposit — Brand Site Relaunch', '1250.00', 'PAID', '2026-01-15T14:10:00.000Z', '2026-01-16T08:00:00.000Z'],
-    ['inv-7', 'proj-3', 'FINAL', 'Final payment — Brand Site Relaunch', '1250.00', 'PAID', '2026-03-15T10:00:00.000Z', '2026-03-18T13:40:00.000Z'],
-    ['inv-8', 'proj-3', 'EXTRA', 'Extra — Duplicate charge correction', '150.00', 'REFUNDED', '2026-03-19T09:00:00.000Z', '2026-03-19T09:05:00.000Z'],
-    ['inv-9', 'proj-4', 'DEPOSIT', 'Deposit — Seasonal Menu Microsite', '3600.00', 'PAID', '2026-07-01T14:10:00.000Z', '2026-07-02T10:00:00.000Z'],
-    ['inv-10', 'proj-4', 'EXTRA', 'Extra — Menu redesign add-on', '600.00', 'VOIDED', '2026-07-20T10:00:00.000Z', undefined],
-    ['inv-11', 'proj-4', 'EXTRA', 'Extra — Menu redesign add-on (redraft)', '600.00', 'DRAFT', '2026-07-28T10:00:00.000Z', undefined],
+    ['inv-1', 'proj-1', 'DEPOSIT', 'Deposit — Full Website', '3250.00', 'PAID', '2026-06-02T14:10:00.000Z', '2026-06-10T00:00:00.000Z', '2026-06-03T08:20:00.000Z'],
+    ['inv-2', 'proj-1', 'EXTRA', 'Extra — Additional landing sections', '450.00', 'FAILED', '2026-08-01T10:00:00.000Z', '2026-08-15T00:00:00.000Z', undefined],
+    ['inv-3', 'proj-1', 'EXTRA', 'Extra — Rush timeline fee', '200.00', 'PAYMENT_PENDING', '2026-08-09T09:00:00.000Z', '2026-08-23T00:00:00.000Z', undefined],
+    ['inv-4', 'proj-2', 'DEPOSIT', 'Deposit — Landing Page Refresh', '1250.00', 'PAID', '2026-05-10T14:10:00.000Z', '2026-05-17T00:00:00.000Z', '2026-05-11T09:00:00.000Z'],
+    ['inv-5', 'proj-2', 'FINAL', 'Final payment — Landing Page Refresh', '1250.00', 'SENT', '2026-07-25T10:00:00.000Z', '2026-08-05T00:00:00.000Z', undefined],
+    ['inv-6', 'proj-3', 'DEPOSIT', 'Deposit — Brand Site Relaunch', '1250.00', 'PAID', '2026-01-15T14:10:00.000Z', '2026-01-22T00:00:00.000Z', '2026-01-16T08:00:00.000Z'],
+    ['inv-7', 'proj-3', 'FINAL', 'Final payment — Brand Site Relaunch', '1250.00', 'PAID', '2026-03-15T10:00:00.000Z', '2026-03-22T00:00:00.000Z', '2026-03-18T13:40:00.000Z'],
+    ['inv-8', 'proj-3', 'EXTRA', 'Extra — Duplicate charge correction', '150.00', 'REFUNDED', '2026-03-19T09:00:00.000Z', '2026-03-26T00:00:00.000Z', '2026-03-19T09:05:00.000Z'],
+    ['inv-9', 'proj-4', 'DEPOSIT', 'Deposit — Seasonal Menu Microsite', '3600.00', 'PAID', '2026-07-01T14:10:00.000Z', '2026-07-08T00:00:00.000Z', '2026-07-02T10:00:00.000Z'],
+    ['inv-10', 'proj-4', 'EXTRA', 'Extra — Menu redesign add-on', '600.00', 'VOIDED', '2026-07-20T10:00:00.000Z', '2026-08-03T00:00:00.000Z', undefined],
+    ['inv-11', 'proj-4', 'EXTRA', 'Extra — Menu redesign add-on (redraft)', '600.00', 'DRAFT', '2026-07-28T10:00:00.000Z', '2026-08-11T00:00:00.000Z', undefined],
+    ['inv-12', 'proj-4', 'CUSTOM', 'Custom — Content strategy sprint', '900.00', 'SENT', '2026-08-04T10:00:00.000Z', '2026-08-08T00:00:00.000Z', undefined],
   ] as const;
 
-  for (const [id, projectId, type, description, amount, status, createdAt, paidAt] of invoices) {
+  for (const [id, projectId, type, description, amount, status, createdAt, dueDate, paidAt] of invoices) {
     await prisma.invoice.upsert({
       where: { id },
       update: {
         projectId,
-        clientId: client.id,
+        clientId: projectClientIds[projectId],
         type,
         description,
         amount,
         status,
+        dueDate: date(dueDate),
         createdAt: date(createdAt),
         paidAt: paidAt ? date(paidAt) : null,
         issuedAt: status === 'DRAFT' ? null : date(createdAt),
@@ -206,11 +291,12 @@ async function main() {
       create: {
         id,
         projectId,
-        clientId: client.id,
+        clientId: projectClientIds[projectId],
         type,
         description,
         amount,
         status,
+        dueDate: date(dueDate),
         createdAt: date(createdAt),
         paidAt: paidAt ? date(paidAt) : undefined,
         issuedAt: status === 'DRAFT' ? undefined : date(createdAt),
