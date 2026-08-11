@@ -3,7 +3,7 @@
 **You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.**
 
-Last updated: 2026-08-11 by Codex — project status trigger fix
+Last updated: 2026-08-11 by Codex — project detail live-data audit
 
 ## What exists
 
@@ -34,6 +34,10 @@ Last updated: 2026-08-11 by Codex — project status trigger fix
   already proven by the invoice action flow.
 - If the real-browser check finds another issue, inspect the rendered trigger and
   Base UI menu state before changing the API layer.
+
+## Blocked follow-up
+
+- The requested project-detail conversion is paused because `GET /api/projects` and `GET /api/projects/:id` return only `packageId`, while `GET /api/clients` has no package fields. The current detail UI needs the package name, custom-pricing flag, and price that currently come from `getPackage`; there is no packages API route. No code or browser verification was performed, and the note composer/refetch change was intentionally not started.
 
 ## Hard rule
 
