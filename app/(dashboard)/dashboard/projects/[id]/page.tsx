@@ -13,7 +13,7 @@ import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialo
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { Client, Note, Project } from "@/lib/types";
+import type { Client, Invoice, Note, Project } from "@/lib/types";
 
 async function fetchJson<T>(url: string, fallbackError: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(url, {
@@ -41,19 +41,14 @@ async function fetchJson<T>(url: string, fallbackError: string, signal?: AbortSi
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
-  const allInvoices = useAppStore((s) => s.invoices);
   const applyProjectUpdate = useAppStore((s) => s.applyProjectUpdate);
-  const applyInvoiceUpdate = useAppStore((s) => s.applyInvoiceUpdate);
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const invoices = useMemo(
-    () => allInvoices.filter((i) => i.projectId === projectId),
-    [allInvoices, projectId]
-  );
   const sortedNotes = useMemo(
     () =>
       notes
@@ -78,7 +73,7 @@ export default function ProjectDetailPage() {
       setError(null);
 
       try {
-        const [projectData, clientData, notesData] = await Promise.all([
+        const [projectData, clientData, notesData, invoiceData] = await Promise.all([
           fetchJson<Project>(
             `/api/projects/${encodeURIComponent(projectId)}`,
             "We couldn't load this project.",
@@ -86,15 +81,21 @@ export default function ProjectDetailPage() {
           ),
           fetchJson<Client[]>("/api/clients", "We couldn't load the client list.", signal),
           fetchNotes(signal),
+          fetchJson<Invoice[]>(
+            `/api/invoices?projectId=${encodeURIComponent(projectId)}`,
+            "We couldn't load this project's invoices.",
+            signal,
+          ),
         ]);
 
-        if (!Array.isArray(clientData) || !Array.isArray(notesData)) {
+        if (!Array.isArray(clientData) || !Array.isArray(notesData) || !Array.isArray(invoiceData)) {
           throw new Error("The server returned an unexpected project response.");
         }
 
         if (!signal?.aborted) {
           setProject(projectData);
           setClient(clientData.find((currentClient) => currentClient.id === projectData.clientId) ?? null);
+          setInvoices(invoiceData);
           setNotes(notesData);
         }
       } catch (caughtError) {
@@ -129,6 +130,14 @@ export default function ProjectDetailPage() {
     },
     [applyProjectUpdate, fetchNotes],
   );
+
+  const handleInvoiceUpdated = useCallback((updatedInvoice: Invoice) => {
+    setInvoices((currentInvoices) =>
+      currentInvoices.map((invoice) =>
+        invoice.id === updatedInvoice.id ? updatedInvoice : invoice,
+      ),
+    );
+  }, []);
 
   if (isLoading) {
     return (
@@ -259,7 +268,7 @@ export default function ProjectDetailPage() {
                       {inv.dueDate ? formatDate(inv.dueDate) : "—"}
                     </td>
                     <td className="px-2 py-3 text-right">
-                      <InvoiceRowActions invoice={inv} onInvoiceUpdated={applyInvoiceUpdate} />
+                      <InvoiceRowActions invoice={inv} onInvoiceUpdated={handleInvoiceUpdated} />
                     </td>
                   </tr>
                 ))}

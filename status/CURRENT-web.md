@@ -3,7 +3,7 @@
 **You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.**
 
-Last updated: 2026-08-11 by Codex — live project package summary
+Last updated: 2026-08-11 by Codex — live project invoices
 
 ## What exists
 
@@ -25,6 +25,9 @@ Last updated: 2026-08-11 by Codex — live project package summary
 - `/dashboard/projects/[id]` now uses the additive `project.package` summary from the
   project response for package name and price. Prices are treated as serialized
   major currency units and formatted with the returned currency code.
+- `/dashboard/projects/[id]` now loads its invoice rows from
+  `GET /api/invoices?projectId=…`; the Zustand invoice store is no longer used on
+  this page. Send/Void actions replace the matching row with the server response.
 
 ## Verification
 
@@ -35,8 +38,8 @@ Last updated: 2026-08-11 by Codex — live project package summary
   webpack fallback build. The required Turbopack build hit the documented sandbox
   process/port restriction.
 - Browser verification was attempted again at the local app, but the browser runtime
-  reported zero available backends. No signed-in status change, hard-refresh
-  persistence check, or narrow/wide layout claim is being made from this environment.
+  reported zero available backends. No signed-in invoice comparison, row action, or
+  narrow/wide layout claim is being made from this environment.
 
 ## Handoff notes
 
@@ -44,10 +47,18 @@ Last updated: 2026-08-11 by Codex — live project package summary
   `24e2f0a`; no second package request is made.
 - The earlier live activity-feed behavior remains: status changes refetch notes from
   the server after the PATCH returns.
+- The project-detail invoice list uses the same `/api/invoices` serializer and
+  newest-first ordering as the main invoices dashboard, filtered by project ID.
 
 ## Package follow-up
 
 - Complete for this lane. The former mock lookup and TODO were removed.
+
+## Invoice follow-up
+
+- Complete for this lane. The detail table no longer reads mock invoice records or
+  writes invoice updates to Zustand. The invoice creation dialog remains unchanged;
+  this task only replaced the existing invoice list and row-action data path.
 
 ## Hard rule
 
