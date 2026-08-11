@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clientflow
 
-## Getting Started
+A client and project management CRM for a small web design/development studio.
 
-First, run the development server:
+- **Web** (Next.js) — a public marketing site plus a staff dashboard, and the API both frontends call.
+- **Mobile** (`mobile/`, Expo) — the client-facing app: track project status, read notes, pay invoices.
+
+Built as an internship evaluation project for Tetbit.
+
+## Working on this
+
+**Agents: read `AGENTS.md` first — it is the source of truth. Then `STATUS.md` and
+the `status/CURRENT-*.md` file for your lane.** Paste-able starting prompts are in
+`PROMPT.md`. Ignore `SETUP_GUIDE.md`; it is kept for history and its worktree
+advice is actively wrong.
+
+Work happens in this one checkout, directly on `main`. No worktrees, no feature
+branches — see `AGENTS.md` §7 for why.
+
+## Running it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma generate
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The mobile app is a separate project and needs Node 22:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd mobile
+nvm use 22
+npm install
+npx expo start       # press w for browser, or scan with Expo Go
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Demo login (mock data): `jordan@riversidecoffee.com` / `riverside123`, code `123456`.
 
-## Learn More
+## Before you commit
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run verify       # tsc --noEmit && eslint . && next build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Mobile work also needs `npx tsc --noEmit` from inside `mobile/`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Commit your own paths — never `git add -A`, since more than one agent may be
+working in this folder. Then push.
 
-## Deploy on Vercel
+## Layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/(marketing)      public site
+app/(dashboard)      staff dashboard
+app/api              API routes (not built yet)
+components/          shared UI
+lib/                 helpers, mock data, Zustand store
+prisma/              schema + migrations
+mobile/              the Expo app (its own package.json)
+docs/SPEC.md         what to build
+docs/ARCHITECTURE.md why it is built that way
+status/              current state per lane + the session log
+```

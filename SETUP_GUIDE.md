@@ -1,5 +1,37 @@
 # Setup guide: Claude Desktop + Claude Code + Codex CLI on one repo
 
+> ## ⚠️ HISTORICAL — do not follow the instructions in this file
+>
+> **Agents: stop reading here and read `AGENTS.md` instead. That is the source of
+> truth.** This file is the generic guide written on 2026-08-10, *before* the
+> project existed. Parts of it were tried and did not work. It is kept only as a
+> record of the original reasoning.
+>
+> Specifically, **do NOT create git worktrees** as section 3 below instructs. That
+> advice was followed and it caused the 10 August incident: it produced sibling
+> folders `clientflow-backend` and `clientflow-frontend`, each with its own
+> `node_modules` that drifted out of sync with `package.json` and broke the mobile
+> app, and around 7,800 lines of work ended up uncommitted and nearly lost across
+> four separate checkouts. The worktrees were removed on 11 August.
+>
+> The setup that actually works, and is documented in `AGENTS.md` §7:
+>
+> - One checkout, `clientflow/`, everyone directly on `main`. No worktrees, no
+>   feature branches.
+> - Isolation by **directory ownership**, not by separate folders — the lanes never
+>   touch the same files.
+> - Every state file has exactly one writer (`status/CURRENT-*.md` per lane, and
+>   `status/log/` where each entry is a new file), so collisions are impossible.
+> - Commit your own paths, never `git add -A`. Push, don't just commit.
+> - `npm run verify` must pass before committing.
+>
+> Section 5 below ("common failure modes") is the part that aged well — it
+> predicted context loss between sessions and agents clobbering each other. Those
+> were real. The mistake was treating them as guidelines rather than enforcing them.
+>
+> Also note: this file references a `KICKOFF_PROMPT.md` that never existed. The
+> paste-able prompts live in `PROMPT.md`.
+
 ## 1. Repo structure
 
 ```
