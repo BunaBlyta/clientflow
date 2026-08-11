@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/api/_lib/prisma';
-import { createVerificationCode } from '@/app/api/_lib/verification';
-import { sendVerificationEmail } from '@/app/api/_lib/resend';
+import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
 
 export const runtime = 'nodejs';
 
@@ -32,21 +31,11 @@ export async function POST(request: NextRequest) {
   // enumerate accounts. The UI can always show the same "check your inbox" state.
   if (!user) return NextResponse.json({ sent: true });
 
-  const verification = createVerificationCode();
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      verificationCodeHash: verification.hash,
-      verificationCodeExpiresAt: verification.expiresAt,
-    },
-  });
-
   try {
-    await sendVerificationEmail({ email: user.email, name: user.name, code: verification.code });
+    await issueVerificationEmail(user);
   } catch {
     return NextResponse.json({ error: 'Unable to send verification email' }, { status: 502 });
   }
 
   return NextResponse.json({ sent: true });
 }
-

@@ -151,3 +151,48 @@ Each changed status creates an immutable system note such as `Project status cha
 from Design to Development.` in the same database transaction as the project
 update. Invalid status values return 400, missing projects return 404, and
 client sessions return 403.
+
+## Client onboarding contracts
+
+`POST /api/requests` is public and accepts a prospect's name, email, active
+`packageId`, and optional `companyName` and `message`:
+
+```json
+{
+  "name": "Alex Morgan",
+  "email": "alex@example.com",
+  "packageId": "pkg-full-website",
+  "companyName": "Alex Studio",
+  "message": "Build us a new site."
+}
+```
+
+It validates the package before creating a `PENDING` request and never creates
+a user, client, project, or other account data. Unknown or inactive packages
+return 400. A successful request returns 201 with the same flat request shape
+used by `GET /api/requests`.
+
+`PATCH /api/requests/:id` is staff-only and accepts `{ "status": "APPROVED" }`
+or `{ "status": "REJECTED" }`. Authentication and authorization errors are
+returned before body validation; invalid bodies return 400, missing requests
+404, and already-reviewed requests 409. Approval atomically creates the client
+user and client record when they do not already exist, links an existing user
+or client by email when present, and marks the request approved. Rejection only
+marks the request rejected and creates no user, client, or project.
+
+After an approval transaction commits, the verification code is generated and
+the email is sent in a separate operation. The approval remains successful if
+Resend fails; the response then contains `emailSent: false`, and the failure is
+logged so staff can resend through the verification endpoint. A successful
+approval returns `{ request, emailSent: true }`.
+
+`POST /api/auth/set-password` accepts `{ "email": string, "code": string,
+"password": string }`. Passwords must be at least eight characters. The server
+looks up the stored, unexpired code and verifies it again before hashing the
+password, activating the user, clearing the code, and returning the same
+`{ user, token }` session shape as login. Invalid or expired codes always return
+the generic `Invalid or expired verification code` error.
+
+`POST /api/auth/verification/send` still returns `{ "sent": true }` for unknown
+emails. That generic response is intentional and remains the account-
+enumeration protection for the endpoint.

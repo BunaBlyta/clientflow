@@ -1,5 +1,6 @@
 import {
   createHmac,
+  randomBytes,
   scryptSync,
   timingSafeEqual,
 } from 'node:crypto';
@@ -111,6 +112,18 @@ export function verifyPassword(password: string, storedHash: string | null): boo
   } catch {
     return false;
   }
+}
+
+export function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64, {
+    N: 16_384,
+    r: 8,
+    p: 1,
+    maxmem: 32 * 1024 * 1024,
+  }).toString('hex');
+
+  return `scrypt:${salt}:${hash}`;
 }
 
 export function getSessionToken(request: NextRequest): string | null {

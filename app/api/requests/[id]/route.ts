@@ -1,0 +1,179 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/app/api/_lib/auth';
+import { prisma } from '@/app/api/_lib/prisma';
+import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
+
+export const runtime = 'nodejs';
+
+const requestSelect = {
+  id: true,
+  packageId: true,
+  name: true,
+  email: true,
+  companyName: true,
+  message: true,
+  status: true,
+  clientId: true,
+  createdAt: true,
+  reviewedAt: true,
+} as const;
+
+function serializeProjectRequest(projectRequest: {
+  id: string;
+  packageId: string;
+  name: string;
+  email: string;
+  companyName: string | null;
+  message: string | null;
+  status: string;
+  clientId: string | null;
+  createdAt: Date;
+  reviewedAt: Date | null;
+}) {
+  return {
+    id: projectRequest.id,
+    packageId: projectRequest.packageId,
+    prospectName: projectRequest.name,
+    prospectEmail: projectRequest.email,
+    ...(projectRequest.companyName ? { companyName: projectRequest.companyName } : {}),
+    ...(projectRequest.message ? { message: projectRequest.message } : {}),
+    status: projectRequest.status,
+    ...(projectRequest.clientId ? { clientId: projectRequest.clientId } : {}),
+    createdAt: projectRequest.createdAt.toISOString(),
+    ...(projectRequest.reviewedAt
+      ? { reviewedAt: projectRequest.reviewedAt.toISOString() }
+      : {}),
+  };
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getAuthenticatedUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  if (user.role !== 'STAFF') {
+    return NextResponse.json({ error: 'Staff access required' }, { status: 403 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON' }, { status: 400 });
+  }
+
+  const status = (body as { status?: unknown })?.status;
+  if (status !== 'APPROVED' && status !== 'REJECTED') {
+    return NextResponse.json(
+      { error: 'Status must be APPROVED or REJECTED' },
+      { status: 400 },
+    );
+  }
+
+  const { id } = await params;
+  const projectRequest = await prisma.projectRequest.findUnique({
+    where: { id },
+    select: requestSelect,
+  });
+
+  if (!projectRequest) {
+    return NextResponse.json({ error: 'Project request not found' }, { status: 404 });
+  }
+
+  if (projectRequest.status !== 'PENDING') {
+    return NextResponse.json(
+      { error: `Project request cannot transition from ${projectRequest.status} to ${status}` },
+      { status: 409 },
+    );
+  }
+
+  if (status === 'REJECTED') {
+    const rejectedRequest = await prisma.projectRequest.update({
+      where: { id },
+      data: { status: 'REJECTED', reviewedAt: new Date() },
+      select: requestSelect,
+    });
+
+    return NextResponse.json(serializeProjectRequest(rejectedRequest));
+  }
+
+  const approval = await prisma.$transaction(async (transaction) => {
+    const pendingRequest = await transaction.projectRequest.findUnique({
+      where: { id },
+      select: requestSelect,
+    });
+
+    if (!pendingRequest) throw new Error('Project request not found');
+    if (pendingRequest.status !== 'PENDING') {
+      throw new Error(`Project request cannot transition from ${pendingRequest.status} to APPROVED`);
+    }
+
+    const existingUser = await transaction.user.findUnique({
+      where: { email: pendingRequest.email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        client: { select: { id: true } },
+      },
+    });
+
+    const userRecord = existingUser ?? await transaction.user.create({
+      data: {
+        email: pendingRequest.email,
+        name: pendingRequest.name,
+        role: 'CLIENT',
+        isActive: false,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        client: { select: { id: true } },
+      },
+    });
+
+    const client = userRecord.client ?? await transaction.client.create({
+      data: {
+        userId: userRecord.id,
+        name: pendingRequest.name,
+        email: pendingRequest.email,
+        ...(pendingRequest.companyName ? { companyName: pendingRequest.companyName } : {}),
+      },
+      select: { id: true },
+    });
+
+    const approvedRequest = await transaction.projectRequest.update({
+      where: { id },
+      data: { status: 'APPROVED', clientId: client.id, reviewedAt: new Date() },
+      select: requestSelect,
+    });
+
+    return {
+      projectRequest: approvedRequest,
+      user: { id: userRecord.id, email: userRecord.email, name: userRecord.name },
+    };
+  });
+
+  let emailSent = true;
+  try {
+    await issueVerificationEmail(approval.user);
+  } catch (error) {
+    emailSent = false;
+    console.error('Failed to send onboarding verification email after approval', {
+      requestId: id,
+      userId: approval.user.id,
+      email: approval.user.email,
+      error,
+    });
+  }
+
+  return NextResponse.json({
+    request: serializeProjectRequest(approval.projectRequest),
+    emailSent,
+  });
+}

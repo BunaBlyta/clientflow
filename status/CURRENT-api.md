@@ -1,27 +1,40 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-11 by Agent A — packages read contract and project package summaries
+Last updated: 2026-08-11 by Agent A — client onboarding chain
 
 ## Completed
 
-- Existing API work remains in place: authenticated project/invoice reads, staff-only invoice and project status updates, auth and verification-code routes, Stripe checkout/webhook handling, and the seeded Neon-backed data layer.
-- Added public `GET /api/packages`, returning active packages ordered by `sortOrder`.
-- The package response includes `id`, `name`, `slug`, `description`, `price`, `currency`, `estimatedDuration`, and `sortOrder`. Decimal prices are converted to JSON numbers in major currency units; no Prisma `Decimal` is returned.
-- Extended both project GET responses additively. Existing `packageId` remains unchanged, and projects now also include a nullable `package` object with `id`, `name`, `price`, and `currency`.
-- Added tests for active-package filtering, sort-order query behavior, Decimal serialization, and the additive package object on both project list and detail responses.
-- Updated `docs/ARCHITECTURE.md` with the package and project response contracts.
+- Added public `POST /api/requests`. It validates the prospect details and
+  requires an active package before creating a pending request. It does not
+  create an account or client record.
+- Added staff-only `PATCH /api/requests/[id]` for approval and rejection. An
+  approval creates or reuses the user and client inside one database
+  transaction; rejection changes only the request and creates nothing else.
+- Approval sends the verification email only after the database transaction
+  commits. If Resend fails, the approval remains successful, the response says
+  `emailSent: false`, and the failure is logged.
+- Added `POST /api/auth/set-password`. It checks the stored, unexpired code
+  again on the server, hashes a password of at least eight characters, clears
+  the code, activates the user, and returns the normal login session shape.
+- Kept the verification-send account-enumeration protection: unknown emails
+  still receive `{ sent: true }`.
+- Documented the onboarding API contracts in `docs/ARCHITECTURE.md`.
 
 ## Verification
 
-- `npm run verify` was run on 2026-08-11: typecheck, lint, and all 19 tests passed.
-- The required Turbopack production build failed only at the documented sandbox process/port restriction (`Operation not permitted`).
-- `npx next build --webpack` passed, including the new `/api/packages` route and all 26 static pages/routes.
-- No Prisma migration, package install, schema change, frontend file change, or write endpoint was made.
+- `npm run verify` ran: typecheck passed, lint passed, and 29 tests passed.
+- The normal Turbopack build failed only at the documented sandbox process/port
+  restriction. `npx next build --webpack` passed and generated all 27 routes.
+- Against the real Neon database, request `cmsosgpm70000ozoftbusakum` was
+  created for `bunablyta@gmail.com`, approved, linked to client
+  `cmsosgpza0002ozofp656k5ez`, and Resend accepted the verification email.
 
 ## Handoff
 
-The web lane can use `GET /api/packages` for active pricing data. Project list and detail responses expose the related package summary without requiring a second package lookup, while existing consumers can continue reading `packageId` unchanged. `price` is a number in major currency units, for example `6500` with `currency: "usd"`.
+The code is ready for the final real-chain step: use the six-digit code delivered
+to `bunablyta@gmail.com` with `POST /api/auth/set-password`, then log in with the
+new password. The approval and email-send portions are already proven against
+the real database and Resend.
 
-## Known stale project-wide documentation
-
-`STATUS.md` and `docs/HANDOVER-2026-08-11.md` still describe the earlier 13-route, no-write-endpoint state. They were not edited because Buna owns them; they should be refreshed separately.
+No Prisma migration, package install, schema change, frontend file change, or
+mobile file change was made.
