@@ -9,13 +9,14 @@ import { formatCurrency } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
 import { color, fontFamily, fontSize, spacing } from '../../../../lib/theme';
 import { useDataStore } from '../../../../store/data-store';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const project = useDataStore((s) => s.projectById(id));
-  const invoices = useDataStore((s) => s.invoicesForProject(id));
-  const notes = useDataStore((s) => s.notesForProject(id));
+  const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
+  const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
 
   if (!project) {
     return (

@@ -16,11 +16,12 @@ import { EmptyState } from '../../../../components/ui/EmptyState';
 import { color, fontFamily, fontSize, radius, spacing } from '../../../../lib/theme';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectNotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const client = useAuthStore((s) => s.client);
-  const notes = useDataStore((s) => s.notesForProject(id));
+  const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const addNote = useDataStore((s) => s.addNote);
 
   const [draft, setDraft] = useState('');

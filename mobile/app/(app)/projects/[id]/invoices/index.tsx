@@ -7,12 +7,13 @@ import { EmptyState } from '../../../../../components/ui/EmptyState';
 import { Screen } from '../../../../../components/ui/Screen';
 import { spacing } from '../../../../../lib/theme';
 import { useDataStore } from '../../../../../store/data-store';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectInvoicesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const invoices = useDataStore((s) => s.invoicesForProject(id)).filter(
-    (i) => i.status !== 'DRAFT'
+  const invoices = useDataStore(
+    useShallow((s) => s.invoicesForProject(id).filter((i) => i.status !== 'DRAFT'))
   );
 
   if (invoices.length === 0) {

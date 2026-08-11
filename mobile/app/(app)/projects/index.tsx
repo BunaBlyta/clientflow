@@ -7,12 +7,13 @@ import { Screen } from '../../../components/ui/Screen';
 import { color, fontFamily, fontSize, spacing } from '../../../lib/theme';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectsListScreen() {
   const router = useRouter();
   const client = useAuthStore((s) => s.client);
-  const projects = useDataStore((s) =>
-    client ? s.projectsForClient(client.id) : []
+  const projects = useDataStore(
+    useShallow((s) => (client ? s.projectsForClient(client.id) : []))
   );
 
   return (
