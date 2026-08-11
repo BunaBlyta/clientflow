@@ -58,10 +58,14 @@ export const INVOICE_STATUS_TONE: Record<InvoiceStatus, string> = {
   REFUNDED: "text-muted-foreground",
 };
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
 export function isInvoiceOverdue(invoice: Invoice): boolean {
   if (!invoice.dueDate) return false;
   if (invoice.status !== "SENT" && invoice.status !== "PAYMENT_PENDING") return false;
-  return new Date(invoice.dueDate).getTime() < Date.now();
+  // dueDate is midnight on the day the invoice is due, so it isn't overdue
+  // until that whole day has passed — an invoice due today is not yet late.
+  return new Date(invoice.dueDate).getTime() + ONE_DAY_MS <= Date.now();
 }
 
 export function invoiceDisplayLabel(invoice: Invoice): string {

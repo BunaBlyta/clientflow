@@ -31,12 +31,15 @@ things that are easy to get wrong, which this file deliberately does not repeat.
 
 ## One-line status per lane
 
-- **API** — 13 routes, seeded Neon database, auth, verification codes, Stripe
-  checkout + webhook. 9 tests across 4 files. **No write endpoints yet** outside
-  auth and Stripe.
+- **API** — 14 routes, seeded Neon database, auth, verification codes, Stripe
+  checkout + webhook. 19 tests. Staff write endpoints exist for invoice and
+  project status (`PATCH /api/invoices/[id]`, `PATCH /api/projects/[id]`), plus
+  a public `GET /api/packages`.
 - **Web** — 12 page routes. Login and `/dashboard` protection work.
-  `/dashboard/projects` and `/dashboard/invoices` read live data; the other 6
-  dashboard screens are still on `lib/mock-data.ts`.
+  `/dashboard/projects`, `/dashboard/invoices` and `/dashboard/projects/[id]`
+  read live data. Still on `lib/mock-data.ts`: dashboard home, analytics,
+  clients, notifications, settings, and both marketing components
+  (`packages-and-request.tsx`, `contact-form.tsx`).
 - **Mobile** — login, projects and the full invoice + checkout flow read live
   data. Notes, notifications and verification codes are still fixtures. Runs
   under `expo start --web`; **still never run on a simulator or a device.**
@@ -50,18 +53,30 @@ chain is mocked. **This is the demo.**
 
 ## Missing against the assignment
 
-- **Table actions** — no write endpoints exist, so every table is read-only.
+- **Table actions** — send/void invoice and project status changes are done and
+  verified in a browser. Request approve/reject and resend-invitation are not.
 - **Email verification codes** — endpoints work, nothing calls them.
+- **Mock data** — five dashboard screens and the marketing pricing still don't
+  read the database. Analytics matters most: SPEC #11 requires real charts, not
+  static mockups. The marketing pricing is the cheapest, since
+  `GET /api/packages` now exists.
 
-## In flight — table actions (started 11 Aug)
+## Done — table actions (11 Aug)
 
-Briefs are in `status/briefs/2026-08-11-actions-*.md`. Agent A adds `PATCH`
-for invoice and project status, then Agent B restores the row actions for real.
+`PATCH /api/invoices/[id]` and `PATCH /api/projects/[id]` ship with the row
+actions wired to them. Verified by clicking through the signed-in dashboard and
+refreshing after each action, not by the test suite.
 
-`prisma/invoice-state.ts` is a tested state machine nothing imports yet — it
-exists for this. It makes `PAID` unreachable except from `PAYMENT_PENDING`,
-which the Stripe webhook owns, so **"Mark as paid" cannot exist as a manual
-action.** That is deliberate, not a gap.
+`prisma/invoice-state.ts` makes `PAID` unreachable except from
+`PAYMENT_PENDING`, which the Stripe webhook owns, so **"Mark as paid" cannot
+exist as a manual action.** It was deleted from the UI, not hidden. Deliberate,
+not a gap.
+
+**What the automated checks missed, both caught only by clicking:** the project
+status dropdown shipped completely inert, and the project detail page rendered
+mock invoices whose IDs collided with real ones — so a row action there would
+have PATCHed a different, real invoice. Typecheck, lint, 19 tests and the build
+passed in both cases.
 
 ## The rule that matters
 
