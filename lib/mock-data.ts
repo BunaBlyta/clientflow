@@ -123,7 +123,8 @@ export const notifications: Notification[] = [
 
 // --- Lookup helpers ---
 
-export function getPackage(id: string): Package | undefined {
+export function getPackage(id: string | null): Package | undefined {
+  if (!id) return undefined;
   return packages.find((p) => p.id === id);
 }
 

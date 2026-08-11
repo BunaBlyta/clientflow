@@ -4,7 +4,7 @@
 `components/` and `lib/` only. You are the only writer of this file. Overwrite it
 before you stop. Never edit another lane's CURRENT-*.md.**
 
-Last updated: 2026-08-11 by Codex — login and route protection
+Last updated: 2026-08-11 by Codex — live projects list
 
 ## Hard rule: you do not run installs
 
@@ -13,7 +13,7 @@ Three agents share this checkout and a concurrent install corrupts the lockfile.
 
 ## What exists
 
-- **9 routes, every one on mock data:** `/`, `/dashboard`, `/dashboard/clients`,
+- **9 routes, with the Projects tab now live:** `/`, `/dashboard`, `/dashboard/clients`,
   `/dashboard/projects`, `/dashboard/projects/[id]`, `/dashboard/invoices`,
   `/dashboard/analytics`, `/dashboard/notifications`, `/dashboard/settings`.
 - Data comes from `lib/mock-data.ts` through a Zustand store in `lib/store.ts`.
@@ -34,13 +34,18 @@ Three agents share this checkout and a concurrent install corrupts the lockfile.
   the signed, unexpired `clientflow_session` cookie before allowing access,
   redirects signed-out visitors to `/login`, clears stale cookies, and sends
   signed-in visitors away from the login page.
+- The Projects tab on `/dashboard/projects` now loads projects from
+  `GET /api/projects` and client names from `GET /api/clients`. It has explicit
+  loading, API error with retry, empty database, and filtered-no-results states.
+  It treats a null `packageId` as “Custom project” and shows live statuses as
+  read-only until a status-update API exists.
 
 ## The next gap
 
-The web login and dashboard route protection are now covered. The next web task
-is converting one dashboard screen from mock data to Agent A's live API contract,
-with loading, error, and empty states, then showing that complete screen to Buna
-before moving on.
+The web login and dashboard route protection are covered, and the Projects tab
+is the first dashboard screen converted to live data. Stop here for Buna's review
+before converting another screen. The Requests tab remains on the previous mock
+store until its API contract is explicitly wired as a separate step.
 
 ## Your job, in dependency order
 
@@ -64,13 +69,21 @@ before moving on.
   prints its expected deprecation warning because the project contract still
   requires `middleware.ts`.
 
+## Verification for the live Projects tab
+
+- `npm run typecheck`: passed.
+- `npm run lint`: passed with no warnings.
+- `npm run test`: passed (7 tests).
+- `npm run verify`: typecheck, lint, and tests pass; the Turbopack build repeats
+  the environment worker failure (`Operation not permitted`).
+- `npx next build --webpack`: passed; all 22 pages generated successfully.
+
 ## Known type mismatch to handle
 
-`Project.packageId` is nullable in the database but typed as required in
-`lib/types.ts`. Prisma is correct (AGENTS.md §4 — custom projects have no
-package). The type needs `string | null` and the UI needs a fallback;
-`getPackage(project.packageId)` is called in at least two places. All four seeded
-projects happen to have a package, so this has not broken yet.
+`Project.packageId` is now nullable in the web type and the live Projects tab
+renders a clear fallback for custom work. The mobile lane has its own equivalent
+type and should be updated separately by Agent C/Buna before mobile consumes the
+same live response.
 
 `lib/types.ts` is shared with the mobile lane's equivalent — tell Buna before
 changing it.
