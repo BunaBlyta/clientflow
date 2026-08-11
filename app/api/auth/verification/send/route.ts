@@ -1,0 +1,52 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/app/api/_lib/prisma';
+import { createVerificationCode } from '@/app/api/_lib/verification';
+import { sendVerificationEmail } from '@/app/api/_lib/resend';
+
+export const runtime = 'nodejs';
+
+export async function POST(request: NextRequest) {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON' }, { status: 400 });
+  }
+
+  if (!body || typeof body !== 'object' || typeof (body as { email?: unknown }).email !== 'string') {
+    return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+  }
+
+  const email = (body as { email: string }).email.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true },
+  });
+
+  // Keep this response deliberately generic so the endpoint cannot be used to
+  // enumerate accounts. The UI can always show the same "check your inbox" state.
+  if (!user) return NextResponse.json({ sent: true });
+
+  const verification = createVerificationCode();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      verificationCodeHash: verification.hash,
+      verificationCodeExpiresAt: verification.expiresAt,
+    },
+  });
+
+  try {
+    await sendVerificationEmail({ email: user.email, name: user.name, code: verification.code });
+  } catch {
+    return NextResponse.json({ error: 'Unable to send verification email' }, { status: 502 });
+  }
+
+  return NextResponse.json({ sent: true });
+}
+
