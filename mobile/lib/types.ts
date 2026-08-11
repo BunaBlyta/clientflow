@@ -23,7 +23,7 @@ export type InvoiceStatus =
   | 'VOIDED'
   | 'REFUNDED';
 
-export type InvoiceKind = 'DEPOSIT' | 'FINAL' | 'EXTRA';
+export type InvoiceKind = 'DEPOSIT' | 'FINAL' | 'EXTRA' | 'CUSTOM';
 
 export type NoteAuthorRole = 'STAFF' | 'CLIENT' | 'SYSTEM';
 
