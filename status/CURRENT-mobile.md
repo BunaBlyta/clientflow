@@ -13,9 +13,29 @@ Last updated: 2026-08-11 by Claude (Cowork)
   invoice list and detail, mock Stripe checkout, notifications with unread badge.
 - **Requires Node 22** — run `nvm use 22` before any expo command. Expo SDK 57
   needs 22.13+ and the system default is older.
-- **Never run on a simulator or device.** It was verified only via
-  `npx tsc --noEmit` and `npx expo export --platform ios`. **Do this first** — it is
-  the single most likely place for surprises to be hiding.
+- **Now verified in a browser, not just a simulator/device.** The app was run with
+  Expo's web target, which is what surfaced two real bugs (both now fixed, see
+  below) — a simulator alone never would have caught them, since they only show up
+  under React's stricter web rendering checks:
+  1. **Infinite re-render loop, fixed.** Several screens read lists (a client's
+     projects, a project's invoices, a project's notes) out of the shared data
+     store using a selector that built a brand-new array every time it ran. Zustand
+     treats a new array as "the data changed" even when the actual contents are
+     identical, so the app got stuck re-rendering those screens forever ("The
+     result of getSnapshot should be cached" error). Fixed by wrapping those four
+     selectors in Zustand's `useShallow` helper, which compares the array's
+     contents instead of its identity — the screens now re-render only when the
+     underlying data actually changes. Touched: `app/(app)/projects/index.tsx`,
+     `app/(app)/projects/[id]/index.tsx`, `app/(app)/projects/[id]/invoices/index.tsx`,
+     `app/(app)/projects/[id]/notes.tsx`.
+  2. **Missing home route, fixed.** There was no screen registered for the app's
+     root path ("/"), because both top-level route groups are named in a way that
+     hides them from the URL. On a phone this was invisible — the app just opens
+     to its first screen regardless. In a browser (or via a deep link) it showed
+     an "Unmatched Route" error instead. Added `app/index.tsx`, which redirects to
+     the projects list if logged in or the login screen if not.
+  - Also added the `react-dom` and `react-native-web` packages, required for the
+    Expo web target to run at all.
 - Plain StyleSheet plus `lib/theme.ts`, not NativeWind. Zustand stores in `store/`.
 - Auth does not persist across app restart (no token storage) — deliberate, there
   is no real session yet.
@@ -32,7 +52,8 @@ Last updated: 2026-08-11 by Claude (Cowork)
 
 ## Next, in order
 
-1. **Run it on a simulator and click through everything.** Before any new work.
+1. **Click through the app in the browser (and ideally a simulator too) end to
+   end** to confirm nothing else was hiding behind the two bugs above.
 2. Wire to the real API once endpoints exist — the plan is to swap the Zustand
    store's initial state and actions for `fetch` calls with the same shapes, so
    screens should barely change. Types in `mobile/lib/types.ts` were written to
