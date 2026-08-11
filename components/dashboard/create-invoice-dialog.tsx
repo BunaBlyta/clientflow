@@ -28,6 +28,7 @@ const KIND_LABEL: Record<InvoiceKind, string> = {
   DEPOSIT: "Deposit",
   FINAL: "Final payment",
   EXTRA: "Extra charge",
+  CUSTOM: "Custom",
 };
 
 export function CreateInvoiceDialog({ projectId }: { projectId?: string }) {
