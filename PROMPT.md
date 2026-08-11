@@ -43,7 +43,7 @@ starts coding on a misread costs you an evening. That trade is worth it every ti
 ## Backend lane (Codex)
 
 ```
-Read AGENTS.md, STATUS.md and status/CURRENT-backend.md first.
+Read AGENTS.md, STATUS.md and status/CURRENT-api.md first.
 
 You own the backend only: prisma/, app/api/, auth, Stripe, and the seed
 script. Do not touch frontend files or the mobile app — another agent owns
@@ -54,7 +54,7 @@ next backend task is. Do not write code until I confirm.
 
 Run `npm run verify` from the repo root, then commit with
 `git add prisma/ app/api/ status/` (never -A) and push. Before you stop,
-overwrite your own status/CURRENT-backend.md and add a new file in
+overwrite your own status/CURRENT-api.md and add a new file in
 status/log/.
 ```
 
@@ -104,7 +104,7 @@ being loaded — that was never the problem.
 
 The problem was the other half: `STATUS.md` had grown to over 3,000 words, so agents
 skimmed it, missed the current state, and re-derived it badly. It is now split so
-that **every file has exactly one writer** — `status/CURRENT-backend.md`,
+that **every file has exactly one writer** — `status/CURRENT-api.md`,
 `CURRENT-web.md` and `CURRENT-mobile.md`, each overwritten only by its own lane,
 plus `status/log/` where each entry is a brand-new file. Two agents can never
 target the same path, so a conflict is structurally impossible rather than merely

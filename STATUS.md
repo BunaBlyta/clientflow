@@ -10,7 +10,7 @@ Agents: write your lane's `status/CURRENT-*.md` instead, and add a log entry.
 | File | Who writes it |
 |---|---|
 | `STATUS.md` (this file) | Buna |
-| `status/CURRENT-backend.md` | Codex CLI only |
+| `status/CURRENT-api.md` | Codex CLI only |
 | `status/CURRENT-web.md` | web agent only |
 | `status/CURRENT-mobile.md` | mobile agent only |
 | `status/log/<date>-<time>-<agent>-<task>.md` | whoever did the task — a **new** file each time, never edited afterwards |
