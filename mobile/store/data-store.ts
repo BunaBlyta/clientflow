@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { projectRequest, projectsRequest } from '../lib/api';
+import { invoiceRequest, invoicesRequest, projectRequest, projectsRequest } from '../lib/api';
 import {
   MOCK_INVOICES,
   MOCK_NOTES,
@@ -9,7 +9,6 @@ import {
 import type { Invoice, Note, Notification, Project } from '../lib/types';
 
 let noteCounter = 1000;
-let notifCounter = 1000;
 
 interface DataState {
   projects: Project[];
@@ -24,17 +23,10 @@ interface DataState {
   projectById: (projectId: string) => Project | undefined;
   refreshProjects: (token: string) => Promise<void>;
   refreshProject: (projectId: string, token: string) => Promise<void>;
+  refreshInvoices: (token: string, projectId?: string) => Promise<boolean>;
+  refreshInvoice: (invoiceId: string, token: string) => Promise<boolean>;
 
   addNote: (projectId: string, body: string, authorName: string) => void;
-
-  /** Client taps Pay — mirrors real flow: this only ever moves an invoice to
-   * PAYMENT_PENDING, never straight to PAID. A confirmed webhook is what
-   * finalizes it (see resolvePayment), matching the non-negotiable in
-   * AGENTS.md #2 even though this whole flow is mocked. */
-  beginPayment: (invoiceId: string) => void;
-  /** Simulates the Stripe webhook landing and confirming (or declining) the
-   * payment. */
-  resolvePayment: (invoiceId: string, success: boolean) => void;
 
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -79,6 +71,34 @@ export const useDataStore = create<DataState>((set, get) => ({
       // Keep the fixture visible when the local API is unavailable.
     }
   },
+  refreshInvoices: async (token, projectId) => {
+    try {
+      const invoices = await invoicesRequest(token, projectId);
+      set((state) => ({
+        invoices: projectId
+          ? [...state.invoices.filter((invoice) => invoice.projectId !== projectId), ...invoices]
+          : invoices,
+      }));
+      return true;
+    } catch {
+      // Keep the fixtures visible when the local API is unavailable.
+      return false;
+    }
+  },
+  refreshInvoice: async (invoiceId, token) => {
+    try {
+      const invoice = await invoiceRequest(invoiceId, token);
+      set((state) => ({
+        invoices: state.invoices.some((item) => item.id === invoice.id)
+          ? state.invoices.map((item) => (item.id === invoice.id ? invoice : item))
+          : [...state.invoices, invoice],
+      }));
+      return true;
+    } catch {
+      // Keep the fixture visible when the local API is unavailable.
+      return false;
+    }
+  },
 
   addNote: (projectId, body, authorName) => {
     const note: Note = {
@@ -91,61 +111,6 @@ export const useDataStore = create<DataState>((set, get) => ({
       createdAt: new Date().toISOString(),
     };
     set((state) => ({ notes: [...state.notes, note] }));
-  },
-
-  beginPayment: (invoiceId) => {
-    set((state) => ({
-      invoices: state.invoices.map((inv) =>
-        inv.id === invoiceId ? { ...inv, status: 'PAYMENT_PENDING' } : inv
-      ),
-    }));
-  },
-
-  resolvePayment: (invoiceId, success) => {
-    const invoice = get().invoices.find((i) => i.id === invoiceId);
-    if (!invoice) return;
-    const now = new Date().toISOString();
-
-    set((state) => ({
-      invoices: state.invoices.map((inv) =>
-        inv.id === invoiceId
-          ? {
-              ...inv,
-              status: success ? 'PAID' : 'FAILED',
-              paidAt: success ? now : undefined,
-            }
-          : inv
-      ),
-    }));
-
-    const systemNote: Note = {
-      id: `note-local-${noteCounter++}`,
-      projectId: invoice.projectId,
-      authorId: null,
-      authorName: 'System',
-      authorRole: 'SYSTEM',
-      body: success
-        ? `Payment received for invoice '${invoice.label}'.`
-        : `Payment failed for invoice '${invoice.label}'.`,
-      createdAt: now,
-    };
-    const notification: Notification = {
-      id: `notif-local-${notifCounter++}`,
-      type: success ? 'PAYMENT_SUCCEEDED' : 'PAYMENT_FAILED',
-      title: success ? 'Payment received' : 'Payment failed',
-      body: success
-        ? `Your payment for '${invoice.label}' was received.`
-        : `Your payment for '${invoice.label}' didn't go through. Tap to try again.`,
-      read: false,
-      createdAt: now,
-      projectId: invoice.projectId,
-      invoiceId: invoice.id,
-    };
-
-    set((state) => ({
-      notes: [...state.notes, systemNote],
-      notifications: [notification, ...state.notifications],
-    }));
   },
 
   markNotificationRead: (id) => {

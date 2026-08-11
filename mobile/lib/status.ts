@@ -67,4 +67,5 @@ export const INVOICE_KIND_LABEL: Record<string, string> = {
   DEPOSIT: 'Deposit',
   FINAL: 'Final payment',
   EXTRA: 'Extra',
+  CUSTOM: 'Custom charge',
 };

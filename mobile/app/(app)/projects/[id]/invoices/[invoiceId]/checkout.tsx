@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
+import { AppState, type AppStateStatus } from 'react-native';
 import {
   CheckCircle2,
-  CreditCard,
   Lock,
   XCircle,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -18,6 +19,8 @@ import { Screen } from '../../../../../../components/ui/Screen';
 import { formatCurrency } from '../../../../../../lib/format';
 import { color, fontFamily, fontSize, radius, spacing } from '../../../../../../lib/theme';
 import { useDataStore } from '../../../../../../store/data-store';
+import { useAuthStore } from '../../../../../../store/auth-store';
+import { ApiError, checkoutRequest } from '../../../../../../lib/api';
 
 type Step = 'select' | 'processing' | 'success' | 'failed';
 
@@ -25,10 +28,69 @@ export default function CheckoutScreen() {
   const { invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
   const router = useRouter();
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
-  const beginPayment = useDataStore((s) => s.beginPayment);
-  const resolvePayment = useDataStore((s) => s.resolvePayment);
+  const token = useAuthStore((s) => s.token);
+  const refreshInvoice = useDataStore((s) => s.refreshInvoice);
 
   const [step, setStep] = useState<Step>('select');
+  const [message, setMessage] = useState<string | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+
+  async function refreshAfterReturn() {
+    if (!token || !invoiceId) return;
+    setCheckingStatus(true);
+    const live = await refreshInvoice(invoiceId, token);
+    setCheckingStatus(false);
+    const latest = useDataStore.getState().invoiceById(invoiceId);
+    if (!live) {
+      setMessage('We could not check Stripe yet. Return to this screen and try again.');
+    } else if (latest?.status === 'PAID') {
+      setMessage(null);
+      setStep('success');
+    } else if (latest?.status === 'FAILED') {
+      setMessage('Stripe did not confirm this payment. You can try again.');
+      setStep('failed');
+    } else {
+      setMessage('No payment was confirmed. If you backed out of Stripe, nothing was charged.');
+      setStep('select');
+    }
+  }
+
+  async function handlePay() {
+    if (!token) {
+      setMessage('Your session has expired. Please sign in again.');
+      setStep('failed');
+      return;
+    }
+    setStep('processing');
+    setMessage(null);
+    try {
+      const response = await checkoutRequest(invoiceId, token);
+      await Linking.openURL(response.checkoutUrl);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        await refreshAfterReturn();
+        setMessage('This invoice has already been paid.');
+      } else if (error instanceof ApiError && error.status === 503) {
+        setMessage('Stripe checkout is temporarily unavailable. Please try again later.');
+        setStep('failed');
+      } else {
+        setMessage(error instanceof Error ? error.message : 'Unable to open Stripe checkout.');
+        setStep('failed');
+      }
+    }
+  }
+
+  useEffect(() => {
+    let wasBackgrounded = false;
+    const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      if (nextState !== 'active') wasBackgrounded = true;
+      if (nextState === 'active' && wasBackgrounded && step === 'processing') {
+        wasBackgrounded = false;
+        void refreshAfterReturn();
+      }
+    });
+    return () => subscription.remove();
+  }, [step, token, invoiceId]);
 
   if (!invoice) {
     return (
@@ -38,21 +100,12 @@ export default function CheckoutScreen() {
     );
   }
 
-  function handlePay(succeed: boolean) {
-    setStep('processing');
-    beginPayment(invoiceId);
-    setTimeout(() => {
-      resolvePayment(invoiceId, succeed);
-      setStep(succeed ? 'success' : 'failed');
-    }, 1300);
-  }
-
   return (
     <Screen contentContainerStyle={styles.content}>
       <View style={styles.disclaimer}>
         <Lock size={12} color={color.textMuted} />
         <Text style={styles.disclaimerText}>
-          Placeholder for Stripe Checkout — no real payment is made here.
+          You’ll complete payment securely in Stripe’s browser checkout.
         </Text>
       </View>
 
@@ -63,30 +116,11 @@ export default function CheckoutScreen() {
             <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
             <Text style={styles.label}>{invoice.label}</Text>
 
-            <View style={styles.fieldMock}>
-              <CreditCard size={16} color={color.textMuted} />
-              <Text style={styles.fieldMockText}>Card number</Text>
-            </View>
-            <View style={styles.fieldRow}>
-              <View style={[styles.fieldMock, styles.fieldHalf]}>
-                <Text style={styles.fieldMockText}>MM / YY</Text>
-              </View>
-              <View style={[styles.fieldMock, styles.fieldHalf]}>
-                <Text style={styles.fieldMockText}>CVC</Text>
-              </View>
-            </View>
           </View>
 
-          <Text style={styles.sectionLabel}>Choose a test card</Text>
           <Button
-            label="Pay with •••• 4242 (succeeds)"
-            onPress={() => handlePay(true)}
-          />
-          <View style={{ height: spacing.md }} />
-          <Button
-            label="Pay with •••• 0002 (declines)"
-            variant="secondary"
-            onPress={() => handlePay(false)}
+            label="Continue to secure checkout"
+            onPress={() => void handlePay()}
           />
         </>
       )}
@@ -96,9 +130,11 @@ export default function CheckoutScreen() {
           <ActivityIndicator size="large" color={color.accent} />
           <Text style={styles.centerTitle}>Confirming with Stripe…</Text>
           <Text style={styles.centerSubtitle}>
-            Your project only updates once payment is confirmed — this won't
-            resolve until then.
+            Complete payment in the browser, then return here to check the
+            confirmed Stripe status.
           </Text>
+          <View style={{ height: spacing.lg }} />
+          <Button label={checkingStatus ? 'Checking…' : 'I’ve returned — check status'} onPress={() => void refreshAfterReturn()} loading={checkingStatus} />
         </View>
       )}
 
@@ -107,8 +143,7 @@ export default function CheckoutScreen() {
           <CheckCircle2 size={40} color={color.success} />
           <Text style={styles.centerTitle}>Payment received</Text>
           <Text style={styles.centerSubtitle}>
-            {formatCurrency(invoice.amountCents)} for "{invoice.label}" was
-            confirmed.
+            {formatCurrency(invoice.amountCents)} for "{invoice.label}" was confirmed by Stripe.
           </Text>
           <View style={{ height: spacing.lg }} />
           <Button label="Return to invoice" onPress={() => router.back()} />
@@ -120,8 +155,7 @@ export default function CheckoutScreen() {
           <XCircle size={40} color={color.danger} />
           <Text style={styles.centerTitle}>Payment declined</Text>
           <Text style={styles.centerSubtitle}>
-            That test card was declined. Nothing was charged — you can try
-            again.
+            {message || 'Stripe did not confirm this payment. Nothing was charged — you can try again.'}
           </Text>
           <View style={{ height: spacing.lg }} />
           <Button label="Try again" onPress={() => setStep('select')} />
@@ -130,6 +164,10 @@ export default function CheckoutScreen() {
             <Text style={styles.backLink}>Return to invoice</Text>
           </Pressable>
         </View>
+      )}
+
+      {message && step !== 'failed' && step !== 'success' && (
+        <Text style={styles.message}>{message}</Text>
       )}
     </Screen>
   );
@@ -231,5 +269,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     color: color.accent,
     textAlign: 'center',
+  },
+  message: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.caption,
+    color: color.warning,
+    textAlign: 'center',
+    marginTop: spacing.lg,
   },
 });

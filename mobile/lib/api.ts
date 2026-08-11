@@ -1,4 +1,4 @@
-import type { Client, Project } from './types';
+import type { Client, Invoice, Project } from './types';
 
 const configuredBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const baseUrl = configuredBaseUrl || 'http://localhost:3000';
@@ -58,6 +58,27 @@ export function projectRequest(projectId: string, token: string) {
 
 export function projectsRequest(token: string) {
   return request<Project[]>('/api/projects', {}, token);
+}
+
+export function invoicesRequest(token: string, projectId?: string) {
+  const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+  return request<Invoice[]>(`/api/invoices${query}`, {}, token);
+}
+
+export function invoiceRequest(invoiceId: string, token: string) {
+  return request<Invoice>(`/api/invoices/${encodeURIComponent(invoiceId)}`, {}, token);
+}
+
+export interface CheckoutResponse {
+  checkoutSessionId: string;
+  checkoutUrl: string;
+}
+
+export function checkoutRequest(invoiceId: string, token: string) {
+  return request<CheckoutResponse>('/api/stripe/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ invoiceId }),
+  }, token);
 }
 
 export function clientFromUser(user: LoginResponse['user']): Client {
