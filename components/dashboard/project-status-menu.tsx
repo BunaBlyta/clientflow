@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { patchJson } from "@/lib/api-client";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
 import type { Project, ProjectStatus } from "@/lib/types";
@@ -61,9 +62,10 @@ export function ProjectStatusMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button
-            type="button"
-            className="flex items-center gap-1 text-[13px] hover:opacity-70"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto gap-1 px-1 text-[13px] font-normal hover:opacity-70"
             disabled={isUpdating}
           />
         }

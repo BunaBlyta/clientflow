@@ -3,44 +3,37 @@
 **You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.**
 
-Last updated: 2026-08-11 by Codex — live table actions
+Last updated: 2026-08-11 by Codex — project status trigger fix
 
 ## What exists
 
-- `/dashboard/invoices` now shows real row actions backed by
-  `PATCH /api/invoices/:id`. Draft invoices can be sent, and Draft, Sent,
-  Payment Pending, or Failed invoices can be voided after confirmation.
-- The invoice action menu derives its choices from the current server status.
-  It shows API error messages, including an unexpected 409, and only updates the
-  row with the record returned by the server.
-- Manual “Mark as paid” was deleted from the UI and its old mock store action was
-  removed. Stripe's confirmed webhook remains the only path to Paid.
-- `/dashboard/projects` now uses the existing project status menu. Status changes
-  call `PATCH /api/projects/:id` and replace the row with the returned record.
-- The shared project and invoice controls no longer invent successful local
-  transitions when they appear on the remaining mock-backed project detail page;
-  they apply only records returned by the API.
+- `/dashboard/invoices` shows real Send and Void actions backed by
+  `PATCH /api/invoices/:id`; action choices come from the current invoice status.
+- Manual “Mark as paid” is deleted from the UI and old mock store action. Stripe's
+  confirmed webhook remains the only path to Paid.
+- `/dashboard/projects` uses the existing project status menu. Status changes call
+  `PATCH /api/projects/:id` and apply the returned project record.
+- The project status menu trigger now passes the app's `Button` component into
+  `DropdownMenuTrigger`, matching the working invoice actions trigger. The prior
+  bare `<button>` rendered but did not open the Base UI menu.
 
 ## Verification
 
-- `npm run verify` was run after the changes: typecheck, lint, and all 16 tests
-  passed. The Turbopack build then hit the documented sandbox restriction while
-  trying to create a process and bind a port.
+- `npm run verify` was run after the trigger fix: typecheck, lint, and all 16 tests
+  passed. The Turbopack build hit the documented sandbox process/port restriction.
 - `npx next build --webpack` passed; all 25 routes compiled successfully.
-- A signed-in browser click-through is **pending**. The browser runtime returned
-  zero available browser backends, so Send, Void, project status changes, and
-  refresh persistence have not been verified through the UI by this lane.
-- Buna is running the signed-in click-through separately and will report any bugs
-  as follow-up work.
+- Browser re-verification is **pending** in this lane. The browser runtime again
+  returned zero available backends, so this lane did not open the menu, change a
+  status, or confirm persistence after reload. Buna reported the pre-fix failure
+  from a real browser and is running the post-fix check separately.
 
 ## Handoff notes
 
-- Invoice actions intentionally expose only Send and Void. Do not reintroduce a
-  manual Paid action.
-- The UI prevents known illegal invoice transitions; server error text is still
-  surfaced if the record changes concurrently and the API returns 409.
-- Other dashboard screens remain on their previous data sources; Requests,
-  create-invoice, and Settings were not changed.
+- The one source change in this follow-up is the trigger primitive in
+  `components/dashboard/project-status-menu.tsx`; the API and `patchJson` were
+  already proven by the invoice action flow.
+- If the real-browser check finds another issue, inspect the rendered trigger and
+  Base UI menu state before changing the API layer.
 
 ## Hard rule
 
