@@ -6,7 +6,7 @@ import {
   invoices as initialInvoices,
   notes as initialNotes,
   notifications as initialNotifications,
-  packages,
+  packages as initialPackages,
   projectRequests as initialProjectRequests,
   projects as initialProjects,
 } from "@/lib/mock-data";
@@ -17,6 +17,7 @@ import type {
   InvoiceKind,
   Note,
   Notification,
+  Package,
   Project,
   ProjectRequest,
   ProjectStatus,
@@ -43,6 +44,7 @@ interface AppState {
   projectRequests: ProjectRequest[];
   contactLeads: ContactLead[];
   notifications: Notification[];
+  packages: Package[];
 
   submitProjectRequest: (input: {
     packageId: string;
@@ -78,6 +80,9 @@ interface AppState {
   voidInvoice: (invoiceId: string) => boolean;
 
   resendInvite: (clientId: string) => void;
+  inviteStaff: (email: string) => void;
+
+  updatePackage: (packageId: string, patch: Partial<Omit<Package, "id" | "slug">>) => void;
 
   addNote: (projectId: string, body: string) => void;
 
@@ -93,6 +98,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   projectRequests: initialProjectRequests,
   contactLeads: initialContactLeads,
   notifications: initialNotifications,
+  packages: initialPackages,
 
   submitProjectRequest: (input) => {
     const request: ProjectRequest = {
@@ -135,7 +141,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       phone: request.prospectPhone,
       createdAt: now,
     };
-    const pkg = packages.find((p) => p.id === request.packageId);
+    const pkg = get().packages.find((p) => p.id === request.packageId);
     const project: Project = {
       id: nextId("proj"),
       clientId: client.id,
@@ -285,6 +291,16 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   resendInvite: () => {
     // No state to mutate — this is a fire-and-forget email resend in the real app.
+  },
+
+  inviteStaff: () => {
+    // No state to mutate — this is a fire-and-forget email invite in the real app.
+  },
+
+  updatePackage: (packageId, patch) => {
+    set((state) => ({
+      packages: state.packages.map((p) => (p.id === packageId ? { ...p, ...patch } : p)),
+    }));
   },
 
   addNote: (projectId, body) => {

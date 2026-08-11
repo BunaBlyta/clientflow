@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FolderKanban, Receipt, Settings, Users } from "lucide-react";
+import { BarChart3, FolderKanban, Receipt, Settings, TrendingUp, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/invoices", label: "Invoices", icon: Receipt },
+  { href: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

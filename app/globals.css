@@ -20,8 +20,15 @@
 @custom-variant data-disabled (&[data-disabled]);
 @custom-variant data-placeholder (&[data-placeholder]);
 @custom-variant data-inset (&[data-inset]);
-@custom-variant data-horizontal (&[data-horizontal]);
-@custom-variant data-vertical (&[data-vertical]);
+/*
+ * Base UI's orientation-aware primitives (Tabs, Separator, ScrollArea) only ever
+ * emit data-orientation="horizontal"/"vertical" — never a bare data-horizontal/
+ * data-vertical boolean attribute like data-open/data-disabled do. Matching on
+ * attribute presence here (the data-open pattern above) silently never fires,
+ * which is what made every Tabs list render as an unstyled vertical stack.
+ */
+@custom-variant data-horizontal (&[data-orientation="horizontal"]);
+@custom-variant data-vertical (&[data-orientation="vertical"]);
 
 @theme inline {
   --color-background: var(--background);

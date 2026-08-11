@@ -16,15 +16,15 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
-import { packages } from "@/lib/mock-data";
 import { useAppStore } from "@/lib/store";
 
-const standardPackages = packages.filter((p) => !p.isCustom);
 const mostPopularSlug = "full-website";
 
 export function PackagesAndRequest() {
-  const [selectedPackageId, setSelectedPackageId] = useState(standardPackages[0].id);
+  const packages = useAppStore((s) => s.packages);
+  const standardPackages = packages.filter((p) => !p.isCustom);
   const submitProjectRequest = useAppStore((s) => s.submitProjectRequest);
+  const [selectedPackageId, setSelectedPackageId] = useState(packages.find((p) => !p.isCustom)?.id ?? packages[0]?.id ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
 

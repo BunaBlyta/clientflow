@@ -79,3 +79,53 @@ export function totalPaidRevenue(invoices: Invoice[]) {
 export function activeProjectCount(projects: Project[]) {
   return projects.filter((p) => !["LAUNCHED", "CANCELLED"].includes(p.status)).length;
 }
+
+const INVOICE_STATUS_ORDER: Invoice["status"][] = [
+  "DRAFT",
+  "SENT",
+  "PAYMENT_PENDING",
+  "PAID",
+  "FAILED",
+  "VOIDED",
+  "REFUNDED",
+];
+
+export function invoicesByStatus(invoices: Invoice[]) {
+  return INVOICE_STATUS_ORDER.map((status) => {
+    const matching = invoices.filter((i) => i.status === status);
+    return {
+      status,
+      count: matching.length,
+      amountCents: matching.reduce((sum, i) => sum + i.amountCents, 0),
+    };
+  });
+}
+
+const PROJECT_STAGE_ORDER: Project["status"][] = [
+  "PENDING",
+  "DISCOVERY",
+  "DESIGN",
+  "DEVELOPMENT",
+  "REVIEW",
+  "LAUNCHED",
+  "ON_HOLD",
+  "CANCELLED",
+];
+
+export function projectsByStage(projects: Project[]) {
+  return PROJECT_STAGE_ORDER.map((status) => ({
+    status,
+    count: projects.filter((p) => p.status === status).length,
+  }));
+}
+
+export function overallAverageTurnaroundDays(projects: Project[]): number | null {
+  const launched = projects.filter((p) => p.status === "LAUNCHED");
+  if (launched.length === 0) return null;
+  return Math.round(
+    launched.reduce(
+      (sum, p) => sum + (new Date(p.updatedAt).getTime() - new Date(p.createdAt).getTime()) / 86_400_000,
+      0
+    ) / launched.length
+  );
+}
