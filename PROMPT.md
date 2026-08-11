@@ -16,7 +16,14 @@ the next task is, and anything in those files that looks stale or wrong.
 Do not write code until I confirm.
 
 Rules that are not optional:
-- Commit at the end of every task. Conventional Commits.
+- Run `npm run verify` from the repo root before committing. Actually run
+  it, do not assume it passes.
+- Commit at the end of every task, then push. Conventional Commits.
+  Commit your OWN paths only - never `git add -A`, another agent may have
+  work in progress in this same folder.
+- Work directly in clientflow/ on main. Do NOT create git worktrees or
+  branches; we removed those on 11 Aug because each one carried its own
+  node_modules that drifted out of sync and broke the build.
 - Before you stop: overwrite your own lane's status/CURRENT-*.md file, and
   create a NEW file in status/log/. Never edit another lane's file, never
   edit STATUS.md, never edit an existing log file. Plain language a
@@ -45,8 +52,10 @@ those and we have lost work to overlap before.
 Summarise the current state in three lines and tell me what you think the
 next backend task is. Do not write code until I confirm.
 
-Commit at the end of every task. Before you stop, overwrite your own
-status/CURRENT-*.md and add a new file in status/log/.
+Run `npm run verify` from the repo root, then commit with
+`git add prisma/ app/api/ status/` (never -A) and push. Before you stop,
+overwrite your own status/CURRENT-backend.md and add a new file in
+status/log/.
 ```
 
 ## Frontend lane (Claude Code — web)
@@ -63,8 +72,10 @@ lib/. Do not touch prisma/, app/api/, or mobile/.
 Summarise the current state in three lines and tell me what you think the
 next web task is. Do not write code until I confirm.
 
-Commit at the end of every task. Before you stop, overwrite your own
-status/CURRENT-*.md and add a new file in status/log/.
+Run `npm run verify` from the repo root, then commit with
+`git add app/ components/ lib/ status/` (never -A) and push. Before you
+stop, overwrite your own status/CURRENT-web.md and add a new file in
+status/log/.
 ```
 
 ## Mobile lane
@@ -78,8 +89,9 @@ You own mobile/ only. Nothing outside it.
 Summarise the current state in three lines and tell me what you think the
 next mobile task is. Do not write code until I confirm.
 
-Commit at the end of every task. Before you stop, overwrite your own
-status/CURRENT-*.md and add a new file in status/log/.
+Run `npx tsc --noEmit` from inside mobile/, then commit with
+`git add mobile/ status/` (never -A) and push. Before you stop, overwrite
+your own status/CURRENT-mobile.md and add a new file in status/log/.
 ```
 
 ---
