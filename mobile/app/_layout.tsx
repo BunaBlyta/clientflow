@@ -23,7 +23,7 @@ export default function RootLayout() {
   const isRestoring = useAuthStore((s) => s.isRestoring);
 
   useEffect(() => {
-    restoreSession();
+    void restoreSession();
   }, [restoreSession]);
 
   useEffect(() => {

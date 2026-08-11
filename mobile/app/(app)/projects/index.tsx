@@ -8,13 +8,18 @@ import { color, fontFamily, fontSize, spacing } from '../../../lib/theme';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
+import { useEffect } from 'react';
 
 export default function ProjectsListScreen() {
   const router = useRouter();
   const client = useAuthStore((s) => s.client);
-  const projects = useDataStore(
-    useShallow((s) => (client ? s.projectsForClient(client.id) : []))
-  );
+  const token = useAuthStore((s) => s.token);
+  const projects = useDataStore(useShallow((s) => s.projects));
+  const refreshProjects = useDataStore((s) => s.refreshProjects);
+
+  useEffect(() => {
+    if (token) void refreshProjects(token);
+  }, [refreshProjects, token]);
 
   return (
     <Screen>

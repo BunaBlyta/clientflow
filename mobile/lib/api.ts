@@ -56,6 +56,10 @@ export function projectRequest(projectId: string, token: string) {
   return request<Project>(`/api/projects/${encodeURIComponent(projectId)}`, {}, token);
 }
 
+export function projectsRequest(token: string) {
+  return request<Project[]>('/api/projects', {}, token);
+}
+
 export function clientFromUser(user: LoginResponse['user']): Client {
   return {
     id: user.id,

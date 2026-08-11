@@ -8,7 +8,7 @@ interface AuthState {
   client: Client | null;
   token: string | null;
   isRestoring: boolean;
-  restoreSession: () => void;
+  restoreSession: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -18,8 +18,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   client: null,
   token: null,
   isRestoring: true,
-  restoreSession: () => {
-    const session = readSession();
+  restoreSession: async () => {
+    const session = await readSession();
     set({
       isAuthenticated: Boolean(session),
       client: session?.client ?? null,
@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await loginRequest(email.trim().toLowerCase(), password);
       const client = clientFromUser(response.user);
-      writeSession(response.token, client);
+      await writeSession(response.token, client);
       set({ isAuthenticated: true, client, token: response.token });
       return true;
     } catch {
@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   logout: () => {
-    clearSession();
+    void clearSession();
     set({ isAuthenticated: false, client: null, token: null });
   },
 }));
