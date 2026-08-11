@@ -95,10 +95,18 @@ export interface ContactLead {
   createdAt: string;
 }
 
+export interface ProjectPackage {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+}
+
 export interface Project {
   id: string;
   clientId: string;
   packageId: string | null;
+  package?: ProjectPackage | null;
   name: string;
   status: ProjectStatus;
   createdAt: string;

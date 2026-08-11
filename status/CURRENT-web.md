@@ -3,7 +3,7 @@
 **You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.**
 
-Last updated: 2026-08-11 by Codex — live project detail activity feed
+Last updated: 2026-08-11 by Codex — live project package summary
 
 ## What exists
 
@@ -22,32 +22,32 @@ Last updated: 2026-08-11 by Codex — live project detail activity feed
   from the server with caching disabled instead of adding a predicted note locally.
 - The project note composer is disabled and says that posting notes is not wired up
   yet, so it cannot show state that is absent from the database.
+- `/dashboard/projects/[id]` now uses the additive `project.package` summary from the
+  project response for package name and price. Prices are treated as serialized
+  major currency units and formatted with the returned currency code.
 
 ## Verification
 
 - `npm run verify` was run after the trigger fix: typecheck, lint, and all 16 tests
   passed. The Turbopack build hit the documented sandbox process/port restriction.
 - `npx next build --webpack` passed; all 25 routes compiled successfully.
-- For this task, `npm run verify` passed typecheck, lint, all 16 tests, and the
+- For this task, `npm run verify` passed typecheck, lint, all 19 tests, and the
   webpack fallback build. The required Turbopack build hit the documented sandbox
   process/port restriction.
-- Browser verification was attempted at the local app, but the browser runtime
-  reported zero available backends. No signed-in status change, narrow/wide layout
-  check, or reload persistence claim is being made from this environment.
+- Browser verification was attempted again at the local app, but the browser runtime
+  reported zero available backends. No signed-in status change, hard-refresh
+  persistence check, or narrow/wide layout claim is being made from this environment.
 
 ## Handoff notes
 
-- The one source change in this follow-up is the trigger primitive in
-  `components/dashboard/project-status-menu.tsx`; the API and `patchJson` were
-  already proven by the invoice action flow.
-- If the real-browser check finds another issue, inspect the rendered trigger and
-  Base UI menu state before changing the API layer.
+- The project-detail page now consumes the package summary included by API commit
+  `24e2f0a`; no second package request is made.
+- The earlier live activity-feed behavior remains: status changes refetch notes from
+  the server after the PATCH returns.
 
 ## Package follow-up
 
-- The detail page keeps `getPackage` only for package name and pricing, with a TODO
-  marking the missing API fields. Swap this lookup for `GET /api/packages` when the
-  API lane adds it and the project response includes the package relation.
+- Complete for this lane. The former mock lookup and TODO were removed.
 
 ## Hard rule
 

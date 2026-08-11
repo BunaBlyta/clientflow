@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
 import { useAppStore } from "@/lib/store";
-import { getPackage } from "@/lib/mock-data";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatMajorCurrency } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { invoiceDisplayLabel, invoiceDisplayTone } from "@/lib/status";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
@@ -172,8 +171,7 @@ export default function ProjectDetailPage() {
     );
   }
 
-  // TODO(web): Replace this mock lookup when GET /api/packages exposes package name and pricing.
-  const pkg = getPackage(project.packageId);
+  const pkg = project.package;
 
   return (
     <div className="flex flex-col gap-6">
@@ -215,7 +213,7 @@ export default function ProjectDetailPage() {
             <dt className="text-[12px] text-muted-foreground">Package</dt>
             <dd className="mt-1 text-[13px] font-medium">{pkg?.name ?? "—"}</dd>
             <dd className="text-[12px] text-muted-foreground">
-              {pkg && (pkg.isCustom ? "Custom pricing" : formatCurrency(pkg.priceCents!))}
+              {pkg ? formatMajorCurrency(pkg.price, pkg.currency) : "Custom pricing"}
             </dd>
           </div>
           <div>

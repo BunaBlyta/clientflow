@@ -6,6 +6,14 @@ export function formatCurrency(cents: number): string {
   }).format(cents / 100);
 }
 
+export function formatMajorCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
