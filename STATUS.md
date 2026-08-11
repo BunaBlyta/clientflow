@@ -1,5 +1,38 @@
 # STATUS.md
 
+## CURRENT STATE — read this part, then stop
+
+*Overwrite this block every session. Keep it under 25 lines. The full log is below;
+you do not need to read it unless something here looks wrong or you need the "why".*
+
+**Last updated:** 2026-08-11 · **Deadline:** Friday 2026-08-14
+
+- **Repo:** work in `clientflow/` on `main`. All four worktrees are on the same
+  commit. Everything is committed.
+- **Database: LIVE.** Migration ran against Neon on 11 Aug. All 9 tables and 6 enums
+  exist. **The database is empty — there is no seed script yet.**
+- **Web:** 5 routes built, all on mock data — `/`, `/dashboard`,
+  `/dashboard/clients`, `/dashboard/projects`, `/dashboard/invoices`.
+  Not built: product/detail page, settings, notifications, Stripe.
+- **Mobile:** feature-complete on mock data (auth, projects, stage tracker, notes,
+  invoices, mock checkout, notifications). **Never run on a simulator.** Needs
+  Node 22 (`nvm use 22`).
+- **API routes: none exist yet.** This is the current bottleneck.
+- **Tests: none written yet.** Required for anything financial (AGENTS.md §3).
+
+**Next three things, in order:**
+
+1. Seed script (Codex) — copy the data shape from `mobile/lib/mock-data.ts`.
+2. One thin end-to-end slice: login → see a seeded project. Do this before fanning
+   out, so mismatches between API shapes and frontend assumptions surface early.
+3. Remaining API routes, then move each frontend off mock data screen by screen.
+   Stripe last.
+
+**Known trap:** on 10 Aug, ~7,800 lines sat uncommitted across four folders and
+almost got lost. Commit at the end of every task. No exceptions.
+
+---
+
 The shared memory between sessions and between agents. Every agent (Claude Code, Codex CLI) reads this before starting and appends to it before stopping. Newest entry on top. Don't delete old entries — this is the log of *why* things are the way they are, not just *what*.
 
 ### 2026-08-10 22:30 — Claude (Cowork) — recovered and merged all the scattered work
