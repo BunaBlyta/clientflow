@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
 import { useAppStore } from "@/lib/store";
-import { getClient, getPackage } from "@/lib/mock-data";
+import { getPackage } from "@/lib/mock-data";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { invoiceDisplayLabel, invoiceDisplayTone } from "@/lib/status";
@@ -14,29 +14,152 @@ import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialo
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import type { Client, Note, Project } from "@/lib/types";
+
+async function fetchJson<T>(url: string, fallbackError: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(url, {
+    credentials: "include",
+    cache: "no-store",
+    signal,
+  });
+  const payload = (await response.json().catch(() => null)) as { error?: unknown } | T | null;
+
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
+        ? payload.error
+        : fallbackError;
+    throw new Error(message);
+  }
+
+  if (payload === null || typeof payload !== "object") {
+    throw new Error(fallbackError);
+  }
+
+  return payload as T;
+}
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
-  const projects = useAppStore((s) => s.projects);
+  const projectId = params.id;
   const allInvoices = useAppStore((s) => s.invoices);
-  const allNotes = useAppStore((s) => s.notes);
-  const addNote = useAppStore((s) => s.addNote);
   const applyProjectUpdate = useAppStore((s) => s.applyProjectUpdate);
   const applyInvoiceUpdate = useAppStore((s) => s.applyInvoiceUpdate);
-  const [draft, setDraft] = useState("");
+  const [project, setProject] = useState<Project | null>(null);
+  const [client, setClient] = useState<Client | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const project = projects.find((p) => p.id === params.id);
   const invoices = useMemo(
-    () => allInvoices.filter((i) => i.projectId === params.id),
-    [allInvoices, params.id]
+    () => allInvoices.filter((i) => i.projectId === projectId),
+    [allInvoices, projectId]
   );
   const sortedNotes = useMemo(
     () =>
-      allNotes
-        .filter((n) => n.projectId === params.id)
+      notes
+        .slice()
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-    [allNotes, params.id]
+    [notes]
   );
+
+  const fetchNotes = useCallback(
+    (signal?: AbortSignal) =>
+      fetchJson<Note[]>(
+        `/api/notes?projectId=${encodeURIComponent(projectId)}`,
+        "We couldn't load the project activity.",
+        signal,
+      ),
+    [projectId],
+  );
+
+  const loadProject = useCallback(
+    async (signal?: AbortSignal) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const [projectData, clientData, notesData] = await Promise.all([
+          fetchJson<Project>(
+            `/api/projects/${encodeURIComponent(projectId)}`,
+            "We couldn't load this project.",
+            signal,
+          ),
+          fetchJson<Client[]>("/api/clients", "We couldn't load the client list.", signal),
+          fetchNotes(signal),
+        ]);
+
+        if (!Array.isArray(clientData) || !Array.isArray(notesData)) {
+          throw new Error("The server returned an unexpected project response.");
+        }
+
+        if (!signal?.aborted) {
+          setProject(projectData);
+          setClient(clientData.find((currentClient) => currentClient.id === projectData.clientId) ?? null);
+          setNotes(notesData);
+        }
+      } catch (caughtError) {
+        if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+        if (!signal?.aborted) {
+          setError(caughtError instanceof Error ? caughtError.message : "We couldn't load this project.");
+        }
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
+      }
+    },
+    [fetchNotes, projectId],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadProject(controller.signal));
+    return () => controller.abort();
+  }, [loadProject]);
+
+  const handleProjectUpdated = useCallback(
+    (updatedProject: Project) => {
+      setProject(updatedProject);
+      applyProjectUpdate(updatedProject);
+
+      // Re-read the feed after the PATCH transaction completes; do not predict or append its note locally.
+      void fetchNotes()
+        .then(setNotes)
+        .catch((caughtError) => {
+          setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the project activity.");
+        });
+    },
+    [applyProjectUpdate, fetchNotes],
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <BackLink />
+        <div className="flex min-h-56 items-center justify-center border border-border">
+          <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin text-brand-accent" />
+            Loading project…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-6">
+        <BackLink />
+        <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
+          <p className="text-[13px] font-medium text-status-danger">Project couldn&apos;t load</p>
+          <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
+          <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadProject()}>
+            <RefreshCw />
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -49,15 +172,8 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const client = getClient(project.clientId);
+  // TODO(web): Replace this mock lookup when GET /api/packages exposes package name and pricing.
   const pkg = getPackage(project.packageId);
-
-  function handleAddNote(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!draft.trim() || !project) return;
-    addNote(project.id, draft.trim());
-    setDraft("");
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,7 +186,7 @@ export default function ProjectDetailPage() {
             {client?.companyName} · {pkg?.name}
           </p>
         </div>
-        <ProjectStatusMenu project={project} onProjectUpdated={applyProjectUpdate} />
+        <ProjectStatusMenu project={project} onProjectUpdated={handleProjectUpdated} />
       </div>
 
       <div className="rounded-lg border border-border p-5">
@@ -195,14 +311,14 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          <form onSubmit={handleAddNote} className="flex flex-col gap-2 border-t border-border pt-4">
+          <form className="flex flex-col gap-2 border-t border-border pt-4">
             <Textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
               placeholder="Add a note for this project…"
               rows={2}
+              disabled
             />
-            <Button type="submit" size="sm" className="self-end" disabled={!draft.trim()}>
+            <p className="text-[12px] text-muted-foreground">Posting notes isn&apos;t wired up yet.</p>
+            <Button type="button" size="sm" className="self-end" disabled>
               Post note
             </Button>
           </form>
