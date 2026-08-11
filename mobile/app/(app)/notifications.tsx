@@ -8,11 +8,14 @@ import { Screen } from '../../components/ui/Screen';
 import { color, fontFamily, fontSize, spacing } from '../../lib/theme';
 import { useDataStore } from '../../store/data-store';
 import type { Notification } from '../../lib/types';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const notifications = useDataStore((s) =>
-    [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  const notifications = useDataStore(
+    useShallow((s) =>
+      [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    )
   );
   const markRead = useDataStore((s) => s.markNotificationRead);
   const markAllRead = useDataStore((s) => s.markAllNotificationsRead);
