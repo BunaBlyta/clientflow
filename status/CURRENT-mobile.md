@@ -3,7 +3,7 @@
 **Owner: the mobile agent. You are the only writer of this file. Overwrite it
 before you stop. Do not edit the other CURRENT-*.md files.**
 
-Last updated: 2026-08-11 by Claude (Cowork)
+Last updated: 2026-08-11 by Claude (Cowork), fix 2
 
 ## State
 
@@ -17,17 +17,25 @@ Last updated: 2026-08-11 by Claude (Cowork)
   Expo's web target, which is what surfaced two real bugs (both now fixed, see
   below) — a simulator alone never would have caught them, since they only show up
   under React's stricter web rendering checks:
-  1. **Infinite re-render loop, fixed.** Several screens read lists (a client's
-     projects, a project's invoices, a project's notes) out of the shared data
-     store using a selector that built a brand-new array every time it ran. Zustand
-     treats a new array as "the data changed" even when the actual contents are
-     identical, so the app got stuck re-rendering those screens forever ("The
-     result of getSnapshot should be cached" error). Fixed by wrapping those four
-     selectors in Zustand's `useShallow` helper, which compares the array's
-     contents instead of its identity — the screens now re-render only when the
-     underlying data actually changes. Touched: `app/(app)/projects/index.tsx`,
+  1. **Infinite re-render loop, fixed (took two passes).** Several screens read
+     lists (a client's projects, a project's invoices, a project's notes, and — in
+     a fifth spot found on the second pass — the sorted notifications list) out of
+     the shared data store using a selector that built a brand-new array every
+     time it ran. Zustand treats a new array as "the data changed" even when the
+     actual contents are identical, so the app got stuck re-rendering those
+     screens forever ("Maximum update depth exceeded" / "The result of
+     getSnapshot should be cached" error). Fixed by wrapping those five selectors
+     in Zustand's `useShallow` helper, which compares the array's contents instead
+     of its identity — the screens now re-render only when the underlying data
+     actually changes. Touched: `app/(app)/projects/index.tsx`,
      `app/(app)/projects/[id]/index.tsx`, `app/(app)/projects/[id]/invoices/index.tsx`,
-     `app/(app)/projects/[id]/notes.tsx`.
+     `app/(app)/projects/[id]/notes.tsx`, `app/(app)/notifications.tsx`.
+     Note: the first pass missed `notifications.tsx` (its selector did
+     `[...s.notifications].sort(...)`, a spread-then-sort, which builds a new array
+     just like the `.filter()` cases already fixed). The error React reported
+     pointed at `app/(app)/_layout.tsx` line 8/11 (`<Tabs>`), which is just the
+     nearest navigator to the loop — the actual bug was one level down, in the
+     notifications screen's own selector.
   2. **Missing home route, fixed.** There was no screen registered for the app's
      root path ("/"), because both top-level route groups are named in a way that
      hides them from the URL. On a phone this was invisible — the app just opens
