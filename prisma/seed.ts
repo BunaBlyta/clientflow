@@ -125,6 +125,7 @@ async function main() {
       description: 'A complete multi-page website for Riverside Coffee Co.',
       createdAt: '2026-06-02T14:00:00.000Z',
       updatedAt: '2026-08-05T09:30:00.000Z',
+      targetLaunchDate: '2026-09-15T00:00:00.000Z',
     },
     {
       id: 'proj-2',
@@ -134,6 +135,7 @@ async function main() {
       description: 'A conversion-focused landing page refresh.',
       createdAt: '2026-05-10T14:00:00.000Z',
       updatedAt: '2026-08-08T16:00:00.000Z',
+      targetLaunchDate: '2026-08-20T00:00:00.000Z',
     },
     {
       id: 'proj-3',
@@ -144,6 +146,7 @@ async function main() {
       createdAt: '2026-01-15T14:00:00.000Z',
       updatedAt: '2026-03-20T11:00:00.000Z',
       launchedAt: '2026-03-20T00:00:00.000Z',
+      targetLaunchDate: '2026-03-20T00:00:00.000Z',
     },
     {
       id: 'proj-4',
@@ -153,14 +156,15 @@ async function main() {
       description: 'A seasonal menu experience awaiting refreshed content.',
       createdAt: '2026-07-01T14:00:00.000Z',
       updatedAt: '2026-07-28T10:00:00.000Z',
+      targetLaunchDate: '2026-10-15T00:00:00.000Z',
     },
   ];
 
   for (const project of projects) {
     await prisma.project.upsert({
       where: { id: project.id },
-      update: { ...project, clientId: client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt) },
-      create: { ...project, clientId: client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt) },
+      update: { ...project, clientId: client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt), targetLaunchDate: date(project.targetLaunchDate) },
+      create: { ...project, clientId: client.id, createdAt: date(project.createdAt), updatedAt: date(project.updatedAt), targetLaunchDate: date(project.targetLaunchDate) },
     });
   }
 

@@ -20,6 +20,46 @@ Two frontends, one backend, one database. The Next.js web app serves the public 
 | No staff permission tiers (admin/PM/designer/finance) — every staff account has equal permissions | Deliberate scope cut given the deadline. Considered and explicitly rejected during planning as a place to spend limited time. | 2026-08-10 |
 | Icon library is Lucide, not Hugeicons | Lucide was an explicit requirement in the mentor's assigned tech stack. A colleague's Hugeicons (stroke-rounded) recommendation was considered, but deviating from an assigned stack item in an evaluation meant to prove you can follow a brief was judged not worth it. | 2026-08-10 |
 | Codex CLI owns the backend (schema, API, Stripe/webhooks, auth logic, seed script); Claude Code owns all frontend on both platforms (web + mobile), parallelized via subagents | Matches the user's stated tool preference and gives each agent clean, non-overlapping file ownership — Codex touches `prisma/` and API routes only, Claude Code touches frontend directories only. | 2026-08-10 |
+| Stateless signed auth token, returned in JSON and set as an HTTP-only cookie | Web can use the secure cookie while Expo can store the same token and send it as `Authorization: Bearer <token>`, without adding a session table or making mobile cookie handling a dependency. | 2026-08-11 |
+| API dates are serialized as ISO 8601 strings and the first project response stays flat | Both frontend type files expect string dates and project IDs rather than nested Prisma relations; extra database fields are withheld until a screen needs them. | 2026-08-11 |
 | Design language pulls specifically from Linear, Attio, and Stripe | The user responded strongly to all three, and they share a describable philosophy (restraint, typography-led hierarchy, status communicated through layout rather than pill badges, dense-but-readable tables) that directly serves "premium, not a generic AI-template look" — see AGENTS.md section 5 for the full translation into typography/color/spacing rules. | 2026-08-10 |
 
 Keep this log even for decisions that seem obvious at the time — it's what stops an agent (or you, in three weeks) from "fixing" something that was deliberate.
+
+## First API contracts
+
+`POST /api/auth/login` accepts `{ "email": string, "password": string }` and
+returns `{ user, token }`. `user` has the web frontend's current shape:
+
+```json
+{
+  "id": "staff-1",
+  "email": "sam@clientflow.studio",
+  "name": "Sam Torres",
+  "role": "STAFF",
+  "createdAt": "2026-08-01T09:00:00.000Z"
+}
+```
+
+The token is also set as the `clientflow_session` HTTP-only cookie. Mobile stores
+the response token and sends it as `Authorization: Bearer <token>`; the backend
+accepts either the bearer token or cookie.
+
+`GET /api/projects/:id` requires that session and returns one flat project:
+
+```json
+{
+  "id": "proj-1",
+  "clientId": "client-1",
+  "packageId": "pkg-full-website",
+  "name": "Riverside Cafe — Full Website",
+  "status": "DEVELOPMENT",
+  "createdAt": "2026-06-02T14:00:00.000Z",
+  "updatedAt": "2026-08-05T09:30:00.000Z",
+  "targetLaunchDate": "2026-09-15T00:00:00.000Z"
+}
+```
+
+`packageId` is intentionally `string | null` in the live database contract so
+custom projects can omit a package. `description`, `startedAt`, `launchedAt`,
+and Prisma relations are not returned until a consuming screen needs them.
