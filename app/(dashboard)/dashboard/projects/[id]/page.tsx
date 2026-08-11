@@ -21,6 +21,8 @@ export default function ProjectDetailPage() {
   const allInvoices = useAppStore((s) => s.invoices);
   const allNotes = useAppStore((s) => s.notes);
   const addNote = useAppStore((s) => s.addNote);
+  const applyProjectUpdate = useAppStore((s) => s.applyProjectUpdate);
+  const applyInvoiceUpdate = useAppStore((s) => s.applyInvoiceUpdate);
   const [draft, setDraft] = useState("");
 
   const project = projects.find((p) => p.id === params.id);
@@ -68,7 +70,7 @@ export default function ProjectDetailPage() {
             {client?.companyName} · {pkg?.name}
           </p>
         </div>
-        <ProjectStatusMenu project={project} />
+        <ProjectStatusMenu project={project} onProjectUpdated={applyProjectUpdate} />
       </div>
 
       <div className="rounded-lg border border-border p-5">
@@ -143,7 +145,7 @@ export default function ProjectDetailPage() {
                       {inv.dueDate ? formatDate(inv.dueDate) : "—"}
                     </td>
                     <td className="px-2 py-3 text-right">
-                      <InvoiceRowActions invoice={inv} />
+                      <InvoiceRowActions invoice={inv} onInvoiceUpdated={applyInvoiceUpdate} />
                     </td>
                   </tr>
                 ))}

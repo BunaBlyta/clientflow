@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { LoaderCircle, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -11,35 +11,76 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
-import { useAppStore } from "@/lib/store";
-import type { Invoice } from "@/lib/types";
+import { patchJson } from "@/lib/api-client";
+import type { Invoice, InvoiceStatus } from "@/lib/types";
 
-export function InvoiceRowActions({ invoice }: { invoice: Invoice }) {
-  const sendInvoice = useAppStore((s) => s.sendInvoice);
-  const markInvoicePaid = useAppStore((s) => s.markInvoicePaid);
-  const voidInvoice = useAppStore((s) => s.voidInvoice);
+const VOIDABLE_STATUSES: readonly InvoiceStatus[] = [
+  "DRAFT",
+  "SENT",
+  "PAYMENT_PENDING",
+  "FAILED",
+];
+
+export function InvoiceRowActions({
+  invoice,
+  onInvoiceUpdated,
+}: {
+  invoice: Invoice;
+  onInvoiceUpdated: (invoice: Invoice) => void;
+}) {
   const [voidOpen, setVoidOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const canSend = invoice.status === "DRAFT";
-  const canMarkPaid = !["PAID", "VOIDED", "REFUNDED"].includes(invoice.status);
-  const canVoid = invoice.status !== "PAID" && invoice.status !== "VOIDED";
+  const canVoid = VOIDABLE_STATUSES.includes(invoice.status);
 
-  if (!canSend && !canMarkPaid && !canVoid) {
+  async function updateStatus(status: "SENT" | "VOIDED") {
+    setIsUpdating(true);
+
+    try {
+      const updatedInvoice = await patchJson<Invoice>(
+        `/api/invoices/${invoice.id}`,
+        { status },
+        "We couldn't update the invoice.",
+      );
+
+      if (updatedInvoice.id !== invoice.id || updatedInvoice.status !== status) {
+        throw new Error("The server returned an unexpected invoice response.");
+      }
+
+      onInvoiceUpdated(updatedInvoice);
+      toast.success(status === "SENT" ? "Invoice sent." : "Invoice voided.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We couldn't update the invoice.");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  if (!canSend && !canVoid) {
     return <span className="text-[12px] text-muted-foreground">—</span>;
   }
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-          <MoreHorizontal />
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isUpdating}
+              aria-label={`Actions for ${invoice.label}`}
+            />
+          }
+        >
+          {isUpdating ? <LoaderCircle className="animate-spin" /> : <MoreHorizontal />}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
           {canSend && (
-            <DropdownMenuItem onClick={() => sendInvoice(invoice.id)}>Send invoice</DropdownMenuItem>
-          )}
-          {canMarkPaid && (
-            <DropdownMenuItem onClick={() => markInvoicePaid(invoice.id)}>Mark as paid</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void updateStatus("SENT")}>
+              Send invoice
+            </DropdownMenuItem>
           )}
           {canVoid && (
             <DropdownMenuItem variant="destructive" onClick={() => setVoidOpen(true)}>
@@ -55,10 +96,7 @@ export function InvoiceRowActions({ invoice }: { invoice: Invoice }) {
         title="Void this invoice?"
         description={`"${invoice.label}" will be marked void and can no longer be paid. This can't be undone.`}
         confirmLabel="Void invoice"
-        onConfirm={() => {
-          const ok = voidInvoice(invoice.id);
-          if (!ok) toast.error("Can't void a paid invoice.");
-        }}
+        onConfirm={() => updateStatus("VOIDED")}
       />
     </>
   );

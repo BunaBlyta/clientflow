@@ -7,8 +7,9 @@ import { Check, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { getPackage } from "@/lib/mock-data";
 import { formatDate } from "@/lib/format";
-import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE, REQUEST_STATUS_LABEL } from "@/lib/status";
+import { REQUEST_STATUS_LABEL } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
+import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -138,6 +139,14 @@ function ProjectsTable() {
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [projects, search, statusFilter]);
 
+  const handleProjectUpdated = useCallback((updatedProject: Project) => {
+    setProjects((currentProjects) =>
+      currentProjects.map((project) =>
+        project.id === updatedProject.id ? updatedProject : project,
+      ),
+    );
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex min-h-56 items-center justify-center border border-border">
@@ -211,9 +220,10 @@ function ProjectsTable() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{packageLabel}</td>
                   <td className="px-4 py-3">
-                    <span className={PROJECT_STATUS_TONE[project.status]}>
-                      {PROJECT_STATUS_LABEL[project.status]}
-                    </span>
+                    <ProjectStatusMenu
+                      project={project}
+                      onProjectUpdated={handleProjectUpdated}
+                    />
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
                     {formatDate(project.updatedAt)}

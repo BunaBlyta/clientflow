@@ -6,6 +6,7 @@ import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { invoiceDisplayLabel, invoiceDisplayTone } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
+import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -118,6 +119,14 @@ export default function InvoicesPage() {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [clientNames, invoices, projectNames, search, statusFilter]);
 
+  const handleInvoiceUpdated = useCallback((updatedInvoice: Invoice) => {
+    setInvoices((currentInvoices) =>
+      currentInvoices.map((invoice) =>
+        invoice.id === updatedInvoice.id ? { ...invoice, ...updatedInvoice } : invoice,
+      ),
+    );
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
@@ -176,6 +185,9 @@ export default function InvoicesPage() {
               <th className="px-4 py-2.5 text-right font-normal">Amount</th>
               <th className="px-4 py-2.5 font-normal">Status</th>
               <th className="px-4 py-2.5 text-right font-normal">Due</th>
+              <th className="w-10 px-2 py-2.5">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -203,12 +215,18 @@ export default function InvoicesPage() {
                   <td className="px-4 py-3 text-right text-muted-foreground">
                     {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
                   </td>
+                  <td className="px-2 py-3 text-right">
+                    <InvoiceRowActions
+                      invoice={invoice}
+                      onInvoiceUpdated={handleInvoiceUpdated}
+                    />
+                  </td>
                 </tr>
               );
             })}
             {invoices.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center">
+                <td colSpan={7} className="px-4 py-10 text-center">
                   <p className="text-[13px] font-medium">No invoices yet</p>
                   <p className="mt-1 text-[12px] text-muted-foreground">
                     Invoices will appear here when they are created for a project.
@@ -218,7 +236,7 @@ export default function InvoicesPage() {
             )}
             {invoices.length > 0 && filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
                   No invoices match your filters.
                 </td>
               </tr>

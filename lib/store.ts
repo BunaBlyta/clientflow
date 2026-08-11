@@ -20,17 +20,13 @@ import type {
   Package,
   Project,
   ProjectRequest,
-  ProjectStatus,
 } from "@/lib/types";
-import { PROJECT_STATUS_LABEL } from "@/lib/status";
 
 /**
- * Everything in this store stands in for the real database/API until Codex's
- * backend lanes come online (see STATUS.md). It's seeded from lib/mock-data.ts
- * and mutated entirely client-side, so table actions (approve/reject, status
- * changes, invoicing) are genuinely clickable in the demo, not static mockups.
- * Actions here are named/shaped to mirror what the real API routes will need
- * to do — swapping them for real fetch calls later should be close to 1:1.
+ * Screens that have not been connected to the API still read their fixtures from
+ * this store. Live project and invoice controls apply the records returned by the
+ * server here when they also appear inside a remaining mock-backed screen; they do
+ * not invent successful state transitions locally.
  */
 
 let idCounter = 1000;
@@ -65,7 +61,7 @@ interface AppState {
   approveRequest: (requestId: string) => void;
   rejectRequest: (requestId: string) => void;
 
-  updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
+  applyProjectUpdate: (project: Project) => void;
 
   createInvoice: (input: {
     projectId: string;
@@ -75,9 +71,7 @@ interface AppState {
     dueDate?: string;
     sendImmediately: boolean;
   }) => void;
-  sendInvoice: (invoiceId: string) => void;
-  markInvoicePaid: (invoiceId: string) => void;
-  voidInvoice: (invoiceId: string) => boolean;
+  applyInvoiceUpdate: (invoice: Invoice) => void;
 
   resendInvite: (clientId: string) => void;
   inviteStaff: (email: string) => void;
@@ -186,36 +180,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  updateProjectStatus: (projectId, status) => {
-    const project = get().projects.find((p) => p.id === projectId);
-    if (!project || project.status === status) return;
-    const now = new Date().toISOString();
-    const note: Note = {
-      id: nextId("note"),
-      projectId,
-      authorId: null,
-      authorName: "System",
-      authorRole: "SYSTEM",
-      body: `Status changed from ${PROJECT_STATUS_LABEL[project.status]} to ${PROJECT_STATUS_LABEL[status]}.`,
-      createdAt: now,
-    };
+  applyProjectUpdate: (project) => {
     set((state) => ({
-      projects: state.projects.map((p) =>
-        p.id === projectId ? { ...p, status, updatedAt: now } : p
+      projects: state.projects.map((currentProject) =>
+        currentProject.id === project.id ? project : currentProject,
       ),
-      notes: [...state.notes, note],
-      notifications: [
-        {
-          id: nextId("notif"),
-          userId: currentStaffUser.id,
-          type: "PROJECT_STAGE_CHANGED",
-          title: "Project stage changed",
-          body: `${project.name} is now ${PROJECT_STATUS_LABEL[status]}.`,
-          read: true,
-          createdAt: now,
-        },
-        ...state.notifications,
-      ],
     }));
   },
 
@@ -250,43 +219,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  sendInvoice: (invoiceId) => {
+  applyInvoiceUpdate: (invoice) => {
     set((state) => ({
-      invoices: state.invoices.map((i) =>
-        i.id === invoiceId && i.status === "DRAFT" ? { ...i, status: "SENT" } : i
+      invoices: state.invoices.map((currentInvoice) =>
+        currentInvoice.id === invoice.id ? invoice : currentInvoice,
       ),
     }));
-  },
-
-  // Stand-in for the real, webhook-driven confirmation (AGENTS.md: a project only
-  // advances on a confirmed Stripe webhook, never a client-side click). Marking an
-  // invoice paid here simulates that webhook firing, since Stripe isn't wired up yet.
-  markInvoicePaid: (invoiceId) => {
-    const invoice = get().invoices.find((i) => i.id === invoiceId);
-    if (!invoice) return;
-    const now = new Date().toISOString();
-
-    set((state) => ({
-      invoices: state.invoices.map((i) =>
-        i.id === invoiceId ? { ...i, status: "PAID", paidAt: now } : i
-      ),
-    }));
-
-    if (invoice.kind === "DEPOSIT") {
-      const project = get().projects.find((p) => p.id === invoice.projectId);
-      if (project && project.status === "PENDING") {
-        get().updateProjectStatus(project.id, "DISCOVERY");
-      }
-    }
-  },
-
-  voidInvoice: (invoiceId) => {
-    const invoice = get().invoices.find((i) => i.id === invoiceId);
-    if (!invoice || invoice.status === "PAID") return false;
-    set((state) => ({
-      invoices: state.invoices.map((i) => (i.id === invoiceId ? { ...i, status: "VOIDED" } : i)),
-    }));
-    return true;
   },
 
   resendInvite: () => {

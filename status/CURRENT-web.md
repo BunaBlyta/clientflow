@@ -3,49 +3,44 @@
 **You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.**
 
-Last updated: 2026-08-11 by Codex — live invoices list
+Last updated: 2026-08-11 by Codex — live table actions
 
 ## What exists
 
-- The web login and dashboard route protection are live, and `/dashboard/projects`
-  reads projects and clients from the API with loading, error, empty, and filtered
-  states.
-- `/dashboard/invoices` now reads invoices, projects, and clients from the three
-  authenticated API endpoints. It shows live amounts, paid/overdue statuses,
-  due dates, project links, and client names.
-- The invoices screen explicitly distinguishes loading, API error with Retry,
-  an empty database, and invoices that exist but do not match the current search
-  or status filter.
-- Invoice row actions and the create-invoice dialog are intentionally not mounted
-  on the live invoices table. Their current implementations only mutate the
-  local Zustand store, and no invoice write endpoint exists yet; hiding them keeps
-  the page from showing changes that disappear after refresh.
-- `InvoiceKind` now includes the API's `CUSTOM` value, and the existing create
-  dialog has a matching `Custom` label for any future live write flow.
+- `/dashboard/invoices` now shows real row actions backed by
+  `PATCH /api/invoices/:id`. Draft invoices can be sent, and Draft, Sent,
+  Payment Pending, or Failed invoices can be voided after confirmation.
+- The invoice action menu derives its choices from the current server status.
+  It shows API error messages, including an unexpected 409, and only updates the
+  row with the record returned by the server.
+- Manual “Mark as paid” was deleted from the UI and its old mock store action was
+  removed. Stripe's confirmed webhook remains the only path to Paid.
+- `/dashboard/projects` now uses the existing project status menu. Status changes
+  call `PATCH /api/projects/:id` and replace the row with the returned record.
+- The shared project and invoice controls no longer invent successful local
+  transitions when they appear on the remaining mock-backed project detail page;
+  they apply only records returned by the API.
 
 ## Verification
 
-- `npm run verify`: typecheck, lint, and all 9 tests passed. The required Turbopack
-  build is blocked by this sandbox's `Operation not permitted` process/port
-  restriction, the same known environment failure recorded in the handover.
-- `npx next build --webpack`: passed; all 23 routes compiled successfully.
-- The local dev server is running on `http://localhost:3001` because port 3000
-  was already occupied.
-- The in-app browser was unavailable in this session: browser discovery returned
-  no connected backends. The required signed-in click-through could not be
-  completed here and still needs Buna's browser check.
+- `npm run verify` was run after the changes: typecheck, lint, and all 16 tests
+  passed. The Turbopack build then hit the documented sandbox restriction while
+  trying to create a process and bind a port.
+- `npx next build --webpack` passed; all 25 routes compiled successfully.
+- A signed-in browser click-through is **pending**. The browser runtime returned
+  zero available browser backends, so Send, Void, project status changes, and
+  refresh persistence have not been verified through the UI by this lane.
+- Buna is running the signed-in click-through separately and will report any bugs
+  as follow-up work.
 
 ## Handoff notes
 
-- The API invoice shape used here is `id`, `projectId`, `clientId`, `kind`,
-  `label`, `amountCents`, `status`, `createdAt`, and optional `dueDate`/`paidAt`.
-- The API lane's seeded data now includes three clients, due dates on every
-  invoice, two past-due `SENT` invoices, and one `CUSTOM` invoice.
-- `lib/types.ts` changed for `CUSTOM`; the equivalent `mobile/lib/types.ts` was
-  deliberately not changed. Tell Buna/Agent C to mirror that union before mobile
-  consumes custom invoices.
-- Unrelated mobile files were already modified in the shared checkout and were
-  not staged or changed by this lane.
+- Invoice actions intentionally expose only Send and Void. Do not reintroduce a
+  manual Paid action.
+- The UI prevents known illegal invoice transitions; server error text is still
+  surfaced if the record changes concurrently and the API returns 409.
+- Other dashboard screens remain on their previous data sources; Requests,
+  create-invoice, and Settings were not changed.
 
 ## Hard rule
 
