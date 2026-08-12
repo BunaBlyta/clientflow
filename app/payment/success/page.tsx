@@ -34,7 +34,7 @@ export default function PaymentSuccessPage() {
         </p>
 
         <div className="mt-6 flex justify-center">
-          <Button render={<Link href="/dashboard/invoices" />}>View invoices</Button>
+          <Button nativeButton={false} render={<Link href="/dashboard/invoices" />}>View invoices</Button>
         </div>
       </div>
     </main>
