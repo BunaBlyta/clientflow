@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { LoaderCircle, RefreshCw, Sparkles } from "lucide-react";
 import {
   averageTurnaroundByPackage,
   invoicesByStatus,
@@ -31,6 +31,9 @@ export default function AnalyticsPage() {
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [insight, setInsight] = useState<string | null>(null);
+  const [insightError, setInsightError] = useState<string | null>(null);
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
 
   const loadAnalytics = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -67,6 +70,30 @@ export default function AnalyticsPage() {
     void Promise.resolve().then(() => loadAnalytics(controller.signal));
     return () => controller.abort();
   }, [loadAnalytics]);
+
+  async function generateInsight() {
+    setIsGeneratingInsight(true);
+    setInsightError(null);
+
+    try {
+      const result = await fetchJson<{ insight: string }>(
+        "/api/analytics/insight",
+        "We couldn't generate an insight right now.",
+        undefined,
+        { method: "POST" },
+      );
+      if (typeof result.insight !== "string" || !result.insight.trim()) {
+        throw new Error("We couldn't generate an insight right now.");
+      }
+      setInsight(result.insight.trim());
+    } catch (caughtError) {
+      setInsightError(
+        caughtError instanceof Error ? caughtError.message : "We couldn't generate an insight right now.",
+      );
+    } finally {
+      setIsGeneratingInsight(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -129,6 +156,32 @@ export default function AnalyticsPage() {
           value={overallTurnaround === null ? "—" : `${overallTurnaround}d`}
           hint="Creation to launch, all packages"
         />
+      </div>
+
+      <div className="rounded-lg border border-border p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-accent" />
+            <div>
+              <h2 className="text-[15px] font-medium">AI analytics insight</h2>
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                A short summary of the numbers above, generated on request.
+              </p>
+              {insight && <p className="mt-3 max-w-2xl text-[13px] leading-5 text-foreground">{insight}</p>}
+              {insightError && <p className="mt-3 text-[13px] text-status-danger">{insightError}</p>}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void generateInsight()}
+            disabled={isGeneratingInsight}
+            className="shrink-0"
+          >
+            {isGeneratingInsight ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
+            {isGeneratingInsight ? "Generating…" : "Generate insight"}
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-border p-5">
