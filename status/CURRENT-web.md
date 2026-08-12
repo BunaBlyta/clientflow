@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-12 by Codex — dashboard logout wiring
+Last updated: 2026-08-12 by Codex — deferred custom contact flow
 
 ## What changed
 
@@ -22,6 +22,11 @@ Last updated: 2026-08-12 by Codex — dashboard logout wiring
 - The dashboard topbar’s “Log out” action now calls `POST /api/auth/logout` with
   the session cookie, shows a pending state, and redirects to `/login` with a
   router refresh even if the request fails so the user is not left in the menu.
+- The custom web app contact section is intentionally disabled per the deferred
+  SPEC decision. It keeps the existing copy and links prospects to
+  `buna@tetbit.studio` instead of accepting a submission that the app cannot
+  deliver to staff. The dead frontend `ContactLead` type, fixture data, and
+  Zustand action were removed; the API lane’s Prisma schema was not changed.
 
 ## Verification
 
@@ -29,8 +34,8 @@ Last updated: 2026-08-12 by Codex — dashboard logout wiring
   The required Turbopack build was blocked by the sandbox process/port
   restriction.
 - `npx next build --webpack`: passed; all 29 routes compiled, including the
-  logout endpoint.
-- The logout change passed the repository typecheck and lint steps.
+  logout endpoint and the marketing page.
+- The contact-flow change passed the repository typecheck and lint steps.
 - No API, Prisma, mobile, or other lane files were changed.
 
 ## Handoff notes
@@ -45,6 +50,9 @@ Last updated: 2026-08-12 by Codex — dashboard logout wiring
 - The logout request depends on the API lane’s shipped `POST /api/auth/logout`
   route; the UI also navigates away if the request returns an error or cannot
   complete.
+- The custom package flow remains deferred: staff manually creates the client,
+  project, and invoice after an outside conversation. Do not restore an online
+  contact submission until a real delivery path and staff UI exist.
 
 ## Hard rule
 

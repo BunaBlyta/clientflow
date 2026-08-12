@@ -97,15 +97,6 @@ export interface ProjectRequest {
   reviewedAt?: string;
 }
 
-export interface ContactLead {
-  id: string;
-  name: string;
-  email: string;
-  companyName?: string;
-  message: string;
-  createdAt: string;
-}
-
 export interface ProjectPackage {
   id: string;
   name: string;

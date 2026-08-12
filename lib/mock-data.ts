@@ -1,6 +1,5 @@
 import type {
   Client,
-  ContactLead,
   Invoice,
   Note,
   Notification,
@@ -106,11 +105,6 @@ export const projectRequests: ProjectRequest[] = [
   { id: "req-2", packageId: "pkg-full-website", prospectName: "Marcus Webb", prospectEmail: "marcus@webbstructural.com", companyName: "Webb Structural Engineering", message: "Need a proper multi-page site — current one is a single WordPress page from 2016.", status: "PENDING", createdAt: daysAgo(3) },
   { id: "req-3", packageId: "pkg-landing", prospectName: "Tori Blackwood", prospectEmail: "tori@blackwoodyoga.com", companyName: "Blackwood Yoga", status: "APPROVED", createdAt: daysAgo(14), reviewedAt: daysAgo(12) },
   { id: "req-4", packageId: "pkg-full-website", prospectName: "Elliot Price", prospectEmail: "elliot@pricefinancial.net", companyName: "Price Financial", message: "Budget is tight this quarter, exploring options.", status: "REJECTED", createdAt: daysAgo(22), reviewedAt: daysAgo(20) },
-];
-
-export const contactLeads: ContactLead[] = [
-  { id: "lead-1", name: "Renata Souza", email: "renata@fieldnoteapp.com", companyName: "Fieldnote", message: "We need a custom web app for field data collection — offline-first, exports to our existing backend.", createdAt: daysAgo(2) },
-  { id: "lead-2", name: "Callum Ashworth", email: "callum@driftline.co", message: "Interested in a booking + scheduling system for a small studio chain.", createdAt: daysAgo(6) },
 ];
 
 export const notifications: Notification[] = [

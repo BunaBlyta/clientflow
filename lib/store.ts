@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import {
   clients as initialClients,
-  contactLeads as initialContactLeads,
   currentStaffUser,
   invoices as initialInvoices,
   notes as initialNotes,
@@ -12,7 +11,6 @@ import {
 } from "@/lib/mock-data";
 import type {
   Client,
-  ContactLead,
   Invoice,
   InvoiceKind,
   Note,
@@ -38,7 +36,6 @@ interface AppState {
   invoices: Invoice[];
   notes: Note[];
   projectRequests: ProjectRequest[];
-  contactLeads: ContactLead[];
   notifications: Notification[];
   packages: Package[];
 
@@ -49,13 +46,6 @@ interface AppState {
     prospectPhone?: string;
     companyName?: string;
     message?: string;
-  }) => void;
-
-  submitContactLead: (input: {
-    name: string;
-    email: string;
-    companyName?: string;
-    message: string;
   }) => void;
 
   approveRequest: (requestId: string) => void;
@@ -90,7 +80,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   invoices: initialInvoices,
   notes: initialNotes,
   projectRequests: initialProjectRequests,
-  contactLeads: initialContactLeads,
   notifications: initialNotifications,
   packages: initialPackages,
 
@@ -107,18 +96,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       createdAt: new Date().toISOString(),
     };
     set((state) => ({ projectRequests: [request, ...state.projectRequests] }));
-  },
-
-  submitContactLead: (input) => {
-    const lead: ContactLead = {
-      id: nextId("lead"),
-      name: input.name,
-      email: input.email,
-      companyName: input.companyName,
-      message: input.message,
-      createdAt: new Date().toISOString(),
-    };
-    set((state) => ({ contactLeads: [lead, ...state.contactLeads] }));
   },
 
   approveRequest: (requestId) => {
