@@ -39,11 +39,24 @@ conclude a migration is required, **stop and report it** — do not run
 
 ## What to build, in this order
 
-**Item 0 is a bug fix and comes before everything else — the mobile lane is
-blocked on it right now.** After that: 1 and 2 unblock the web lane's next task,
-5 is the cheapest and most visible, 6 is the one that may not be worth it.
+**Run `status/briefs/2026-08-12-flow-a-repair-api.md` before this one.** It fixes
+two defects in Flow A that the mobile and web lanes are blocked on. This brief
+assumes it has landed.
 
-### 0. `POST /api/auth/verification/verify` consumes the code, so set-password then fails
+Order matters: 1 and 2 unblock the web lane's next task, 5 is the cheapest and
+most visible, 6 is the one that may not be worth it.
+
+### (moved) The verify / set-password conflict
+
+This was item 0 here and is now task 1 of
+`status/briefs/2026-08-12-flow-a-repair-api.md`. Kept below for reference only —
+**do not do it twice.** If `/verification/verify` still writes to the user record
+when you get here, the earlier brief was not run; stop and tell Buna.
+
+<details>
+<summary>Original description</summary>
+
+#### `POST /api/auth/verification/verify` consumes the code, so set-password then fails
 
 Both `verify/route.ts` and `set-password/route.ts` validate the verification code
 against `verificationCodeHash`, and **both clear it on success**. A client who
@@ -83,6 +96,8 @@ tight — a prospect who reads the email over lunch is locked out and has to res
 Raise it to 30 minutes. It is one constant. If you think that weakens something,
 say so instead of changing it.
 
+</details>
+
 ### 1. `POST /api/invoices` — create an invoice
 
 Staff only. Body: project, invoice type, amount, currency, optional due date,
@@ -99,6 +114,9 @@ trust it from the body.
   already uses**, same field names, same `amountCents` treatment. The web dialog
   will render what you return; a second shape is how the mobile `InvoiceKind`
   drift happened last week.
+- Create a notification for the client, matching the events the previous brief
+  added. An extra charge appearing with no notification is the case SPEC #13 calls
+  out by name.
 
 ### 2. `POST /api/notes` — post a note to a project
 
@@ -112,6 +130,8 @@ Both roles. Body: project and the note text.
   fine in a demo while being broken underneath. Enforce it server-side and add a
   test for the cross-client case specifically, not just the happy path.
 - Notes are immutable — no PATCH, no DELETE, do not add them.
+- Notify the other side: a client's note notifies staff, a staff note notifies the
+  client. Never notify the author of their own note.
 - The DB column is `content`; `GET /api/notes` already serializes it as `body`.
   **Accept and return `body`** so both sides of the endpoint match.
 
@@ -177,8 +197,6 @@ re-sends the email through the existing Resend path used by request approval.
 
 ## Definition of done
 
-- **Item 0 first, committed and pushed on its own, before you start item 1.** The
-  mobile lane is blocked on it and is waiting.
 - All six endpoints (or five, with #6 skipped and explained) work against the real
   Neon database, **verified by calling them and then reading the row back** — not
   by the test suite alone. Every serious bug this week was green on typecheck,

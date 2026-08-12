@@ -20,7 +20,7 @@ App: Clientflow (working name) — a client and project management CRM for a sma
 | 10 | Stripe purchasing flow | Client pays a deposit (standard flow, after approval) or a custom invoice (custom flow) through Stripe Checkout (sandbox). Invoice status follows `Draft → Sent → Payment Pending → Paid / Failed / Voided / Refunded`. A project only advances on a confirmed, signature-verified Stripe webhook — never on the client clicking "Pay" alone. Tested with both a successful test card (`4242 4242 4242 4242`) and a declined one, not just the happy path. Webhook handler built and tested locally via the Stripe CLI (`stripe listen` / `stripe trigger`), and confirmed idempotent — the same event delivered twice (Stripe retries by design) must not double-process, double-notify, or error. Voiding an invoice that's already `Paid` is blocked outright. | not started |
 | 11 | Analytics | Revenue over time, revenue by package, project turnaround time, outstanding invoices total — real charts against real (seeded, then live) data, not static mockups. | not started |
 | 12 | Settings | Manage packages and pricing (feeds both the public pricing page and internal project creation), invite staff, business profile. | not started |
-| 13 | Notifications | In-app (staff) and push (mobile client) for: request submitted, request approved/rejected, invoice issued, payment succeeded/failed, project stage changed, new note, extra charge created. | not started |
+| 13 | Notifications | In-app (staff) and push (mobile client) for: request submitted, request approved/rejected, invoice issued, payment succeeded/failed, project stage changed, new note, extra charge created. | **push cut 2026-08-12 — see "Deferred and cut" below.** In-app on both platforms stays. |
 | 14 | Mobile app (client experience) | Full client journey in Expo: auth, request status, project stage tracker, notes, invoices, pay, push notifications. This is a must-have, not a stretch goal. | not started |
 | 15 | Seed data | A Prisma seed script populating realistic mock clients, projects spread across different stages, invoices in different states (paid/due/overdue), and at least one pending request — so the dashboard and analytics are never empty on first login. | not started |
 
@@ -49,9 +49,28 @@ prospect types. The custom-invoice half of the flow is still real: `POST /api/in
 supports a custom invoice raised against an existing project, which is what
 SPEC #7 needs anyway.
 
-**Not deferred, and worth stating explicitly:** the shared note feed (#9),
+**#13 / #14 Mobile push notifications: cut. In-app notifications stay.** Expo push
+needs a physical device, push credentials and an EAS build, none of which have ever
+been produced — as of 12 Aug the mobile app has still never run on a device or a
+simulator at all. In-app notifications on both platforms cover the feature
+visibly and are reachable. Spending an evening on push infrastructure two days
+before the deadline, to demonstrate something that may not work on the day, is the
+wrong trade.
+
+**Not deferred, and worth stating explicitly:** the shared note feed (#9), in-app
 notifications (#13) and settings (#12) are all still in scope. They were blocked
 on write endpoints, not cut — see `status/briefs/2026-08-12-write-endpoints-api.md`.
+
+### Decisions made 2026-08-12
+
+**Approving a request creates a project and a 50% deposit invoice, already sent.**
+Until 12 Aug, approval created only the user, the client and the approved request —
+so a client who onboarded through Flow A logged in to an empty app with nothing to
+pay, and the payment-gated `Approved → Discovery` transition could never fire for
+them. Approval now creates the project and a deposit invoice at 50% of the package
+price, issued immediately so the client can pay on first login. Staff raises the
+remaining 50% as a final invoice later through `POST /api/invoices`, which is what
+Flow C describes. See `status/briefs/2026-08-12-flow-a-repair-api.md`.
 
 ## Edge cases to test (not just the happy path)
 
