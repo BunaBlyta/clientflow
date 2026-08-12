@@ -71,7 +71,7 @@ function seedAnalyticsData() {
 describe('POST /api/analytics/insight', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('GEMINI_API_KEY', 'test-gemini-key');
+    vi.stubEnv('GROQ_API_KEY', 'test-groq-key');
     mocks.getAuthenticatedUser.mockResolvedValue({ role: 'STAFF' });
     seedAnalyticsData();
     vi.stubGlobal('fetch', mocks.fetch);
@@ -97,8 +97,8 @@ describe('POST /api/analytics/insight', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('reports missing Gemini configuration', async () => {
-    vi.stubEnv('GEMINI_API_KEY', '');
+  it('reports missing Groq configuration', async () => {
+    vi.stubEnv('GROQ_API_KEY', '');
 
     const response = await POST(request());
 
@@ -107,7 +107,7 @@ describe('POST /api/analytics/insight', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('returns a safe error when Gemini fails', async () => {
+  it('returns a safe error when Groq fails', async () => {
     mocks.fetch.mockResolvedValue(new Response('{}', { status: 503 }));
 
     const response = await POST(request());
@@ -116,9 +116,9 @@ describe('POST /api/analytics/insight', () => {
     expect(await response.json()).toEqual({ error: 'We couldn’t generate an insight right now.' });
   });
 
-  it('returns a safe error when Gemini returns no text', async () => {
+  it('returns a safe error when Groq returns no text', async () => {
     mocks.fetch.mockResolvedValue(
-      new Response(JSON.stringify({ candidates: [{ content: { parts: [{}] } }] }), { status: 200 }),
+      new Response(JSON.stringify({ choices: [{ message: {} }] }), { status: 200 }),
     );
 
     const response = await POST(request());
@@ -130,7 +130,7 @@ describe('POST /api/analytics/insight', () => {
   it('parses the generated text and sends computed stage data', async () => {
     mocks.fetch.mockResolvedValue(
       new Response(
-        JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Revenue is concentrated in the Landing Page package.' }] } }] }),
+        JSON.stringify({ choices: [{ message: { content: 'Revenue is concentrated in the Landing Page package.' } }] }),
         { status: 200 },
       ),
     );
@@ -143,9 +143,15 @@ describe('POST /api/analytics/insight', () => {
     });
 
     const [, init] = mocks.fetch.mock.calls[0] as [string, RequestInit];
-    const prompt = JSON.parse(String(init.body)).contents[0].parts[0].text as string;
+    const body = JSON.parse(String(init.body)) as {
+      model: string;
+      messages: Array<{ role: string; content: string }>;
+    };
+    const prompt = body.messages[0].content;
+    expect(body.model).toBe('llama-3.3-70b-versatile');
+    expect(body.messages[0].role).toBe('user');
     expect(prompt).toContain('projectsByStage');
     expect(prompt).toContain('REVIEW');
-    expect(init.headers).toMatchObject({ 'x-goog-api-key': 'test-gemini-key' });
+    expect(init.headers).toMatchObject({ Authorization: 'Bearer test-groq-key' });
   });
 });

@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-12 by Codex — Gemini access and insight grounding
+Last updated: 2026-08-12 by Codex — Groq analytics insight
 
 ## What changed
 
@@ -33,7 +33,7 @@ Last updated: 2026-08-12 by Codex — Gemini access and insight grounding
   join from the stale mock ID `pkg-landing` to the seeded ID `pkg-landing-page`.
 - The analytics page now has a manual “Generate insight” card. It calls the
   staff-only `POST /api/analytics/insight`, which computes live dashboard numbers
-  server-side and requests a short read-only Gemini summary. Missing keys and
+  server-side and requests a short read-only Groq summary. Missing keys and
   upstream failures appear as an inline error instead of breaking analytics.
 - The insight prompt now includes project counts by stage, so its pipeline summary
   is grounded in data the dashboard already computes. The route has focused tests
@@ -47,14 +47,11 @@ Last updated: 2026-08-12 by Codex — Gemini access and insight grounding
   restriction.
 - `npx next build --webpack`: passed; all 30 routes compiled, including the
   logout endpoint, the insight endpoint, and the marketing page.
-- The insight change passed the repository typecheck and lint steps. An
-  unauthenticated POST returned 401 as expected. Direct curl tests against the
-  configured key returned 404 for `gemini-3.1-flash-lite`,
-  `gemini-3.5-flash-lite`, `gemini-2.5-flash`, and additional catalog-listed
-  models; Google’s response says these models are unavailable to new users.
-  No working generation model was available to update the endpoint, so the UI
-  continues to display its graceful error state until Buna supplies a key with
-  generation access.
+- The insight change passed the repository typecheck, lint, and focused route
+  tests. An unauthenticated POST returned 401 as expected. Direct curl
+  verification against the configured Groq key returned HTTP 200 with generated
+  text using `llama-3.3-70b-versatile`; the local signed endpoint request also
+  returned a real `{ insight: string }` response.
 - Signed-in local API verification confirmed `pkg-landing-page`, `proj-2`, and
   paid invoice `inv-4` for 125000 cents. The rendered browser check could not
   run because no browser connection was available in this session.
@@ -78,10 +75,10 @@ Last updated: 2026-08-12 by Codex — Gemini access and insight grounding
   contact submission until a real delivery path and staff UI exist.
 - Package analytics must continue to consume `ManagedPackage` records from the
   API rather than the public marketing fixture package list.
-- The Gemini model URL remains the requested one because every tested fallback
-  returned 404 for this key. When Buna has a key with generation access, update
-  `GEMINI_ENDPOINT` to the first model that returns 200 and click the button to
-  verify real text.
+- The analytics insight route uses Groq’s OpenAI-compatible endpoint with
+  `GROQ_API_KEY` and `llama-3.3-70b-versatile`. Its prompt includes the same
+  revenue, turnaround, outstanding-total, and project-stage numbers computed for
+  the dashboard.
 
 ## Hard rule
 

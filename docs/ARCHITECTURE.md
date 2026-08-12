@@ -12,10 +12,11 @@ Two frontends, one backend, one database. The Next.js web app serves the public 
 active packages, projects, and invoices on the server, computes revenue over
 time, revenue by package, turnaround by package, project stages, and the
 outstanding invoice total with `lib/analytics.ts`, then sends those numbers to
-Gemini. A successful response is `{ "insight": string }`; missing configuration,
-upstream failures, or malformed model responses return a JSON error so the
-dashboard can keep its inline failure state. Gemini was chosen for the free tier
-and lower per-token cost of this low-volume, read-only summary.
+Groq using the `llama-3.3-70b-versatile` model. A successful response is
+`{ "insight": string }`; missing configuration, upstream failures, or malformed
+model responses return a JSON error so the dashboard can keep its inline failure
+state. Groq was chosen for its free tier, no-card setup, and generous limits for
+this low-volume, read-only summary.
 
 ## Key decisions log
 

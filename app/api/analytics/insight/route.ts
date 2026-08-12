@@ -15,8 +15,7 @@ import { serializeInvoice } from '@/app/api/invoices/serialize';
 
 export const runtime = 'nodejs';
 
-const GEMINI_ENDPOINT =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
 function serializeProject(project: {
   id: string;
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
   if (!user) return insightError('Authentication required', 401);
   if (user.role !== 'STAFF') return insightError('Staff access required', 403);
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return insightError('Analytics insights are not configured yet.', 503);
 
   try {
@@ -111,23 +110,24 @@ export async function POST(request: NextRequest) {
       `Computed numbers (money is in cents): ${JSON.stringify(numbers)}`,
     ].join('\n');
 
-    const response = await fetch(GEMINI_ENDPOINT, {
+    const response = await fetch(GROQ_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     if (!response.ok) return insightError('We couldn’t generate an insight right now.', 502);
 
     const payload = (await response.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: unknown }> } }>;
+      choices?: Array<{ message?: { content?: unknown } }>;
     };
-    const insight = payload.candidates?.[0]?.content?.parts?.[0]?.text;
+    const insight = payload.choices?.[0]?.message?.content;
     if (typeof insight !== 'string' || !insight.trim()) {
       return insightError('We couldn’t generate an insight right now.', 502);
     }
