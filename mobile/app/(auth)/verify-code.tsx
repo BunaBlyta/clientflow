@@ -4,11 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
-import {
-  DEMO_EXPIRED_CODE,
-  DEMO_VALID_CODE,
-  MOCK_CLIENT,
-} from '../../lib/mock-data';
+import { verificationCheckRequest, verificationSendRequest } from '../../lib/api';
 import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
 
 export default function VerifyCodeScreen() {
@@ -16,7 +12,7 @@ export default function VerifyCodeScreen() {
   const params = useLocalSearchParams<{ mode?: string; email?: string }>();
   const mode = params.mode === 'reset' ? 'reset' : 'invite';
 
-  const [email, setEmail] = useState(params.email ?? (mode === 'invite' ? MOCK_CLIENT.email : ''));
+  const [email, setEmail] = useState(params.email ?? '');
   const [code, setCode] = useState('');
   const [error, setError] = useState<'invalid' | 'expired' | ''>('');
   const [loading, setLoading] = useState(false);
@@ -43,35 +39,48 @@ export default function VerifyCodeScreen() {
     }, 1000);
   }
 
-  function handleContinue() {
+  async function handleContinue() {
     setError('');
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedCode = code.trim();
+    if (!normalizedEmail) {
       setError('invalid');
       return;
     }
-    if (code.length !== 6) {
+    if (normalizedCode.length !== 6) {
       setError('invalid');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await verificationCheckRequest(normalizedEmail, normalizedCode);
+      router.push(
+        `/(auth)/set-password?mode=${mode}&email=${encodeURIComponent(normalizedEmail)}&code=${encodeURIComponent(normalizedCode)}`
+      );
+    } catch {
+      setError('invalid');
+    } finally {
       setLoading(false);
-      if (code === DEMO_VALID_CODE) {
-        router.push(
-          `/(auth)/set-password?mode=${mode}&email=${encodeURIComponent(email)}`
-        );
-      } else if (code === DEMO_EXPIRED_CODE) {
-        setError('expired');
-      } else {
-        setError('invalid');
-      }
-    }, 400);
+    }
   }
 
-  function handleResend() {
+  async function handleResend() {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setError('invalid');
+      return;
+    }
     setCode('');
     setError('');
-    startCooldown();
+    setLoading(true);
+    try {
+      await verificationSendRequest(normalizedEmail);
+      startCooldown();
+    } catch {
+      setError('invalid');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -109,7 +118,7 @@ export default function VerifyCodeScreen() {
         placeholder="123456"
         keyboardType="number-pad"
         maxLength={6}
-        helperText={!error ? 'Demo code: 123456 (try 000000 to see an expired code)' : undefined}
+        helperText={!error ? 'Enter the 6-digit code from your email.' : undefined}
         error={
           error === 'invalid'
             ? "That code isn't right. Check your email and try again."
@@ -123,7 +132,7 @@ export default function VerifyCodeScreen() {
 
       <Pressable
         onPress={handleResend}
-        disabled={cooldown > 0}
+        disabled={cooldown > 0 || loading}
         style={styles.resendLink}
       >
         <Text

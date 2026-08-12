@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { clientFromUser, loginRequest } from '../lib/api';
+import { clientFromUser, loginRequest, type LoginResponse } from '../lib/api';
 import { clearSession, readSession, writeSession } from '../lib/token-storage';
 import type { Client } from '../lib/types';
 
@@ -10,10 +10,11 @@ interface AuthState {
   isRestoring: boolean;
   restoreSession: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
+  startSession: (response: LoginResponse) => Promise<void>;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   client: null,
   token: null,
@@ -27,12 +28,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       isRestoring: false,
     });
   },
+  startSession: async (response) => {
+    const client = clientFromUser(response.user);
+    await writeSession(response.token, client);
+    set({ isAuthenticated: true, client, token: response.token });
+  },
   login: async (email, password) => {
     try {
       const response = await loginRequest(email.trim().toLowerCase(), password);
-      const client = clientFromUser(response.user);
-      await writeSession(response.token, client);
-      set({ isAuthenticated: true, client, token: response.token });
+      await get().startSession(response);
       return true;
     } catch {
       return false;

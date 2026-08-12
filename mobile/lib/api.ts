@@ -35,20 +35,43 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string) 
 }
 
 export interface LoginResponse {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    createdAt: string;
-  };
+  user: AuthUser;
   token: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: string;
 }
 
 export function loginRequest(email: string, password: string) {
   return request<LoginResponse>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export function verificationSendRequest(email: string) {
+  return request<{ sent: true }>('/api/auth/verification/send', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function verificationCheckRequest(email: string, code: string) {
+  return request<{ verified: true; user: AuthUser }>('/api/auth/verification/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, code }),
+  });
+}
+
+export function setPasswordRequest(email: string, code: string, password: string) {
+  return request<LoginResponse>('/api/auth/set-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, password }),
   });
 }
 

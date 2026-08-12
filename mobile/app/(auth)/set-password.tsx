@@ -4,19 +4,22 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
+import { ApiError, setPasswordRequest } from '../../lib/api';
 import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { useAuthStore } from '../../store/auth-store';
 
 export default function SetPasswordScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string; email?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; email?: string; code?: string }>();
   const mode = params.mode === 'reset' ? 'reset' : 'invite';
+  const startSession = useAuthStore((s) => s.startSession);
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setError('');
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
@@ -26,15 +29,26 @@ export default function SetPasswordScreen() {
       setError('Passwords do not match.');
       return;
     }
+    const email = params.email?.trim().toLowerCase();
+    const code = params.code?.trim();
+    if (!email || !code) {
+      setError('This password link is missing its verification code. Start again.');
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const response = await setPasswordRequest(email, code, password);
+      await startSession(response);
+      router.replace('/projects');
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : 'Unable to set your password. Please try again.'
+      );
+    } finally {
       setLoading(false);
-      const banner =
-        mode === 'invite'
-          ? 'Password set! Log in to get started.'
-          : 'Password updated. Log in with your new password.';
-      router.replace(`/(auth)/login?banner=${encodeURIComponent(banner)}`);
-    }, 400);
+    }
   }
 
   return (

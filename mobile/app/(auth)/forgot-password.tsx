@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
+import { ApiError, verificationSendRequest } from '../../lib/api';
 import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
 
 export default function ForgotPasswordScreen() {
@@ -12,19 +13,28 @@ export default function ForgotPasswordScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleSend() {
+  async function handleSend() {
     setError('');
-    if (!email.trim() || !email.includes('@')) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
       setError('Enter a valid email address.');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await verificationSendRequest(normalizedEmail);
       router.push(
-        `/(auth)/verify-code?mode=reset&email=${encodeURIComponent(email)}`
+        `/(auth)/verify-code?mode=reset&email=${encodeURIComponent(normalizedEmail)}`
       );
-    }, 400);
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : 'Unable to send a reset code. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
