@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,60 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
-import { useAppStore } from "@/lib/store";
+import { fetchJson } from "@/lib/fetch-json";
+import { formatMajorCurrency } from "@/lib/format";
+import type { ManagedPackage } from "@/lib/types";
 
 const mostPopularSlug = "full-website";
+const customPackageSlug = "web-app-build";
+
+function isCustomPackage(pkg: ManagedPackage) {
+  return pkg.slug === customPackageSlug;
+}
 
 export function PackagesAndRequest() {
-  const packages = useAppStore((s) => s.packages);
-  const standardPackages = packages.filter((p) => !p.isCustom);
-  const [selectedPackageId, setSelectedPackageId] = useState(packages.find((p) => !p.isCustom)?.id ?? packages[0]?.id ?? "");
+  const [packages, setPackages] = useState<ManagedPackage[]>([]);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true);
+  const [packagesError, setPackagesError] = useState<string | null>(null);
+  const standardPackages = packages.filter((p) => !isCustomPackage(p));
+  const [selectedPackageId, setSelectedPackageId] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void Promise.resolve().then(async () => {
+      try {
+        const packageData = await fetchJson<ManagedPackage[]>(
+          "/api/packages",
+          "We couldn't load the packages.",
+          controller.signal,
+        );
+        if (!Array.isArray(packageData)) {
+          throw new Error("We couldn't load the packages.");
+        }
+        if (!controller.signal.aborted) {
+          setPackages(packageData);
+          setSelectedPackageId(
+            packageData.find((p) => !isCustomPackage(p))?.id ?? packageData[0]?.id ?? "",
+          );
+        }
+      } catch (caughtError) {
+        if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+        if (!controller.signal.aborted) {
+          setPackagesError(
+            caughtError instanceof Error ? caughtError.message : "We couldn't load the packages.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingPackages(false);
+      }
+    });
+
+    return () => controller.abort();
+  }, []);
 
   function handleChoose(packageId: string) {
     setSelectedPackageId(packageId);
@@ -84,55 +126,68 @@ export function PackagesAndRequest() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {packages.map((pkg) => {
-            const isPopular = pkg.slug === mostPopularSlug;
-            return (
-              <div
-                key={pkg.id}
-                className={cn(
-                  "flex flex-col rounded-lg border border-border bg-background p-6",
-                  isPopular && "border-2 border-brand-accent"
-                )}
-              >
-                {isPopular && (
-                  <span className="mb-3 w-fit rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-[12px] font-medium text-brand-accent">
-                    Most popular
-                  </span>
-                )}
-                <h3 className="text-[16px] font-semibold">{pkg.name}</h3>
-                <p className="mt-1 text-[28px] font-semibold tracking-tight">
-                  {pkg.isCustom ? "Custom" : formatCurrency(pkg.priceCents!)}
-                </p>
-                <p className="mt-2 text-[13px] text-muted-foreground">{pkg.description}</p>
-                <ul className="mt-5 flex flex-1 flex-col gap-2.5">
-                  {pkg.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-[13px]">
+        {isLoadingPackages ? (
+          <p className="mt-10 text-[13px] text-muted-foreground">Loading packages…</p>
+        ) : packagesError ? (
+          <p role="alert" className="mt-10 text-[13px] text-status-danger">
+            {packagesError}
+          </p>
+        ) : packages.length === 0 ? (
+          <p className="mt-10 text-[13px] text-muted-foreground">No packages are available right now.</p>
+        ) : (
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {packages.map((pkg) => {
+              const isPopular = pkg.slug === mostPopularSlug;
+              return (
+                <div
+                  key={pkg.id}
+                  className={cn(
+                    "flex flex-col rounded-lg border border-border bg-background p-6",
+                    isPopular && "border-2 border-brand-accent",
+                  )}
+                >
+                  {isPopular && (
+                    <span className="mb-3 w-fit rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-[12px] font-medium text-brand-accent">
+                      Most popular
+                    </span>
+                  )}
+                  <h3 className="text-[16px] font-semibold">{pkg.name}</h3>
+                  <p className="mt-1 text-[28px] font-semibold tracking-tight">
+                    {isCustomPackage(pkg) ? "Custom" : formatMajorCurrency(pkg.price, pkg.currency)}
+                  </p>
+                  <p className="mt-2 text-[13px] text-muted-foreground">{pkg.description}</p>
+                  <ul className="mt-5 flex flex-1 flex-col gap-2.5">
+                    <li className="flex items-start gap-2 text-[13px]">
                       <Check className="mt-0.5 size-3.5 shrink-0 text-brand-accent" />
-                      <span>{feature}</span>
+                      <span>
+                        {pkg.estimatedDuration
+                          ? `Estimated delivery: ${pkg.estimatedDuration}`
+                          : "Timeline set after scoping"}
+                      </span>
                     </li>
-                  ))}
-                </ul>
-                {pkg.isCustom ? (
-                  <Button className="mt-6" variant="outline" render={<a href="#contact" />}>
-                    Talk to us
-                  </Button>
-                ) : (
-                  <Button
-                    className="mt-6"
-                    variant={isPopular ? "default" : "outline"}
-                    onClick={() => handleChoose(pkg.id)}
-                  >
-                    Request this package
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  </ul>
+                  {isCustomPackage(pkg) ? (
+                    <Button className="mt-6" variant="outline" render={<a href="#contact" />}>
+                      Talk to us
+                    </Button>
+                  ) : (
+                    <Button
+                      className="mt-6"
+                      variant={isPopular ? "default" : "outline"}
+                      onClick={() => handleChoose(pkg.id)}
+                    >
+                      Request this package
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
-      <section id="request-form" className="border-t border-border bg-secondary/40">
+      {!isLoadingPackages && !packagesError && standardPackages.length > 0 && (
+        <section id="request-form" className="border-t border-border bg-secondary/40">
         <div className="mx-auto max-w-xl px-4 py-20 sm:px-6">
           <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">Request a package</h2>
           <p className="mt-2 text-[14px] text-muted-foreground">
@@ -164,7 +219,7 @@ export function PackagesAndRequest() {
                   <SelectContent>
                     {standardPackages.map((pkg) => (
                       <SelectItem key={pkg.id} value={pkg.id}>
-                        {pkg.name} — {formatCurrency(pkg.priceCents!)}
+                        {pkg.name} — {formatMajorCurrency(pkg.price, pkg.currency)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -202,7 +257,8 @@ export function PackagesAndRequest() {
             </form>
           )}
         </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }

@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-12 by Codex — Groq analytics insight
+Last updated: 2026-08-12 by Codex — live marketing packages
 
 ## What changed
 
@@ -39,6 +39,10 @@ Last updated: 2026-08-12 by Codex — Groq analytics insight
   is grounded in data the dashboard already computes. The route has focused tests
   for auth, missing configuration, upstream/malformed responses, success parsing,
   and prompt grounding.
+- The public marketing pricing section now loads active packages from
+  `GET /api/packages` instead of the Zustand fixture. It uses the live package
+  name, description, price, currency, and estimated duration, so Settings edits
+  appear on the public page.
 
 ## Verification
 
@@ -52,6 +56,9 @@ Last updated: 2026-08-12 by Codex — Groq analytics insight
   verification against the configured Groq key returned HTTP 200 with generated
   text using `llama-3.3-70b-versatile`; the local signed endpoint request also
   returned a real `{ insight: string }` response.
+- The marketing package change passed typecheck, lint, and all 73 Vitest tests.
+  `npm run verify` reached the Next build, where Turbopack hit the sandbox
+  process/port restriction; `npx next build --webpack` passed all 30 routes.
 - Signed-in local API verification confirmed `pkg-landing-page`, `proj-2`, and
   paid invoice `inv-4` for 125000 cents. The rendered browser check could not
   run because no browser connection was available in this session.
