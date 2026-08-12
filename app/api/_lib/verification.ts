@@ -7,7 +7,7 @@ import {
 } from 'node:crypto';
 
 const CODE_LENGTH = 6;
-const CODE_TTL_MS = 10 * 60 * 1000;
+const CODE_TTL_MS = 30 * 60 * 1000;
 
 function hashCode(code: string, salt: string): string {
   return scryptSync(code, salt, 64, {
@@ -52,4 +52,3 @@ export function verifyCode(code: string, storedHash: string | null): boolean {
 export function codeDigest(code: string): string {
   return createHash('sha256').update(code).digest('hex');
 }
-
