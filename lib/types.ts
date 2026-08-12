@@ -52,6 +52,15 @@ export interface User {
   createdAt: string;
 }
 
+export interface StaffMember {
+  id: string;
+  email: string;
+  name: string;
+  role: "STAFF";
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Client {
   id: string;
   userId: string;

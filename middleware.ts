@@ -123,5 +123,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // /accept-invite is intentionally omitted: invited users do not have a
+  // session until set-password completes.
   matcher: ["/dashboard/:path*", "/login", "/api/:path*"],
 };

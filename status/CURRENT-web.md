@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-12 by Codex — live marketing packages
+Last updated: 2026-08-13 by Codex — live team settings and invite onboarding
 
 ## What changed
 
@@ -43,6 +43,18 @@ Last updated: 2026-08-12 by Codex — live marketing packages
   `GET /api/packages` instead of the Zustand fixture. It uses the live package
   name, description, price, currency, and estimated duration, so Settings edits
   appear on the public page.
+- The Settings Team tab now loads staff and the signed-in user from `GET /api/staff`
+  and `GET /api/auth/me`. Inviting a teammate creates the real inactive staff
+  account through `POST /api/staff/invite`; inactive rows show an Invited badge and
+  can resend their verification email through the staff resend endpoint.
+- Added `/accept-invite`, a public onboarding page that prefills the invited email,
+  accepts the six-digit code and new password, and calls `POST /api/auth/set-password`
+  before sending the new staff member to `/dashboard`. Middleware intentionally
+  leaves this route outside the protected matcher because the invitee has no session
+  until setup finishes.
+- Removed the unused staff-invite action and the other uncalled mock actions that
+  depended on the hardcoded staff identity from `lib/store.ts`. The remaining mock
+  store actions are unrelated open work.
 
 ## Verification
 
@@ -64,16 +76,18 @@ Last updated: 2026-08-12 by Codex — live marketing packages
   run because no browser connection was available in this session.
 - The AI insight task also touched the API lane’s `app/api/analytics/insight/route.ts`
   explicitly requested by Buna; no Prisma or mobile files were changed.
+- `npm run verify` passed typecheck, lint, and all 87 Vitest tests. The required
+  Turbopack build hit the sandbox-only port-binding restriction; `npx next build
+  --webpack` passed and included `/accept-invite`, `/api/staff`, and the staff resend
+  route. The in-app browser was unavailable for a click-through in this session.
 
 ## Handoff notes
 
 - The topbar notification mark-read controls remain a separate follow-up; this task
   wires the notifications page requested here.
-- The staff invite control remains intentionally out of scope because staff invites
-  are cut from v1 and have no backend endpoint.
 - Settings business profile remains local UI only; no API contract exists for it.
-- The topbar and settings profile still use the seeded `currentStaffUser`; the
-  shipped `GET /api/auth/me` endpoint can replace that identity later.
+- The topbar still uses the seeded `currentStaffUser`; the Team tab now uses the
+  signed-in identity from `GET /api/auth/me`. Business profile remains local UI only.
 - The logout request depends on the API lane’s shipped `POST /api/auth/logout`
   route; the UI also navigates away if the request returns an error or cannot
   complete.
@@ -86,6 +100,10 @@ Last updated: 2026-08-12 by Codex — live marketing packages
   `GROQ_API_KEY` and `llama-3.3-70b-versatile`. Its prompt includes the same
   revenue, turnaround, outstanding-total, and project-stage numbers computed for
   the dashboard.
+- The staff invitation API contract is documented in `docs/ARCHITECTURE.md`: the
+  invite body is `{ name, email }`, and a successful response is `{ user, emailSent }`.
+  The web form refreshes the list after the write so the server remains the source
+  of truth even if email delivery fails.
 
 ## Hard rule
 
