@@ -1,10 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { MoreHorizontal, Send } from "lucide-react";
-import { useAppStore } from "@/lib/store";
-import { clientTotalBilledCents } from "@/lib/mock-data";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { LoaderCircle, MoreHorizontal, RefreshCw } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, initials } from "@/lib/format";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,12 +13,53 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import type { Client, Invoice, Project } from "@/lib/types";
+
+type ApiInvoice = Invoice & { clientId: string };
 
 export default function ClientsPage() {
-  const clients = useAppStore((s) => s.clients);
-  const projects = useAppStore((s) => s.projects);
-  const resendInvite = useAppStore((s) => s.resendInvite);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  const loadClients = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [clientData, projectData, invoiceData] = await Promise.all([
+        fetchJson<Client[]>("/api/clients", "We couldn't load the clients.", signal),
+        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
+        fetchJson<ApiInvoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
+      ]);
+
+      if (!Array.isArray(clientData) || !Array.isArray(projectData) || !Array.isArray(invoiceData)) {
+        throw new Error("The server returned an unexpected clients response.");
+      }
+
+      if (!signal?.aborted) {
+        setClients(clientData);
+        setProjects(projectData);
+        setInvoices(invoiceData);
+      }
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the clients.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadClients(controller.signal));
+    return () => controller.abort();
+  }, [loadClients]);
 
   const filtered = useMemo(() => {
     return clients
@@ -30,6 +69,41 @@ export default function ClientsPage() {
       })
       .sort((a, b) => a.companyName.localeCompare(b.companyName));
   }, [clients, search]);
+
+  const billedByClient = useMemo(() => {
+    const projectClient = new Map(projects.map((project) => [project.id, project.clientId]));
+    const totals = new Map<string, number>();
+    for (const invoice of invoices) {
+      if (invoice.status !== "PAID") continue;
+      const clientId = projectClient.get(invoice.projectId) ?? invoice.clientId;
+      totals.set(clientId, (totals.get(clientId) ?? 0) + invoice.amountCents);
+    }
+    return totals;
+  }, [invoices, projects]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-56 items-center justify-center border border-border">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <LoaderCircle className="size-4 animate-spin text-brand-accent" />
+          Loading clients…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
+        <p className="text-[13px] font-medium text-status-danger">Clients couldn&apos;t load</p>
+        <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadClients()}>
+          <RefreshCw />
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -75,7 +149,7 @@ export default function ClientsPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{clientProjects.length}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatCurrency(clientTotalBilledCents(client.id))}
+                    {formatCurrency(billedByClient.get(client.id) ?? 0)}
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
                     {formatDate(client.createdAt)}
@@ -86,15 +160,10 @@ export default function ClientsPage() {
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            resendInvite(client.id);
-                            toast.success(`Invitation resent to ${client.email}`);
-                          }}
-                        >
-                          <Send />
-                          Resend app invitation
-                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled>Resend app invitation</DropdownMenuItem>
+                        <p className="px-2 pb-1.5 text-[11px] leading-4 text-muted-foreground">
+                          Invitations are not wired up yet.
+                        </p>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>

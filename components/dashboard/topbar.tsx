@@ -1,7 +1,8 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell, LogOut, Settings } from "lucide-react";
+import { Bell, LoaderCircle, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,17 +12,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/lib/store";
 import { currentStaffUser } from "@/lib/mock-data";
+import { fetchJson } from "@/lib/fetch-json";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { formatRelativeTime } from "@/lib/relative-time";
+import type { Notification } from "@/lib/types";
 
 export function Topbar() {
-  const notifications = useAppStore((s) => s.notifications);
-  const markNotificationRead = useAppStore((s) => s.markNotificationRead);
-  const markAllNotificationsRead = useAppStore((s) => s.markAllNotificationsRead);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadNotifications = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const notificationData = await fetchJson<Notification[]>(
+        "/api/notifications",
+        "We couldn't load notifications.",
+        signal,
+      );
+      if (!Array.isArray(notificationData)) throw new Error("We couldn't load notifications.");
+      if (!signal?.aborted) setNotifications(notificationData);
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load notifications.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadNotifications(controller.signal));
+    return () => controller.abort();
+  }, [loadNotifications]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
@@ -45,17 +73,19 @@ export function Topbar() {
           <div className="flex items-center justify-between px-3 py-2.5">
             <p className="text-[13px] font-medium text-foreground">Notifications</p>
             {unreadCount > 0 && (
-              <button
-                onClick={() => markAllNotificationsRead()}
-                className="text-[12px] text-brand-accent hover:underline"
-              >
-                Mark all read
-              </button>
+              <span className="text-[11px] text-muted-foreground">Read state is not wired up yet.</span>
             )}
           </div>
           <DropdownMenuSeparator className="m-0" />
           <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2 px-3 py-6 text-[13px] text-muted-foreground">
+                <LoaderCircle className="size-3.5 animate-spin text-brand-accent" />
+                Loading…
+              </div>
+            ) : error ? (
+              <p className="px-3 py-6 text-center text-[13px] text-status-danger">{error}</p>
+            ) : notifications.length === 0 ? (
               <p className="px-3 py-6 text-center text-[13px] text-muted-foreground">
                 No notifications yet.
               </p>
@@ -66,7 +96,6 @@ export function Topbar() {
                   <Link
                     key={n.id}
                     href={n.link ?? "/dashboard/notifications"}
-                    onClick={() => markNotificationRead(n.id)}
                     className={cn(
                       "flex items-start gap-2.5 border-b border-border px-3 py-2.5 last:border-0 hover:bg-muted",
                       !n.read && "bg-brand-accent/5"
@@ -124,4 +153,3 @@ export function Topbar() {
     </header>
   );
 }
-

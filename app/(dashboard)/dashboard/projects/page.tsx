@@ -4,8 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Check, LoaderCircle, RefreshCw, X } from "lucide-react";
-import { useAppStore } from "@/lib/store";
-import { getPackage } from "@/lib/mock-data";
+import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
 import { REQUEST_STATUS_LABEL } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
@@ -20,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Client, Project, ProjectStatus } from "@/lib/types";
+import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All statuses" },
@@ -201,13 +200,7 @@ function ProjectsTable() {
           </thead>
           <tbody>
             {filtered.map((project) => {
-              const packageLabel = project.packageId
-                ? project.packageId
-                    .replace(/^pkg-/, "")
-                    .split("-")
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")
-                : "Custom project";
+              const packageLabel = project.package?.name ?? "Custom project";
               return (
                 <tr key={project.id} className="border-b border-border last:border-0 hover:bg-muted/40">
                   <td className="px-4 py-3">
@@ -256,11 +249,81 @@ function ProjectsTable() {
 }
 
 function RequestsTable() {
-  const projectRequests = useAppStore((s) => s.projectRequests);
-  const approveRequest = useAppStore((s) => s.approveRequest);
-  const rejectRequest = useAppStore((s) => s.rejectRequest);
+  const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
+  const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+
+  const loadRequests = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [requestData, packageData] = await Promise.all([
+        fetchJson<ProjectRequest[]>("/api/requests", "We couldn't load project requests.", signal),
+        fetchJson<Pick<Package, "id" | "name">[]>("/api/packages", "We couldn't load packages.", signal),
+      ]);
+      if (!Array.isArray(requestData) || !Array.isArray(packageData)) {
+        throw new Error("The server returned an unexpected request response.");
+      }
+      if (!signal?.aborted) {
+        setProjectRequests(requestData);
+        setPackages(packageData);
+      }
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load project requests.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadRequests(controller.signal));
+    return () => controller.abort();
+  }, [loadRequests]);
+
+  const updateRequest = useCallback(async (requestId: string, status: "APPROVED" | "REJECTED") => {
+    setUpdatingId(requestId);
+    try {
+      const response = await fetch(`/api/requests/${encodeURIComponent(requestId)}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | ProjectRequest
+        | { request: ProjectRequest; emailSent: boolean }
+        | { error?: string }
+        | null;
+      if (!response.ok) {
+        throw new Error(
+          payload && "error" in payload && typeof payload.error === "string"
+            ? payload.error
+            : "We couldn't update this request.",
+        );
+      }
+      const updatedRequest = payload && "request" in payload ? payload.request : payload;
+      if (!updatedRequest || !("id" in updatedRequest)) {
+        throw new Error("The server returned an unexpected request update.");
+      }
+      setProjectRequests((currentRequests) =>
+        currentRequests.map((request) => (request.id === updatedRequest.id ? updatedRequest : request)),
+      );
+      setRejectingId(null);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "We couldn't update this request.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     return [...projectRequests]
@@ -271,6 +334,32 @@ function RequestsTable() {
       )
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [projectRequests, search]);
+
+  const packageNames = useMemo(() => new Map(packages.map((pkg) => [pkg.id, pkg.name])), [packages]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-56 items-center justify-center border border-border">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <LoaderCircle className="size-4 animate-spin text-brand-accent" />
+          Loading requests…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
+        <p className="text-[13px] font-medium text-status-danger">Requests couldn&apos;t load</p>
+        <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadRequests()}>
+          <RefreshCw />
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -289,7 +378,6 @@ function RequestsTable() {
           </thead>
           <tbody>
             {filtered.map((r) => {
-              const pkg = getPackage(r.packageId);
               return (
                 <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/40">
                   <td className="px-4 py-3">
@@ -298,7 +386,9 @@ function RequestsTable() {
                       {r.companyName ?? r.prospectEmail}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{pkg?.name}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {packageNames.get(r.packageId) ?? "Unknown package"}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={
@@ -316,10 +406,20 @@ function RequestsTable() {
                   <td className="px-4 py-3">
                     {r.status === "PENDING" ? (
                       <div className="flex justify-end gap-1.5">
-                        <Button size="icon-sm" variant="outline" onClick={() => approveRequest(r.id)}>
-                          <Check className="text-status-success" />
+                        <Button
+                          size="icon-sm"
+                          variant="outline"
+                          disabled={updatingId !== null}
+                          onClick={() => void updateRequest(r.id, "APPROVED")}
+                        >
+                          {updatingId === r.id ? <LoaderCircle className="animate-spin" /> : <Check className="text-status-success" />}
                         </Button>
-                        <Button size="icon-sm" variant="outline" onClick={() => setRejectingId(r.id)}>
+                        <Button
+                          size="icon-sm"
+                          variant="outline"
+                          disabled={updatingId !== null}
+                          onClick={() => setRejectingId(r.id)}
+                        >
                           <X className="text-status-danger" />
                         </Button>
                       </div>
@@ -349,7 +449,7 @@ function RequestsTable() {
         title="Reject this request?"
         description="The prospect will be notified. No client or project record is created — this can't be undone."
         confirmLabel="Reject request"
-        onConfirm={() => rejectingId && rejectRequest(rejectingId)}
+        onConfirm={() => rejectingId && void updateRequest(rejectingId, "REJECTED")}
       />
     </div>
   );

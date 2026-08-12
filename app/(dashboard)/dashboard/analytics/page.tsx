@@ -1,6 +1,7 @@
 "use client";
 
-import { useAppStore } from "@/lib/store";
+import { useCallback, useEffect, useState } from "react";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import {
   averageTurnaroundByPackage,
   invoicesByStatus,
@@ -12,18 +13,81 @@ import {
   revenueOverTime,
   totalPaidRevenue,
 } from "@/lib/analytics";
+import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency } from "@/lib/format";
 import { INVOICE_STATUS_LABEL, INVOICE_STATUS_TONE, PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over-time-chart";
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
 import { TurnaroundChart } from "@/components/dashboard/charts/turnaround-chart";
+import { Button } from "@/components/ui/button";
+import type { Invoice, Project } from "@/lib/types";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
 export default function AnalyticsPage() {
-  const invoices = useAppStore((s) => s.invoices);
-  const projects = useAppStore((s) => s.projects);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadAnalytics = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [invoiceData, projectData] = await Promise.all([
+        fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
+        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
+      ]);
+
+      if (!Array.isArray(invoiceData) || !Array.isArray(projectData)) {
+        throw new Error("The server returned an unexpected analytics response.");
+      }
+
+      if (!signal?.aborted) {
+        setInvoices(invoiceData);
+        setProjects(projectData);
+      }
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load analytics.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadAnalytics(controller.signal));
+    return () => controller.abort();
+  }, [loadAnalytics]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-56 items-center justify-center border border-border">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <LoaderCircle className="size-4 animate-spin text-brand-accent" />
+          Loading analytics…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
+        <p className="text-[13px] font-medium text-status-danger">Analytics couldn&apos;t load</p>
+        <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadAnalytics()}>
+          <RefreshCw />
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   const revenueTrend = revenueOverTime(invoices, 12);
   const revenueByPkg = revenueByPackage(invoices, projects);

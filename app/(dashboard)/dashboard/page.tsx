@@ -1,7 +1,8 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useAppStore } from "@/lib/store";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import {
   activeProjectCount,
   averageTurnaroundByPackage,
@@ -11,18 +12,83 @@ import {
   revenueOverTime,
   totalPaidRevenue,
 } from "@/lib/analytics";
+import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over-time-chart";
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
+import { Button } from "@/components/ui/button";
+import type { Invoice, Project, ProjectRequest } from "@/lib/types";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
 export default function OverviewPage() {
-  const invoices = useAppStore((s) => s.invoices);
-  const projects = useAppStore((s) => s.projects);
-  const projectRequests = useAppStore((s) => s.projectRequests);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadOverview = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [invoiceData, projectData, requestData] = await Promise.all([
+        fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
+        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
+        fetchJson<ProjectRequest[]>("/api/requests", "We couldn't load project requests.", signal),
+      ]);
+
+      if (!Array.isArray(invoiceData) || !Array.isArray(projectData) || !Array.isArray(requestData)) {
+        throw new Error("The server returned an unexpected overview response.");
+      }
+
+      if (!signal?.aborted) {
+        setInvoices(invoiceData);
+        setProjects(projectData);
+        setProjectRequests(requestData);
+      }
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the overview.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadOverview(controller.signal));
+    return () => controller.abort();
+  }, [loadOverview]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-56 items-center justify-center border border-border">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <LoaderCircle className="size-4 animate-spin text-brand-accent" />
+          Loading overview…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
+        <p className="text-[13px] font-medium text-status-danger">Overview couldn&apos;t load</p>
+        <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadOverview()}>
+          <RefreshCw />
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   const revenueTrend = revenueOverTime(invoices);
   const revenueByPkg = revenueByPackage(invoices, projects);
