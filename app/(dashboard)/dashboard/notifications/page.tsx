@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -12,9 +13,13 @@ import type { Notification } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
 
   const loadNotifications = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -55,6 +60,68 @@ export default function NotificationsPage() {
   );
   const unread = sorted.filter((n) => !n.read);
 
+  const markNotificationRead = useCallback(async (notificationId: string) => {
+    setMarkingId(notificationId);
+    setActionError(null);
+
+    try {
+      const updatedNotification = await fetchJson<Notification>(
+        `/api/notifications/${encodeURIComponent(notificationId)}`,
+        "We couldn't mark this notification as read.",
+        undefined,
+        { method: "PATCH" },
+      );
+      setNotifications((currentNotifications) =>
+        currentNotifications.map((notification) =>
+          notification.id === updatedNotification.id ? updatedNotification : notification,
+        ),
+      );
+      return true;
+    } catch (caughtError) {
+      setActionError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "We couldn't mark this notification as read.",
+      );
+      return false;
+    } finally {
+      setMarkingId(null);
+    }
+  }, []);
+
+  async function markAllNotificationsRead() {
+    const unreadIds = unread.map((notification) => notification.id);
+    if (unreadIds.length === 0) return;
+
+    setIsMarkingAll(true);
+    setActionError(null);
+    try {
+      const updatedNotifications = await Promise.all(
+        unreadIds.map((notificationId) =>
+          fetchJson<Notification>(
+            `/api/notifications/${encodeURIComponent(notificationId)}`,
+            "We couldn't mark all notifications as read.",
+            undefined,
+            { method: "PATCH" },
+          ),
+        ),
+      );
+      const updatedById = new Map(updatedNotifications.map((notification) => [notification.id, notification]));
+      setNotifications((currentNotifications) =>
+        currentNotifications.map((notification) => updatedById.get(notification.id) ?? notification),
+      );
+    } catch (caughtError) {
+      setActionError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "We couldn't mark all notifications as read.",
+      );
+      void loadNotifications();
+    } finally {
+      setIsMarkingAll(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-56 items-center justify-center border border-border">
@@ -92,15 +159,21 @@ export default function NotificationsPage() {
           <div className="text-right">
             <button
               type="button"
-              disabled
-              className="cursor-not-allowed text-[13px] text-muted-foreground"
+              disabled={isMarkingAll || markingId !== null}
+              onClick={() => void markAllNotificationsRead()}
+              className="text-[13px] text-brand-accent hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground"
             >
-              Mark all read
+              {isMarkingAll ? "Marking…" : "Mark all read"}
             </button>
-            <p className="mt-1 text-[11px] text-muted-foreground">Read state is not wired up yet.</p>
           </div>
         )}
       </div>
+
+      {actionError && (
+        <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
+          {actionError}
+        </p>
+      )}
 
       <Tabs defaultValue="all">
         <TabsList>
@@ -111,12 +184,24 @@ export default function NotificationsPage() {
           <NotificationList
             notifications={sorted}
             emptyLabel="No notifications yet."
+            markingId={markingId}
+            onRead={async (notification) => {
+              if (!notification.read && !(await markNotificationRead(notification.id))) return false;
+              router.push(notification.link ?? "/dashboard/notifications");
+              return true;
+            }}
           />
         </TabsContent>
         <TabsContent value="unread" className="mt-4">
           <NotificationList
             notifications={unread}
             emptyLabel="You're all caught up."
+            markingId={markingId}
+            onRead={async (notification) => {
+              if (!(await markNotificationRead(notification.id))) return false;
+              router.push(notification.link ?? "/dashboard/notifications");
+              return true;
+            }}
           />
         </TabsContent>
       </Tabs>
@@ -127,9 +212,13 @@ export default function NotificationsPage() {
 function NotificationList({
   notifications,
   emptyLabel,
+  markingId,
+  onRead,
 }: {
   notifications: Notification[];
   emptyLabel: string;
+  markingId: string | null;
+  onRead: (notification: Notification) => Promise<boolean>;
 }) {
   if (notifications.length === 0) {
     return (
@@ -147,9 +236,16 @@ function NotificationList({
           <Link
             key={n.id}
             href={n.link ?? "/dashboard/notifications"}
+            onClick={(event) => {
+              if (n.read) return;
+              event.preventDefault();
+              void onRead(n);
+            }}
+            aria-disabled={markingId === n.id}
             className={cn(
               "flex items-start gap-3 px-4 py-3.5 hover:bg-muted/40",
-              !n.read && "bg-brand-accent/5"
+              !n.read && "bg-brand-accent/5",
+              markingId === n.id && "pointer-events-none opacity-60",
             )}
           >
             <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
