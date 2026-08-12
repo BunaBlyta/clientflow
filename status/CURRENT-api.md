@@ -1,42 +1,39 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — seed note correction
+Last updated: 2026-08-13 00:30 by Codex — staff invitation endpoints
 
 ## Completed
 
-- Verification-code checking is read-only, and codes remain available until
-  the password is set. Codes last 30 minutes so a client has time to read the
-  onboarding email.
-- Approving a request creates the client, a readable pending project, and a
-  sent deposit invoice together. Staff and clients receive the relevant
-  request, approval, invoice, rejection, and project-stage notifications.
-- Rejecting a request now emails the prospect even when they have never had a
-  Clientflow account. A linked client still receives the existing in-app
-  rejection notification as well.
-- The seed now names Maya Patel in proj-3's congratulatory note, matching the
-  Northstar Wellness client assigned to that project.
-- Demo seed data includes a pending Full Website project, its sent deposit
-  invoice, and an unread staff request notification. The shared database was
-  not reseeded by this lane.
-- The API has the shipped write routes for invoices, notes, notifications,
-  packages, current-user details, staff invitation resend, and logout.
-  Invoice notifications use `INVOICE_ISSUED` for DEPOSIT, FINAL, and CUSTOM
-  invoices, and `EXTRA_CHARGE_CREATED` for EXTRA invoices.
-- Stripe webhook tests cover successful payments, deposit-only project
-  advancement, duplicate delivery safety, failed payments, paid-invoice
-  failure no-ops, and signature rejection.
+- Added staff-only `GET /api/staff`, returning staff users newest first with safe
+  identity/status fields and no password, verification-code, reset-token, or
+  invitation fields.
+- Added staff-only `POST /api/staff/invite`. It validates and normalizes the
+  submitted name/email, refuses any existing user email with 409, creates an
+  inactive `STAFF` user, and sends the existing verification-code email.
+- Added staff-only `POST /api/staff/[id]/resend-invitation`, which looks up a
+  `User` directly while requiring `role: STAFF` and returns the same emailSent
+  response shape as client invitation resend.
+- Email delivery failures are logged and returned as `emailSent: false` without
+  undoing a newly created user.
+- Added route tests covering authentication, authorization, validation, duplicate
+  emails, successful listing/invites/resends, missing staff users, and email
+  failures. Updated the SPEC and API contract documentation to reflect that
+  teammate invitations are built while register and forgot-password remain cut.
 
 ## Verification
 
-- `npm run verify` passed typecheck, lint, and all 73 tests. Its normal
-  Turbopack build hit the documented sandbox-only port-binding restriction
-  while processing the other lane's `app/globals.css`.
-- `npx next build --webpack` passed and generated all 30 routes.
+- `npm run verify`: typecheck, lint, and all 87 Vitest tests passed. The standard
+  Turbopack build is blocked in this Codex sandbox by its documented process/port
+  binding restriction while processing the other lane's `app/globals.css`.
+- `npx next build --webpack`: passed; the new `/api/staff` and
+  `/api/staff/[id]/resend-invitation` routes compiled successfully.
+- `git diff --check`: passed.
 
 ## Handoff
 
-The API and database work is committed and pushed in small changes. Buna's
-remaining work is frontend wiring, live Neon readback, and final end-to-end
-testing. After this seed text update is pulled, Buna should run
-`npx prisma db seed` to apply the corrected note to the live development
-database; the seed uses upserts and does not wipe data.
+- No Prisma schema or migration work is needed. The invitation uses the existing
+  verification-code columns and `issueVerificationEmail` helper.
+- The web lane has unrelated in-progress settings/accept-invite changes in the
+  shared checkout. They were preserved and excluded from this commit.
+- Buna should run the usual signed-in browser check of the Settings Team tab once
+  the web lane wires it to these endpoints.

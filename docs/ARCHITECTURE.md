@@ -220,6 +220,17 @@ verification-email helper used after request approval, and returns
 success from email delivery. Unknown clients return 404 and client sessions
 return 403.
 
+`GET /api/staff` is staff-only and returns all staff users ordered newest first.
+Each item contains only `id`, `email`, `name`, `role`, `isActive`, and the ISO
+serialized `createdAt`; password, verification-code, reset-token, and invitation
+fields are never returned. `POST /api/staff/invite` accepts `{ "email": string,
+"name": string }`, rejects any existing user email with 409, creates an inactive
+`STAFF` user, and sends a verification-code invitation through the same helper.
+It returns 201 with `{ "user": User, "emailSent": boolean }`; an email failure
+does not undo the user creation. `POST /api/staff/:id/resend-invitation` looks
+up the ID directly as a `STAFF` user and has the same `{ "emailSent": boolean }`
+response and 401/403/404 behavior as the client resend route.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:
