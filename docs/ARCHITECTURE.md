@@ -169,6 +169,32 @@ both the notification ID and session user ID, so another user's notification is
 reported as 404. Repeating the request for an already-read notification returns
 200 without writing again.
 
+## Package management contracts
+
+`GET /api/packages` remains public and returns active packages ordered by
+`sortOrder`. Staff can create packages with `POST /api/packages`:
+
+```json
+{
+  "name": "Full Website",
+  "slug": "full-website",
+  "description": "A complete multi-page marketing site.",
+  "price": 6500,
+  "currency": "usd",
+  "estimatedDuration": "6–8 weeks",
+  "sortOrder": 2
+}
+```
+
+Prices use major currency units, matching the public GET response, and are
+stored to two decimal places. A successful create returns 201 with the same
+package shape as GET. Duplicate slugs return 409. `PATCH /api/packages/:id`
+accepts any subset of the editable fields, including `isActive: false` for
+deactivation; packages are never deleted. Duplicate slugs return 409 and a
+missing package returns 404. Updating a package only updates that package row:
+existing projects and invoices retain their historical values and are not
+retroactively repriced.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:

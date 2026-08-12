@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — notification mark-read endpoint complete
+Last updated: 2026-08-12 by Agent A — package management endpoints complete
 
 ## Completed
 
@@ -53,9 +53,13 @@ Last updated: 2026-08-12 by Agent A — notification mark-read endpoint complete
 - Added `PATCH /api/notifications/[id]`. It scopes lookup to the session user,
   returns 404 for another user's notification, marks unread notifications once,
   and safely returns 200 without another write when already read.
+- Added staff-only `POST /api/packages` and `PATCH /api/packages/[id]`. They
+  validate major-unit prices, normalize currencies and slugs, return 409 for
+  duplicate slugs, and use `isActive: false` for deactivation. Package updates
+  touch no project or invoice rows, so historical amounts remain unchanged.
 
 ## Handoff
 
-The Flow A repair tasks and endpoints 1–2 are committed and pushed separately.
-Endpoint 3 is implemented and ready to commit/push separately. Endpoint 4 is
-next: staff package create/update with deactivation and slug-conflict handling.
+The Flow A repair tasks and endpoints 1–3 are committed and pushed separately.
+Endpoint 4 is implemented and ready to commit/push separately. Endpoint 5 is
+next: the small authenticated current-user response.
