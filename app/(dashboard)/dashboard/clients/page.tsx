@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { LoaderCircle, MoreHorizontal, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, initials } from "@/lib/format";
@@ -24,6 +25,8 @@ export default function ClientsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [resendingClientId, setResendingClientId] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<{ clientId: string; message: string } | null>(null);
 
   const loadClients = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -80,6 +83,28 @@ export default function ClientsPage() {
     }
     return totals;
   }, [invoices, projects]);
+
+  async function handleResendInvitation(client: Client) {
+    setResendingClientId(client.id);
+    setResendError(null);
+    try {
+      const result = await fetchJson<{ emailSent: boolean }>(
+        `/api/clients/${encodeURIComponent(client.id)}/resend-invitation`,
+        "We couldn't resend the invitation.",
+        undefined,
+        { method: "POST" },
+      );
+      if (!result.emailSent) throw new Error("The invitation email could not be sent. Try again.");
+      toast.success("Invitation sent", { description: `A fresh sign-in code was sent to ${client.email}.` });
+    } catch (caughtError) {
+      setResendError({
+        clientId: client.id,
+        message: caughtError instanceof Error ? caughtError.message : "We couldn't resend the invitation.",
+      });
+    } finally {
+      setResendingClientId(null);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -146,6 +171,9 @@ export default function ClientsPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     <p>{client.contactName}</p>
                     <p className="text-[12px]">{client.email}</p>
+                    {resendError?.clientId === client.id && (
+                      <p role="alert" className="mt-1 text-[11px] text-status-danger">{resendError.message}</p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{clientProjects.length}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
@@ -160,10 +188,15 @@ export default function ClientsPage() {
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem disabled>Resend app invitation</DropdownMenuItem>
-                        <p className="px-2 pb-1.5 text-[11px] leading-4 text-muted-foreground">
-                          Invitations are not wired up yet.
-                        </p>
+                        <DropdownMenuItem
+                          disabled={resendingClientId !== null}
+                          onClick={() => void handleResendInvitation(client)}
+                        >
+                          {resendingClientId === client.id ? (
+                            <LoaderCircle className="animate-spin" />
+                          ) : null}
+                          {resendingClientId === client.id ? "Sending…" : "Resend app invitation"}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
