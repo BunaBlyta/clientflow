@@ -24,10 +24,14 @@ export default function ProjectNotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const token = useAuthStore((s) => s.token);
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
+  const postNote = useDataStore((s) => s.postNote);
   const refreshNotes = useDataStore((s) => s.refreshNotes);
 
+  const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
   const [unreachable, setUnreachable] = useState(false);
+  const [postError, setPostError] = useState('');
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -46,6 +50,25 @@ export default function ProjectNotesScreen() {
       active = false;
     };
   }, [id, refreshNotes, token]);
+
+  async function handleSend() {
+    const body = draft.trim();
+    if (!body || !id || !token || posting) return;
+
+    setPostError('');
+    setPosting(true);
+    const ok = await postNote(id, body, token);
+    setPosting(false);
+    if (!ok) {
+      setPostError('Unable to post your note. Please try again.');
+      return;
+    }
+
+    setDraft('');
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+  }
 
   if (loading && notes.length === 0) {
     return (
@@ -88,22 +111,32 @@ export default function ProjectNotesScreen() {
       </ScrollView>
 
       <View style={styles.composer}>
-        <Text style={styles.composerNote}>
-          Posting notes will be available shortly.
-        </Text>
-        <TextInput
-          editable={false}
-          placeholder="Note posting unavailable"
-          placeholderTextColor={color.textMuted}
-          style={[styles.input, styles.inputDisabled]}
-          multiline
-        />
-        <Pressable
-          disabled
-          style={[styles.sendButton, styles.sendButtonDisabled]}
-        >
-          <Send size={16} color={color.textOnAccent} />
-        </Pressable>
+        {postError ? <Text style={styles.error}>{postError}</Text> : null}
+        <View style={styles.composerRow}>
+          <TextInput
+            value={draft}
+            onChangeText={(value) => {
+              setDraft(value);
+              if (postError) setPostError('');
+            }}
+            placeholder="Write a note…"
+            placeholderTextColor={color.textMuted}
+            style={styles.input}
+            multiline
+            editable={!posting}
+          />
+          <Pressable
+            onPress={() => void handleSend()}
+            disabled={!draft.trim() || posting}
+            style={[styles.sendButton, (!draft.trim() || posting) && styles.sendButtonDisabled]}
+          >
+            {posting ? (
+              <ActivityIndicator size="small" color={color.textOnAccent} />
+            ) : (
+              <Send size={16} color={color.textOnAccent} />
+            )}
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -132,13 +165,15 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.sm,
     padding: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border,
     backgroundColor: color.surface,
+  },
+  composerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.sm,
   },
   input: {
     flex: 1,
@@ -151,15 +186,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     maxHeight: 100,
-  },
-  inputDisabled: {
-    backgroundColor: color.surfaceMuted,
-  },
-  composerNote: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-    marginBottom: spacing.sm,
   },
   sendButton: {
     width: 40,

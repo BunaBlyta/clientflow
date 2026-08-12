@@ -97,8 +97,23 @@ export function notesRequest(token: string, projectId?: string) {
   return request<Note[]>(`/api/notes${query}`, {}, token);
 }
 
+export function createNoteRequest(projectId: string, body: string, token: string) {
+  return request<Note>('/api/notes', {
+    method: 'POST',
+    body: JSON.stringify({ projectId, body }),
+  }, token);
+}
+
 export function notificationsRequest(token: string) {
   return request<Notification[]>('/api/notifications', {}, token);
+}
+
+export function markNotificationReadRequest(notificationId: string, token: string) {
+  return request<Notification>(
+    `/api/notifications/${encodeURIComponent(notificationId)}`,
+    { method: 'PATCH' },
+    token,
+  );
 }
 
 export interface CheckoutResponse {

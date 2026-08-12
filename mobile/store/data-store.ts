@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import {
   invoiceRequest,
   invoicesRequest,
+  createNoteRequest,
+  markNotificationReadRequest,
   notesRequest,
   notificationsRequest,
   projectRequest,
@@ -32,6 +34,9 @@ interface DataState {
   refreshInvoice: (invoiceId: string, token: string) => Promise<boolean>;
   refreshNotes: (token: string, projectId?: string) => Promise<boolean>;
   refreshNotifications: (token: string) => Promise<boolean>;
+  postNote: (projectId: string, body: string, token: string) => Promise<boolean>;
+  markNotificationRead: (id: string, token: string) => Promise<boolean>;
+  markAllNotificationsRead: (token: string) => Promise<boolean>;
   unreadNotificationCount: () => number;
 }
 
@@ -125,6 +130,51 @@ export const useDataStore = create<DataState>((set, get) => ({
       return true;
     } catch {
       // Keep the fixtures visible when the local API is unavailable.
+      return false;
+    }
+  },
+  postNote: async (projectId, body, token) => {
+    try {
+      const note = await createNoteRequest(projectId, body, token);
+      set((state) => ({
+        notes: state.notes.some((item) => item.id === note.id)
+          ? state.notes.map((item) => (item.id === note.id ? note : item))
+          : [...state.notes, note],
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  markNotificationRead: async (id, token) => {
+    try {
+      const notification = await markNotificationReadRequest(id, token);
+      set((state) => ({
+        notifications: state.notifications.map((item) =>
+          item.id === notification.id ? notification : item,
+        ),
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  markAllNotificationsRead: async (token) => {
+    const unreadIds = get()
+      .notifications.filter((notification) => !notification.read)
+      .map((notification) => notification.id);
+
+    try {
+      const notifications = await Promise.all(
+        unreadIds.map((id) => markNotificationReadRequest(id, token)),
+      );
+      set((state) => ({
+        notifications: state.notifications.map((item) =>
+          notifications.find((notification) => notification.id === item.id) ?? item,
+        ),
+      }));
+      return true;
+    } catch {
       return false;
     }
   },

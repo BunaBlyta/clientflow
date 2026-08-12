@@ -15,8 +15,13 @@ import { useShallow } from 'zustand/react/shallow';
 export default function NotificationsScreen() {
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const markNotificationRead = useDataStore((s) => s.markNotificationRead);
+  const markAllNotificationsRead = useDataStore((s) => s.markAllNotificationsRead);
   const refreshNotifications = useDataStore((s) => s.refreshNotifications);
   const [unreachable, setUnreachable] = useState(false);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
+  const [actionError, setActionError] = useState('');
   const notifications = useDataStore(
     useShallow((s) =>
       [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -35,7 +40,15 @@ export default function NotificationsScreen() {
     };
   }, [refreshNotifications, token]);
 
-  function handlePress(notification: Notification) {
+  async function handlePress(notification: Notification) {
+    if (markingId || markingAll) return;
+    setActionError('');
+    if (!notification.read && token) {
+      setMarkingId(notification.id);
+      const ok = await markNotificationRead(notification.id, token);
+      setMarkingId(null);
+      if (!ok) setActionError('Unable to mark this notification as read.');
+    }
     if (notification.projectId && notification.invoiceId) {
       router.push(
         `/projects/${notification.projectId}/invoices/${notification.invoiceId}`
@@ -45,13 +58,26 @@ export default function NotificationsScreen() {
     }
   }
 
+  async function handleMarkAll() {
+    if (!token || markingAll || unread === 0) return;
+    setActionError('');
+    setMarkingAll(true);
+    const ok = await markAllNotificationsRead(token);
+    setMarkingAll(false);
+    if (!ok) setActionError('Some notifications could not be marked as read.');
+  }
+
   return (
     <Screen scroll={notifications.length > 0}>
       <View style={styles.headerRow}>
         <Text style={styles.heading}>Notifications</Text>
         {unread > 0 && (
-          <Pressable disabled style={styles.markAllDisabled}>
-            <Text style={styles.markAllText}>Mark all read</Text>
+          <Pressable
+            onPress={() => void handleMarkAll()}
+            disabled={markingAll || markingId !== null}
+            style={[styles.markAllButton, (markingAll || markingId !== null) && styles.markAllDisabled]}
+          >
+            <Text style={styles.markAllText}>{markingAll ? 'Marking…' : 'Mark all read'}</Text>
           </Pressable>
         )}
       </View>
@@ -60,11 +86,7 @@ export default function NotificationsScreen() {
           Live notifications are unavailable. Showing saved notification data.
         </Text>
       )}
-      {unread > 0 && (
-        <Text style={styles.readNote}>
-          Marking notifications read will be available shortly.
-        </Text>
-      )}
+      {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
 
       {notifications.length === 0 ? (
         <EmptyState icon={Bell} title="You're all caught up" />
@@ -73,7 +95,7 @@ export default function NotificationsScreen() {
           <View key={notification.id}>
             <NotificationRow
               notification={notification}
-              onPress={() => handlePress(notification)}
+              onPress={() => void handlePress(notification)}
             />
             {index < notifications.length - 1 && <Divider />}
           </View>
@@ -104,16 +126,14 @@ const styles = StyleSheet.create({
   markAllDisabled: {
     opacity: 0.45,
   },
+  markAllButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
   error: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.warning,
-    marginBottom: spacing.md,
-  },
-  readNote: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
     marginBottom: spacing.md,
   },
 });
