@@ -162,6 +162,13 @@ staff users, while a staff note creates one for the project client. The author
 is never notified about their own note, and notes have no update or delete
 endpoint.
 
+`PATCH /api/notifications/:id` marks the authenticated user's notification as
+read and returns the same object shape as `GET /api/notifications`, with
+`body` mapped from the database `message` and `read: true`. The lookup includes
+both the notification ID and session user ID, so another user's notification is
+reported as 404. Repeating the request for an already-read notification returns
+200 without writing again.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:

@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — notes endpoint complete
+Last updated: 2026-08-12 by Agent A — notification mark-read endpoint complete
 
 ## Completed
 
@@ -50,9 +50,12 @@ Last updated: 2026-08-12 by Agent A — notes endpoint complete
   the author from the session, always writes a non-system note, blocks clients
   from another client's project with a non-disclosing 404, and notifies only the
   opposite side of the conversation.
+- Added `PATCH /api/notifications/[id]`. It scopes lookup to the session user,
+  returns 404 for another user's notification, marks unread notifications once,
+  and safely returns 200 without another write when already read.
 
 ## Handoff
 
-The Flow A repair tasks and endpoint 1 are committed and pushed separately.
-Endpoint 2 is implemented and ready to commit/push separately. Endpoint 3 is
-next: idempotent mark-read for a user's own notification.
+The Flow A repair tasks and endpoints 1–2 are committed and pushed separately.
+Endpoint 3 is implemented and ready to commit/push separately. Endpoint 4 is
+next: staff package create/update with deactivation and slug-conflict handling.
