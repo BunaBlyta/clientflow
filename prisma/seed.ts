@@ -364,7 +364,7 @@ async function main() {
     ['note-7', 'proj-2', staff.id, 'The staging link is ready for your review — let us know about any final tweaks before we launch.', false, '2026-08-08T16:05:00.000Z'],
     ['note-8', 'proj-2', clientUser.id, 'Looks fantastic. One small typo on the About section — "Riverside" is misspelled in the second paragraph.', false, '2026-08-09T11:15:00.000Z'],
     ['note-9', 'proj-3', null, 'Project status changed from Review to Launched.', true, '2026-03-20T11:00:00.000Z'],
-    ['note-10', 'proj-3', staff.id, "You're live! Congrats on the new site, Jordan.", false, '2026-03-20T11:05:00.000Z'],
+    ['note-10', 'proj-3', staff.id, "You're live! Congrats on the new site, Maya.", false, '2026-03-20T11:05:00.000Z'],
     ['note-11', 'proj-3', clientUser.id, 'Thank you — the whole team loves it!', false, '2026-03-20T19:40:00.000Z'],
     ['note-12', 'proj-4', null, 'Project status changed from Design to On Hold.', true, '2026-07-28T10:00:00.000Z'],
     ['note-13', 'proj-4', staff.id, "Pausing this one while you finalize the new seasonal menu. Just post a note here when you're ready to pick it back up.", false, '2026-07-28T10:04:00.000Z'],

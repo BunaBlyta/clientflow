@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — rejection email
+Last updated: 2026-08-12 by Agent A — seed note correction
 
 ## Completed
 
@@ -13,6 +13,8 @@ Last updated: 2026-08-12 by Agent A — rejection email
 - Rejecting a request now emails the prospect even when they have never had a
   Clientflow account. A linked client still receives the existing in-app
   rejection notification as well.
+- The seed now names Maya Patel in proj-3's congratulatory note, matching the
+  Northstar Wellness client assigned to that project.
 - Demo seed data includes a pending Full Website project, its sent deposit
   invoice, and an unread staff request notification. The shared database was
   not reseeded by this lane.
@@ -26,13 +28,15 @@ Last updated: 2026-08-12 by Agent A — rejection email
 
 ## Verification
 
-- `npm run verify` passed typecheck, lint, and all 67 tests. Its normal
+- `npm run verify` passed typecheck, lint, and all 73 tests. Its normal
   Turbopack build hit the documented sandbox-only port-binding restriction
   while processing the other lane's `app/globals.css`.
-- `npx next build --webpack` passed and generated all 29 routes.
+- `npx next build --webpack` passed and generated all 30 routes.
 
 ## Handoff
 
 The API and database work is committed and pushed in small changes. Buna's
 remaining work is frontend wiring, live Neon readback, and final end-to-end
-testing. No schema migration was needed for rejection email delivery.
+testing. After this seed text update is pulled, Buna should run
+`npx prisma db seed` to apply the corrected note to the live development
+database; the seed uses upserts and does not wipe data.
