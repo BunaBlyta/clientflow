@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
 import { useAppStore } from "@/lib/store";
+import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, formatMajorCurrency } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { invoiceDisplayLabel, invoiceDisplayTone } from "@/lib/status";
@@ -15,29 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Client, Invoice, Note, Project } from "@/lib/types";
 
-async function fetchJson<T>(url: string, fallbackError: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, {
-    credentials: "include",
-    cache: "no-store",
-    signal,
-  });
-  const payload = (await response.json().catch(() => null)) as { error?: unknown } | T | null;
-
-  if (!response.ok) {
-    const message =
-      payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
-        ? payload.error
-        : fallbackError;
-    throw new Error(message);
-  }
-
-  if (payload === null || typeof payload !== "object") {
-    throw new Error(fallbackError);
-  }
-
-  return payload as T;
-}
-
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
@@ -46,6 +24,10 @@ export default function ProjectDetailPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [noteBody, setNoteBody] = useState("");
+  const [isPostingNote, setIsPostingNote] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [noteSuccess, setNoteSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -138,6 +120,30 @@ export default function ProjectDetailPage() {
       ),
     );
   }, []);
+
+  async function handleNoteSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const body = noteBody.trim();
+    if (!body) return;
+
+    setIsPostingNote(true);
+    setNoteError(null);
+    setNoteSuccess(null);
+    try {
+      const createdNote = await fetchJson<Note>("/api/notes", "We couldn't post this note.", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, body }),
+      });
+      setNotes((currentNotes) => [...currentNotes, createdNote]);
+      setNoteBody("");
+      setNoteSuccess("Note posted.");
+    } catch (caughtError) {
+      setNoteError(caughtError instanceof Error ? caughtError.message : "We couldn't post this note.");
+    } finally {
+      setIsPostingNote(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -322,15 +328,23 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          <form className="flex flex-col gap-2 border-t border-border pt-4">
+          <form onSubmit={handleNoteSubmit} className="flex flex-col gap-2 border-t border-border pt-4">
             <Textarea
               placeholder="Add a note for this project…"
               rows={2}
-              disabled
+              value={noteBody}
+              onChange={(event) => {
+                setNoteBody(event.target.value);
+                setNoteSuccess(null);
+              }}
+              disabled={isPostingNote}
             />
-            <p className="text-[12px] text-muted-foreground">Posting notes isn&apos;t wired up yet.</p>
-            <Button type="button" size="sm" className="self-end" disabled>
-              Post note
+            {noteError && (
+              <p role="alert" className="text-[12px] text-status-danger">{noteError}</p>
+            )}
+            {noteSuccess && <p className="text-[12px] text-status-success">{noteSuccess}</p>}
+            <Button type="submit" size="sm" className="self-end" disabled={isPostingNote || !noteBody.trim()}>
+              {isPostingNote ? "Posting…" : "Post note"}
             </Button>
           </form>
         </div>
