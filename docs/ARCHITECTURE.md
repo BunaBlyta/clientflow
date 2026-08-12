@@ -124,6 +124,20 @@ from major currency units to integer cents, and supplies a label based on the
 invoice kind if `description` is null. Nullable dates are omitted. `CUSTOM` is
 returned as its own kind so each frontend can widen its local invoice union.
 
+`POST /api/invoices` is staff-only and accepts `{ "projectId": string,
+"type": "DEPOSIT" | "FINAL" | "EXTRA" | "CUSTOM", "amount": number | string,
+"currency": string, "dueDate"?: string, "description"?: string }`. Amounts use
+the same major currency units accepted by the package API and are stored to two
+decimal places. The server derives `clientId` from the project, ignores any
+client ID supplied by the caller, and creates every invoice in `DRAFT` through
+the invoice state helper. Requests for `PAID` or `PAYMENT_PENDING` are rejected;
+Stripe's verified webhook remains the only payment confirmation path.
+
+The successful response is 201 with the exact same serialized invoice shape as
+`GET /api/invoices`. Creating an invoice also creates an
+`EXTRA_CHARGE_CREATED` notification for the project client in the same database
+transaction, so the client is told when a new charge appears.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:

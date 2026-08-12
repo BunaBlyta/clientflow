@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — Flow A repair tasks complete
+Last updated: 2026-08-12 by Agent A — invoice creation endpoint complete
 
 ## Completed
 
@@ -41,9 +41,14 @@ Last updated: 2026-08-12 by Agent A — Flow A repair tasks complete
 - Seed code typechecks as part of the repository gate. The shared Neon database
   was not reseeded by this agent because the seed resets demo states; Buna should
   run the existing seed command when ready to refresh demo data.
+- Added staff-only `POST /api/invoices`. It derives the client from the project,
+  creates a two-decimal `DRAFT` invoice through the tested state helper, returns
+  the existing invoice serializer shape, and notifies the client in the same
+  transaction. Caller-supplied client IDs are ignored and paid/payment-pending
+  starting states are rejected.
 
 ## Handoff
 
-Tasks 1, 2, and 3 are committed and pushed separately. Task 4 is implemented and
-ready to commit and push. After this commit, the API brief is complete; the next
-step is Buna's live Flow A click-through and Neon readback.
+The Flow A repair tasks are committed and pushed. Endpoint 1 of the write-endpoint
+brief is implemented and ready to commit/push separately. Endpoint 2 is next:
+the notes write route with cross-client ownership protection.
