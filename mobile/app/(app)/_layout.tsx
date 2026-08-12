@@ -1,11 +1,19 @@
 import { Tabs } from 'expo-router';
 import { Bell, FolderKanban, User } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { color, fontFamily, fontSize } from '../../lib/theme';
+import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
 export default function AppTabsLayout() {
+  const token = useAuthStore((s) => s.token);
+  const refreshNotifications = useDataStore((s) => s.refreshNotifications);
   const unread = useDataStore((s) => s.unreadNotificationCount());
+
+  useEffect(() => {
+    if (token) void refreshNotifications(token);
+  }, [refreshNotifications, token]);
 
   return (
     <Tabs

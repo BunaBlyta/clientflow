@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { MessageSquare, Send } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +14,7 @@ import {
 } from 'react-native';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { EmptyState } from '../../../../components/ui/EmptyState';
+import { Screen } from '../../../../components/ui/Screen';
 import { color, fontFamily, fontSize, radius, spacing } from '../../../../lib/theme';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
@@ -20,21 +22,37 @@ import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectNotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const client = useAuthStore((s) => s.client);
+  const token = useAuthStore((s) => s.token);
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
-  const addNote = useDataStore((s) => s.addNote);
+  const refreshNotes = useDataStore((s) => s.refreshNotes);
 
-  const [draft, setDraft] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [unreachable, setUnreachable] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
-  function handleSend() {
-    const text = draft.trim();
-    if (!text || !client) return;
-    addNote(id, text, client.name);
-    setDraft('');
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
+  useEffect(() => {
+    if (!token || !id) {
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    void refreshNotes(token, id).then((ok) => {
+      if (active) {
+        setUnreachable(!ok);
+        setLoading(false);
+      }
     });
+    return () => {
+      active = false;
+    };
+  }, [id, refreshNotes, token]);
+
+  if (loading && notes.length === 0) {
+    return (
+      <Screen>
+        <ActivityIndicator color={color.accent} style={styles.loading} />
+      </Screen>
+    );
   }
 
   return (
@@ -49,6 +67,11 @@ export default function ProjectNotesScreen() {
         contentContainerStyle={styles.content}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
+        {unreachable && (
+          <Text style={styles.error}>
+            Live notes are unavailable. Showing saved note data.
+          </Text>
+        )}
         <Text style={styles.intro}>
           A shared, permanent record between you and the studio. Notes can't be
           edited or deleted once posted.
@@ -65,18 +88,19 @@ export default function ProjectNotesScreen() {
       </ScrollView>
 
       <View style={styles.composer}>
+        <Text style={styles.composerNote}>
+          Posting notes will be available shortly.
+        </Text>
         <TextInput
-          value={draft}
-          onChangeText={setDraft}
-          placeholder="Write a note…"
+          editable={false}
+          placeholder="Note posting unavailable"
           placeholderTextColor={color.textMuted}
-          style={styles.input}
+          style={[styles.input, styles.inputDisabled]}
           multiline
         />
         <Pressable
-          onPress={handleSend}
-          disabled={!draft.trim()}
-          style={[styles.sendButton, !draft.trim() && styles.sendButtonDisabled]}
+          disabled
+          style={[styles.sendButton, styles.sendButtonDisabled]}
         >
           <Send size={16} color={color.textOnAccent} />
         </Pressable>
@@ -90,6 +114,15 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  loading: {
+    marginTop: spacing.xxl,
+  },
+  error: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.warning,
+    marginBottom: spacing.md,
   },
   intro: {
     fontFamily: fontFamily.regular,
@@ -118,6 +151,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     maxHeight: 100,
+  },
+  inputDisabled: {
+    backgroundColor: color.surfaceMuted,
+  },
+  composerNote: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.textMuted,
+    marginBottom: spacing.sm,
   },
   sendButton: {
     width: 40,

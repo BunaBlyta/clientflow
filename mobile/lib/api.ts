@@ -1,4 +1,4 @@
-import type { Client, Invoice, Project } from './types';
+import type { Client, Invoice, Note, Notification, Project } from './types';
 
 const configuredBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const baseUrl = configuredBaseUrl || 'http://localhost:3000';
@@ -67,6 +67,15 @@ export function invoicesRequest(token: string, projectId?: string) {
 
 export function invoiceRequest(invoiceId: string, token: string) {
   return request<Invoice>(`/api/invoices/${encodeURIComponent(invoiceId)}`, {}, token);
+}
+
+export function notesRequest(token: string, projectId?: string) {
+  const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+  return request<Note[]>(`/api/notes${query}`, {}, token);
+}
+
+export function notificationsRequest(token: string) {
+  return request<Notification[]>('/api/notifications', {}, token);
 }
 
 export interface CheckoutResponse {

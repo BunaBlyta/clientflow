@@ -19,12 +19,16 @@ export default function ProjectDetailScreen() {
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);
+  const refreshNotes = useDataStore((s) => s.refreshNotes);
   const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
 
   useEffect(() => {
-    if (id && token) void refreshProject(id, token);
-  }, [id, refreshProject, token]);
+    if (id && token) {
+      void refreshProject(id, token);
+      void refreshNotes(token, id);
+    }
+  }, [id, refreshNotes, refreshProject, token]);
 
   if (!project) {
     return (

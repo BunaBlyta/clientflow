@@ -1,28 +1,41 @@
 import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { NotificationRow } from '../../components/NotificationRow';
 import { Divider } from '../../components/ui/Divider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
 import { color, fontFamily, fontSize, spacing } from '../../lib/theme';
+import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import type { Notification } from '../../lib/types';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+  const refreshNotifications = useDataStore((s) => s.refreshNotifications);
+  const [unreachable, setUnreachable] = useState(false);
   const notifications = useDataStore(
     useShallow((s) =>
       [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     )
   );
-  const markRead = useDataStore((s) => s.markNotificationRead);
-  const markAllRead = useDataStore((s) => s.markAllNotificationsRead);
   const unread = useDataStore((s) => s.unreadNotificationCount());
 
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    void refreshNotifications(token).then((ok) => {
+      if (active) setUnreachable(!ok);
+    });
+    return () => {
+      active = false;
+    };
+  }, [refreshNotifications, token]);
+
   function handlePress(notification: Notification) {
-    markRead(notification.id);
     if (notification.projectId && notification.invoiceId) {
       router.push(
         `/projects/${notification.projectId}/invoices/${notification.invoiceId}`
@@ -37,11 +50,21 @@ export default function NotificationsScreen() {
       <View style={styles.headerRow}>
         <Text style={styles.heading}>Notifications</Text>
         {unread > 0 && (
-          <Pressable onPress={markAllRead}>
+          <Pressable disabled style={styles.markAllDisabled}>
             <Text style={styles.markAllText}>Mark all read</Text>
           </Pressable>
         )}
       </View>
+      {unreachable && (
+        <Text style={styles.error}>
+          Live notifications are unavailable. Showing saved notification data.
+        </Text>
+      )}
+      {unread > 0 && (
+        <Text style={styles.readNote}>
+          Marking notifications read will be available shortly.
+        </Text>
+      )}
 
       {notifications.length === 0 ? (
         <EmptyState icon={Bell} title="You're all caught up" />
@@ -77,5 +100,20 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
     color: color.accent,
+  },
+  markAllDisabled: {
+    opacity: 0.45,
+  },
+  error: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.warning,
+    marginBottom: spacing.md,
+  },
+  readNote: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.textMuted,
+    marginBottom: spacing.md,
   },
 });

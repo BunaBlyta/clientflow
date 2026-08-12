@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { invoiceRequest, invoicesRequest, projectRequest, projectsRequest } from '../lib/api';
+import {
+  invoiceRequest,
+  invoicesRequest,
+  notesRequest,
+  notificationsRequest,
+  projectRequest,
+  projectsRequest,
+} from '../lib/api';
 import {
   MOCK_INVOICES,
   MOCK_NOTES,
@@ -7,8 +14,6 @@ import {
   MOCK_PROJECTS,
 } from '../lib/mock-data';
 import type { Invoice, Note, Notification, Project } from '../lib/types';
-
-let noteCounter = 1000;
 
 interface DataState {
   projects: Project[];
@@ -25,11 +30,8 @@ interface DataState {
   refreshProject: (projectId: string, token: string) => Promise<void>;
   refreshInvoices: (token: string, projectId?: string) => Promise<boolean>;
   refreshInvoice: (invoiceId: string, token: string) => Promise<boolean>;
-
-  addNote: (projectId: string, body: string, authorName: string) => void;
-
-  markNotificationRead: (id: string) => void;
-  markAllNotificationsRead: () => void;
+  refreshNotes: (token: string, projectId?: string) => Promise<boolean>;
+  refreshNotifications: (token: string) => Promise<boolean>;
   unreadNotificationCount: () => number;
 }
 
@@ -99,31 +101,32 @@ export const useDataStore = create<DataState>((set, get) => ({
       return false;
     }
   },
-
-  addNote: (projectId, body, authorName) => {
-    const note: Note = {
-      id: `note-local-${noteCounter++}`,
-      projectId,
-      authorId: 'client-1',
-      authorName,
-      authorRole: 'CLIENT',
-      body,
-      createdAt: new Date().toISOString(),
-    };
-    set((state) => ({ notes: [...state.notes, note] }));
+  refreshNotes: async (token, projectId) => {
+    try {
+      const notes = await notesRequest(token, projectId);
+      set((state) => ({
+        notes: projectId
+          ? [
+              ...state.notes.filter((note) => note.projectId !== projectId),
+              ...notes,
+            ]
+          : notes,
+      }));
+      return true;
+    } catch {
+      // Keep the fixtures visible when the local API is unavailable.
+      return false;
+    }
   },
-
-  markNotificationRead: (id) => {
-    set((state) => ({
-      notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      ),
-    }));
-  },
-  markAllNotificationsRead: () => {
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, read: true })),
-    }));
+  refreshNotifications: async (token) => {
+    try {
+      const notifications = await notificationsRequest(token);
+      set({ notifications });
+      return true;
+    } catch {
+      // Keep the fixtures visible when the local API is unavailable.
+      return false;
+    }
   },
   unreadNotificationCount: () =>
     get().notifications.filter((n) => !n.read).length,
