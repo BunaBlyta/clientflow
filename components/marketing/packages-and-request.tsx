@@ -23,34 +23,55 @@ const mostPopularSlug = "full-website";
 export function PackagesAndRequest() {
   const packages = useAppStore((s) => s.packages);
   const standardPackages = packages.filter((p) => !p.isCustom);
-  const submitProjectRequest = useAppStore((s) => s.submitProjectRequest);
   const [selectedPackageId, setSelectedPackageId] = useState(packages.find((p) => !p.isCustom)?.id ?? packages[0]?.id ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function handleChoose(packageId: string) {
     setSelectedPackageId(packageId);
     document.getElementById("request-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
+    setSubmitError(null);
     setPending(true);
-    submitProjectRequest({
-      packageId: selectedPackageId,
-      prospectName: String(form.get("name") ?? ""),
-      prospectEmail: String(form.get("email") ?? ""),
-      prospectPhone: (form.get("phone") as string) || undefined,
-      companyName: (form.get("companyName") as string) || undefined,
-      message: (form.get("message") as string) || undefined,
-    });
-    e.currentTarget.reset();
-    setPending(false);
-    setSubmitted(true);
-    toast.success("Request submitted", {
-      description: "We'll review it and follow up by email shortly.",
-    });
+
+    try {
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          packageId: selectedPackageId,
+          name: String(form.get("name") ?? ""),
+          email: String(form.get("email") ?? ""),
+          companyName: String(form.get("companyName") ?? "").trim() || undefined,
+          message: String(form.get("message") ?? "").trim() || undefined,
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as { error?: unknown } | null;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof result?.error === "string" ? result.error : "We couldn't submit your request.",
+        );
+      }
+
+      formElement.reset();
+      setSubmitted(true);
+      toast.success("Request submitted", {
+        description: "We'll review it and follow up by email shortly.",
+      });
+    } catch (caughtError) {
+      setSubmitError(
+        caughtError instanceof Error ? caughtError.message : "We couldn't submit your request.",
+      );
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -159,20 +180,22 @@ export function PackagesAndRequest() {
                   <Input id="companyName" name="companyName" placeholder="Marlowe & Finch" />
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required placeholder="you@company.com" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="phone">Phone (optional)</Label>
-                  <Input id="phone" name="phone" type="tel" placeholder="+1 555 000 0000" />
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" required placeholder="you@company.com" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="message">What are you looking to build? (optional)</Label>
                 <Textarea id="message" name="message" rows={4} placeholder="A landing page for a product launch in September..." />
               </div>
+              {submitError && (
+                <p
+                  role="alert"
+                  className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger"
+                >
+                  {submitError}
+                </p>
+              )}
               <Button type="submit" disabled={pending} className="mt-2">
                 {pending ? "Submitting…" : "Submit request"}
               </Button>
