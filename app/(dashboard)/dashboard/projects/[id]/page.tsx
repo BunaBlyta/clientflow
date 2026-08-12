@@ -240,7 +240,11 @@ export default function ProjectDetailPage() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-medium">Invoices</h2>
-          <CreateInvoiceDialog projectId={project.id} />
+          <CreateInvoiceDialog
+            projectId={project.id}
+            currency={project.package?.currency ?? "usd"}
+            onCreated={(createdInvoice) => setInvoices((currentInvoices) => [createdInvoice, ...currentInvoices])}
+          />
         </div>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-[13px]">

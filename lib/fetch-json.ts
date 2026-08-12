@@ -2,8 +2,10 @@ export async function fetchJson<T>(
   url: string,
   fallbackError: string,
   signal?: AbortSignal,
+  init?: RequestInit,
 ): Promise<T> {
   const response = await fetch(url, {
+    ...init,
     credentials: "include",
     cache: "no-store",
     signal,

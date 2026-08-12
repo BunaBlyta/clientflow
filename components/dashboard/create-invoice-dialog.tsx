@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAppStore } from "@/lib/store";
-import type { InvoiceKind } from "@/lib/types";
+import { fetchJson } from "@/lib/fetch-json";
+import type { Invoice, InvoiceKind, Project } from "@/lib/types";
 
 const KIND_LABEL: Record<InvoiceKind, string> = {
   DEPOSIT: "Deposit",
@@ -31,33 +32,83 @@ const KIND_LABEL: Record<InvoiceKind, string> = {
   CUSTOM: "Custom",
 };
 
-export function CreateInvoiceDialog({ projectId }: { projectId?: string }) {
-  const projects = useAppStore((s) => s.projects);
-  const createInvoice = useAppStore((s) => s.createInvoice);
+export function CreateInvoiceDialog({
+  projectId,
+  currency = "usd",
+  onCreated,
+}: {
+  projectId?: string;
+  currency?: string;
+  onCreated?: (invoice: Invoice) => void;
+}) {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [open, setOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const [kind, setKind] = useState<InvoiceKind>("EXTRA");
+  const [pending, setPending] = useState(false);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const loadProjects = useCallback(async () => {
+    setIsLoadingProjects(true);
+    setError(null);
+    try {
+      setProjects(await fetchJson<Project[]>("/api/projects", "We couldn't load the projects."));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the projects.");
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  }, []);
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (nextOpen && !projectId) void loadProjects();
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
     const amount = Number(form.get("amount"));
     const targetProjectId = projectId ?? selectedProjectId;
-    if (!targetProjectId || !amount) return;
-    createInvoice({
-      projectId: targetProjectId,
-      kind,
-      label: String(form.get("label") || KIND_LABEL[kind]),
-      amountCents: Math.round(amount * 100),
-      dueDate: (form.get("dueDate") as string) || undefined,
-      sendImmediately: true,
-    });
-    setOpen(false);
-    e.currentTarget.reset();
+    if (!targetProjectId) {
+      setError("Select a project before creating the invoice.");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Enter a positive invoice amount.");
+      return;
+    }
+
+    setPending(true);
+    setError(null);
+    try {
+      const invoice = await fetchJson<Invoice>("/api/invoices", "We couldn't create this invoice.", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: targetProjectId,
+          type: kind,
+          amount,
+          currency: currency.toLowerCase(),
+          dueDate: String(form.get("dueDate") ?? "") || undefined,
+          description: String(form.get("label") || KIND_LABEL[kind]),
+        }),
+      });
+      onCreated?.(invoice);
+      formElement.reset();
+      setOpen(false);
+      toast.success("Invoice created", { description: "The invoice is ready for the client." });
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "We couldn't create this invoice.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button size="sm" />}>
         <Plus />
         New invoice
@@ -65,7 +116,7 @@ export function CreateInvoiceDialog({ projectId }: { projectId?: string }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New invoice</DialogTitle>
-          <DialogDescription>Sends immediately to the client.</DialogDescription>
+          <DialogDescription>Creates a draft invoice for the client.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {!projectId && (
@@ -76,11 +127,13 @@ export function CreateInvoiceDialog({ projectId }: { projectId?: string }) {
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
+                    {isLoadingProjects ? (
+                      <SelectItem value="loading" disabled>Loading projects…</SelectItem>
+                    ) : projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -114,8 +167,15 @@ export function CreateInvoiceDialog({ projectId }: { projectId?: string }) {
               <Input id="dueDate" name="dueDate" type="date" />
             </div>
           </div>
+          {error && (
+            <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
+              {error}
+            </p>
+          )}
           <DialogFooter>
-            <Button type="submit">Send invoice</Button>
+            <Button type="submit" disabled={pending || isLoadingProjects}>
+              {pending ? "Creating…" : "Create invoice"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
