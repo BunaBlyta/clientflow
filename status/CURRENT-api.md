@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — Stripe webhook idempotency tests
+Last updated: 2026-08-12 by Agent A — logout endpoint
 
 ## Completed
 
@@ -17,21 +17,22 @@ Last updated: 2026-08-12 by Agent A — Stripe webhook idempotency tests
   packages, current-user details, and staff invitation resend. Invoice
   notifications use `INVOICE_ISSUED` for DEPOSIT, FINAL, and CUSTOM invoices,
   and `EXTRA_CHARGE_CREATED` for EXTRA invoices.
-- Added route tests for the Stripe webhook. They prove successful checkout
-  payment, deposit-only project advancement, one success notification,
-  duplicate delivery safety, failed payment handling, paid-invoice failure
-  no-ops, and missing or invalid signature rejection.
+- Stripe webhook tests cover successful payments, deposit-only project
+  advancement, duplicate delivery safety, failed payments, paid-invoice
+  failure no-ops, and signature rejection.
+- Added `POST /api/auth/logout`. It always succeeds, clears the shared session
+  cookie immediately, and remains safe to call when no session exists.
 
 ## Verification
 
-- `npm run verify` passed typecheck, lint, and all 65 tests. Its normal
+- `npm run verify` passed typecheck, lint, and all 66 tests. Its normal
   Turbopack build hit the documented sandbox-only port-binding restriction
   while processing the other lane's `app/globals.css`.
-- `npx next build --webpack` passed and generated all 28 routes, including the
-  Stripe webhook.
+- `npx next build --webpack` passed and generated all 29 routes, including
+  `POST /api/auth/logout`.
 
 ## Handoff
 
 The API and database work is committed and pushed in small changes. Buna's
-remaining work is live Neon readback, frontend wiring, and final end-to-end
-testing. No schema migration was needed for the webhook tests.
+remaining work is frontend wiring, live Neon readback, and final end-to-end
+testing. No schema migration was needed for logout.
