@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { currentStaffUser } from "@/lib/mock-data";
 import { fetchJson } from "@/lib/fetch-json";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -21,8 +20,18 @@ import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { Notification } from "@/lib/types";
 
+type CurrentUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "STAFF";
+};
+
 export function Topbar() {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [userError, setUserError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +83,44 @@ export function Topbar() {
   }, [loadNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const loadCurrentUser = useCallback(async (signal?: AbortSignal) => {
+    setIsLoadingUser(true);
+    setUserError(null);
+
+    try {
+      const user = await fetchJson<CurrentUser>(
+        "/api/auth/me",
+        "We couldn't load your account.",
+        signal,
+      );
+
+      if (
+        !user ||
+        typeof user.id !== "string" ||
+        typeof user.name !== "string" ||
+        typeof user.email !== "string" ||
+        user.role !== "STAFF"
+      ) {
+        throw new Error("The server returned an unexpected account response.");
+      }
+
+      if (!signal?.aborted) setCurrentUser(user);
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setUserError(caughtError instanceof Error ? caughtError.message : "We couldn't load your account.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoadingUser(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadCurrentUser(controller.signal));
+    return () => controller.abort();
+  }, [loadCurrentUser]);
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-end gap-2 border-b border-border px-6">
@@ -153,15 +200,28 @@ export function Topbar() {
         >
           <Avatar className="size-6">
             <AvatarFallback className="text-[11px]">
-              {initials(currentStaffUser.name)}
+              {isLoadingUser ? <LoaderCircle className="size-3 animate-spin" /> : initials(currentUser?.name ?? "?")}
             </AvatarFallback>
           </Avatar>
-          <span className="text-[13px]">{currentStaffUser.name}</span>
+          <span className="text-[13px]">
+            {isLoadingUser ? "Loading…" : currentUser?.name ?? "Account unavailable"}
+          </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <p className="px-2 py-1.5 text-[12px] font-normal text-muted-foreground">
-            {currentStaffUser.email}
-          </p>
+          {userError ? (
+            <>
+              <p role="alert" className="px-2 py-1.5 text-[12px] font-normal text-status-danger">
+                {userError}
+              </p>
+              <DropdownMenuItem onClick={() => void loadCurrentUser()}>
+                Try again
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <p className="px-2 py-1.5 text-[12px] font-normal text-muted-foreground">
+              {isLoadingUser ? "Loading account…" : currentUser?.email ?? "Account unavailable"}
+            </p>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
             <Settings className="size-4" />

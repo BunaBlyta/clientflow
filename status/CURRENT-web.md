@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 by Codex — live team settings and invite onboarding
+Last updated: 2026-08-13 by Codex — live topbar identity
 
 ## What changed
 
@@ -22,6 +22,9 @@ Last updated: 2026-08-13 by Codex — live team settings and invite onboarding
 - The dashboard topbar’s “Log out” action now calls `POST /api/auth/logout` with
   the session cookie, shows a pending state, and redirects to `/login` with a
   router refresh even if the request fails so the user is not left in the menu.
+- The topbar identity now loads from `GET /api/auth/me` with an account loading
+  state, an inline retry path on failure, and the same notification and logout
+  behavior as before.
 - The custom web app contact section is intentionally disabled per the deferred
   SPEC decision. It keeps the existing copy and links prospects to
   `buna@tetbit.studio` instead of accepting a submission that the app cannot
@@ -76,6 +79,11 @@ Last updated: 2026-08-13 by Codex — live team settings and invite onboarding
   run because no browser connection was available in this session.
 - The AI insight task also touched the API lane’s `app/api/analytics/insight/route.ts`
   explicitly requested by Buna; no Prisma or mobile files were changed.
+- For this follow-up, `npm run test` passed all 90 tests, `npm run typecheck`
+  passed, and `npm run lint` passed. No UI test was added because the current
+  Vitest setup has no React DOM testing dependencies. The normal Turbopack build
+  hit the known sandbox port-binding restriction; the webpack build passed and
+  generated `/accept-invite` and the dashboard routes.
 - `npm run verify` passed typecheck, lint, and all 87 Vitest tests. The required
   Turbopack build hit the sandbox-only port-binding restriction; `npx next build
   --webpack` passed and included `/accept-invite`, `/api/staff`, and the staff resend
@@ -86,8 +94,8 @@ Last updated: 2026-08-13 by Codex — live team settings and invite onboarding
 - The topbar notification mark-read controls remain a separate follow-up; this task
   wires the notifications page requested here.
 - Settings business profile remains local UI only; no API contract exists for it.
-- The topbar still uses the seeded `currentStaffUser`; the Team tab now uses the
-  signed-in identity from `GET /api/auth/me`. Business profile remains local UI only.
+- The topbar and Team tab now use the signed-in identity from `GET /api/auth/me`.
+  Business profile remains local UI only.
 - The logout request depends on the API lane’s shipped `POST /api/auth/logout`
   route; the UI also navigates away if the request returns an error or cannot
   complete.
