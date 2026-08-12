@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — write-endpoints brief complete
+Last updated: 2026-08-12 by Agent A — write-endpoints brief complete and pushed
 
 ## Completed
 
@@ -30,8 +30,9 @@ Last updated: 2026-08-12 by Agent A — write-endpoints brief complete
 ## Verification
 
 - `npm run verify`: typecheck, lint, and all 30 tests passed. The normal build
+- `npm run verify`: typecheck, lint, and all 53 tests passed. The normal build
   hit the documented sandbox-only Turbopack port restriction.
-- `npx next build --webpack` passed and generated all 27 routes.
+- `npx next build --webpack` passed and generated all 28 routes.
 - The approval tests use a shared transaction mock and verify the exact project
   and invoice payloads, including the 50% amount and invoice state transition.
   A fresh Neon approval and subsequent client `GET` readback still need to be
@@ -67,7 +68,7 @@ Last updated: 2026-08-12 by Agent A — write-endpoints brief complete
 
 ## Handoff
 
-The Flow A repair tasks and all six write-endpoint tasks are implemented in
-separate commits. Endpoint 6 is a thin wrapper over the existing verification
-email path and is ready to commit/push separately. After that, Buna's remaining
-work is live Neon readback and frontend wiring; no schema migration was needed.
+The Flow A repair tasks and all six write-endpoint tasks are implemented,
+committed, and pushed separately. Endpoint 6 is a thin wrapper over the existing
+verification email path. Buna's remaining work is live Neon readback and
+frontend wiring; no schema migration was needed.
