@@ -6,6 +6,17 @@ Living document. Update it in the same commit/session that changes the structure
 
 Two frontends, one backend, one database. The Next.js web app serves the public marketing site and the staff dashboard, and also hosts the API routes that both the web app and the separate Expo mobile app call — the mobile app has no direct database access, it only talks to the API. Neon Postgres via Prisma underneath everything. Stripe (sandbox) handles payments, with the single rule that money-related state only ever changes on a confirmed, signature-verified webhook, never on a client-side click. Resend sends transactional email (verification codes, invites, approval notifications). See `AGENTS.md` section 4 for the full entity list.
 
+### Analytics insight
+
+`POST /api/analytics/insight` is staff-only and takes no request body. It reads
+active packages, projects, and invoices on the server, computes revenue over
+time, revenue by package, turnaround by package, project stages, and the
+outstanding invoice total with `lib/analytics.ts`, then sends those numbers to
+Gemini. A successful response is `{ "insight": string }`; missing configuration,
+upstream failures, or malformed model responses return a JSON error so the
+dashboard can keep its inline failure state. Gemini was chosen for the free tier
+and lower per-token cost of this low-volume, read-only summary.
+
 ## Key decisions log
 
 | Decision | Why | Date |

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { averageTurnaroundByPackage, outstandingInvoicesTotal, revenueByPackage, revenueOverTime } from '@/lib/analytics';
+import {
+  averageTurnaroundByPackage,
+  outstandingInvoicesTotal,
+  projectsByStage,
+  revenueByPackage,
+  revenueOverTime,
+} from '@/lib/analytics';
 import type { Invoice, ManagedPackage, Project } from '@/lib/types';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
@@ -93,6 +99,7 @@ export async function POST(request: NextRequest) {
       revenueOverTime: revenueTrend.map(({ label, revenueCents }) => ({ label, revenueCents })),
       revenueByPackage: revenueByPkg.map(({ name, revenueCents }) => ({ name, revenueCents })),
       turnaroundByPackage: turnaroundByPkg.map(({ name, avgDays, count }) => ({ name, avgDays, count })),
+      projectsByStage: projectsByStage(projects),
       outstandingInvoicesCents: outstandingInvoicesTotal(invoices),
     };
 

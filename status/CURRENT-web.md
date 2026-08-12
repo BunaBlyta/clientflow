@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-12 by Codex — manual AI analytics insight
+Last updated: 2026-08-12 by Codex — Gemini access and insight grounding
 
 ## What changed
 
@@ -35,22 +35,31 @@ Last updated: 2026-08-12 by Codex — manual AI analytics insight
   staff-only `POST /api/analytics/insight`, which computes live dashboard numbers
   server-side and requests a short read-only Gemini summary. Missing keys and
   upstream failures appear as an inline error instead of breaking analytics.
+- The insight prompt now includes project counts by stage, so its pipeline summary
+  is grounded in data the dashboard already computes. The route has focused tests
+  for auth, missing configuration, upstream/malformed responses, success parsing,
+  and prompt grounding.
 
 ## Verification
 
-- `npm run verify`: typecheck passed, lint passed, and all 67 Vitest tests passed.
+- `npm run verify`: typecheck passed, lint passed, and all 73 Vitest tests passed.
   The required Turbopack build was blocked by the sandbox process/port
   restriction.
 - `npx next build --webpack`: passed; all 30 routes compiled, including the
   logout endpoint, the insight endpoint, and the marketing page.
 - The insight change passed the repository typecheck and lint steps. An
-  unauthenticated POST returned 401 as expected. The configured Gemini endpoint
-  currently returns 404 because `gemini-2.5-flash-lite` is unavailable to new
-  users, and the UI displays the route’s graceful error state.
+  unauthenticated POST returned 401 as expected. Direct curl tests against the
+  configured key returned 404 for `gemini-3.1-flash-lite`,
+  `gemini-3.5-flash-lite`, `gemini-2.5-flash`, and additional catalog-listed
+  models; Google’s response says these models are unavailable to new users.
+  No working generation model was available to update the endpoint, so the UI
+  continues to display its graceful error state until Buna supplies a key with
+  generation access.
 - Signed-in local API verification confirmed `pkg-landing-page`, `proj-2`, and
   paid invoice `inv-4` for 125000 cents. The rendered browser check could not
   run because no browser connection was available in this session.
-- No API, Prisma, mobile, or other lane files were changed.
+- The AI insight task also touched the API lane’s `app/api/analytics/insight/route.ts`
+  explicitly requested by Buna; no Prisma or mobile files were changed.
 
 ## Handoff notes
 
@@ -69,9 +78,10 @@ Last updated: 2026-08-12 by Codex — manual AI analytics insight
   contact submission until a real delivery path and staff UI exist.
 - Package analytics must continue to consume `ManagedPackage` records from the
   API rather than the public marketing fixture package list.
-- The Gemini model URL is intentionally the one specified in the task. If Buna
-  replaces it after checking Google AI Studio, update the API route contract and
-  re-test the manual button.
+- The Gemini model URL remains the requested one because every tested fallback
+  returned 404 for this key. When Buna has a key with generation access, update
+  `GEMINI_ENDPOINT` to the first model that returns 200 and click the button to
+  verify real text.
 
 ## Hard rule
 
