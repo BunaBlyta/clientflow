@@ -195,6 +195,11 @@ missing package returns 404. Updating a package only updates that package row:
 existing projects and invoices retain their historical values and are not
 retroactively repriced.
 
+`GET /api/auth/me` requires a valid session and returns the signed-in user's
+`id`, `name`, `email`, and `role`. Client sessions also receive `clientId`, the
+linked `Client` record ID; staff responses omit that field. An invalid or
+missing session returns 401 with an empty response body.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:

@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — package management endpoints complete
+Last updated: 2026-08-12 by Agent A — current-user endpoint complete
 
 ## Completed
 
@@ -57,9 +57,12 @@ Last updated: 2026-08-12 by Agent A — package management endpoints complete
   validate major-unit prices, normalize currencies and slugs, return 409 for
   duplicate slugs, and use `isActive: false` for deactivation. Package updates
   touch no project or invoice rows, so historical amounts remain unchanged.
+- Added authenticated `GET /api/auth/me`. It returns the current user's id,
+  name, email, and role, plus `clientId` for client sessions. Invalid sessions
+  receive a bodyless 401 response.
 
 ## Handoff
 
-The Flow A repair tasks and endpoints 1–3 are committed and pushed separately.
-Endpoint 4 is implemented and ready to commit/push separately. Endpoint 5 is
-next: the small authenticated current-user response.
+The Flow A repair tasks and endpoints 1–4 are committed and pushed separately.
+Endpoint 5 is implemented and ready to commit/push separately. Endpoint 6 is
+next: assess whether invitation resend is a safe thin wrapper before Friday.
