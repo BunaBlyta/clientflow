@@ -4,6 +4,10 @@ import { prisma } from '@/app/api/_lib/prisma';
 
 export const runtime = 'nodejs';
 
+function invalidRequest(message: string) {
+  return NextResponse.json({ error: message }, { status: 400 });
+}
+
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser(request);
   if (!user) {
@@ -42,3 +46,104 @@ export async function GET(request: NextRequest) {
   );
 }
 
+export async function POST(request: NextRequest) {
+  const user = await getAuthenticatedUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return invalidRequest('Request body must be valid JSON');
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return invalidRequest('Request body must be an object');
+  }
+
+  const values = body as Record<string, unknown>;
+  const projectId = typeof values.projectId === 'string' ? values.projectId.trim() : '';
+  const noteBody = typeof values.body === 'string' ? values.body.trim() : '';
+
+  if (!projectId) return invalidRequest('Project is required');
+  if (!noteBody || noteBody.length > 5_000) {
+    return invalidRequest('Note body is required and must be 5,000 characters or fewer');
+  }
+
+  const createdNote = await prisma.$transaction(async (transaction) => {
+    const project = await transaction.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        clientId: true,
+        client: { select: { userId: true } },
+      },
+    });
+
+    if (!project || (user.role === 'CLIENT' && project.client?.userId !== user.id)) {
+      return null;
+    }
+
+    const note = await transaction.note.create({
+      data: {
+        projectId: project.id,
+        authorId: user.id,
+        content: noteBody,
+        isSystem: false,
+      },
+      select: {
+        id: true,
+        projectId: true,
+        authorId: true,
+        content: true,
+        createdAt: true,
+        author: { select: { name: true, role: true } },
+      },
+    });
+
+    if (user.role === 'CLIENT') {
+      const staffUsers = await transaction.user.findMany({
+        where: { role: 'STAFF' },
+        select: { id: true },
+      });
+
+      for (const staffUser of staffUsers) {
+        await transaction.notification.create({
+          data: {
+            userId: staffUser.id,
+            type: 'NEW_NOTE',
+            title: 'New note from a client',
+            message: noteBody,
+          },
+        });
+      }
+    } else if (project.client) {
+      await transaction.notification.create({
+        data: {
+          userId: project.client.userId,
+          type: 'NEW_NOTE',
+          title: 'New note from the studio',
+          message: noteBody,
+        },
+      });
+    }
+
+    return note;
+  });
+
+  if (!createdNote) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    id: createdNote.id,
+    projectId: createdNote.projectId,
+    authorId: createdNote.authorId,
+    authorName: createdNote.author?.name ?? 'System',
+    authorRole: createdNote.author?.role ?? 'SYSTEM',
+    body: createdNote.content,
+    createdAt: createdNote.createdAt.toISOString(),
+  }, { status: 201 });
+}

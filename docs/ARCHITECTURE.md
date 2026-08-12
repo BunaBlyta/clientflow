@@ -138,6 +138,30 @@ The successful response is 201 with the exact same serialized invoice shape as
 `EXTRA_CHARGE_CREATED` notification for the project client in the same database
 transaction, so the client is told when a new charge appears.
 
+`POST /api/notes` accepts `{ "projectId": string, "body": string }` for both
+staff and client sessions and returns 201 with the same shape as a note from
+`GET /api/notes`:
+
+```json
+{
+  "id": "note-14",
+  "projectId": "proj-1",
+  "authorId": "user-client-1",
+  "authorName": "Jordan Ellis",
+  "authorRole": "CLIENT",
+  "body": "Could we add a testimonials section?",
+  "createdAt": "2026-08-12T10:30:00.000Z"
+}
+```
+
+The server takes `authorId` from the session and always writes `isSystem: false`;
+body-supplied author or system fields are ignored. Clients can only post to a
+project whose client belongs to their session; an unknown or other client's
+project is returned as 404. A client note creates `NEW_NOTE` notifications for
+staff users, while a staff note creates one for the project client. The author
+is never notified about their own note, and notes have no update or delete
+endpoint.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:

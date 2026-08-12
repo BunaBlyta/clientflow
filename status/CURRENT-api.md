@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — invoice creation endpoint complete
+Last updated: 2026-08-12 by Agent A — notes endpoint complete
 
 ## Completed
 
@@ -46,9 +46,13 @@ Last updated: 2026-08-12 by Agent A — invoice creation endpoint complete
   the existing invoice serializer shape, and notifies the client in the same
   transaction. Caller-supplied client IDs are ignored and paid/payment-pending
   starting states are rejected.
+- Added `POST /api/notes` for both roles. It accepts and returns `body`, derives
+  the author from the session, always writes a non-system note, blocks clients
+  from another client's project with a non-disclosing 404, and notifies only the
+  opposite side of the conversation.
 
 ## Handoff
 
-The Flow A repair tasks are committed and pushed. Endpoint 1 of the write-endpoint
-brief is implemented and ready to commit/push separately. Endpoint 2 is next:
-the notes write route with cross-client ownership protection.
+The Flow A repair tasks and endpoint 1 are committed and pushed separately.
+Endpoint 2 is implemented and ready to commit/push separately. Endpoint 3 is
+next: idempotent mark-read for a user's own notification.
