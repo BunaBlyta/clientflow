@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { sendRejectionEmail } from '@/app/api/_lib/resend';
 import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
 import { transitionInvoiceStatus } from '@/prisma/invoice-state';
 
@@ -140,7 +141,25 @@ export async function PATCH(
       return updatedRequest;
     });
 
-    return NextResponse.json(serializeProjectRequest(rejectedRequest));
+    let emailSent = true;
+    try {
+      await sendRejectionEmail({
+        email: projectRequest.email,
+        name: projectRequest.name,
+      });
+    } catch (error) {
+      emailSent = false;
+      console.error('Failed to send rejection email after request rejection', {
+        requestId: id,
+        email: projectRequest.email,
+        error,
+      });
+    }
+
+    return NextResponse.json({
+      ...serializeProjectRequest(rejectedRequest),
+      emailSent,
+    });
   }
 
   const approval = await prisma.$transaction(async (transaction) => {

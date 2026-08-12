@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   invoiceCreate: vi.fn(),
   clientFindUnique: vi.fn(),
   notificationCreate: vi.fn(),
+  sendRejectionEmail: vi.fn(),
   issueVerificationEmail: vi.fn(),
 }));
 
@@ -34,6 +35,10 @@ vi.mock('@/app/api/_lib/prisma', () => ({
 
 vi.mock('@/app/api/_lib/verification-email', () => ({
   issueVerificationEmail: mocks.issueVerificationEmail,
+}));
+
+vi.mock('@/app/api/_lib/resend', () => ({
+  sendRejectionEmail: mocks.sendRejectionEmail,
 }));
 
 import { PATCH } from './route';
@@ -115,23 +120,54 @@ describe('PATCH /api/requests/:id', () => {
     expect(mocks.invoiceCreate).not.toHaveBeenCalled();
   });
 
-  it('rejects without creating a user, client, project, or sending email', async () => {
+  it('rejects and emails a first-time prospect without creating client data', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(pendingRequest);
     mocks.transactionRequestUpdate.mockResolvedValue({ ...pendingRequest, status: 'REJECTED' });
+    mocks.sendRejectionEmail.mockResolvedValue(undefined);
     setupTransaction();
 
     const response = await PATCH(request('REJECTED'), params());
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ id: 'req-1', status: 'REJECTED' });
+    expect(await response.json()).toMatchObject({ id: 'req-1', status: 'REJECTED', emailSent: true });
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
     expect(mocks.userCreate).not.toHaveBeenCalled();
     expect(mocks.clientCreate).not.toHaveBeenCalled();
     expect(mocks.projectCreate).not.toHaveBeenCalled();
     expect(mocks.invoiceCreate).not.toHaveBeenCalled();
     expect(mocks.notificationCreate).not.toHaveBeenCalled();
-    expect(mocks.issueVerificationEmail).not.toHaveBeenCalled();
+    expect(mocks.sendRejectionEmail).toHaveBeenCalledWith({
+      email: pendingRequest.email,
+      name: pendingRequest.name,
+    });
+  });
+
+  it('keeps the linked-client rejection notification while emailing the prospect', async () => {
+    const linkedRequest = { ...pendingRequest, clientId: 'client-1' };
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(linkedRequest);
+    mocks.transactionRequestUpdate.mockResolvedValue({ ...linkedRequest, status: 'REJECTED' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
+    mocks.sendRejectionEmail.mockResolvedValue(undefined);
+    setupTransaction();
+
+    const response = await PATCH(request('REJECTED'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: 'REJECTED', emailSent: true });
+    expect(mocks.sendRejectionEmail).toHaveBeenCalledWith({
+      email: linkedRequest.email,
+      name: linkedRequest.name,
+    });
+    expect(mocks.notificationCreate).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        type: 'REQUEST_REJECTED',
+        title: 'Project request update',
+        message: 'Your project request was not approved at this time.',
+      },
+    });
   });
 
   it('approves by creating exactly one user and one client in one transaction', async () => {
