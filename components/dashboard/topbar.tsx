@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, LoaderCircle, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,9 +22,31 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import type { Notification } from "@/lib/types";
 
 export function Topbar() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Logout request failed.");
+    } catch {
+      // Leave the dashboard immediately even if the request cannot complete.
+      // The next request will let middleware re-evaluate the session state.
+    } finally {
+      router.replace("/login");
+      router.refresh();
+    }
+  }
 
   const loadNotifications = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -144,9 +167,13 @@ export function Topbar() {
             <Settings className="size-4" />
             Settings
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/" />}>
-            <LogOut className="size-4" />
-            Log out
+          <DropdownMenuItem onClick={() => void handleLogout()} disabled={isLoggingOut}>
+            {isLoggingOut ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <LogOut className="size-4" />
+            )}
+            {isLoggingOut ? "Logging out…" : "Log out"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-12 by Codex — notification read actions
+Last updated: 2026-08-12 by Codex — dashboard logout wiring
 
 ## What changed
 
@@ -19,14 +19,18 @@ Last updated: 2026-08-12 by Codex — notification read actions
   the same PATCH request to every unread notification with `Promise.all`, updates
   only confirmed server responses, and refreshes from the server if a bulk request
   partially fails.
+- The dashboard topbar’s “Log out” action now calls `POST /api/auth/logout` with
+  the session cookie, shows a pending state, and redirects to `/login` with a
+  router refresh even if the request fails so the user is not left in the menu.
 
 ## Verification
 
-- `npm run verify`: typecheck passed, lint passed, and all 65 Vitest tests passed.
+- `npm run verify`: typecheck passed, lint passed, and all 66 Vitest tests passed.
   The required Turbopack build was blocked by the sandbox process/port
   restriction.
-- `npx next build --webpack`: passed; all 28 routes compiled.
-- Focused typecheck/lint checks passed after the notification change.
+- `npx next build --webpack`: passed; all 29 routes compiled, including the
+  logout endpoint.
+- The logout change passed the repository typecheck and lint steps.
 - No API, Prisma, mobile, or other lane files were changed.
 
 ## Handoff notes
@@ -38,6 +42,9 @@ Last updated: 2026-08-12 by Codex — notification read actions
 - Settings business profile remains local UI only; no API contract exists for it.
 - The topbar and settings profile still use the seeded `currentStaffUser`; the
   shipped `GET /api/auth/me` endpoint can replace that identity later.
+- The logout request depends on the API lane’s shipped `POST /api/auth/logout`
+  route; the UI also navigates away if the request returns an error or cannot
+  complete.
 
 ## Hard rule
 
