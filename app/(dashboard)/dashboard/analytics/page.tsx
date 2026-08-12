@@ -21,13 +21,14 @@ import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
 import { TurnaroundChart } from "@/components/dashboard/charts/turnaround-chart";
 import { Button } from "@/components/ui/button";
-import type { Invoice, Project } from "@/lib/types";
+import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
 export default function AnalyticsPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,18 +37,20 @@ export default function AnalyticsPage() {
     setError(null);
 
     try {
-      const [invoiceData, projectData] = await Promise.all([
+      const [invoiceData, projectData, packageData] = await Promise.all([
         fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
         fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
+        fetchJson<ManagedPackage[]>("/api/packages", "We couldn't load the packages.", signal),
       ]);
 
-      if (!Array.isArray(invoiceData) || !Array.isArray(projectData)) {
+      if (!Array.isArray(invoiceData) || !Array.isArray(projectData) || !Array.isArray(packageData)) {
         throw new Error("The server returned an unexpected analytics response.");
       }
 
       if (!signal?.aborted) {
         setInvoices(invoiceData);
         setProjects(projectData);
+        setPackages(packageData);
       }
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
@@ -90,8 +93,8 @@ export default function AnalyticsPage() {
   }
 
   const revenueTrend = revenueOverTime(invoices, 12);
-  const revenueByPkg = revenueByPackage(invoices, projects);
-  const turnaroundByPkg = averageTurnaroundByPackage(projects).filter(
+  const revenueByPkg = revenueByPackage(invoices, projects, packages);
+  const turnaroundByPkg = averageTurnaroundByPackage(projects, packages).filter(
     (t): t is typeof t & { avgDays: number } => t.avgDays !== null
   );
   const overallTurnaround = overallAverageTurnaroundDays(projects);

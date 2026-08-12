@@ -19,13 +19,14 @@ import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
-import type { Invoice, Project, ProjectRequest } from "@/lib/types";
+import type { Invoice, ManagedPackage, Project, ProjectRequest } from "@/lib/types";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
 export default function OverviewPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +36,19 @@ export default function OverviewPage() {
     setError(null);
 
     try {
-      const [invoiceData, projectData, requestData] = await Promise.all([
+      const [invoiceData, projectData, requestData, packageData] = await Promise.all([
         fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
         fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
         fetchJson<ProjectRequest[]>("/api/requests", "We couldn't load project requests.", signal),
+        fetchJson<ManagedPackage[]>("/api/packages", "We couldn't load the packages.", signal),
       ]);
 
-      if (!Array.isArray(invoiceData) || !Array.isArray(projectData) || !Array.isArray(requestData)) {
+      if (
+        !Array.isArray(invoiceData) ||
+        !Array.isArray(projectData) ||
+        !Array.isArray(requestData) ||
+        !Array.isArray(packageData)
+      ) {
         throw new Error("The server returned an unexpected overview response.");
       }
 
@@ -49,6 +56,7 @@ export default function OverviewPage() {
         setInvoices(invoiceData);
         setProjects(projectData);
         setProjectRequests(requestData);
+        setPackages(packageData);
       }
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
@@ -91,8 +99,8 @@ export default function OverviewPage() {
   }
 
   const revenueTrend = revenueOverTime(invoices);
-  const revenueByPkg = revenueByPackage(invoices, projects);
-  const turnaround = averageTurnaroundByPackage(projects);
+  const revenueByPkg = revenueByPackage(invoices, projects, packages);
+  const turnaround = averageTurnaroundByPackage(projects, packages);
   const pendingRequests = projectRequests.filter((r) => r.status === "PENDING");
 
   return (

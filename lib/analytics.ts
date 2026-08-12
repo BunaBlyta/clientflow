@@ -1,5 +1,4 @@
-import type { Invoice, Project } from "@/lib/types";
-import { packages } from "@/lib/mock-data";
+import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 
 const OUTSTANDING_STATUSES: Invoice["status"][] = ["SENT", "PAYMENT_PENDING", "FAILED"];
 
@@ -25,7 +24,11 @@ export function revenueOverTime(invoices: Invoice[], months = 6) {
   return buckets;
 }
 
-export function revenueByPackage(invoices: Invoice[], projects: Project[]) {
+export function revenueByPackage(
+  invoices: Invoice[],
+  projects: Project[],
+  packages: ManagedPackage[],
+) {
   const projectPackage = new Map(projects.map((p) => [p.id, p.packageId]));
   return packages.map((pkg) => {
     const revenueCents = invoices
@@ -53,9 +56,13 @@ export function overdueInvoicesTotal(invoices: Invoice[]) {
     .reduce((sum, i) => sum + i.amountCents, 0);
 }
 
-export function averageTurnaroundByPackage(projects: Project[]) {
+export function averageTurnaroundByPackage(projects: Project[], packages: ManagedPackage[]) {
   return packages
-    .filter((pkg) => !pkg.isCustom || projects.some((p) => p.packageId === pkg.id && p.status === "LAUNCHED"))
+    .filter(
+      (pkg) =>
+        pkg.slug !== "web-app-build" ||
+        projects.some((p) => p.packageId === pkg.id && p.status === "LAUNCHED"),
+    )
     .map((pkg) => {
       const launched = projects.filter((p) => p.packageId === pkg.id && p.status === "LAUNCHED");
       const avgDays =
