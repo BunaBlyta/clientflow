@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Mail } from "lucide-react";
+import { LoaderCircle, Mail, RefreshCw } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { currentStaffUser } from "@/lib/mock-data";
-import { formatCurrency, initials } from "@/lib/format";
+import { formatMajorCurrency, initials } from "@/lib/format";
 import { EditPackageDialog } from "@/components/dashboard/edit-package-dialog";
+import { CreatePackageDialog } from "@/components/dashboard/create-package-dialog";
+import { fetchJson } from "@/lib/fetch-json";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ManagedPackage } from "@/lib/types";
 
 export default function SettingsPage() {
   return (
@@ -44,13 +47,66 @@ export default function SettingsPage() {
 }
 
 function PackagesSection() {
-  const packages = useAppStore((s) => s.packages);
+  const [packages, setPackages] = useState<ManagedPackage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadPackages = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const packageData = await fetchJson<ManagedPackage[]>("/api/packages", "We couldn't load the packages.", signal);
+      if (!Array.isArray(packageData)) throw new Error("The server returned an unexpected package response.");
+      if (!signal?.aborted) setPackages(packageData);
+    } catch (caughtError) {
+      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+      if (!signal?.aborted) {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the packages.");
+      }
+    } finally {
+      if (!signal?.aborted) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadPackages(controller.signal));
+    return () => controller.abort();
+  }, [loadPackages]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-40 items-center justify-center border border-border">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <LoaderCircle className="size-4 animate-spin text-brand-accent" />
+          Loading packages…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-40 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
+        <p className="text-[13px] font-medium text-status-danger">Packages couldn&apos;t load</p>
+        <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadPackages()}>
+          <RefreshCw />
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[13px] text-muted-foreground">
-        The single source of truth for the public pricing page and internal project creation.
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[13px] text-muted-foreground">
+          The single source of truth for the public pricing page and internal project creation.
+        </p>
+        <CreatePackageDialog onCreated={(pkg) => setPackages((current) => [...current, pkg].sort((a, b) => a.sortOrder - b.sortOrder))} />
+      </div>
       <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
         {packages.map((pkg) => (
           <div key={pkg.id} className="flex items-start justify-between gap-4 p-5">
@@ -58,13 +114,24 @@ function PackagesSection() {
               <p className="text-[14px] font-medium">{pkg.name}</p>
               <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{pkg.description}</p>
               <p className="mt-2 text-[13px]">
-                {pkg.isCustom ? "Custom pricing" : formatCurrency(pkg.priceCents!)} ·{" "}
-                {pkg.turnaroundDays}-day turnaround · {pkg.features.length} features
+                {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? "Duration to be scoped"}
               </p>
             </div>
-            <EditPackageDialog pkg={pkg} />
+            <EditPackageDialog
+              pkg={pkg}
+              onUpdated={(updatedPackage) =>
+                setPackages((current) =>
+                  current.map((currentPackage) =>
+                    currentPackage.id === updatedPackage.id ? updatedPackage : currentPackage,
+                  ),
+                )
+              }
+            />
           </div>
         ))}
+        {packages.length === 0 && (
+          <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">No active packages yet.</p>
+        )}
       </div>
     </div>
   );

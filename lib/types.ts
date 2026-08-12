@@ -73,6 +73,17 @@ export interface Package {
   turnaroundDays: number;
 }
 
+export interface ManagedPackage {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  currency: string;
+  estimatedDuration: string | null;
+  sortOrder: number;
+}
+
 export interface ProjectRequest {
   id: string;
   packageId: string;
