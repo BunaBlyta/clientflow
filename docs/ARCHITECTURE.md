@@ -180,11 +180,28 @@ user and client record when they do not already exist, links an existing user
 or client by email when present, and marks the request approved. Rejection only
 marks the request rejected and creates no user, client, or project.
 
+Approval also atomically creates the first project and deposit invoice for a
+standard-package request. The project name is `<company name or prospect name>
+— <package name>` and its initial status is `PENDING`, which is the exact status
+the Stripe webhook uses to unlock the next project stage. The invoice is a
+`DEPOSIT` for half the package price, rounded to two decimal places, uses the
+package currency, and is created through the `DRAFT` → `SENT` invoice
+transition with an issue date so the client can pay immediately. The remaining
+half is deliberately left for a later staff-created final invoice. Requests
+without a package are rejected explicitly rather than producing a zero-value
+invoice.
+
 After an approval transaction commits, the verification code is generated and
 the email is sent in a separate operation. The approval remains successful if
 Resend fails; the response then contains `emailSent: false`, and the failure is
 logged so staff can resend through the verification endpoint. A successful
 approval returns `{ request, emailSent: true }`.
+
+`POST /api/auth/verification/verify` checks `{ "email": string, "code":
+string }` and returns `{ "verified": true, "user": ... }` without changing
+the account or consuming the code. Verification codes remain valid for 30
+minutes. `POST /api/auth/set-password` re-checks and consumes the same code
+while setting the password, activating the account, and creating the session.
 
 `POST /api/auth/set-password` accepts `{ "email": string, "code": string,
 "password": string }`. Passwords must be at least eight characters. The server

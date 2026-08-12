@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
+import { transitionInvoiceStatus } from '@/prisma/invoice-state';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +17,19 @@ const requestSelect = {
   clientId: true,
   createdAt: true,
   reviewedAt: true,
+  package: {
+    select: {
+      name: true,
+      price: true,
+      currency: true,
+    },
+  },
 } as const;
+
+function calculateDepositAmount(price: { toString(): string }): string {
+  const priceInCents = Math.round(Number(price.toString()) * 100);
+  return (Math.round(priceInCents / 2) / 100).toFixed(2);
+}
 
 function serializeProjectRequest(projectRequest: {
   id: string;
@@ -91,6 +104,13 @@ export async function PATCH(
     );
   }
 
+  if (!projectRequest.package) {
+    return NextResponse.json(
+      { error: 'A package is required before approving this request' },
+      { status: 400 },
+    );
+  }
+
   if (status === 'REJECTED') {
     const rejectedRequest = await prisma.projectRequest.update({
       where: { id },
@@ -110,6 +130,10 @@ export async function PATCH(
     if (!pendingRequest) throw new Error('Project request not found');
     if (pendingRequest.status !== 'PENDING') {
       throw new Error(`Project request cannot transition from ${pendingRequest.status} to APPROVED`);
+    }
+
+    if (!pendingRequest.package) {
+      throw new Error('A package is required before approving this request');
     }
 
     const existingUser = await transaction.user.findUnique({
@@ -145,6 +169,29 @@ export async function PATCH(
         ...(pendingRequest.companyName ? { companyName: pendingRequest.companyName } : {}),
       },
       select: { id: true },
+    });
+
+    const project = await transaction.project.create({
+      data: {
+        clientId: client.id,
+        packageId: pendingRequest.packageId,
+        name: `${pendingRequest.companyName ?? pendingRequest.name} — ${pendingRequest.package.name}`,
+        status: 'PENDING',
+      },
+      select: { id: true },
+    });
+
+    await transaction.invoice.create({
+      data: {
+        projectId: project.id,
+        clientId: client.id,
+        type: 'DEPOSIT',
+        description: `Deposit — ${pendingRequest.package.name}`,
+        amount: calculateDepositAmount(pendingRequest.package.price),
+        currency: pendingRequest.package.currency,
+        status: transitionInvoiceStatus('DRAFT', 'SENT'),
+        issuedAt: new Date(),
+      },
     });
 
     const approvedRequest = await transaction.projectRequest.update({

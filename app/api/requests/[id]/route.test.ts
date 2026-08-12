@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   userCreate: vi.fn(),
   clientCreate: vi.fn(),
+  projectCreate: vi.fn(),
+  invoiceCreate: vi.fn(),
   issueVerificationEmail: vi.fn(),
 }));
 
@@ -45,6 +47,11 @@ const pendingRequest = {
   clientId: null,
   createdAt: new Date('2026-08-11T10:00:00.000Z'),
   reviewedAt: null,
+  package: {
+    name: 'Full Website',
+    price: '6500.00',
+    currency: 'usd',
+  },
 };
 
 function request(status: string) {
@@ -71,6 +78,8 @@ function setupTransaction() {
         create: mocks.userCreate,
       },
       client: { create: mocks.clientCreate },
+      project: { create: mocks.projectCreate },
+      invoice: { create: mocks.invoiceCreate },
     }),
   );
 }
@@ -97,6 +106,8 @@ describe('PATCH /api/requests/:id', () => {
     });
     expect(mocks.transaction).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.projectCreate).not.toHaveBeenCalled();
+    expect(mocks.invoiceCreate).not.toHaveBeenCalled();
   });
 
   it('rejects without creating a user, client, project, or sending email', async () => {
@@ -126,6 +137,8 @@ describe('PATCH /api/requests/:id', () => {
       client: null,
     });
     mocks.clientCreate.mockResolvedValue({ id: 'client-1' });
+    mocks.projectCreate.mockResolvedValue({ id: 'project-1' });
+    mocks.invoiceCreate.mockResolvedValue({ id: 'invoice-1' });
     mocks.transactionRequestUpdate.mockResolvedValue({
       ...pendingRequest,
       status: 'APPROVED',
@@ -145,6 +158,29 @@ describe('PATCH /api/requests/:id', () => {
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
     expect(mocks.userCreate).toHaveBeenCalledTimes(1);
     expect(mocks.clientCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.projectCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.invoiceCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.projectCreate).toHaveBeenCalledWith({
+      data: {
+        clientId: 'client-1',
+        packageId: 'pkg-1',
+        name: 'Alex Studio — Full Website',
+        status: 'PENDING',
+      },
+      select: { id: true },
+    });
+    expect(mocks.invoiceCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        projectId: 'project-1',
+        clientId: 'client-1',
+        type: 'DEPOSIT',
+        description: 'Deposit — Full Website',
+        amount: '3250.00',
+        currency: 'usd',
+        status: 'SENT',
+        issuedAt: expect.any(Date),
+      }),
+    });
     expect(mocks.transactionRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'req-1' },
       data: expect.objectContaining({ status: 'APPROVED', clientId: 'client-1' }),
@@ -167,6 +203,8 @@ describe('PATCH /api/requests/:id', () => {
       name: pendingRequest.name,
       client: { id: 'client-1' },
     });
+    mocks.projectCreate.mockResolvedValue({ id: 'project-1' });
+    mocks.invoiceCreate.mockResolvedValue({ id: 'invoice-1' });
     mocks.transactionRequestUpdate.mockResolvedValue({
       ...pendingRequest,
       status: 'APPROVED',
