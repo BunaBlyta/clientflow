@@ -159,6 +159,43 @@ async function main() {
     },
   });
 
+  const pendingClientUser = await prisma.user.upsert({
+    where: { id: 'user-client-4' },
+    update: {
+      email: 'casey@northwindstudio.com',
+      name: 'Casey Brooks',
+      role: 'CLIENT',
+      isActive: true,
+      emailVerifiedAt: date('2026-08-12T08:00:00.000Z'),
+    },
+    create: {
+      id: 'user-client-4',
+      email: 'casey@northwindstudio.com',
+      name: 'Casey Brooks',
+      passwordHash: passwordHash('northwind123'),
+      role: 'CLIENT',
+      isActive: true,
+      emailVerifiedAt: date('2026-08-12T08:00:00.000Z'),
+    },
+  });
+
+  const pendingClient = await prisma.client.upsert({
+    where: { id: 'client-4' },
+    update: {
+      userId: pendingClientUser.id,
+      name: 'Casey Brooks',
+      email: 'casey@northwindstudio.com',
+      companyName: 'Northwind Studio',
+    },
+    create: {
+      id: 'client-4',
+      userId: pendingClientUser.id,
+      name: 'Casey Brooks',
+      email: 'casey@northwindstudio.com',
+      companyName: 'Northwind Studio',
+    },
+  });
+
   const packages = [
     {
       id: 'pkg-landing-page',
@@ -241,6 +278,17 @@ async function main() {
       updatedAt: '2026-07-28T10:00:00.000Z',
       targetLaunchDate: '2026-10-15T00:00:00.000Z',
     },
+    {
+      id: 'proj-5',
+      clientId: pendingClient.id,
+      packageId: 'pkg-full-website',
+      name: 'Northwind Studio — Full Website',
+      status: 'PENDING' as const,
+      description: 'A new website awaiting deposit payment before discovery.',
+      createdAt: '2026-08-12T08:00:00.000Z',
+      updatedAt: '2026-08-12T08:00:00.000Z',
+      targetLaunchDate: '2026-10-30T00:00:00.000Z',
+    },
   ];
 
   for (const project of projects) {
@@ -256,6 +304,7 @@ async function main() {
     'proj-2': client.id,
     'proj-3': clientTwo.id,
     'proj-4': clientThree.id,
+    'proj-5': pendingClient.id,
   };
 
   const invoices = [
@@ -271,6 +320,7 @@ async function main() {
     ['inv-10', 'proj-4', 'EXTRA', 'Extra — Menu redesign add-on', '600.00', 'VOIDED', '2026-07-20T10:00:00.000Z', '2026-08-03T00:00:00.000Z', undefined],
     ['inv-11', 'proj-4', 'EXTRA', 'Extra — Menu redesign add-on (redraft)', '600.00', 'DRAFT', '2026-07-28T10:00:00.000Z', '2026-08-11T00:00:00.000Z', undefined],
     ['inv-12', 'proj-4', 'CUSTOM', 'Custom — Content strategy sprint', '900.00', 'SENT', '2026-08-04T10:00:00.000Z', '2026-08-08T00:00:00.000Z', undefined],
+    ['inv-13', 'proj-5', 'DEPOSIT', 'Deposit — Full Website', '3250.00', 'SENT', '2026-08-12T08:00:00.000Z', '2026-08-19T00:00:00.000Z', undefined],
   ] as const;
 
   for (const [id, projectId, type, description, amount, status, createdAt, dueDate, paidAt] of invoices) {
@@ -346,6 +396,26 @@ async function main() {
     });
   }
 
+  await prisma.notification.upsert({
+    where: { id: 'notif-8' },
+    update: {
+      userId: staff.id,
+      type: 'REQUEST_SUBMITTED',
+      title: 'New project request',
+      message: 'A new project request is waiting for review.',
+      readAt: null,
+      createdAt: date('2026-08-12T08:05:00.000Z'),
+    },
+    create: {
+      id: 'notif-8',
+      userId: staff.id,
+      type: 'REQUEST_SUBMITTED',
+      title: 'New project request',
+      message: 'A new project request is waiting for review.',
+      createdAt: date('2026-08-12T08:05:00.000Z'),
+    },
+  });
+
   const requests = [
     ['req-1', 'Dana Chen', 'dana@brightlaunch.io', 'Bright Launch', 'pkg-landing-page', 'PENDING', '2026-08-08T12:00:00.000Z', undefined],
     ['req-2', 'Marcus Webb', 'marcus@webbstudio.com', 'Webb Studio', 'pkg-full-website', 'APPROVED', '2026-08-01T09:00:00.000Z', '2026-08-03T15:00:00.000Z'],
@@ -360,7 +430,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${packages.length} packages, ${projects.length} projects, ${invoices.length} invoices, ${notes.length} notes, ${notifications.length} notifications, and ${requests.length} requests.`);
+  console.log(`Seeded ${packages.length} packages, ${projects.length} projects, ${invoices.length} invoices, ${notes.length} notes, ${notifications.length + 1} notifications, and ${requests.length} requests.`);
 }
 
 main()

@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — Flow A notification repair complete
+Last updated: 2026-08-12 by Agent A — Flow A repair tasks complete
 
 ## Completed
 
@@ -22,6 +22,10 @@ Last updated: 2026-08-12 by Agent A — Flow A notification repair complete
   invoice issuance to the client, and project stage changes to the client. A
   linked client also gets a rejection notification; a brand-new rejected
   prospect has no account to notify, so rejection does not create one.
+- Added a fourth seeded client with a `PENDING` Full Website project and a
+  `SENT` $3,250 deposit invoice, plus an unread `REQUEST_SUBMITTED` notification
+  for the seeded staff user. Existing seeded clients and their project counts
+  were left unchanged.
 
 ## Verification
 
@@ -34,8 +38,12 @@ Last updated: 2026-08-12 by Agent A — Flow A notification repair complete
   clicked through by Buna.
 - Notification tests cover all five events added in this task and verify that
   each notification is written in the same transaction as its state change.
+- Seed code typechecks as part of the repository gate. The shared Neon database
+  was not reseeded by this agent because the seed resets demo states; Buna should
+  run the existing seed command when ready to refresh demo data.
 
 ## Handoff
 
-Tasks 1 and 2 are committed and pushed separately. Task 3 is implemented and
-ready to commit and push. Task 4 seed coverage remains pending.
+Tasks 1, 2, and 3 are committed and pushed separately. Task 4 is implemented and
+ready to commit and push. After this commit, the API brief is complete; the next
+step is Buna's live Flow A click-through and Neon readback.
