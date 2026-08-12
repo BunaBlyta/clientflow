@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     await transaction.notification.create({
       data: {
         userId: client.userId,
-        type: 'EXTRA_CHARGE_CREATED',
+        type: type === 'EXTRA' ? 'EXTRA_CHARGE_CREATED' : 'INVOICE_ISSUED',
         title: 'New invoice',
         message: description
           ? `${description} was added to ${project.name}.`

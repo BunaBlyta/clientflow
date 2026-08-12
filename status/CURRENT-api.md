@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — write-endpoints brief complete and pushed
+Last updated: 2026-08-12 by Agent A — invoice notification type correction
 
 ## Completed
 
@@ -65,10 +65,13 @@ Last updated: 2026-08-12 by Agent A — write-endpoints brief complete and pushe
   existing verification-email helper, returns `{ emailSent: true }` or
   `{ emailSent: false }` when delivery fails, and returns 404 for an unknown
   client.
+- Corrected invoice-creation notifications so DEPOSIT, FINAL, and CUSTOM
+  invoices use `INVOICE_ISSUED`, while EXTRA invoices use
+  `EXTRA_CHARGE_CREATED`.
 
 ## Handoff
 
 The Flow A repair tasks and all six write-endpoint tasks are implemented,
-committed, and pushed separately. Endpoint 6 is a thin wrapper over the existing
-verification email path. Buna's remaining work is live Neon readback and
-frontend wiring; no schema migration was needed.
+committed, and pushed separately. The invoice notification correction is ready
+for its own commit. Buna's remaining work is live Neon readback and frontend
+wiring; no schema migration was needed.
