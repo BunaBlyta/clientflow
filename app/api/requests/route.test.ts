@@ -5,6 +5,10 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   findFirst: vi.fn(),
   create: vi.fn(),
+  transaction: vi.fn(),
+  transactionCreate: vi.fn(),
+  staffFindMany: vi.fn(),
+  notificationCreate: vi.fn(),
 }));
 
 vi.mock('@/app/api/_lib/auth', () => ({
@@ -15,6 +19,7 @@ vi.mock('@/app/api/_lib/prisma', () => ({
   prisma: {
     package: { findFirst: mocks.findFirst },
     projectRequest: { findMany: mocks.findMany, create: mocks.create },
+    $transaction: mocks.transaction,
   },
 }));
 
@@ -32,8 +37,8 @@ describe('POST /api/requests', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('creates a pending request for an active package', async () => {
-    mocks.findFirst.mockResolvedValue({ id: 'pkg-1' });
-    mocks.create.mockResolvedValue({
+    mocks.findFirst.mockResolvedValue({ id: 'pkg-1', name: 'Full Website' });
+    mocks.transactionCreate.mockResolvedValue({
       id: 'req-1',
       packageId: 'pkg-1',
       name: 'Alex Morgan',
@@ -44,6 +49,12 @@ describe('POST /api/requests', () => {
       createdAt: new Date('2026-08-11T10:00:00.000Z'),
       reviewedAt: null,
     });
+    mocks.staffFindMany.mockResolvedValue([{ id: 'staff-1' }, { id: 'staff-2' }]);
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      projectRequest: { create: mocks.transactionCreate },
+      user: { findMany: mocks.staffFindMany },
+      notification: { create: mocks.notificationCreate },
+    }));
 
     const response = await POST(request({
       name: ' Alex Morgan ',
@@ -62,9 +73,10 @@ describe('POST /api/requests', () => {
     });
     expect(mocks.findFirst).toHaveBeenCalledWith({
       where: { id: 'pkg-1', isActive: true },
-      select: { id: true },
+      select: { id: true, name: true },
     });
-    expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mocks.transaction).toHaveBeenCalledTimes(1);
+    expect(mocks.transactionCreate).toHaveBeenCalledWith(expect.objectContaining({
       data: {
         name: 'Alex Morgan',
         email: 'alex@example.com',
@@ -73,6 +85,15 @@ describe('POST /api/requests', () => {
         message: 'Build us a new site.',
       },
     }));
+    expect(mocks.notificationCreate).toHaveBeenCalledTimes(2);
+    expect(mocks.notificationCreate).toHaveBeenNthCalledWith(1, {
+      data: {
+        userId: 'staff-1',
+        type: 'REQUEST_SUBMITTED',
+        title: 'New project request',
+        message: 'Alex Morgan from Alex Studio requested a Full Website.',
+      },
+    });
   });
 
   it('rejects an unknown or inactive package without creating a request', async () => {
@@ -86,6 +107,6 @@ describe('POST /api/requests', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Package not found or inactive' });
-    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.transaction).not.toHaveBeenCalled();
   });
 });

@@ -101,29 +101,49 @@ export async function POST(request: NextRequest) {
 
   const packageRecord = await prisma.package.findFirst({
     where: { id: packageId, isActive: true },
-    select: { id: true },
+    select: { id: true, name: true },
   });
   if (!packageRecord) return invalidRequest('Package not found or inactive');
 
-  const projectRequest = await prisma.projectRequest.create({
-    data: {
-      name,
-      email,
-      packageId,
-      ...(companyName ? { companyName } : {}),
-      ...(message ? { message } : {}),
-    },
-    select: {
-      id: true,
-      packageId: true,
-      name: true,
-      email: true,
-      companyName: true,
-      message: true,
-      status: true,
-      createdAt: true,
-      reviewedAt: true,
-    },
+  const projectRequest = await prisma.$transaction(async (transaction) => {
+    const createdRequest = await transaction.projectRequest.create({
+      data: {
+        name,
+        email,
+        packageId,
+        ...(companyName ? { companyName } : {}),
+        ...(message ? { message } : {}),
+      },
+      select: {
+        id: true,
+        packageId: true,
+        name: true,
+        email: true,
+        companyName: true,
+        message: true,
+        status: true,
+        createdAt: true,
+        reviewedAt: true,
+      },
+    });
+
+    const staffUsers = await transaction.user.findMany({
+      where: { role: 'STAFF' },
+      select: { id: true },
+    });
+
+    for (const staffUser of staffUsers) {
+      await transaction.notification.create({
+        data: {
+          userId: staffUser.id,
+          type: 'REQUEST_SUBMITTED',
+          title: 'New project request',
+          message: `${name}${companyName ? ` from ${companyName}` : ''} requested a ${packageRecord.name}.`,
+        },
+      });
+    }
+
+    return createdRequest;
   });
 
   return NextResponse.json(serializeProjectRequest(projectRequest), { status: 201 });

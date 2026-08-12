@@ -213,3 +213,23 @@ the generic `Invalid or expired verification code` error.
 `POST /api/auth/verification/send` still returns `{ "sent": true }` for unknown
 emails. That generic response is intentional and remains the account-
 enumeration protection for the endpoint.
+
+## Notification side effects
+
+The following user-facing events create in-app notifications in the same
+transaction as their database change:
+
+| Event | Recipient | Type |
+|-------|-----------|------|
+| A project request is submitted | Every staff user | `REQUEST_SUBMITTED` |
+| A request is approved | The newly onboarded client | `REQUEST_APPROVED` |
+| A request is rejected | An already-linked client, if one exists | `REQUEST_REJECTED` |
+| An invoice moves to `SENT` | The invoice's client | `INVOICE_ISSUED` |
+| A project status changes | The project's client | `PROJECT_STAGE_CHANGED` |
+
+Rejection normally happens before a prospect has an account, so the route does
+not create a user just to deliver an in-app notification. An existing linked
+client is notified when that relationship is present. Payment success and
+failure notifications remain owned by the Stripe webhook; new-note and
+extra-charge notifications belong to the write endpoints that will create
+those records.

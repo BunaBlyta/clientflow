@@ -112,10 +112,32 @@ export async function PATCH(
   }
 
   if (status === 'REJECTED') {
-    const rejectedRequest = await prisma.projectRequest.update({
-      where: { id },
-      data: { status: 'REJECTED', reviewedAt: new Date() },
-      select: requestSelect,
+    const rejectedRequest = await prisma.$transaction(async (transaction) => {
+      const updatedRequest = await transaction.projectRequest.update({
+        where: { id },
+        data: { status: 'REJECTED', reviewedAt: new Date() },
+        select: requestSelect,
+      });
+
+      if (projectRequest.clientId) {
+        const client = await transaction.client.findUnique({
+          where: { id: projectRequest.clientId },
+          select: { userId: true },
+        });
+
+        if (client) {
+          await transaction.notification.create({
+            data: {
+              userId: client.userId,
+              type: 'REQUEST_REJECTED',
+              title: 'Project request update',
+              message: 'Your project request was not approved at this time.',
+            },
+          });
+        }
+      }
+
+      return updatedRequest;
     });
 
     return NextResponse.json(serializeProjectRequest(rejectedRequest));
@@ -191,6 +213,15 @@ export async function PATCH(
         currency: pendingRequest.package.currency,
         status: transitionInvoiceStatus('DRAFT', 'SENT'),
         issuedAt: new Date(),
+      },
+    });
+
+    await transaction.notification.create({
+      data: {
+        userId: userRecord.id,
+        type: 'REQUEST_APPROVED',
+        title: 'Project request approved',
+        message: 'Your project is ready. Your deposit invoice is available to pay.',
       },
     });
 

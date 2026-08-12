@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   clientCreate: vi.fn(),
   projectCreate: vi.fn(),
   invoiceCreate: vi.fn(),
+  clientFindUnique: vi.fn(),
+  notificationCreate: vi.fn(),
   issueVerificationEmail: vi.fn(),
 }));
 
@@ -77,14 +79,17 @@ function setupTransaction() {
         findUnique: mocks.userFindUnique,
         create: mocks.userCreate,
       },
-      client: { create: mocks.clientCreate },
+      client: { create: mocks.clientCreate, findUnique: mocks.clientFindUnique },
       project: { create: mocks.projectCreate },
       invoice: { create: mocks.invoiceCreate },
+      notification: { create: mocks.notificationCreate },
     }),
   );
 }
 
 describe('PATCH /api/requests/:id', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it('refuses clients before looking up the request', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'CLIENT' });
 
@@ -113,15 +118,19 @@ describe('PATCH /api/requests/:id', () => {
   it('rejects without creating a user, client, project, or sending email', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(pendingRequest);
-    mocks.update.mockResolvedValue({ ...pendingRequest, status: 'REJECTED' });
+    mocks.transactionRequestUpdate.mockResolvedValue({ ...pendingRequest, status: 'REJECTED' });
+    setupTransaction();
 
     const response = await PATCH(request('REJECTED'), params());
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ id: 'req-1', status: 'REJECTED' });
-    expect(mocks.transaction).not.toHaveBeenCalled();
+    expect(mocks.transaction).toHaveBeenCalledTimes(1);
     expect(mocks.userCreate).not.toHaveBeenCalled();
     expect(mocks.clientCreate).not.toHaveBeenCalled();
+    expect(mocks.projectCreate).not.toHaveBeenCalled();
+    expect(mocks.invoiceCreate).not.toHaveBeenCalled();
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
     expect(mocks.issueVerificationEmail).not.toHaveBeenCalled();
   });
 
@@ -160,6 +169,14 @@ describe('PATCH /api/requests/:id', () => {
     expect(mocks.clientCreate).toHaveBeenCalledTimes(1);
     expect(mocks.projectCreate).toHaveBeenCalledTimes(1);
     expect(mocks.invoiceCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.notificationCreate).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        type: 'REQUEST_APPROVED',
+        title: 'Project request approved',
+        message: 'Your project is ready. Your deposit invoice is available to pay.',
+      },
+    });
     expect(mocks.projectCreate).toHaveBeenCalledWith({
       data: {
         clientId: 'client-1',

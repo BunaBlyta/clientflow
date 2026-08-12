@@ -1,10 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
   findUnique: vi.fn(),
   update: vi.fn(),
+  transaction: vi.fn(),
+  transactionUpdate: vi.fn(),
+  clientFindUnique: vi.fn(),
+  notificationCreate: vi.fn(),
 }));
 
 vi.mock('@/app/api/_lib/auth', () => ({
@@ -15,8 +19,8 @@ vi.mock('@/app/api/_lib/prisma', () => ({
   prisma: {
     invoice: {
       findUnique: mocks.findUnique,
-      update: mocks.update,
     },
+    $transaction: mocks.transaction,
   },
 }));
 
@@ -48,6 +52,8 @@ function params() {
 }
 
 describe('PATCH /api/invoices/:id', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it('refuses clients before looking up the invoice', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'CLIENT' });
 
@@ -86,7 +92,12 @@ describe('PATCH /api/invoices/:id', () => {
   it('updates a legal staff transition and returns the serialized invoice', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(invoice);
-    mocks.update.mockResolvedValue({ ...invoice, status: 'PAYMENT_PENDING' });
+    mocks.transactionUpdate.mockResolvedValue({ ...invoice, status: 'PAYMENT_PENDING' });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { update: mocks.transactionUpdate },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
 
     const response = await PATCH(request('PAYMENT_PENDING'), params());
 
@@ -96,9 +107,33 @@ describe('PATCH /api/invoices/:id', () => {
       amountCents: 10000,
       status: 'PAYMENT_PENDING',
     });
-    expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mocks.transactionUpdate).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'inv-1' },
       data: { status: 'PAYMENT_PENDING' },
     }));
+  });
+
+  it('notifies the client when an invoice is sent', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue({ ...invoice, status: 'DRAFT' });
+    mocks.transactionUpdate.mockResolvedValue({ ...invoice, status: 'SENT' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { update: mocks.transactionUpdate },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('SENT'), params());
+
+    expect(response.status).toBe(200);
+    expect(mocks.notificationCreate).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        type: 'INVOICE_ISSUED',
+        title: 'Invoice sent',
+        message: 'Deposit is ready to review and pay.',
+      },
+    });
   });
 });

@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
   update: vi.fn(),
   createNote: vi.fn(),
+  clientFindUnique: vi.fn(),
+  notificationCreate: vi.fn(),
   transaction: vi.fn(),
 }));
 
@@ -93,9 +95,12 @@ describe('PATCH /api/projects/:id', () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(project);
     mocks.update.mockResolvedValue({ ...project, status: 'DEVELOPMENT' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
     mocks.transaction.mockImplementation(async (callback) => callback({
       project: { update: mocks.update },
       note: { create: mocks.createNote },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
     }));
 
     const response = await PATCH(request('DEVELOPMENT'), params());
@@ -111,6 +116,14 @@ describe('PATCH /api/projects/:id', () => {
         projectId: 'proj-1',
         content: 'Project status changed from Design to Development.',
         isSystem: true,
+      },
+    });
+    expect(mocks.notificationCreate).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        type: 'PROJECT_STAGE_CHANGED',
+        title: 'Riverside Cafe — Full Website moved to Development',
+        message: 'Your project moved from Design to Development.',
       },
     });
   });

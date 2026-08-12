@@ -140,6 +140,22 @@ export async function PATCH(
       },
     });
 
+    const client = await transaction.client.findUnique({
+      where: { id: project.clientId },
+      select: { userId: true },
+    });
+
+    if (client) {
+      await transaction.notification.create({
+        data: {
+          userId: client.userId,
+          type: 'PROJECT_STAGE_CHANGED',
+          title: `${project.name} moved to ${formatProjectStatus(nextStatus)}`,
+          message: `Your project moved from ${formatProjectStatus(project.status)} to ${formatProjectStatus(nextStatus)}.`,
+        },
+      });
+    }
+
     return updated;
   });
 

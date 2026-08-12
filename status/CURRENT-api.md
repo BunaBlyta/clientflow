@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — Flow A approval repair complete
+Last updated: 2026-08-12 by Agent A — Flow A notification repair complete
 
 ## Completed
 
@@ -18,6 +18,10 @@ Last updated: 2026-08-12 by Agent A — Flow A approval repair complete
   prospect name) followed by the package name.
 - Updated the architecture handoff to describe the approval side effects and
   the read-only verification check.
+- Added in-app notifications for new requests to staff, approval to the client,
+  invoice issuance to the client, and project stage changes to the client. A
+  linked client also gets a rejection notification; a brand-new rejected
+  prospect has no account to notify, so rejection does not create one.
 
 ## Verification
 
@@ -28,8 +32,10 @@ Last updated: 2026-08-12 by Agent A — Flow A approval repair complete
   and invoice payloads, including the 50% amount and invoice state transition.
   A fresh Neon approval and subsequent client `GET` readback still need to be
   clicked through by Buna.
+- Notification tests cover all five events added in this task and verify that
+  each notification is written in the same transaction as its state change.
 
 ## Handoff
 
-Task 1 is committed and pushed on its own. Task 2 is implemented and ready to
-commit and push. Task 3 notifications and Task 4 seed coverage remain pending.
+Tasks 1 and 2 are committed and pushed separately. Task 3 is implemented and
+ready to commit and push. Task 4 seed coverage remains pending.

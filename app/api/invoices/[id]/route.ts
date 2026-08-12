@@ -103,10 +103,34 @@ export async function PATCH(
     );
   }
 
-  const updatedInvoice = await prisma.invoice.update({
-    where: { id },
-    data: { status: nextStatus },
-    select: invoiceSelect,
+  const updatedInvoice = await prisma.$transaction(async (transaction) => {
+    const updated = await transaction.invoice.update({
+      where: { id },
+      data: { status: nextStatus },
+      select: invoiceSelect,
+    });
+
+    if (nextStatus === 'SENT' && invoice.status !== 'SENT') {
+      const client = await transaction.client.findUnique({
+        where: { id: invoice.clientId },
+        select: { userId: true },
+      });
+
+      if (client) {
+        await transaction.notification.create({
+          data: {
+            userId: client.userId,
+            type: 'INVOICE_ISSUED',
+            title: 'Invoice sent',
+            message: invoice.description
+              ? `${invoice.description} is ready to review and pay.`
+              : 'A new invoice is ready to review and pay.',
+          },
+        });
+      }
+    }
+
+    return updated;
   });
 
   return NextResponse.json(serializeInvoice(updatedInvoice));
