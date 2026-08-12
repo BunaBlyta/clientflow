@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-12 by Agent A — current-user endpoint complete
+Last updated: 2026-08-12 by Agent A — write-endpoints brief complete
 
 ## Completed
 
@@ -60,9 +60,14 @@ Last updated: 2026-08-12 by Agent A — current-user endpoint complete
 - Added authenticated `GET /api/auth/me`. It returns the current user's id,
   name, email, and role, plus `clientId` for client sessions. Invalid sessions
   receive a bodyless 401 response.
+- Added staff-only `POST /api/clients/[id]/resend-invitation`. It reuses the
+  existing verification-email helper, returns `{ emailSent: true }` or
+  `{ emailSent: false }` when delivery fails, and returns 404 for an unknown
+  client.
 
 ## Handoff
 
-The Flow A repair tasks and endpoints 1–4 are committed and pushed separately.
-Endpoint 5 is implemented and ready to commit/push separately. Endpoint 6 is
-next: assess whether invitation resend is a safe thin wrapper before Friday.
+The Flow A repair tasks and all six write-endpoint tasks are implemented in
+separate commits. Endpoint 6 is a thin wrapper over the existing verification
+email path and is ready to commit/push separately. After that, Buna's remaining
+work is live Neon readback and frontend wiring; no schema migration was needed.

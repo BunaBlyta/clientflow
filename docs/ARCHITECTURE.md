@@ -200,6 +200,14 @@ retroactively repriced.
 linked `Client` record ID; staff responses omit that field. An invalid or
 missing session returns 401 with an empty response body.
 
+`POST /api/clients/:id/resend-invitation` is staff-only. It looks up the known
+client by Client ID, issues a fresh verification code through the same
+verification-email helper used after request approval, and returns
+`{ "emailSent": true }`. If Resend fails, the route returns 200 with
+`{ "emailSent": false }` so the caller can distinguish a database/client lookup
+success from email delivery. Unknown clients return 404 and client sessions
+return 403.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:
