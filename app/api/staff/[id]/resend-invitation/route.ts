@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
-import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
+import {
+  buildAcceptInviteUrl,
+  issueVerificationEmail,
+} from '@/app/api/_lib/verification-email';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +31,10 @@ export async function POST(
   }
 
   try {
-    await issueVerificationEmail(staffUser);
+    await issueVerificationEmail({
+      ...staffUser,
+      acceptInviteUrl: buildAcceptInviteUrl(staffUser.email, new URL(request.url).origin),
+    });
     return NextResponse.json({ emailSent: true });
   } catch (error) {
     console.error('Failed to resend staff invitation email', {

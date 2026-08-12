@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
   findFirst: vi.fn(),
+  buildAcceptInviteUrl: vi.fn(),
   issueVerificationEmail: vi.fn(),
 }));
 
@@ -16,6 +17,7 @@ vi.mock('@/app/api/_lib/prisma', () => ({
 }));
 
 vi.mock('@/app/api/_lib/verification-email', () => ({
+  buildAcceptInviteUrl: mocks.buildAcceptInviteUrl,
   issueVerificationEmail: mocks.issueVerificationEmail,
 }));
 
@@ -32,7 +34,12 @@ function params(id = 'staff-2') {
 }
 
 describe('POST /api/staff/:id/resend-invitation', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.buildAcceptInviteUrl.mockReturnValue(
+      'https://clientflow.example/accept-invite?email=jordan%40example.com',
+    );
+  });
 
   it('returns 401 for an unauthenticated request', async () => {
     mocks.authenticate.mockResolvedValue(null);
@@ -73,7 +80,9 @@ describe('POST /api/staff/:id/resend-invitation', () => {
       id: 'staff-2',
       email: 'jordan@example.com',
       name: 'Jordan Ellis',
+      acceptInviteUrl: 'https://clientflow.example/accept-invite?email=jordan%40example.com',
     });
+    expect(mocks.buildAcceptInviteUrl).toHaveBeenCalledWith('jordan@example.com', 'http://localhost');
   });
 
   it('returns emailSent false when the resend email fails', async () => {

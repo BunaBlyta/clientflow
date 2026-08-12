@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
-import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
+import {
+  buildAcceptInviteUrl,
+  issueVerificationEmail,
+} from '@/app/api/_lib/verification-email';
 
 export const runtime = 'nodejs';
 
@@ -34,6 +37,10 @@ function serializeStaffUser(user: {
 
 function invalidRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
+}
+
+function isUniqueConstraintError(error: unknown) {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }
 
 export async function GET(request: NextRequest) {
@@ -98,15 +105,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const createdUser = await prisma.user.create({
-    data: {
-      email,
-      name,
-      role: 'STAFF',
-      isActive: false,
-    },
-    select: staffUserSelect,
-  });
+  let createdUser;
+  try {
+    createdUser = await prisma.user.create({
+      data: {
+        email,
+        name,
+        role: 'STAFF',
+        isActive: false,
+      },
+      select: staffUserSelect,
+    });
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return NextResponse.json(
+        { error: 'A user with that email already exists' },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 
   let emailSent = true;
   try {
@@ -114,6 +132,7 @@ export async function POST(request: NextRequest) {
       id: createdUser.id,
       email: createdUser.email,
       name: createdUser.name,
+      acceptInviteUrl: buildAcceptInviteUrl(createdUser.email, new URL(request.url).origin),
     });
   } catch (error) {
     emailSent = false;

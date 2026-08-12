@@ -226,10 +226,17 @@ serialized `createdAt`; password, verification-code, reset-token, and invitation
 fields are never returned. `POST /api/staff/invite` accepts `{ "email": string,
 "name": string }`, rejects any existing user email with 409, creates an inactive
 `STAFF` user, and sends a verification-code invitation through the same helper.
-It returns 201 with `{ "user": User, "emailSent": boolean }`; an email failure
-does not undo the user creation. `POST /api/staff/:id/resend-invitation` looks
-up the ID directly as a `STAFF` user and has the same `{ "emailSent": boolean }`
-response and 401/403/404 behavior as the client resend route.
+The uniqueness check is advisory; if a concurrent invite wins the database's
+unique-email race, that `P2002` result is also converted to 409. It returns 201
+with `{ "user": User, "emailSent": boolean }`; an email failure does not undo
+the user creation. Staff invitation and resend emails include an
+`/accept-invite?email=...` URL. Its origin comes from `APP_URL` when configured,
+otherwise from the request origin, so no production domain is hardcoded. Client
+verification emails do not include that staff-only URL. All verification codes,
+including staff invitations, expire in 30 minutes. `POST
+/api/staff/:id/resend-invitation` looks up the ID directly as a `STAFF` user and
+has the same `{ "emailSent": boolean }` response and 401/403/404 behavior as the
+client resend route.
 
 ## Table action write contracts
 

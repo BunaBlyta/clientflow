@@ -4,10 +4,12 @@ export async function sendVerificationEmail({
   email,
   name,
   code,
+  acceptInviteUrl,
 }: {
   email: string;
   name: string;
   code: string;
+  acceptInviteUrl?: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error('RESEND_API_KEY is required');
@@ -22,7 +24,7 @@ export async function sendVerificationEmail({
       from: process.env.RESEND_FROM_EMAIL ?? 'Clientflow <onboarding@resend.dev>',
       to: [email],
       subject: 'Your Clientflow verification code',
-      text: `Hi ${name},\n\nYour Clientflow verification code is ${code}. It expires in 10 minutes.\n\nIf you did not request this code, you can ignore this email.`,
+      text: `Hi ${name},\n\nYour Clientflow verification code is ${code}. It expires in 30 minutes.${acceptInviteUrl ? `\n\nAccept your Clientflow invitation: ${acceptInviteUrl}` : ''}\n\nIf you did not request this code, you can ignore this email.`,
     }),
   });
 

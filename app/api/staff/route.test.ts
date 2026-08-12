@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   findUnique: vi.fn(),
   create: vi.fn(),
+  buildAcceptInviteUrl: vi.fn(),
   issueVerificationEmail: vi.fn(),
 }));
 
@@ -24,6 +25,7 @@ vi.mock('@/app/api/_lib/prisma', () => ({
 }));
 
 vi.mock('@/app/api/_lib/verification-email', () => ({
+  buildAcceptInviteUrl: mocks.buildAcceptInviteUrl,
   issueVerificationEmail: mocks.issueVerificationEmail,
 }));
 
@@ -104,7 +106,12 @@ describe('GET /api/staff', () => {
 });
 
 describe('POST /api/staff/invite', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.buildAcceptInviteUrl.mockReturnValue(
+      'https://clientflow.example/accept-invite?email=jordan%40example.com',
+    );
+  });
 
   it('returns 401 for an unauthenticated request', async () => {
     mocks.authenticate.mockResolvedValue(null);
@@ -154,6 +161,21 @@ describe('POST /api/staff/invite', () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
+  it('returns 409 when a concurrent invite wins the unique email race', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(null);
+    mocks.create.mockRejectedValue({ code: 'P2002' });
+
+    const response = await POST(postRequest({
+      email: 'jordan@example.com',
+      name: 'Jordan Ellis',
+    }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'A user with that email already exists' });
+    expect(mocks.issueVerificationEmail).not.toHaveBeenCalled();
+  });
+
   it('creates an inactive staff user and sends the verification email', async () => {
     mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(null);
@@ -197,7 +219,9 @@ describe('POST /api/staff/invite', () => {
       id: 'staff-2',
       email: 'jordan@example.com',
       name: 'Jordan Ellis',
+      acceptInviteUrl: 'https://clientflow.example/accept-invite?email=jordan%40example.com',
     });
+    expect(mocks.buildAcceptInviteUrl).toHaveBeenCalledWith('jordan@example.com', 'http://localhost');
   });
 
   it('keeps the created user when the invitation email fails', async () => {
