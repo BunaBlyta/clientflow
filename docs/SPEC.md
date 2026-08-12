@@ -9,10 +9,10 @@ App: Clientflow (working name) — a client and project management CRM for a sma
 | # | Feature | Definition of done | Status |
 |---|---------|--------------------|--------|
 | 1 | Public landing page | Hero, the three service packages (Landing Page, Full Website, Web App Build) with pricing pulled from the `Package` table, a project-request form for the two fixed-price packages, a contact form for the custom package, prompts to download the mobile app. Matches the design direction in AGENTS.md — richer/more colorful than the dashboard, still restrained. | not started |
-| 2 | Staff auth | Register (bootstraps the first staff account), invite-a-teammate flow from Settings, login, forgot-password, email verification via a code (sent through Resend). Works end to end, including the error states (wrong code, expired code, already-registered email). | not started |
+| 2 | Staff auth | Register (bootstraps the first staff account), invite-a-teammate flow from Settings, login, forgot-password, email verification via a code (sent through Resend). Works end to end, including the error states (wrong code, expired code, already-registered email). | **partially cut 2026-08-12 — see "Deferred and cut" below.** Login works. Register, forgot-password and invite-a-teammate are not being built. |
 | 3 | Client auth (mobile) | The same underlying auth system, used by clients: account is created/activated on request-approval or by staff for custom work, client sets a password via an emailed verification code, logs in, forgot-password works. Never a self-registration entry point for clients. | not started |
 | 4 | Project request → approval flow | Prospect submits a request for a standard package, lands in a `Pending` queue. Staff reviews and approves or rejects from the dashboard. Approval creates/activates the `Client` and sends the app-invitation email. Rejection notifies the prospect and creates nothing further. | not started |
-| 5 | Custom package flow | Prospect submits the contact form. Staff manually creates the `Client`, `Project`, and a custom `Invoice` after their own conversation with the prospect (outside the app). | not started |
+| 5 | Custom package flow | Prospect submits the contact form. Staff manually creates the `Client`, `Project`, and a custom `Invoice` after their own conversation with the prospect (outside the app). | **deferred 2026-08-12 — see "Deferred and cut" below.** The contact form is disabled with a visible note rather than silently discarding a submission. |
 | 6 | Staff dashboard — Projects, Clients, Invoices tables | Three tables with search and filtering, status badges, an overdue-payment indicator on invoices. Density and composition follow the design direction (hairline row separators, no default pill-badge-on-everything). | not started |
 | 7 | Table actions | Approve/reject a request, change a project's status (any direction, staff-driven, except the payment-gated Approved→Discovery transition), create/send an invoice, void an invoice, resend a client's app invitation. Confirmation dialog before anything destructive (reject, void, cancel). **An invoice can never be marked paid manually** — `prisma/invoice-state.ts` makes `PAID` reachable only from `PAYMENT_PENDING`, which the Stripe webhook owns. That is a deliberate integrity rule. | send/void invoice + project status done 11 Aug; request approve/reject and resend invitation still to do |
 | 8 | Project detail page | One page, rendered differently by role. Staff view: full control — status, invoice list and creation, the shared note feed, client info. Client view (mobile): stage tracker, shared notes, invoice list, Pay button. Every status change writes a system-generated entry to the shared note feed (this is the audit trail). | not started |
@@ -23,6 +23,35 @@ App: Clientflow (working name) — a client and project management CRM for a sma
 | 13 | Notifications | In-app (staff) and push (mobile client) for: request submitted, request approved/rejected, invoice issued, payment succeeded/failed, project stage changed, new note, extra charge created. | not started |
 | 14 | Mobile app (client experience) | Full client journey in Expo: auth, request status, project stage tracker, notes, invoices, pay, push notifications. This is a must-have, not a stretch goal. | not started |
 | 15 | Seed data | A Prisma seed script populating realistic mock clients, projects spread across different stages, invoices in different states (paid/due/overdue), and at least one pending request — so the dashboard and analytics are never empty on first login. | not started |
+
+## Deferred and cut (decided 2026-08-12)
+
+Two rows in the table above are not being built. Both are deliberate calls made
+with two days left, written down here so they read as decisions rather than as
+things that were missed.
+
+**#2 Staff auth — register, forgot-password and invite-a-teammate: cut.** The
+mentor's requirement was auth with email verification codes, and the client
+onboarding chain demonstrates exactly that, end to end against real
+infrastructure: a prospect submits a request, staff approves it, Resend delivers a
+verification code, the client sets a password with that code and logs in. Nothing
+in that chain is mocked. Staff accounts come from the seed script. Building a
+second, staff-side copy of the same email-code mechanism would prove nothing the
+client chain does not already prove, and it would cost the analytics and settings
+screens, which are visible on every page of the dashboard. Login and route
+protection for staff are done and stay.
+
+**#5 Custom package flow: deferred.** It needs `POST /api/clients` and
+`POST /api/projects`, neither of which exists, plus manual creation UI for both.
+The contact form is disabled with a short line saying it is not wired up yet — the
+same treatment as the project note composer — so nothing silently discards what a
+prospect types. The custom-invoice half of the flow is still real: `POST /api/invoices`
+supports a custom invoice raised against an existing project, which is what
+SPEC #7 needs anyway.
+
+**Not deferred, and worth stating explicitly:** the shared note feed (#9),
+notifications (#13) and settings (#12) are all still in scope. They were blocked
+on write endpoints, not cut — see `status/briefs/2026-08-12-write-endpoints-api.md`.
 
 ## Edge cases to test (not just the happy path)
 

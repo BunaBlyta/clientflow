@@ -46,17 +46,38 @@ Read from `GET /api/clients`.
 
 ### 4. `/dashboard/notifications`
 
-Read from `GET /api/notifications`. **Marking a notification read is a write, and
-no write endpoint exists.** Do not build one and do not fake it — if
-`markNotificationRead` can no longer work honestly, disable the control with a
-short line saying it is not wired up yet, the same treatment as the note composer
-on the project detail page, and flag it in your status file.
+Read from `GET /api/notifications`. **Marking a notification read is a write.**
+The API lane is adding `PATCH /api/notifications/[id]` in
+`status/briefs/2026-08-12-write-endpoints-api.md`. Read `status/CURRENT-api.md`
+for the shape that actually shipped and code against that. If the endpoint is not
+there yet, do not build one and do not fake it — disable the control with a short
+line saying it is not wired up yet, the same treatment as the note composer on the
+project detail page, and flag it in your status file.
+
+### 5. The topbar notification bell
+
+`components/dashboard/topbar.tsx` reads the same mock store as the notifications
+page, so converting the page alone leaves the bell lying. Convert both, or the
+screen a reviewer sees on every single page stays fake.
+
+While you are in that file: it imports `currentStaffUser` from `lib/mock-data.ts`,
+so the signed-in staff name and avatar are hardcoded no matter who logged in.
+`GET /api/auth/me` is in the API brief above. If it exists, use it here and in any
+other place `currentStaffUser` is read. If it does not, leave it and say so.
+
+### 6. `getPackage` in the projects list
+
+`app/(dashboard)/dashboard/projects/page.tsx:8` still imports `getPackage` from
+`lib/mock-data.ts`. The project *detail* page moved to the live `project.package`
+summary on 11 Aug; the list page was missed. Use the same live summary.
 
 ## Explicitly out of scope
 
 - **`/dashboard/settings` — leave it alone.** Managing packages and pricing needs
-  write endpoints on `/api/packages` that do not exist. It is a separate API task,
-  not yours.
+  write endpoints on `/api/packages`. Those are being added by the API lane, but
+  wiring the settings screen to them is a separate web task, not this one. Note
+  that `components/dashboard/edit-package-dialog.tsx` currently writes to the
+  Zustand store only — do not "fix" it here.
 - Do not touch `app/(marketing)/`, `app/api/`, `prisma/` or `mobile/`.
 - Do not rewrite `lib/analytics.ts` or any chart component. If a chart looks wrong
   with real data, the aggregation is probably right and the data is genuinely
