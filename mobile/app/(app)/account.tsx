@@ -1,5 +1,6 @@
 import { Building2, LogOut, Mail, User as UserIcon } from 'lucide-react-native';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
 import { useAuthStore } from '../../store/auth-store';
@@ -7,12 +8,14 @@ import { useAuthStore } from '../../store/auth-store';
 export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   function handleLogout() {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: logout },
-    ]);
+    if (confirmingLogout) {
+      logout();
+      return;
+    }
+    setConfirmingLogout(true);
   }
 
   return (
@@ -33,13 +36,34 @@ export default function AccountScreen() {
         <InfoRow icon={UserIcon} label="Contact" value={client?.name ?? ''} />
       </View>
 
-      <Pressable
-        onPress={handleLogout}
-        style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.7 }]}
-      >
-        <LogOut size={16} color={color.danger} />
-        <Text style={styles.logoutText}>Log out</Text>
-      </Pressable>
+      {confirmingLogout ? (
+        <View style={styles.confirmBlock}>
+          <Text style={styles.confirmText}>Confirm log out?</Text>
+          <View style={styles.confirmActions}>
+            <Pressable
+              onPress={() => setConfirmingLogout(false)}
+              style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleLogout}
+              style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
+            >
+              <LogOut size={16} color={color.danger} />
+              <Text style={styles.logoutText}>Log out</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
+        >
+          <LogOut size={16} color={color.danger} />
+          <Text style={styles.logoutText}>Log out</Text>
+        </Pressable>
+      )}
 
       <Text style={styles.footer}>Clientflow · v1.0.0</Text>
     </Screen>
@@ -137,6 +161,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.dangerBorder,
     backgroundColor: color.dangerBg,
+  },
+  confirmBlock: {
+    gap: spacing.md,
+  },
+  confirmText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.body,
+    color: color.textPrimary,
+    textAlign: 'center',
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  cancelButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.body,
+    color: color.textSecondary,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   logoutText: {
     fontFamily: fontFamily.medium,
