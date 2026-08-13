@@ -37,9 +37,10 @@ const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
 ];
 
 function ProjectsPageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get("tab") === "requests" ? "requests" : "projects";
-  const [tab, setTab] = useState(defaultTab);
+  const tabParam = searchParams.get("tab");
+  const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,7 +51,12 @@ function ProjectsPageInner() {
         </p>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as string)}>
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          router.replace(value === "projects" ? "/dashboard/projects" : `/dashboard/projects?tab=${value}`);
+        }}
+      >
         <TabsList>
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>

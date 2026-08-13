@@ -186,10 +186,9 @@ export default function NotificationsPage() {
             notifications={sorted}
             emptyLabel="No notifications yet."
             markingId={markingId}
-            onRead={async (notification) => {
-              if (!notification.read && !(await markNotificationRead(notification.id))) return false;
+            onRead={(notification) => {
               router.push(getNotificationDestination(notification));
-              return true;
+              if (!notification.read) void markNotificationRead(notification.id);
             }}
           />
         </TabsContent>
@@ -198,10 +197,9 @@ export default function NotificationsPage() {
             notifications={unread}
             emptyLabel="You're all caught up."
             markingId={markingId}
-            onRead={async (notification) => {
-              if (!(await markNotificationRead(notification.id))) return false;
+            onRead={(notification) => {
               router.push(getNotificationDestination(notification));
-              return true;
+              void markNotificationRead(notification.id);
             }}
           />
         </TabsContent>
@@ -219,7 +217,7 @@ function NotificationList({
   notifications: Notification[];
   emptyLabel: string;
   markingId: string | null;
-  onRead: (notification: Notification) => Promise<boolean>;
+  onRead: (notification: Notification) => void;
 }) {
   if (notifications.length === 0) {
     return (
@@ -240,7 +238,7 @@ function NotificationList({
             onClick={(event) => {
               event.preventDefault();
               if (markingId === n.id) return;
-              void onRead(n);
+              onRead(n);
             }}
             aria-disabled={markingId === n.id}
             className={cn(

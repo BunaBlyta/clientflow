@@ -116,16 +116,14 @@ export function Topbar() {
     }
   }, []);
 
-  async function handleNotificationClick(
+  function handleNotificationClick(
     event: React.MouseEvent<HTMLElement>,
     notification: Notification,
   ) {
     event.preventDefault();
     if (markingNotificationId === notification.id) return;
-    if (!notification.read) {
-      if (!(await markNotificationRead(notification.id))) return;
-    }
     router.push(getNotificationDestination(notification));
+    if (!notification.read) void markNotificationRead(notification.id);
   }
 
   const loadCurrentUser = useCallback(async (signal?: AbortSignal) => {
@@ -215,7 +213,7 @@ export function Topbar() {
                   <DropdownMenuItem
                     key={n.id}
                     render={<Link href={getNotificationDestination(n)} />}
-                    onClick={(event) => void handleNotificationClick(event, n)}
+                    onClick={(event) => handleNotificationClick(event, n)}
                     aria-disabled={markingNotificationId === n.id}
                     className={cn(
                       "flex items-start gap-2.5 border-b border-border px-3 py-2.5 last:border-0 hover:bg-muted",
