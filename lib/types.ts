@@ -146,6 +146,22 @@ export interface Invoice {
   createdAt: string;
 }
 
+export interface ClientDetail extends Client {
+  projects: Project[];
+  invoices: Invoice[];
+}
+
+export interface ProjectRequestDetail extends ProjectRequest {
+  package: ManagedPackage | null;
+  client: Client | null;
+  projects: Project[];
+}
+
+export interface CustomLeadDetail extends CustomLead {
+  client: Client | null;
+  projects: Project[];
+}
+
 export interface Note {
   id: string;
   projectId: string;

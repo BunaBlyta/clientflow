@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LoaderCircle, MoreHorizontal, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, initials } from "@/lib/format";
+import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -19,6 +21,7 @@ import type { Client, Invoice, Project } from "@/lib/types";
 type ApiInvoice = Invoice & { clientId: string };
 
 export default function ClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
@@ -157,7 +160,24 @@ export default function ClientsPage() {
             {filtered.map((client) => {
               const clientProjects = projects.filter((p) => p.clientId === client.id);
               return (
-                <tr key={client.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                <tr
+                  key={client.id}
+                  className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open ${client.companyName}`}
+                  onClick={(event) => {
+                    if (!isTableRowInteractiveTarget(event.target)) {
+                      router.push(`/dashboard/clients/${client.id}`);
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if ((event.key === "Enter" || event.key === " ") && !isTableRowInteractiveTarget(event.target)) {
+                      event.preventDefault();
+                      router.push(`/dashboard/clients/${client.id}`);
+                    }
+                  }}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <Avatar className="size-7">

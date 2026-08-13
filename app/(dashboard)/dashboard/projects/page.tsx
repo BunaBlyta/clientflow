@@ -3,10 +3,12 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Check, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
 import { REQUEST_STATUS_LABEL } from "@/lib/status";
+import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
@@ -77,6 +79,7 @@ export default function ProjectsPage() {
 }
 
 function ProjectsTable() {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -207,7 +210,24 @@ function ProjectsTable() {
             {filtered.map((project) => {
               const packageLabel = project.package?.name ?? "Custom project";
               return (
-                <tr key={project.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                <tr
+                  key={project.id}
+                  className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open ${project.name}`}
+                  onClick={(event) => {
+                    if (!isTableRowInteractiveTarget(event.target)) {
+                      router.push(`/dashboard/projects/${project.id}`);
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if ((event.key === "Enter" || event.key === " ") && !isTableRowInteractiveTarget(event.target)) {
+                      event.preventDefault();
+                      router.push(`/dashboard/projects/${project.id}`);
+                    }
+                  }}
+                >
                   <td className="px-4 py-3">
                     <Link href={`/dashboard/projects/${project.id}`} className="font-medium hover:text-brand-accent">
                       {project.name}
@@ -254,6 +274,7 @@ function ProjectsTable() {
 }
 
 function RequestsTable() {
+  const router = useRouter();
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
   const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -384,7 +405,24 @@ function RequestsTable() {
           <tbody>
             {filtered.map((r) => {
               return (
-                <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                <tr
+                  key={r.id}
+                  className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open request from ${r.prospectName}`}
+                  onClick={(event) => {
+                    if (!isTableRowInteractiveTarget(event.target)) {
+                      router.push(`/dashboard/requests/${r.id}`);
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if ((event.key === "Enter" || event.key === " ") && !isTableRowInteractiveTarget(event.target)) {
+                      event.preventDefault();
+                      router.push(`/dashboard/requests/${r.id}`);
+                    }
+                  }}
+                >
                   <td className="px-4 py-3">
                     <p className="font-medium">{r.prospectName}</p>
                     <p className="text-[12px] text-muted-foreground">

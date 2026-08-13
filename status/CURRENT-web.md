@@ -1,174 +1,31 @@
 # CURRENT — web UI lane (Agent B)
 
-You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
-`components/` and `lib/` only. You are the only writer of this file.
-
-Last updated: 2026-08-13 13:06 by Codex — Expo project return redirect
+Last updated: 2026-08-13 13:52 by Codex — staff table navigation and detail pages
 
 ## What changed
 
-- Dashboard overview and analytics load live invoices, projects, and requests.
-  Clients, notifications, the topbar bell, projects, and project requests also use
-  the available API contracts with loading and error states.
-- Settings packages load from `GET /api/packages`, edit through
-  `PATCH /api/packages/[id]`, and create through `POST /api/packages`.
-- Invoice creation, project note posting, and client invitation resend use their
-  shipped API write endpoints with visible pending/error states.
-- The notifications page now marks an individual unread notification through
-  `PATCH /api/notifications/[id]` before following its link. “Mark all read” sends
-  the same PATCH request to every unread notification with `Promise.all`, updates
-  only confirmed server responses, and refreshes from the server if a bulk request
-  partially fails.
-- The dashboard topbar’s “Log out” action now calls `POST /api/auth/logout` with
-  the session cookie, shows a pending state, and redirects to `/login` with a
-  router refresh even if the request fails so the user is not left in the menu.
-- The topbar identity now loads from `GET /api/auth/me` with an account loading
-  state, an inline retry path on failure, and the same notification and logout
-  behavior as before.
-- The public custom web app contact section now submits to
-  `POST /api/contact-leads`, with required name, email, and brief fields plus
-  visible pending, error, and success states.
-- The dashboard Projects page now has a Custom inquiries tab. Staff can search
-  inquiries and convert one into a client/project/invoice through the API,
-  choosing whether the custom invoice is sent immediately or kept as a draft.
-  The UI reports invitation-email failures separately from successful record
-  creation.
-- Analytics revenue and turnaround calculations now receive the live package
-  records from `GET /api/packages`; the overview and analytics pages both load
-  those records before calculating package charts. This fixes the Landing Page
-  join from the stale mock ID `pkg-landing` to the seeded ID `pkg-landing-page`.
-- The analytics page now has a manual “Generate insight” card. It calls the
-  staff-only `POST /api/analytics/insight`, which computes live dashboard numbers
-  server-side and requests a short read-only Groq summary. Missing keys and
-  upstream failures appear as an inline error instead of breaking analytics.
-- The insight prompt now includes project counts by stage, so its pipeline summary
-  is grounded in data the dashboard already computes. The route has focused tests
-  for auth, missing configuration, upstream/malformed responses, success parsing,
-  and prompt grounding.
-- The public marketing pricing section now loads active packages from
-  `GET /api/packages` instead of the Zustand fixture. It uses the live package
-  name, description, price, currency, and estimated duration, so Settings edits
-  appear on the public page.
-- The Settings Team tab now loads staff and the signed-in user from `GET /api/staff`
-  and `GET /api/auth/me`. Inviting a teammate creates the real inactive staff
-  account through `POST /api/staff/invite`; inactive rows show an Invited badge and
-  can resend their verification email through the staff resend endpoint.
-- Added `/accept-invite`, a public onboarding page that prefills the invited email,
-  accepts the six-digit code and new password, and calls `POST /api/auth/set-password`
-  before sending the new staff member to `/dashboard`. Middleware intentionally
-  leaves this route outside the protected matcher because the invitee has no session
-  until setup finishes.
-- Removed the unused staff-invite action and the other uncalled mock actions that
-  depended on the hardcoded staff identity from `lib/store.ts`. The remaining mock
-  store actions are unrelated open work.
-- Standard PENDING projects now show a disabled phase control with an explanation
-  that phase changes become available after the deposit is paid. Custom PENDING
-  projects keep their manual phase choices, and later phases remain unchanged.
-- The unauthenticated Stripe success page now returns mobile checkouts to
-  `clientflow://projects/<projectId>/invoices/<invoiceId>/checkout` only when the
-  mobile return marker and both safe identifiers are present; incomplete or invalid
-  parameters use the existing web invoices fallback. The copy makes clear that the
-  invoice waits for Stripe webhook confirmation before becoming paid.
-- The mobile Stripe return action now launches the custom scheme from a client-side
-  click handler and detects when the browser stayed visible after the attempt. It
-  shows an explicit fallback explaining that Expo web cannot handle `clientflow://`
-  and always offers the web invoices page instead of silently doing nothing.
-- Investigation confirmed that `mobile/app.json` declares the `clientflow` scheme and
-  Expo Router has the matching `[id]/invoices/[invoiceId]/checkout` route. No mobile
-  source change was needed; native deep-link handling remains unverified because no
-  device or simulator was available.
-- On localhost development payment results, the mobile return action now also shows
-  an explicit “Open Expo web app” button. It points only to the fixed local Expo web
-  route at `http://localhost:8081/projects/<projectId>/invoices/<invoiceId>/checkout`;
-  production pages do not show this localhost fallback.
-- The temporary mobile success action now uses the Expo web route as its primary
-  “Continue to web app” destination. The native `clientflow://` action was removed
-  from the payment-result page until Xcode/native builds are available. No established
-  Expo web URL environment variable exists, so it uses the requested local fallback.
-- Because the Expo web app does not yet hydrate the returned invoice reliably, the
-  temporary mobile return now opens the project screen at
-  `http://localhost:8081/projects/<projectId>` without the invoice ID.
-- The valid mobile success-page action keeps the “Continue to web app” label while
-  using the project-level Expo route, so the app can hydrate the project before the
-  client opens an invoice.
+- Project, client, standard request, and custom inquiry table rows are keyboard-reachable and navigate to their detail pages.
+- Existing project status, client invitation, request approve/reject, and custom inquiry conversion controls remain usable without triggering row navigation.
+- Added `/dashboard/clients/[id]`, backed by `GET /api/clients/:id`, showing client contact details, related projects, and related invoices.
+- Added `/dashboard/requests/[id]`, backed by `GET /api/requests/:id`, showing prospect details, selected package, request message/status, linked client, and related projects.
+- Added `/dashboard/inquiries/[id]`, backed by `GET /api/contact-leads/:id`, showing inquiry details, brief, honest email-match conversion context, and related projects.
+- Related project links consistently open `/dashboard/projects/[id]`. Existing Projects tabs, request filtering, and custom inquiry filtering are unchanged.
+- Added shared table-row interaction detection in `lib/table-navigation.ts` so nested links/buttons do not bubble into row navigation.
 
 ## Verification
 
-- `npm run verify`: typecheck passed, lint passed, and all 73 Vitest tests passed.
-  The required Turbopack build was blocked by the sandbox process/port
-  restriction.
-- `npx next build --webpack`: passed; all 30 routes compiled, including the
-  logout endpoint, the insight endpoint, and the marketing page.
-- The insight change passed the repository typecheck, lint, and focused route
-  tests. An unauthenticated POST returned 401 as expected. Direct curl
-  verification against the configured Groq key returned HTTP 200 with generated
-  text using `llama-3.3-70b-versatile`; the local signed endpoint request also
-  returned a real `{ insight: string }` response.
-- The marketing package change passed typecheck, lint, and all 73 Vitest tests.
-  `npm run verify` reached the Next build, where Turbopack hit the sandbox
-  process/port restriction; `npx next build --webpack` passed all 30 routes.
-- Signed-in local API verification confirmed `pkg-landing-page`, `proj-2`, and
-  paid invoice `inv-4` for 125000 cents. The rendered browser check could not
-  run because no browser connection was available in this session.
-- The AI insight task also touched the API lane’s `app/api/analytics/insight/route.ts`
-  explicitly requested by Buna; no Prisma or mobile files were changed.
-- For this follow-up, `npm run test` passed all 90 tests, `npm run typecheck`
-  passed, and `npm run lint` passed. No UI test was added because the current
-  Vitest setup has no React DOM testing dependencies. The normal Turbopack build
-  hit the known sandbox port-binding restriction; the webpack build passed and
-  generated `/accept-invite` and the dashboard routes.
-- `npm run verify` passed typecheck, lint, and all 87 Vitest tests. The required
-  Turbopack build hit the sandbox-only port-binding restriction; `npx next build
-  --webpack` passed and included `/accept-invite`, `/api/staff`, and the staff resend
-  route. The in-app browser was unavailable for a click-through in this session.
-- This task's `npm run test` passed all 123 tests, `npm run typecheck` passed,
-  `npm run lint` passed, and `git diff --check` passed. `npx next build --webpack`
-  passed and included the updated project menu and payment-success route.
-- `npm run verify` passed typecheck, lint, and tests but its normal Turbopack build
-  was blocked when `next/font` could not fetch Inter from Google Fonts in the
-  sandbox. The webpack build passed as the fallback verification.
+- `npm run test`: passed — 32 files, 131 tests.
+- `npm run typecheck`: passed.
+- `npm run lint`: passed.
+- `npx next build --webpack`: passed; generated all three new dashboard detail routes.
+- `git diff --check`: passed.
+- `npm run verify`: typecheck, lint, and tests passed; the Turbopack build was blocked by the sandbox failing to fetch Inter from Google Fonts. The webpack build above passed as the fallback.
 
 ## Handoff notes
 
-- The topbar notification mark-read controls remain a separate follow-up; this task
-  wires the notifications page requested here.
-- Settings business profile remains local UI only; no API contract exists for it.
-- The topbar and Team tab now use the signed-in identity from `GET /api/auth/me`.
-  Business profile remains local UI only.
-- The logout request depends on the API lane’s shipped `POST /api/auth/logout`
-  route; the UI also navigates away if the request returns an error or cannot
-  complete.
-- The custom package flow now has a real public intake and staff conversion
-  path. The staff conversion dialog supplies the agreed project and invoice
-  details; the API remains the source of truth for record creation and client
-  invitation delivery.
-- Package analytics must continue to consume `ManagedPackage` records from the
-  API rather than the public marketing fixture package list.
-- The analytics insight route uses Groq’s OpenAI-compatible endpoint with
-  `GROQ_API_KEY` and `llama-3.3-70b-versatile`. Its prompt includes the same
-  revenue, turnaround, outstanding-total, and project-stage numbers computed for
-  the dashboard.
-- The staff invitation API contract is documented in `docs/ARCHITECTURE.md`: the
-  invite body is `{ name, email }`, and a successful response is `{ user, emailSent }`.
-  The web form refreshes the list after the write so the server remains the source
-  of truth even if email delivery fails.
-- Latest custom-package workflow verification: `npm run test` passed all 101
-  tests, `npm run typecheck` passed, `npm run lint` passed, and
-  `npx next build --webpack` passed with the contact-lead routes and dashboard
-  Projects page included.
-- No known follow-up is required for the two fixes in this task.
-- This task's `npm run test` passed all 123 tests, `npm run typecheck` passed,
-  `npm run lint` passed, `git diff --check` passed, and `npx next build --webpack`
-  passed. Native-device deep-link testing was not performed.
-- No mobile source, API route, webhook, or database file was changed for the Expo web
-  fallback.
-- Verified the exact Expo web checkout URL on port 8081 with HTTP 200 after starting
-  the existing Expo web server temporarily. The server was stopped after verification.
-- Native deep-link support was not tested and is intentionally deferred.
-- The project-level Expo web redirect task passed all relevant checks and keeps the
-  Stripe webhook as the only payment confirmation source.
-- Verified `http://localhost:8081/projects/proj-1` returned HTTP 200 from the existing
-  Expo web server. The temporary server was stopped after the check.
+- No API, Prisma, mobile, or architecture files were changed. The detail pages consume the API contracts from commit `7e5a18c`.
+- Custom inquiry conversion is displayed as the API’s email-matched client context, not as a newly invented conversion state.
+- An unrelated untracked `public/clientflow-logo-mark.png` remains untouched.
 
 ## Hard rule
 

@@ -1,15 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
+import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { ConvertCustomLeadDialog } from "@/components/dashboard/convert-custom-lead-dialog";
 import { Button } from "@/components/ui/button";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import type { CustomLead } from "@/lib/types";
 
 export function CustomLeadsTable() {
+  const router = useRouter();
   const [leads, setLeads] = useState<CustomLead[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +60,24 @@ export function CustomLeadsTable() {
           <thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">Prospect</th><th className="px-4 py-2.5 font-normal">Brief</th><th className="px-4 py-2.5 font-normal">Received</th><th className="px-4 py-2.5 text-right font-normal">Action</th></tr></thead>
           <tbody>
             {filtered.map((lead) => (
-              <tr key={lead.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+              <tr
+                key={lead.id}
+                className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent"
+                role="link"
+                tabIndex={0}
+                aria-label={`Open inquiry from ${lead.name}`}
+                onClick={(event) => {
+                  if (!isTableRowInteractiveTarget(event.target)) {
+                    router.push(`/dashboard/inquiries/${lead.id}`);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if ((event.key === "Enter" || event.key === " ") && !isTableRowInteractiveTarget(event.target)) {
+                    event.preventDefault();
+                    router.push(`/dashboard/inquiries/${lead.id}`);
+                  }
+                }}
+              >
                 <td className="px-4 py-3"><p className="font-medium">{lead.name}</p><p className="text-[12px] text-muted-foreground">{lead.email}</p></td>
                 <td className="max-w-md px-4 py-3 text-muted-foreground"><p className="line-clamp-2">{lead.message}</p></td>
                 <td className="px-4 py-3 text-muted-foreground">{formatDate(lead.createdAt)}</td>
