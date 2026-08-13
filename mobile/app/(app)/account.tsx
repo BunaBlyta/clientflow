@@ -44,7 +44,6 @@ export default function AccountScreen() {
 
       {confirmingLogout ? (
         <View style={styles.confirmBlock}>
-          <Text style={styles.confirmText}>Confirm log out?</Text>
           <View style={styles.confirmActions}>
             <Pressable
               onPress={() => setConfirmingLogout(false)}
@@ -64,6 +63,7 @@ export default function AccountScreen() {
               <Text style={styles.logoutText}>Log out</Text>
             </Pressable>
           </View>
+          <Text style={styles.confirmText}>Confirm log out?</Text>
         </View>
       ) : (
         <Pressable

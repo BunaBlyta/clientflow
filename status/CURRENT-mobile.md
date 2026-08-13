@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 15:02 by Codex — Account footer clearance and logout sizing
+Last updated: 2026-08-13 15:04 by Codex — tab label clipping and logout confirmation order
 
 ## Completed
 
@@ -52,6 +52,10 @@ Last updated: 2026-08-13 15:02 by Codex — Account footer clearance and logout 
   and is full width again. The Account screen also reserves the full tab-footer
   height plus a buffer below its version label so the white tab footer cannot
   cover the bottom of the text.
+- The tab layout no longer overrides Expo Router's calculated tab-bar height or
+  vertical padding; this removes the white clipping strip that was covering tab
+  labels. The logout confirmation message now appears below the equal-width
+  Cancel and Log out buttons.
 
 ## Verification
 
@@ -70,6 +74,8 @@ Last updated: 2026-08-13 15:02 by Codex — Account footer clearance and logout 
   root typecheck, root lint, and `git diff --check` passed.
 - Account footer clearance and standalone Log out sizing: mobile TypeScript,
   root tests, root typecheck, root lint, and `git diff --check` passed.
+- Tab label clipping and confirmation order: mobile TypeScript, root tests,
+  root typecheck, root lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
