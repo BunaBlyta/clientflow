@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { fetchJson } from "@/lib/fetch-json";
 import type { Invoice, InvoiceKind, Project } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 const KIND_LABEL: Record<InvoiceKind, string> = {
   DEPOSIT: "Deposit",
@@ -41,6 +42,7 @@ export function CreateInvoiceDialog({
   currency?: string;
   onCreated?: (invoice: Invoice) => void;
 }) {
+  const { t } = useLocale();
   const [projects, setProjects] = useState<Project[]>([]);
   const [open, setOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
@@ -111,24 +113,24 @@ export function CreateInvoiceDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button size="sm" />}>
         <Plus />
-        New invoice
+        {t("invoices.newInvoice")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New invoice</DialogTitle>
-          <DialogDescription>Creates a draft invoice for the client.</DialogDescription>
+          <DialogTitle>{t("invoices.newInvoice")}</DialogTitle>
+          <DialogDescription>{t("invoices.newInvoiceIntro")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {!projectId && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="project">Project</Label>
+              <Label htmlFor="project">{t("projects.project")}</Label>
               <Select value={selectedProjectId} onValueChange={(v) => v && setSelectedProjectId(v)}>
                 <SelectTrigger id="project" className="w-full">
-                  <SelectValue placeholder="Select a project" />
+                  <SelectValue placeholder={t("invoices.selectProject")} />
                 </SelectTrigger>
                 <SelectContent>
                     {isLoadingProjects ? (
-                      <SelectItem value="loading" disabled>Loading projects…</SelectItem>
+                      <SelectItem value="loading" disabled>{t("projects.loading")}</SelectItem>
                     ) : projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
@@ -139,7 +141,7 @@ export function CreateInvoiceDialog({
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kind">Type</Label>
+            <Label htmlFor="kind">{t("invoices.type")}</Label>
             <Select value={kind} onValueChange={(v) => v && setKind(v as InvoiceKind)}>
               <SelectTrigger id="kind" className="w-full">
                 <SelectValue />
@@ -154,16 +156,16 @@ export function CreateInvoiceDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="label">Label</Label>
+            <Label htmlFor="label">{t("invoices.label")}</Label>
             <Input id="label" name="label" placeholder={KIND_LABEL[kind]} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="amount">Amount (USD)</Label>
+              <Label htmlFor="amount">{t("invoices.amountUsd")}</Label>
               <Input id="amount" name="amount" type="number" min="0" step="1" required />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dueDate">Due date</Label>
+              <Label htmlFor="dueDate">{t("invoices.due")}</Label>
               <Input id="dueDate" name="dueDate" type="date" />
             </div>
           </div>
@@ -174,7 +176,7 @@ export function CreateInvoiceDialog({
           )}
           <DialogFooter>
             <Button type="submit" disabled={pending || isLoadingProjects}>
-              {pending ? "Creating…" : "Create invoice"}
+              {pending ? t("invoices.creating") : t("invoices.createInvoice")}
             </Button>
           </DialogFooter>
         </form>

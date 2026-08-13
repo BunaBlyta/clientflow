@@ -1,7 +1,11 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useLocale } from "@/lib/i18n";
 
 export function Hero() {
+  const { t } = useLocale();
   return (
     <section className="relative overflow-hidden">
       <div
@@ -13,23 +17,21 @@ export function Hero() {
       />
       <div className="mx-auto flex max-w-3xl flex-col items-center px-4 pt-24 pb-20 text-center sm:px-6 sm:pt-32 sm:pb-28">
         <span className="rounded-full border border-border bg-background px-3 py-1 text-[13px] font-medium text-muted-foreground">
-          Web design &amp; development studio
+          {t("marketing.studio")}
         </span>
         <h1 className="mt-6 text-[32px] leading-[1.15] font-semibold tracking-tight text-balance">
-          A clear path from request to launch — and everything after.
+          {t("marketing.heroTitle")}
         </h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground text-balance">
-          Pick a package, tell us about your project, and track it from a first
-          conversation to a live site — all in one place, with a mobile app that
-          keeps you posted along the way.
+          {t("marketing.heroIntro")}
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Button size="lg" render={<a href="#packages" />}>
-            See packages
+            {t("marketing.seePackages")}
             <ArrowRight />
           </Button>
           <Button size="lg" variant="outline" render={<a href="#contact" />}>
-            Talk to us about a custom build
+            {t("marketing.customBuild")}
           </Button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { invoiceDisplayLabel, invoiceDisplayTone } from "@/lib/status";
+import { invoiceDisplayLabelKey, invoiceDisplayTone } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Client, Invoice, InvoiceStatus, Project } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 type ApiInvoice = Invoice & { clientId: string };
 
@@ -32,6 +33,7 @@ const STATUS_FILTERS: { value: InvoiceStatus | "ALL" | "OVERDUE"; label: string 
 ];
 
 export default function InvoicesPage() {
+  const { t } = useLocale();
   const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -106,7 +108,7 @@ export default function InvoicesPage() {
     return invoices
       .filter((invoice) => {
         if (statusFilter === "ALL") return true;
-        if (statusFilter === "OVERDUE") return invoiceDisplayLabel(invoice) === "Overdue";
+        if (statusFilter === "OVERDUE") return invoiceDisplayLabelKey(invoice) === "status.invoice.OVERDUE";
         return invoice.status === statusFilter;
       })
       .filter((invoice) => {
@@ -134,7 +136,7 @@ export default function InvoicesPage() {
         <div className="flex min-h-56 items-center justify-center border border-border">
           <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-            Loading invoices…
+            {t("common.loading")}
           </div>
         </div>
       </div>
@@ -146,11 +148,11 @@ export default function InvoicesPage() {
       <div className="flex flex-col gap-6">
         <PageIntro />
         <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-          <p className="text-[13px] font-medium text-status-danger">Invoices couldn&apos;t load</p>
+          <p className="text-[13px] font-medium text-status-danger">{t("dashboard.invoicesLoadFailed")}</p>
           <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
           <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadInvoices()}>
             <RefreshCw />
-            Try again
+          {t("common.tryAgain")}
           </Button>
         </div>
       </div>
@@ -160,7 +162,7 @@ export default function InvoicesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageIntro />
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder="Search invoices...">
+      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("invoices.search")}>
         <Select value={statusFilter} onValueChange={(value) => value && setStatusFilter(value as typeof statusFilter)}>
           <SelectTrigger className="w-44">
             <SelectValue />
@@ -168,7 +170,7 @@ export default function InvoicesPage() {
           <SelectContent>
             {STATUS_FILTERS.map((filter) => (
               <SelectItem key={filter.value} value={filter.value}>
-                {filter.label}
+                {filter.value === "ALL" || filter.value === "OVERDUE" ? t(`status.filter.${filter.value}`) : t(`status.invoice.${filter.value}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -179,12 +181,12 @@ export default function InvoicesPage() {
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">Invoice</th>
-              <th className="px-4 py-2.5 font-normal">Project</th>
-              <th className="px-4 py-2.5 font-normal">Client</th>
-              <th className="px-4 py-2.5 text-right font-normal">Amount</th>
-              <th className="px-4 py-2.5 font-normal">Status</th>
-              <th className="px-4 py-2.5 text-right font-normal">Due</th>
+              <th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("invoices.project")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("clients.company")}</th>
+              <th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
+              <th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th>
               <th className="w-10 px-2 py-2.5">
                 <span className="sr-only">Actions</span>
               </th>
@@ -202,15 +204,15 @@ export default function InvoicesPage() {
                         {project.name}
                       </Link>
                     ) : (
-                      "Unknown project"
+                      t("common.unknown")
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {clientNames.get(invoice.clientId) ?? "Unknown client"}
+                    {clientNames.get(invoice.clientId) ?? t("common.unknown")}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td>
                   <td className="px-4 py-3">
-                    <span className={invoiceDisplayTone(invoice)}>{invoiceDisplayLabel(invoice)}</span>
+                    <span className={invoiceDisplayTone(invoice)}>{t(invoiceDisplayLabelKey(invoice))}</span>
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
                     {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
@@ -227,9 +229,9 @@ export default function InvoicesPage() {
             {invoices.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center">
-                  <p className="text-[13px] font-medium">No invoices yet</p>
+                  <p className="text-[13px] font-medium">{t("invoices.noInvoices")}</p>
                   <p className="mt-1 text-[12px] text-muted-foreground">
-                    Invoices will appear here when they are created for a project.
+                    {t("invoices.createdIntro")}
                   </p>
                 </td>
               </tr>
@@ -237,7 +239,7 @@ export default function InvoicesPage() {
             {invoices.length > 0 && filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
-                  No invoices match your filters.
+                  {t("invoices.noMatch")}
                 </td>
               </tr>
             )}
@@ -249,11 +251,12 @@ export default function InvoicesPage() {
 }
 
 function PageIntro() {
+  const { t } = useLocale();
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">Invoices</h1>
+      <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.invoices")}</h1>
       <p className="mt-1 text-[13px] text-muted-foreground">
-        Every deposit, final, and extra invoice across all projects.
+        {t("invoices.intro")}
       </p>
     </div>
   );

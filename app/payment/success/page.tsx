@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocaleText } from "@/components/locale-text";
 
 const EXPO_WEB_BASE_URL = "http://localhost:8081";
 
@@ -41,7 +42,7 @@ export default async function PaymentSuccessPage({
   const actionHref = isMobileReturn
     ? `${EXPO_WEB_BASE_URL}/projects/${encodeURIComponent(projectId)}`
     : "/dashboard/invoices";
-  const actionLabel = isMobileReturn ? "Continue to web app" : "View invoices";
+  const actionLabel = isMobileReturn ? "payment.continueApp" : "payment.viewInvoices";
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-6 py-16">
@@ -50,22 +51,19 @@ export default async function PaymentSuccessPage({
           <Check className="size-5 text-brand-accent" />
         </div>
 
-        <h1 className="mt-5 text-lg font-semibold tracking-tight">Payment submitted</h1>
+        <h1 className="mt-5 text-lg font-semibold tracking-tight"><LocaleText id="payment.submitted" /></h1>
         <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          Thank you — Stripe received your payment submission. The invoice updates to
-          paid only after Stripe confirms it, usually within a few seconds. You can
-          close this tab and head back to the app.
+          <LocaleText id="payment.submittedIntro" />
         </p>
 
         <div className="mt-6 flex justify-center">
           <Button nativeButton={false} render={<a href={actionHref} />}>
-            {actionLabel}
+            <LocaleText id={actionLabel} />
           </Button>
         </div>
         {isMobileReturn && (
           <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            This development link opens the Expo web app on port 8081. Native app
-            return links are deferred until native builds are available.
+            <LocaleText id="payment.devLink" />
           </p>
         )}
       </div>

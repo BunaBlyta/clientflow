@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import type { ManagedPackage } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 export function EditPackageDialog({
   pkg,
@@ -28,6 +29,7 @@ export function EditPackageDialog({
   onUpdated: (pkg: ManagedPackage) => void;
   onDeactivated: () => void;
 }) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
   const [pending, setPending] = useState(false);
@@ -111,19 +113,19 @@ export function EditPackageDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit {pkg.name}</DialogTitle>
+          <DialogTitle>{t("settings.editPackage", { name: pkg.name })}</DialogTitle>
           <DialogDescription>
             Feeds both the public pricing page and internal project creation.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t("settings.name")}</Label>
             <Input id="name" name="name" defaultValue={pkg.name} required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="price">Price ({pkg.currency.toUpperCase()})</Label>
+            <Label htmlFor="price">{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
               <Input
                 id="price"
                 name="price"
@@ -135,7 +137,7 @@ export function EditPackageDialog({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="currency">Currency</Label>
+            <Label htmlFor="currency">{t("settings.currency")}</Label>
               <Input
                 id="currency"
                 name="currency"
@@ -146,7 +148,7 @@ export function EditPackageDialog({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="estimatedDuration">Estimated duration</Label>
+            <Label htmlFor="estimatedDuration">{t("settings.duration")}</Label>
             <Input
               id="estimatedDuration"
               name="estimatedDuration"
@@ -155,7 +157,7 @@ export function EditPackageDialog({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("settings.description")}</Label>
             <Textarea id="description" name="description" defaultValue={pkg.description} rows={2} required />
           </div>
           {error && (
@@ -183,7 +185,7 @@ export function EditPackageDialog({
         open={confirmingDeactivation}
         onOpenChange={setConfirmingDeactivation}
         title={`Delete ${pkg.name}?`}
-        description="This removes the package from active pricing and new requests. Existing projects and invoices will keep their historical package details."
+        description={t("settings.deactivateDescription")}
         confirmLabel="Delete package"
         onConfirm={handleDeactivate}
       />

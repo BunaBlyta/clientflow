@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLocale } from "@/lib/i18n";
 
 export function ContactForm() {
+  const { t } = useLocale();
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,58 +33,57 @@ export function ContactForm() {
       });
       const result = (await response.json().catch(() => null)) as { error?: unknown } | null;
       if (!response.ok) {
-        throw new Error(typeof result?.error === "string" ? result.error : "We couldn't send your inquiry.");
+        throw new Error(typeof result?.error === "string" ? result.error : t("dashboard.retryLoad"));
       }
 
       form.reset();
       setSubmitted(true);
-      toast.success("Inquiry sent", { description: "We'll get back to you by email shortly." });
+      toast.success(t("marketing.inquirySent"), { description: t("marketing.inquirySentIntro") });
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "We couldn't send your inquiry.");
+      setError(caughtError instanceof Error ? caughtError.message : t("dashboard.retryLoad"));
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <section id="contact" className="border-t border-border bg-[#CAF4FF]/20">
+    <section id="contact" className="border-t border-border bg-brand-sky-light/20">
       <div className="mx-auto max-w-xl px-4 py-20 sm:px-6">
-        <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">Custom web app build</h2>
+        <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("marketing.customBuildTitle")}</h2>
         <p className="mt-2 text-[14px] text-muted-foreground">
-          Every custom build starts with a conversation. Tell us what you&apos;re building and we&apos;ll
-          reach out to scope it — pricing and timeline follow from there.
+          {t("marketing.customBuildIntro")}
         </p>
 
         {submitted ? (
           <div className="mt-8 rounded-lg border border-border bg-background p-6">
-            <p className="text-[14px] font-medium">Thanks — your inquiry is with the studio.</p>
+            <p className="text-[14px] font-medium">{t("marketing.thanksInquiry")}</p>
             <p className="mt-1 text-[13px] text-muted-foreground">
-              We&apos;ll review the brief and follow up by email. You can send another inquiry anytime.
+              {t("marketing.thanksInquiryIntro")}
             </p>
             <Button variant="outline" size="sm" className="mt-4" onClick={() => setSubmitted(false)}>
-              Send another inquiry
+              {t("marketing.sendAnotherInquiry")}
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="contact-name">Your name</Label>
-                <Input id="contact-name" name="name" required placeholder="Ava Marlowe" />
+                <Label htmlFor="contact-name">{t("marketing.yourName")}</Label>
+                <Input id="contact-name" name="name" required placeholder={t("marketing.namePlaceholder")} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="contact-email">Email</Label>
-                <Input id="contact-email" name="email" type="email" required placeholder="you@company.com" />
+                <Label htmlFor="contact-email">{t("auth.email")}</Label>
+                <Input id="contact-email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="contact-message">What are you looking to build?</Label>
+              <Label htmlFor="contact-message">{t("marketing.whatBuild")}</Label>
               <Textarea
                 id="contact-message"
                 name="message"
                 required
                 rows={5}
-                placeholder="Tell us about the product, audience, and what you need help launching."
+                placeholder={t("marketing.buildPlaceholder")}
               />
             </div>
             {error && (
@@ -91,7 +92,7 @@ export function ContactForm() {
               </p>
             )}
             <Button type="submit" disabled={pending} className="mt-2 self-start">
-              {pending ? "Sending…" : "Send inquiry"}
+              {pending ? t("common.sending") : t("marketing.sendInquiry")}
             </Button>
           </form>
         )}

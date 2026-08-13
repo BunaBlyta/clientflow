@@ -15,17 +15,19 @@ import {
 } from "@/lib/analytics";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency } from "@/lib/format";
-import { INVOICE_STATUS_LABEL, INVOICE_STATUS_TONE, PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
+import { INVOICE_STATUS_TONE, PROJECT_STATUS_TONE } from "@/lib/status";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over-time-chart";
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
 import { TurnaroundChart } from "@/components/dashboard/charts/turnaround-chart";
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
 export default function AnalyticsPage() {
+  const { t } = useLocale();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
@@ -100,7 +102,7 @@ export default function AnalyticsPage() {
       <div className="flex min-h-56 items-center justify-center border border-border">
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-          Loading analytics…
+          {t("common.loading")}
         </div>
       </div>
     );
@@ -109,11 +111,11 @@ export default function AnalyticsPage() {
   if (error) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-        <p className="text-[13px] font-medium text-status-danger">Analytics couldn&apos;t load</p>
+        <p className="text-[13px] font-medium text-status-danger">{t("dashboard.analyticsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadAnalytics()}>
           <RefreshCw />
-          Try again
+          {t("common.tryAgain")}
         </Button>
       </div>
     );
@@ -132,29 +134,29 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">Analytics</h1>
+        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.analytics")}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Revenue, turnaround, and pipeline health across every project and invoice.
+          {t("dashboard.analyticsIntro")}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Total revenue" value={formatCurrency(totalPaidRevenue(invoices))} hint="All-time, paid invoices" />
+        <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.allTimePaid")} />
         <StatTile
-          label="Outstanding"
+          label={t("dashboard.outstanding")}
           value={formatCurrency(outstandingInvoicesTotal(invoices))}
-          hint="Sent, pending, or failed"
+          hint={t("dashboard.sentPendingFailed")}
         />
         <StatTile
-          label="Overdue"
+          label={t("dashboard.overdue")}
           value={formatCurrency(overdueInvoicesTotal(invoices))}
           tone="danger"
-          hint="Past due date, unpaid"
+          hint={t("dashboard.pastDueUnpaid")}
         />
         <StatTile
-          label="Avg. turnaround"
+          label={t("dashboard.avgTurnaround")}
           value={overallTurnaround === null ? "—" : `${overallTurnaround}d`}
-          hint="Creation to launch, all packages"
+          hint={t("dashboard.daysFromCreation")}
         />
       </div>
 
@@ -163,9 +165,9 @@ export default function AnalyticsPage() {
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-accent" />
             <div>
-              <h2 className="text-[15px] font-medium">AI analytics insight</h2>
+              <h2 className="text-[15px] font-medium">{t("dashboard.aiInsight")}</h2>
               <p className="mt-1 text-[12px] text-muted-foreground">
-                A short summary of the numbers above, generated on request.
+                {t("dashboard.aiInsightIntro")}
               </p>
               {insight && <p className="mt-3 max-w-2xl text-[13px] leading-5 text-foreground">{insight}</p>}
               {insightError && <p className="mt-3 text-[13px] text-status-danger">{insightError}</p>}
@@ -179,14 +181,14 @@ export default function AnalyticsPage() {
             className="shrink-0"
           >
             {isGeneratingInsight ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
-            {isGeneratingInsight ? "Generating…" : "Generate insight"}
+            {isGeneratingInsight ? t("dashboard.generating") : t("dashboard.generateInsight")}
           </Button>
         </div>
       </div>
 
       <div className="rounded-lg border border-border p-5">
-        <h2 className="text-[15px] font-medium">Revenue over time</h2>
-        <p className="text-[12px] text-muted-foreground">Last 12 months, paid invoices</p>
+        <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
+        <p className="text-[12px] text-muted-foreground">{t("dashboard.lastMonthsPaid", { months: 12 })}</p>
         <div className="mt-4">
           <RevenueOverTimeChart data={revenueTrend} />
         </div>
@@ -194,8 +196,8 @@ export default function AnalyticsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Revenue by package</h2>
-          <p className="text-[12px] text-muted-foreground">All-time, paid invoices</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.revenueByPackage")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.allTimePaid")}</p>
           <div className="mt-4">
             <RevenueByPackageChart data={revenueByPkg} />
           </div>
@@ -213,12 +215,12 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Turnaround by package</h2>
-          <p className="text-[12px] text-muted-foreground">Days from creation to launch</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.turnaroundByPackage")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
           <div className="mt-4">
             {turnaroundByPkg.length === 0 ? (
               <p className="py-16 text-center text-[13px] text-muted-foreground">
-                No launched projects yet.
+                {t("dashboard.noLaunches")}
               </p>
             ) : (
               <TurnaroundChart data={turnaroundByPkg} />
@@ -229,13 +231,13 @@ export default function AnalyticsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Pipeline by stage</h2>
-          <p className="text-[12px] text-muted-foreground">Every project, current stage</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
           <div className="mt-4 flex flex-col gap-3">
             {stageRows.map((s) => (
               <div key={s.status} className="flex items-center gap-3 text-[13px]">
                 <span className={`w-24 shrink-0 ${PROJECT_STATUS_TONE[s.status]}`}>
-                  {PROJECT_STATUS_LABEL[s.status]}
+                  {t(`status.project.${s.status}`)}
                 </span>
                 <div className="h-2 flex-1 rounded-full bg-muted">
                   <div
@@ -250,21 +252,21 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Invoices by status</h2>
-          <p className="text-[12px] text-muted-foreground">Count and total, every invoice</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
           <table className="mt-4 w-full text-[13px]">
             <thead>
               <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-                <th className="py-2 font-normal">Status</th>
-                <th className="py-2 text-right font-normal">Count</th>
-                <th className="py-2 text-right font-normal">Amount</th>
+                <th className="py-2 font-normal">{t("common.status")}</th>
+                <th className="py-2 text-right font-normal">{t("common.count")}</th>
+                <th className="py-2 text-right font-normal">{t("common.amount")}</th>
               </tr>
             </thead>
             <tbody>
               {invoiceStatusRows.map((row) => (
                 <tr key={row.status} className="border-b border-border last:border-0">
                   <td className="py-2">
-                    <span className={INVOICE_STATUS_TONE[row.status]}>{INVOICE_STATUS_LABEL[row.status]}</span>
+                    <span className={INVOICE_STATUS_TONE[row.status]}>{t(`status.invoice.${row.status}`)}</span>
                   </td>
                   <td className="py-2 text-right tabular-nums text-muted-foreground">{row.count}</td>
                   <td className="py-2 text-right tabular-nums">{formatCurrency(row.amountCents)}</td>

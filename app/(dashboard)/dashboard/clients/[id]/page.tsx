@@ -6,12 +6,14 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { invoiceDisplayLabel, invoiceDisplayTone, PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
+import { invoiceDisplayLabelKey, invoiceDisplayTone, PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import type { ClientDetail } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useLocale();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,29 +58,29 @@ export default function ClientDetailPage() {
       </div>
 
       <section className="rounded-lg border border-border p-5">
-        <h2 className="text-[15px] font-medium">Contact information</h2>
+        <h2 className="text-[15px] font-medium">{t("clients.contactInfo")}</h2>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div><dt className="text-[12px] text-muted-foreground">Contact</dt><dd className="mt-1 text-[13px]">{client.contactName}</dd></div>
-          <div><dt className="text-[12px] text-muted-foreground">Email</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Mail className="size-3.5 text-muted-foreground" />{client.email}</dd></div>
-          <div><dt className="text-[12px] text-muted-foreground">Phone</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Phone className="size-3.5 text-muted-foreground" />{client.phone ?? "—"}</dd></div>
+          <div><dt className="text-[12px] text-muted-foreground">{t("clients.contact")}</dt><dd className="mt-1 text-[13px]">{client.contactName}</dd></div>
+          <div><dt className="text-[12px] text-muted-foreground">{t("auth.email")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Mail className="size-3.5 text-muted-foreground" />{client.email}</dd></div>
+          <div><dt className="text-[12px] text-muted-foreground">{t("clients.phone")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Phone className="size-3.5 text-muted-foreground" />{client.phone ?? "—"}</dd></div>
         </dl>
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-[15px] font-medium">Projects</h2>
+        <h2 className="text-[15px] font-medium">{t("clients.projects")}</h2>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-[13px]"><thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">Project</th><th className="px-4 py-2.5 font-normal">Package</th><th className="px-4 py-2.5 font-normal">Status</th><th className="px-4 py-2.5 text-right font-normal">Updated</th></tr></thead><tbody>
-            {client.projects.map((project) => <tr key={project.id} className="border-b border-border last:border-0"><td className="px-4 py-3"><Link href={`/dashboard/projects/${project.id}`} className="font-medium hover:text-brand-accent">{project.name}</Link></td><td className="px-4 py-3 text-muted-foreground">{project.package?.name ?? "Custom project"}</td><td className={`px-4 py-3 ${PROJECT_STATUS_TONE[project.status]}`}>{PROJECT_STATUS_LABEL[project.status]}</td><td className="px-4 py-3 text-right text-muted-foreground">{formatDate(project.updatedAt)}</td></tr>)}
+          <table className="w-full text-[13px]"><thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">{t("projects.project")}</th><th className="px-4 py-2.5 font-normal">{t("projects.package")}</th><th className="px-4 py-2.5 font-normal">{t("common.status")}</th><th className="px-4 py-2.5 text-right font-normal">{t("projects.updated")}</th></tr></thead><tbody>
+            {client.projects.map((project) => <tr key={project.id} className="border-b border-border last:border-0"><td className="px-4 py-3"><Link href={`/dashboard/projects/${project.id}`} className="font-medium hover:text-brand-accent">{project.name}</Link></td><td className="px-4 py-3 text-muted-foreground">{project.package?.name ?? t("projects.customProject")}</td><td className={`px-4 py-3 ${PROJECT_STATUS_TONE[project.status]}`}>{t(`status.project.${project.status}`)}</td><td className="px-4 py-3 text-right text-muted-foreground">{formatDate(project.updatedAt)}</td></tr>)}
             {client.projects.length === 0 && <EmptyRow colSpan={4} text="No projects for this client yet." />}
           </tbody></table>
         </div>
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-[15px] font-medium">Invoices</h2>
+        <h2 className="text-[15px] font-medium">{t("dashboard.invoices")}</h2>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-[13px]"><thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">Invoice</th><th className="px-4 py-2.5 font-normal">Project</th><th className="px-4 py-2.5 text-right font-normal">Amount</th><th className="px-4 py-2.5 font-normal">Status</th><th className="px-4 py-2.5 text-right font-normal">Due</th></tr></thead><tbody>
-            {client.invoices.map((invoice) => <tr key={invoice.id} className="border-b border-border last:border-0"><td className="px-4 py-3 font-medium">{invoice.label}</td><td className="px-4 py-3"><Link href={`/dashboard/projects/${invoice.projectId}`} className="text-muted-foreground hover:text-brand-accent">{client.projects.find((project) => project.id === invoice.projectId)?.name ?? "View project"}</Link></td><td className="px-4 py-3 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td><td className={`px-4 py-3 ${invoiceDisplayTone(invoice)}`}>{invoiceDisplayLabel(invoice)}</td><td className="px-4 py-3 text-right text-muted-foreground">{invoice.dueDate ? formatDate(invoice.dueDate) : "—"}</td></tr>)}
+          <table className="w-full text-[13px]"><thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th><th className="px-4 py-2.5 font-normal">{t("invoices.project")}</th><th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th><th className="px-4 py-2.5 font-normal">{t("common.status")}</th><th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th></tr></thead><tbody>
+            {client.invoices.map((invoice) => <tr key={invoice.id} className="border-b border-border last:border-0"><td className="px-4 py-3 font-medium">{invoice.label}</td><td className="px-4 py-3"><Link href={`/dashboard/projects/${invoice.projectId}`} className="text-muted-foreground hover:text-brand-accent">{client.projects.find((project) => project.id === invoice.projectId)?.name ?? t("project.viewProject")}</Link></td><td className="px-4 py-3 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td><td className={`px-4 py-3 ${invoiceDisplayTone(invoice)}`}>{t(invoiceDisplayLabelKey(invoice))}</td><td className="px-4 py-3 text-right text-muted-foreground">{invoice.dueDate ? formatDate(invoice.dueDate) : "—"}</td></tr>)}
             {client.invoices.length === 0 && <EmptyRow colSpan={5} text="No invoices for this client yet." />}
           </tbody></table>
         </div>

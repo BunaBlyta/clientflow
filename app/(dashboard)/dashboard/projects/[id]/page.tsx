@@ -8,16 +8,18 @@ import { useAppStore } from "@/lib/store";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, formatMajorCurrency } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { invoiceDisplayLabel, invoiceDisplayTone } from "@/lib/status";
+import { invoiceDisplayLabelKey, invoiceDisplayTone } from "@/lib/status";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Client, Invoice, Note, Project } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
+  const { t } = useLocale();
   const projectId = params.id;
   const applyProjectUpdate = useAppStore((s) => s.applyProjectUpdate);
   const [project, setProject] = useState<Project | null>(null);
@@ -137,7 +139,7 @@ export default function ProjectDetailPage() {
       });
       setNotes((currentNotes) => [...currentNotes, createdNote]);
       setNoteBody("");
-      setNoteSuccess("Note posted.");
+      setNoteSuccess(t("project.notePosted"));
     } catch (caughtError) {
       setNoteError(caughtError instanceof Error ? caughtError.message : "We couldn't post this note.");
     } finally {
@@ -152,7 +154,7 @@ export default function ProjectDetailPage() {
         <div className="flex min-h-56 items-center justify-center border border-border">
           <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-            Loading project…
+            {t("projects.loading")}
           </div>
         </div>
       </div>
@@ -164,11 +166,11 @@ export default function ProjectDetailPage() {
       <div className="flex flex-col gap-6">
         <BackLink />
         <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-          <p className="text-[13px] font-medium text-status-danger">Project couldn&apos;t load</p>
+          <p className="text-[13px] font-medium text-status-danger">{t("dashboard.projectsLoadFailed")}</p>
           <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
           <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadProject()}>
             <RefreshCw />
-            Try again
+            {t("common.tryAgain")}
           </Button>
         </div>
       </div>
@@ -205,12 +207,12 @@ export default function ProjectDetailPage() {
       <div className="rounded-lg border border-border p-5">
         <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="text-[12px] text-muted-foreground">Client</dt>
+            <dt className="text-[12px] text-muted-foreground">{t("projects.client")}</dt>
             <dd className="mt-1 text-[13px] font-medium">{client?.companyName ?? "—"}</dd>
             <dd className="text-[12px] text-muted-foreground">{client?.contactName}</dd>
           </div>
           <div>
-            <dt className="text-[12px] text-muted-foreground">Contact</dt>
+            <dt className="text-[12px] text-muted-foreground">{t("clients.contact")}</dt>
             {client?.email && (
               <dd className="mt-1 flex items-center gap-1.5 text-[13px]">
                 <Mail className="size-3.5 text-muted-foreground" />
@@ -225,14 +227,14 @@ export default function ProjectDetailPage() {
             )}
           </div>
           <div>
-            <dt className="text-[12px] text-muted-foreground">Package</dt>
+            <dt className="text-[12px] text-muted-foreground">{t("projects.package")}</dt>
             <dd className="mt-1 text-[13px] font-medium">{pkg?.name ?? "—"}</dd>
             <dd className="text-[12px] text-muted-foreground">
               {pkg ? formatMajorCurrency(pkg.price, pkg.currency) : "Custom pricing"}
             </dd>
           </div>
           <div>
-            <dt className="text-[12px] text-muted-foreground">Timeline</dt>
+            <dt className="text-[12px] text-muted-foreground">{t("project.timeline")}</dt>
             <dd className="mt-1 text-[13px]">Created {formatDate(project.createdAt)}</dd>
             <dd className="text-[12px] text-muted-foreground">
               {project.targetLaunchDate
@@ -245,7 +247,7 @@ export default function ProjectDetailPage() {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-medium">Invoices</h2>
+          <h2 className="text-[15px] font-medium">{t("dashboard.invoices")}</h2>
           <CreateInvoiceDialog
             projectId={project.id}
             currency={project.package?.currency ?? "usd"}
@@ -256,10 +258,10 @@ export default function ProjectDetailPage() {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-                <th className="px-4 py-2.5 font-normal">Invoice</th>
-                <th className="px-4 py-2.5 text-right font-normal">Amount</th>
-                <th className="px-4 py-2.5 font-normal">Status</th>
-                <th className="px-4 py-2.5 text-right font-normal">Due</th>
+                <th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th>
+                <th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th>
+                <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
+                <th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -272,7 +274,7 @@ export default function ProjectDetailPage() {
                     <td className="px-4 py-3 font-medium">{inv.label}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(inv.amountCents)}</td>
                     <td className="px-4 py-3">
-                      <span className={invoiceDisplayTone(inv)}>{invoiceDisplayLabel(inv)}</span>
+                      <span className={invoiceDisplayTone(inv)}>{t(invoiceDisplayLabelKey(inv))}</span>
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
                       {inv.dueDate ? formatDate(inv.dueDate) : "—"}
@@ -295,10 +297,10 @@ export default function ProjectDetailPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <h2 className="text-[15px] font-medium">Activity</h2>
+        <h2 className="text-[15px] font-medium">{t("project.activity")}</h2>
         <div className="flex flex-col gap-4 rounded-lg border border-border p-5">
           {sortedNotes.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">No activity yet.</p>
+            <p className="text-[13px] text-muted-foreground">{t("project.noActivity")}</p>
           ) : (
             <div className="flex flex-col gap-4">
               {sortedNotes.map((note) => (
@@ -330,7 +332,7 @@ export default function ProjectDetailPage() {
 
           <form onSubmit={handleNoteSubmit} className="flex flex-col gap-2 border-t border-border pt-4">
             <Textarea
-              placeholder="Add a note for this project…"
+              placeholder={t("project.notePlaceholder")}
               rows={2}
               value={noteBody}
               onChange={(event) => {
@@ -344,7 +346,7 @@ export default function ProjectDetailPage() {
             )}
             {noteSuccess && <p className="text-[12px] text-status-success">{noteSuccess}</p>}
             <Button type="submit" size="sm" className="self-end" disabled={isPostingNote || !noteBody.trim()}>
-              {isPostingNote ? "Posting…" : "Post note"}
+              {isPostingNote ? t("project.posting") : t("project.postNote")}
             </Button>
           </form>
         </div>

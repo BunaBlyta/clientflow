@@ -17,13 +17,15 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over-time-chart";
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
-import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
+import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project, ProjectRequest } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
 export default function OverviewPage() {
+  const { t } = useLocale();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
@@ -79,7 +81,7 @@ export default function OverviewPage() {
       <div className="flex min-h-56 items-center justify-center border border-border">
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-          Loading overview…
+          {t("dashboard.loading")}
         </div>
       </div>
     );
@@ -88,11 +90,11 @@ export default function OverviewPage() {
   if (error) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-        <p className="text-[13px] font-medium text-status-danger">Overview couldn&apos;t load</p>
+        <p className="text-[13px] font-medium text-status-danger">{t("dashboard.loadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadOverview()}>
           <RefreshCw />
-          Try again
+          {t("common.tryAgain")}
         </Button>
       </div>
     );
@@ -106,40 +108,40 @@ export default function OverviewPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">Overview</h1>
+        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.overview")}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          A snapshot of revenue, active work, and what needs your attention.
+          {t("dashboard.overviewIntro")}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Total revenue" value={formatCurrency(totalPaidRevenue(invoices))} hint="All-time, paid invoices" />
+        <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.allTimePaid")} />
         <StatTile
-          label="Outstanding"
+          label={t("dashboard.outstanding")}
           value={formatCurrency(outstandingInvoicesTotal(invoices))}
-          hint="Sent, pending, or failed"
+          hint={t("dashboard.sentPendingFailed")}
         />
         <StatTile
-          label="Overdue"
+          label={t("dashboard.overdue")}
           value={formatCurrency(overdueInvoicesTotal(invoices))}
           tone="danger"
-          hint="Past due date, unpaid"
+          hint={t("dashboard.pastDueUnpaid")}
         />
-        <StatTile label="Active projects" value={String(activeProjectCount(projects))} hint="Not launched or cancelled" />
+        <StatTile label={t("dashboard.activeProjects")} value={String(activeProjectCount(projects))} hint={t("dashboard.notLaunchedCancelled")} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Revenue over time</h2>
-          <p className="text-[12px] text-muted-foreground">Last 6 months, paid invoices</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.lastMonthsPaid", { months: 6 })}</p>
           <div className="mt-4">
             <RevenueOverTimeChart data={revenueTrend} />
           </div>
         </div>
 
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Revenue by package</h2>
-          <p className="text-[12px] text-muted-foreground">All-time, paid invoices</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.revenueByPackage")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.allTimePaid")}</p>
           <div className="mt-4">
             <RevenueByPackageChart data={revenueByPkg} />
           </div>
@@ -159,14 +161,14 @@ export default function OverviewPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border p-5">
-          <h2 className="text-[15px] font-medium">Average turnaround</h2>
-          <p className="text-[12px] text-muted-foreground">Days from creation to launch, by package</p>
+          <h2 className="text-[15px] font-medium">{t("dashboard.avgTurnaround")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
           <div className="mt-4 flex flex-col gap-3">
-            {turnaround.map((t) => (
-              <div key={t.packageId} className="flex items-center justify-between text-[13px]">
-                <span>{t.name}</span>
+            {turnaround.map((turnaroundRow) => (
+              <div key={turnaroundRow.packageId} className="flex items-center justify-between text-[13px]">
+                <span>{turnaroundRow.name}</span>
                 <span className="text-muted-foreground">
-                  {t.avgDays === null ? "No launches yet" : `${t.avgDays} days · ${t.count} launched`}
+                  {turnaroundRow.avgDays === null ? t("dashboard.noLaunches") : `${turnaroundRow.avgDays} days · ${turnaroundRow.count} launched`}
                 </span>
               </div>
             ))}
@@ -175,15 +177,15 @@ export default function OverviewPage() {
 
         <div className="rounded-lg border border-border p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-medium">Pending requests</h2>
+            <h2 className="text-[15px] font-medium">{t("dashboard.pendingRequests")}</h2>
             <Link href="/dashboard/projects?tab=requests" className="text-[12px] text-brand-accent hover:underline">
-              View all
+              {t("notifications.viewAll")}
             </Link>
           </div>
-          <p className="text-[12px] text-muted-foreground">Awaiting your approval</p>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.awaitingApproval")}</p>
           <div className="mt-4 flex flex-col gap-3">
             {pendingRequests.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">Nothing pending.</p>
+              <p className="text-[13px] text-muted-foreground">{t("dashboard.nothingPending")}</p>
             ) : (
               pendingRequests.map((r) => (
                 <div key={r.id} className="flex items-center justify-between text-[13px]">
@@ -200,7 +202,7 @@ export default function OverviewPage() {
       </div>
 
       <div className="rounded-lg border border-border p-5">
-        <h2 className="text-[15px] font-medium">Recently updated projects</h2>
+        <h2 className="text-[15px] font-medium">{t("dashboard.recentProjects")}</h2>
         <div className="mt-4 flex flex-col divide-y divide-border">
           {[...projects]
             .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -212,7 +214,7 @@ export default function OverviewPage() {
                 className="flex items-center justify-between py-2.5 text-[13px] hover:text-brand-accent"
               >
                 <span>{p.name}</span>
-                <span className={PROJECT_STATUS_TONE[p.status]}>{PROJECT_STATUS_LABEL[p.status]}</span>
+                <span className={PROJECT_STATUS_TONE[p.status]}>{t(`status.project.${p.status}`)}</span>
               </Link>
             ))}
         </div>

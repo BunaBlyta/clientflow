@@ -6,6 +6,7 @@ import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/lib/i18n";
 
 type LoginResponse = {
   user?: { role?: string };
@@ -14,6 +15,7 @@ type LoginResponse = {
 
 export function LoginForm() {
   const router = useRouter();
+  const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,12 +36,12 @@ export function LoginForm() {
       const result = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
-        setError(result.error ?? "Unable to sign in. Check your details and try again.");
+        setError(result.error ?? t("auth.invalidLogin"));
         return;
       }
 
       if (result.user?.role !== "STAFF") {
-        setError("This workspace is for studio staff. Please use the client app to sign in.");
+        setError(t("auth.staffOnly"));
         return;
       }
 
@@ -48,7 +50,7 @@ export function LoginForm() {
       router.replace(destination);
       router.refresh();
     } catch {
-      setError("Something went wrong while signing in. Please try again.");
+      setError(t("auth.loginError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -57,13 +59,13 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("auth.email")}</Label>
         <Input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
-          placeholder="you@studio.com"
+          placeholder={t("auth.emailPlaceholder")}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -72,15 +74,15 @@ export function LoginForm() {
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <span className="text-[12px] text-muted-foreground">Contact your admin to reset it</span>
+          <Label htmlFor="password">{t("auth.password")}</Label>
+          <span className="text-[12px] text-muted-foreground">{t("auth.contactAdmin")}</span>
         </div>
         <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
-          placeholder="Enter your password"
+          placeholder={t("auth.passwordPlaceholder")}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
@@ -96,7 +98,7 @@ export function LoginForm() {
 
       <Button type="submit" className="h-9 w-full" disabled={isSubmitting || !email || !password}>
         {isSubmitting && <LoaderCircle className="size-3.5 animate-spin" />}
-        {isSubmitting ? "Signing in…" : "Sign in"}
+        {isSubmitting ? t("auth.signingIn") : t("auth.signIn")}
       </Button>
     </form>
   );

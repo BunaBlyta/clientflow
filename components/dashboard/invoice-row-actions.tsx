@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { patchJson } from "@/lib/api-client";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 const VOIDABLE_STATUSES: readonly InvoiceStatus[] = [
   "DRAFT",
@@ -30,6 +31,7 @@ export function InvoiceRowActions({
 }) {
   const [voidOpen, setVoidOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { t } = useLocale();
 
   const canSend = invoice.status === "DRAFT";
   const canVoid = VOIDABLE_STATUSES.includes(invoice.status);
@@ -41,7 +43,7 @@ export function InvoiceRowActions({
       const updatedInvoice = await patchJson<Invoice>(
         `/api/invoices/${invoice.id}`,
         { status },
-        "We couldn't update the invoice.",
+        t("status.updateInvoiceError"),
       );
 
       if (updatedInvoice.id !== invoice.id || updatedInvoice.status !== status) {
@@ -49,9 +51,9 @@ export function InvoiceRowActions({
       }
 
       onInvoiceUpdated(updatedInvoice);
-      toast.success(status === "SENT" ? "Invoice sent." : "Invoice voided.");
+      toast.success(status === "SENT" ? t("status.invoiceSent") : t("status.invoiceVoided"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "We couldn't update the invoice.");
+      toast.error(error instanceof Error ? error.message : t("status.updateInvoiceError"));
     } finally {
       setIsUpdating(false);
     }
@@ -70,7 +72,7 @@ export function InvoiceRowActions({
               variant="ghost"
               size="icon-sm"
               disabled={isUpdating}
-              aria-label={`Actions for ${invoice.label}`}
+              aria-label={t("common.actions")}
             />
           }
         >
@@ -79,12 +81,12 @@ export function InvoiceRowActions({
         <DropdownMenuContent align="end" className="w-44">
           {canSend && (
             <DropdownMenuItem onClick={() => void updateStatus("SENT")}>
-              Send invoice
+              {t("status.sendInvoice")}
             </DropdownMenuItem>
           )}
           {canVoid && (
             <DropdownMenuItem variant="destructive" onClick={() => setVoidOpen(true)}>
-              Void invoice
+              {t("status.voidInvoice")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -93,9 +95,9 @@ export function InvoiceRowActions({
       <ConfirmDialog
         open={voidOpen}
         onOpenChange={setVoidOpen}
-        title="Void this invoice?"
-        description={`"${invoice.label}" will be marked void and can no longer be paid. This can't be undone.`}
-        confirmLabel="Void invoice"
+        title={t("status.voidTitle")}
+        description={t("status.voidDescription")}
+        confirmLabel={t("status.voidInvoice")}
         onConfirm={() => updateStatus("VOIDED")}
       />
     </>

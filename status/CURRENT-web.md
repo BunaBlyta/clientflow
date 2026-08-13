@@ -1,32 +1,29 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 16:16 by Codex — fixed dashboard navigation shell
+Last updated: 2026-08-13 16:42 by Codex — theme and web localization
 
 ## What changed
 
-- Converted Settings into a modal opened from the account menu. The sidebar no longer contains a Settings navigation item, and the old `/dashboard/settings` URL safely redirects to the dashboard instead of exposing a second full-page settings screen.
-- Kept package management and team invitations in the modal, and removed the unused Business profile section completely.
-- Made the dashboard shell persistent: the sidebar and topbar stay in place while only the main page content scrolls. Sidebar navigation items are now slightly wider, taller, and easier to scan.
-- Put the Projects tab search and status filter on the same row as the Projects / Requests / Custom inquiries tabs while preserving the existing filtering behavior.
-- Added an average reference line, y-axis values, and interactive points to the revenue-over-time chart so the trend is easier to read at a glance.
-- Added Accept and Deny actions to standard project-request detail pages at `/dashboard/requests/:requestId`, using the existing request PATCH endpoint and rejection confirmation flow.
-- Made the sidebar explicitly fixed to the viewport and the topbar pinned above the content scroll region, so neither navigation surface moves or becomes scrollable with page content.
+- Added a persisted light/dark theme toggle using `next-themes`. The default follows the operating system, and the provider applies the theme before the page paints to prevent a flash of the wrong theme.
+- Kept theme colors token-driven through the existing CSS variables and added dark-mode values for the brand accents. Marketing, auth, dashboard, dialogs, dropdowns, tables, charts, notifications, and payment-result pages use the shared tokens.
+- Added a shared locale provider and translation dictionary for English, German, and Albanian. Language selection is available from the marketing navbar, auth pages, and dashboard topbar, persists locally, updates the document language, and falls back to English when a key is missing.
+- Localized shared navigation, dashboard headings, tables, status labels, notification controls, auth forms, marketing content/forms, settings/package/team dialogs, invoice/project actions, and payment-result UI.
+- API responses and user-generated values remain unchanged: project names, invoice labels/descriptions, notification titles/messages, prospect/client content, and server error messages are not translated or altered.
 
 ## Verification
 
+- `npm run test`: passed — 34 files, 141 tests.
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
-- `npm run test`: passed — 34 files, 141 tests.
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
-- Focused navigation-shell fix rechecked with the same typecheck, lint, test, and webpack build commands: passed.
-- `npm run verify`: typecheck, lint, and tests passed; the default Turbopack build was blocked by the sandbox refusing a worker port bind while processing `app/globals.css`. The webpack build passed independently.
+
+The build still reports the repository’s existing middleware-to-proxy deprecation warning. The unrelated untracked `public/logo.png` remains untouched.
 
 ## Handoff notes
 
-- The API contract has no accept/deny operation for an already-created project at `/dashboard/projects/:projectId`; the new actions therefore live on the incoming project-request detail route, where the existing API supports approval and rejection. Project status changes remain in the existing status menu.
-- No API, Prisma, mobile, or payment files were changed.
-- Unrelated untracked `public/logo.png` remains untouched.
+- No API, Prisma, mobile, or architecture files were changed.
+- Locale keys are centralized in `lib/i18n.tsx`; adding another language only requires adding a message map and the locale selector entry.
 
 ## Hard rule
 

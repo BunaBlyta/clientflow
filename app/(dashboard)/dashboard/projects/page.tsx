@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Check, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
-import { REQUEST_STATUS_LABEL } from "@/lib/status";
 import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All statuses" },
@@ -38,6 +38,7 @@ const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
 
 function ProjectsPageInner() {
   const router = useRouter();
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
@@ -47,9 +48,9 @@ function ProjectsPageInner() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">Projects</h1>
+        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.projects")}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Every active engagement, and incoming requests waiting on a decision.
+          {t("dashboard.projectsIntro")}
         </p>
       </div>
 
@@ -61,15 +62,15 @@ function ProjectsPageInner() {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-            <TabsTrigger value="requests">Requests</TabsTrigger>
-            <TabsTrigger value="custom">Custom inquiries</TabsTrigger>
+          <TabsTrigger value="projects">{t("projects.tabProjects")}</TabsTrigger>
+          <TabsTrigger value="requests">{t("projects.tabRequests")}</TabsTrigger>
+          <TabsTrigger value="custom">{t("projects.tabCustom")}</TabsTrigger>
           </TabsList>
           {tab === "projects" && (
             <TableToolbar
               search={projectSearch}
               onSearchChange={setProjectSearch}
-              placeholder="Search projects..."
+              placeholder={t("projects.search")}
             >
               <Select
                 value={projectStatusFilter}
@@ -81,7 +82,7 @@ function ProjectsPageInner() {
                 <SelectContent>
                   {STATUS_FILTERS.map((filter) => (
                     <SelectItem key={filter.value} value={filter.value}>
-                      {filter.label}
+                      {filter.value === "ALL" ? t("status.filter.ALL") : t(`status.project.${filter.value}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -122,6 +123,7 @@ function ProjectsTable({
   statusFilter: ProjectStatus | "ALL";
 }) {
   const router = useRouter();
+  const { t } = useLocale();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -199,7 +201,7 @@ function ProjectsTable({
       <div className="flex min-h-56 items-center justify-center border border-border">
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-          Loading projects…
+          {t("projects.loading")}
         </div>
       </div>
     );
@@ -208,11 +210,11 @@ function ProjectsTable({
   if (error) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-        <p className="text-[13px] font-medium text-status-danger">Projects couldn&apos;t load</p>
+        <p className="text-[13px] font-medium text-status-danger">{t("dashboard.projectsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadProjects()}>
           <RefreshCw />
-          Try again
+          {t("common.tryAgain")}
         </Button>
       </div>
     );
@@ -224,11 +226,11 @@ function ProjectsTable({
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">Project</th>
-              <th className="px-4 py-2.5 font-normal">Client</th>
-              <th className="px-4 py-2.5 font-normal">Package</th>
-              <th className="px-4 py-2.5 font-normal">Status</th>
-              <th className="px-4 py-2.5 text-right font-normal">Updated</th>
+              <th className="px-4 py-2.5 font-normal">{t("projects.project")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("projects.client")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("projects.package")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
+              <th className="px-4 py-2.5 text-right font-normal">{t("projects.updated")}</th>
             </tr>
           </thead>
           <tbody>
@@ -259,7 +261,7 @@ function ProjectsTable({
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {clientNames.get(project.clientId) ?? "Unknown client"}
+                    {clientNames.get(project.clientId) ?? t("common.unknown")}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{packageLabel}</td>
                   <td className="px-4 py-3">
@@ -277,17 +279,15 @@ function ProjectsTable({
             {projects.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center">
-                  <p className="text-[13px] font-medium">No projects yet</p>
-                  <p className="mt-1 text-[12px] text-muted-foreground">
-                    Approved client work will appear here.
-                  </p>
+                  <p className="text-[13px] font-medium">{t("projects.noProjects")}</p>
+                  <p className="mt-1 text-[12px] text-muted-foreground">{t("projects.noProjectsIntro")}</p>
                 </td>
               </tr>
             )}
             {projects.length > 0 && filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
-                  No projects match your filters.
+                  {t("projects.noMatch")}
                 </td>
               </tr>
             )}
@@ -300,6 +300,7 @@ function ProjectsTable({
 
 function RequestsTable() {
   const router = useRouter();
+  const { t } = useLocale();
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
   const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -393,7 +394,7 @@ function RequestsTable() {
       <div className="flex min-h-56 items-center justify-center border border-border">
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-          Loading requests…
+          {t("projects.requestsLoading")}
         </div>
       </div>
     );
@@ -402,11 +403,11 @@ function RequestsTable() {
   if (error) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-        <p className="text-[13px] font-medium text-status-danger">Requests couldn&apos;t load</p>
+        <p className="text-[13px] font-medium text-status-danger">{t("dashboard.requestsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadRequests()}>
           <RefreshCw />
-          Try again
+          {t("common.tryAgain")}
         </Button>
       </div>
     );
@@ -414,17 +415,17 @@ function RequestsTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder="Search requests..." />
+      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("projects.searchRequests")} />
 
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">Prospect</th>
-              <th className="px-4 py-2.5 font-normal">Package</th>
-              <th className="px-4 py-2.5 font-normal">Status</th>
-              <th className="px-4 py-2.5 font-normal">Submitted</th>
-              <th className="px-4 py-2.5 text-right font-normal">Actions</th>
+              <th className="px-4 py-2.5 font-normal">{t("projects.prospect")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("projects.package")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("projects.submitted")}</th>
+              <th className="px-4 py-2.5 text-right font-normal">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -467,7 +468,7 @@ function RequestsTable() {
                             : "text-muted-foreground"
                       }
                     >
-                      {REQUEST_STATUS_LABEL[r.status]}
+                      {t(`status.request.${r.status}`)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(r.createdAt)}</td>
@@ -503,7 +504,7 @@ function RequestsTable() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
-                  No requests match your search.
+                  {t("projects.noRequests")}
                 </td>
               </tr>
             )}
@@ -514,9 +515,9 @@ function RequestsTable() {
       <ConfirmDialog
         open={rejectingId !== null}
         onOpenChange={(open) => !open && setRejectingId(null)}
-        title="Reject this request?"
-        description="The prospect will be notified. No client or project record is created — this can't be undone."
-        confirmLabel="Reject request"
+        title={t("projects.rejectTitle")}
+        description={t("projects.rejectDescription")}
+        confirmLabel={t("projects.rejectConfirm")}
         onConfirm={() => rejectingId && void updateRequest(rejectingId, "REJECTED")}
       />
     </div>

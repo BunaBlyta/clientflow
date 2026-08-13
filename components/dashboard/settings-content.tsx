@@ -14,13 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 export function SettingsContent() {
+  const { t } = useLocale();
   return (
     <Tabs defaultValue="packages">
       <TabsList>
-        <TabsTrigger value="packages">Packages</TabsTrigger>
-        <TabsTrigger value="team">Team</TabsTrigger>
+        <TabsTrigger value="packages">{t("nav.packages")}</TabsTrigger>
+        <TabsTrigger value="team">{t("settings.team")}</TabsTrigger>
       </TabsList>
       <TabsContent value="packages" className="mt-4">
         <PackagesSection />
@@ -33,6 +35,7 @@ export function SettingsContent() {
 }
 
 function PackagesSection() {
+  const { t } = useLocale();
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,11 +64,11 @@ function PackagesSection() {
     return () => controller.abort();
   }, [loadPackages]);
 
-  if (isLoading) return <LoadingState label="Loading packages…" />;
+  if (isLoading) return <LoadingState label={t("common.loading")} />;
 
   if (error) {
     return (
-      <ErrorState title="Packages couldn't load" error={error} onRetry={() => void loadPackages()} />
+      <ErrorState title={t("settings.packagesFailed")} error={error} onRetry={() => void loadPackages()} />
     );
   }
 
@@ -73,7 +76,7 @@ function PackagesSection() {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <p className="text-[13px] text-muted-foreground">
-          The single source of truth for the public pricing page and internal project creation.
+          {t("settings.packagesIntro")}
         </p>
         <CreatePackageDialog
           onCreated={(pkg) => setPackages((current) => [...current, pkg].sort((a, b) => a.sortOrder - b.sortOrder))}
@@ -105,7 +108,7 @@ function PackagesSection() {
           </div>
         ))}
         {packages.length === 0 && (
-          <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">No active packages yet.</p>
+          <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{t("settings.noPackages")}</p>
         )}
       </div>
     </div>
@@ -113,6 +116,7 @@ function PackagesSection() {
 }
 
 function TeamSection() {
+  const { t } = useLocale();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -217,8 +221,8 @@ function TeamSection() {
     }
   }
 
-  if (isLoading) return <LoadingState label="Loading team…" />;
-  if (error) return <ErrorState title="Team couldn't load" error={error} onRetry={() => void loadTeam()} />;
+  if (isLoading) return <LoadingState label={t("settings.teamLoading")} />;
+  if (error) return <ErrorState title={t("settings.teamFailed")} error={error} onRetry={() => void loadTeam()} />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -232,31 +236,31 @@ function TeamSection() {
               {resendError?.staffId === staffMember.id && <p role="alert" className="mt-1 text-[11px] text-status-danger">{resendError.message}</p>}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              {currentUserId === staffMember.id && <span className="text-[12px] text-muted-foreground">You</span>}
+              {currentUserId === staffMember.id && <span className="text-[12px] text-muted-foreground">{t("settings.you")}</span>}
               {!staffMember.isActive && (
                 <>
-                  <Badge className="bg-status-warning/10 text-status-warning">Invited</Badge>
+                  <Badge className="bg-status-warning/10 text-status-warning">{t("settings.invited")}</Badge>
                   <Button type="button" variant="ghost" size="sm" disabled={resendingStaffId !== null} onClick={() => void handleResend(staffMember)}>
                     {resendingStaffId === staffMember.id && <LoaderCircle className="animate-spin" />}
-                    {resendingStaffId === staffMember.id ? "Sending…" : "Resend"}
+                    {resendingStaffId === staffMember.id ? t("common.sending") : t("settings.resend")}
                   </Button>
                 </>
               )}
             </div>
           </div>
         ))}
-        {staff.length === 0 && <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">No team members yet.</p>}
+        {staff.length === 0 && <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{t("settings.noTeam")}</p>}
       </div>
 
       <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-[15px] font-medium">Invite a teammate</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">They&apos;ll get an email to set a password and join the dashboard.</p>
+          <h2 className="text-[15px] font-medium">{t("settings.inviteTitle")}</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.inviteIntro")}</p>
         </div>
         <form onSubmit={handleInvite} className="flex max-w-xl flex-wrap items-end gap-2">
-          <div className="flex min-w-40 flex-1 flex-col gap-1.5"><Label htmlFor="invite-name">Name</Label><Input id="invite-name" type="text" placeholder="Teammate name" value={name} onChange={(event) => setName(event.target.value)} required /></div>
-          <div className="flex flex-1 flex-col gap-1.5"><Label htmlFor="invite-email">Email</Label><Input id="invite-email" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required /></div>
-          <Button type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? "Sending…" : "Send invite"}</Button>
+          <div className="flex min-w-40 flex-1 flex-col gap-1.5"><Label htmlFor="invite-name">{t("settings.name")}</Label><Input id="invite-name" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required /></div>
+          <div className="flex flex-1 flex-col gap-1.5"><Label htmlFor="invite-email">{t("auth.email")}</Label><Input id="invite-email" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required /></div>
+          <Button type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
         </form>
       </div>
     </div>

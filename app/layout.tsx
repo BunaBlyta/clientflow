@@ -4,6 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
+import { LocaleProvider } from "@/lib/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,12 +20,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", inter.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("h-full", "antialiased", inter.variable)}>
       <body className="min-h-full flex flex-col font-sans">
-        <TooltipProvider delay={200}>
-          {children}
-          <Toaster position="bottom-right" />
-        </TooltipProvider>
+        <ThemeProvider>
+          <LocaleProvider>
+            <TooltipProvider delay={200}>
+              {children}
+              <Toaster position="bottom-right" />
+            </TooltipProvider>
+          </LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

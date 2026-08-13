@@ -6,6 +6,7 @@ import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/lib/i18n";
 
 type SetPasswordResponse = {
   user?: { role?: string };
@@ -14,6 +15,7 @@ type SetPasswordResponse = {
 
 export function AcceptInviteForm() {
   const router = useRouter();
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState(() => searchParams.get("email") ?? "");
   const [code, setCode] = useState("");
@@ -36,14 +38,14 @@ export function AcceptInviteForm() {
       const result = (await response.json().catch(() => null)) as SetPasswordResponse | null;
 
       if (!response.ok) {
-        setError(result?.error ?? "Unable to accept the invitation. Check your details and try again.");
+        setError(result?.error ?? t("auth.invitationError"));
         return;
       }
 
       router.replace("/dashboard");
       router.refresh();
     } catch {
-      setError("Something went wrong while accepting the invitation. Please try again.");
+      setError(t("auth.invitationUnexpected"));
     } finally {
       setIsSubmitting(false);
     }
@@ -52,13 +54,13 @@ export function AcceptInviteForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="invite-email">Email</Label>
+        <Label htmlFor="invite-email">{t("auth.email")}</Label>
         <Input
           id="invite-email"
           name="email"
           type="email"
           autoComplete="email"
-          placeholder="you@studio.com"
+          placeholder={t("auth.emailPlaceholder")}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -66,7 +68,7 @@ export function AcceptInviteForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="invite-code">6-digit invitation code</Label>
+        <Label htmlFor="invite-code">{t("auth.invitationCode")}</Label>
         <Input
           id="invite-code"
           name="code"
@@ -74,7 +76,7 @@ export function AcceptInviteForm() {
           autoComplete="one-time-code"
           pattern="[0-9]{6}"
           maxLength={6}
-          placeholder="000000"
+          placeholder={t("auth.codePlaceholder")}
           value={code}
           onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
           required
@@ -82,13 +84,13 @@ export function AcceptInviteForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="invite-password">New password</Label>
+        <Label htmlFor="invite-password">{t("auth.newPassword")}</Label>
         <Input
           id="invite-password"
           name="password"
           type="password"
           autoComplete="new-password"
-          placeholder="At least 8 characters"
+          placeholder={t("auth.passwordLength")}
           minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -105,7 +107,7 @@ export function AcceptInviteForm() {
 
       <Button type="submit" className="h-9 w-full" disabled={isSubmitting || !email || code.length !== 6 || !password}>
         {isSubmitting && <LoaderCircle className="size-3.5 animate-spin" />}
-        {isSubmitting ? "Setting up account…" : "Accept invitation"}
+        {isSubmitting ? t("auth.settingUp") : t("auth.accept")}
       </Button>
     </form>
   );

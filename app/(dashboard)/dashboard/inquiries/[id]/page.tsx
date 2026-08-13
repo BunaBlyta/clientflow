@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Mail, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
-import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/status";
+import { PROJECT_STATUS_TONE } from "@/lib/status";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import type { CustomLeadDetail } from "@/lib/types";
 
@@ -40,7 +41,7 @@ export default function InquiryDetailPage() {
   </div>;
 }
 
-function ProjectList({ projects }: { projects: CustomLeadDetail["projects"] }) { return <div className="mt-4 border-t border-border pt-4">{projects.length ? <div className="flex flex-col gap-2">{projects.map((project) => <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="flex items-center justify-between gap-4 text-[13px] hover:text-brand-accent"><span>{project.name}</span><span className={PROJECT_STATUS_TONE[project.status]}>{PROJECT_STATUS_LABEL[project.status]}</span></Link>)}</div> : <p className="text-[12px] text-muted-foreground">No related projects yet.</p>}</div>; }
+function ProjectList({ projects }: { projects: CustomLeadDetail["projects"] }) { const { t } = useLocale(); return <div className="mt-4 border-t border-border pt-4">{projects.length ? <div className="flex flex-col gap-2">{projects.map((project) => <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="flex items-center justify-between gap-4 text-[13px] hover:text-brand-accent"><span>{project.name}</span><span className={PROJECT_STATUS_TONE[project.status]}>{t(`status.project.${project.status}`)}</span></Link>)}</div> : <p className="text-[12px] text-muted-foreground">{t("project.noRelated")}</p>}</div>; }
 function BackLink() { return <Link href="/dashboard/projects?tab=custom" className="inline-flex w-fit items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3.5" />Custom inquiries</Link>; }
 function State({ label }: { label: string }) { return <div className="flex flex-col gap-6"><BackLink /><div className="flex min-h-56 items-center justify-center border border-border"><div className="flex items-center gap-2 text-[13px] text-muted-foreground">{label === "Loading inquiry…" && <LoaderCircle className="size-4 animate-spin text-brand-accent" />}{label}</div></div></div>; }
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) { return <div className="flex flex-col gap-6"><BackLink /><div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center"><p className="text-[13px] font-medium text-status-danger">Inquiry couldn&apos;t load</p><p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p><Button className="mt-4" variant="outline" size="sm" onClick={onRetry}><RefreshCw />Try again</Button></div></div>; }

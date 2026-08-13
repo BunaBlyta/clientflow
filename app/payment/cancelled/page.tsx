@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocaleText } from "@/components/locale-text";
 
 const EXPO_WEB_BASE_URL = "http://localhost:8081";
 
@@ -36,7 +37,7 @@ export default async function PaymentCancelledPage({
   const actionHref = isMobileReturn
     ? `${EXPO_WEB_BASE_URL}/projects/${encodeURIComponent(projectId)}/invoices`
     : "/dashboard/invoices";
-  const actionLabel = isMobileReturn ? "Continue to web app" : "Back to invoices";
+  const actionLabel = isMobileReturn ? "payment.continueApp" : "payment.returnDashboard";
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-6 py-16">
@@ -45,21 +46,19 @@ export default async function PaymentCancelledPage({
           <X className="size-5 text-muted-foreground" />
         </div>
 
-        <h1 className="mt-5 text-lg font-semibold tracking-tight">Payment cancelled</h1>
+        <h1 className="mt-5 text-lg font-semibold tracking-tight"><LocaleText id="payment.cancelled" /></h1>
         <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          No payment was taken and the invoice is unchanged. You can pay it whenever
-          you&rsquo;re ready.
+          <LocaleText id="payment.cancelledIntro" />
         </p>
 
         <div className="mt-6 flex justify-center">
           <Button variant="secondary" nativeButton={false} render={<a href={actionHref} />}>
-            {actionLabel}
+            <LocaleText id={actionLabel} />
           </Button>
         </div>
         {isMobileReturn && (
           <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            This development link opens the Expo web app on port 8081. The invoice
-            remains unchanged until you choose to pay it again.
+            <LocaleText id="payment.cancelledDevLink" />
           </p>
         )}
       </div>

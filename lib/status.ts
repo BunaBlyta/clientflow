@@ -72,6 +72,10 @@ export function invoiceDisplayLabel(invoice: Invoice): string {
   return isInvoiceOverdue(invoice) ? "Overdue" : INVOICE_STATUS_LABEL[invoice.status];
 }
 
+export function invoiceDisplayLabelKey(invoice: Invoice): string {
+  return isInvoiceOverdue(invoice) ? "status.invoice.OVERDUE" : `status.invoice.${invoice.status}`;
+}
+
 export function invoiceDisplayTone(invoice: Invoice): string {
   return isInvoiceOverdue(invoice) ? "text-status-danger" : INVOICE_STATUS_TONE[invoice.status];
 }

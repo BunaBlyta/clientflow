@@ -16,8 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ManagedPackage } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPackage) => void }) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,42 +69,42 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button size="sm" />}>
         <Plus />
-        New package
+        {t("settings.newPackage")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New package</DialogTitle>
-          <DialogDescription>Add a package to the public pricing and request flow.</DialogDescription>
+          <DialogTitle>{t("settings.newPackage")}</DialogTitle>
+          <DialogDescription>{t("settings.newPackageIntro")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-name">Name</Label>
+            <Label htmlFor="package-name">{t("settings.name")}</Label>
             <Input id="package-name" name="name" required placeholder="Full Website" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-slug">Slug</Label>
+            <Label htmlFor="package-slug">{t("settings.slug")}</Label>
             <Input id="package-slug" name="slug" required pattern="[a-z0-9-]+" placeholder="full-website" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="package-price">Price</Label>
+              <Label htmlFor="package-price">{t("settings.price")}</Label>
               <Input id="package-price" name="price" type="number" min="0.01" step="0.01" required />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="package-currency">Currency</Label>
+              <Label htmlFor="package-currency">{t("settings.currency")}</Label>
               <Input id="package-currency" name="currency" defaultValue="usd" maxLength={3} required />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-duration">Estimated duration</Label>
+            <Label htmlFor="package-duration">{t("settings.duration")}</Label>
             <Input id="package-duration" name="estimatedDuration" placeholder="6–8 weeks" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-description">Description</Label>
+            <Label htmlFor="package-description">{t("settings.description")}</Label>
             <Textarea id="package-description" name="description" rows={2} required />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-sort-order">Sort order</Label>
+            <Label htmlFor="package-sort-order">{t("settings.sortOrder")}</Label>
             <Input id="package-sort-order" name="sortOrder" type="number" min="0" step="1" defaultValue="0" required />
           </div>
           {error && (
@@ -112,7 +114,7 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
           )}
           <DialogFooter>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create package"}
+              {pending ? t("settings.creating") : t("settings.createPackage")}
             </Button>
           </DialogFooter>
         </form>

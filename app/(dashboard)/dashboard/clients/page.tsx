@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import type { Client, Invoice, Project } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 type ApiInvoice = Invoice & { clientId: string };
 
 export default function ClientsPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -114,7 +116,7 @@ export default function ClientsPage() {
       <div className="flex min-h-56 items-center justify-center border border-border">
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin text-brand-accent" />
-          Loading clients…
+            {t("common.loading")}
         </div>
       </div>
     );
@@ -123,11 +125,11 @@ export default function ClientsPage() {
   if (error) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-        <p className="text-[13px] font-medium text-status-danger">Clients couldn&apos;t load</p>
+        <p className="text-[13px] font-medium text-status-danger">{t("dashboard.clientsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadClients()}>
           <RefreshCw />
-          Try again
+          {t("common.tryAgain")}
         </Button>
       </div>
     );
@@ -136,23 +138,23 @@ export default function ClientsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">Clients</h1>
+        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.clients")}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Every business with an active or past engagement.
+          {t("clients.intro")}
         </p>
       </div>
 
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder="Search clients..." />
+      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("clients.search")} />
 
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">Client</th>
-              <th className="px-4 py-2.5 font-normal">Contact</th>
-              <th className="px-4 py-2.5 font-normal">Projects</th>
-              <th className="px-4 py-2.5 text-right font-normal">Total billed</th>
-              <th className="px-4 py-2.5 text-right font-normal">Client since</th>
+              <th className="px-4 py-2.5 font-normal">{t("clients.company")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("clients.contact")}</th>
+              <th className="px-4 py-2.5 font-normal">{t("clients.projects")}</th>
+              <th className="px-4 py-2.5 text-right font-normal">{t("clients.totalBilled")}</th>
+              <th className="px-4 py-2.5 text-right font-normal">{t("clients.since")}</th>
               <th className="px-4 py-2.5" />
             </tr>
           </thead>
@@ -215,7 +217,7 @@ export default function ClientsPage() {
                           {resendingClientId === client.id ? (
                             <LoaderCircle className="animate-spin" />
                           ) : null}
-                          {resendingClientId === client.id ? "Sending…" : "Resend app invitation"}
+                          {resendingClientId === client.id ? t("common.sending") : t("clients.resendInvitation")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -226,7 +228,7 @@ export default function ClientsPage() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
-                  No clients match your search.
+                  {t("clients.noMatch")}
                 </td>
               </tr>
             )}

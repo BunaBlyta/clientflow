@@ -4,17 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, FolderKanban, Receipt, TrendingUp, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n";
 
 const navItems = [
-  { href: "/dashboard", label: "Overview", icon: BarChart3, exact: true },
-  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
-  { href: "/dashboard/clients", label: "Clients", icon: Users },
-  { href: "/dashboard/invoices", label: "Invoices", icon: Receipt },
-  { href: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
+  { href: "/dashboard", key: "nav.overview", icon: BarChart3, exact: true },
+  { href: "/dashboard/projects", key: "nav.projects", icon: FolderKanban },
+  { href: "/dashboard/clients", key: "nav.clients", icon: Users },
+  { href: "/dashboard/invoices", key: "nav.invoices", icon: Receipt },
+  { href: "/dashboard/analytics", key: "nav.analytics", icon: TrendingUp },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
@@ -38,7 +40,7 @@ export function Sidebar() {
               )}
             >
               <item.icon className={cn("size-4", isActive && "text-brand-accent")} />
-              {item.label}
+              {t(item.key)}
             </Link>
           );
         })}

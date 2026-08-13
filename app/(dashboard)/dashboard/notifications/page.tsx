@@ -12,8 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n";
 
 export default function NotificationsPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -137,11 +139,11 @@ export default function NotificationsPage() {
   if (error) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
-        <p className="text-[13px] font-medium text-status-danger">Notifications couldn&apos;t load</p>
+          <p className="text-[13px] font-medium text-status-danger">{t("dashboard.notificationsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadNotifications()}>
           <RefreshCw />
-          Try again
+          {t("common.tryAgain")}
         </Button>
       </div>
     );
@@ -151,9 +153,9 @@ export default function NotificationsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">Notifications</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.notifications")}</h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            Everything that needs your attention across requests, invoices, and projects.
+            {t("notifications.intro")}
           </p>
         </div>
         {unread.length > 0 && (
@@ -164,7 +166,7 @@ export default function NotificationsPage() {
               onClick={() => void markAllNotificationsRead()}
               className="text-[13px] text-brand-accent hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground"
             >
-              {isMarkingAll ? "Marking…" : "Mark all read"}
+              {isMarkingAll ? t("notifications.marking") : t("notifications.markAllRead")}
             </button>
           </div>
         )}
@@ -178,13 +180,13 @@ export default function NotificationsPage() {
 
       <Tabs defaultValue="all">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="unread">Unread{unread.length > 0 ? ` (${unread.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="all">{t("notifications.all")}</TabsTrigger>
+          <TabsTrigger value="unread">{t("notifications.unreadTab")}{unread.length > 0 ? ` (${unread.length})` : ""}</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="mt-4">
           <NotificationList
             notifications={sorted}
-            emptyLabel="No notifications yet."
+            emptyLabel={t("notifications.noNotifications")}
             markingId={markingId}
             onRead={(notification) => {
               router.push(getNotificationDestination(notification));
@@ -195,7 +197,7 @@ export default function NotificationsPage() {
         <TabsContent value="unread" className="mt-4">
           <NotificationList
             notifications={unread}
-            emptyLabel="You're all caught up."
+            emptyLabel={t("notifications.caughtUp")}
             markingId={markingId}
             onRead={(notification) => {
               router.push(getNotificationDestination(notification));

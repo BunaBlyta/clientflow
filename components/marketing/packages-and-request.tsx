@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatMajorCurrency } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
 import type { ManagedPackage } from "@/lib/types";
 
 const mostPopularSlug = "full-website";
@@ -27,6 +28,7 @@ function isCustomPackage(pkg: ManagedPackage) {
 }
 
 export function PackagesAndRequest() {
+  const { t } = useLocale();
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [packagesError, setPackagesError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function PackagesAndRequest() {
       try {
         const packageData = await fetchJson<ManagedPackage[]>(
           "/api/packages",
-          "We couldn't load the packages.",
+          t("dashboard.retryLoad"),
           controller.signal,
         );
         if (!Array.isArray(packageData)) {
@@ -58,9 +60,7 @@ export function PackagesAndRequest() {
       } catch (caughtError) {
         if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
         if (!controller.signal.aborted) {
-          setPackagesError(
-            caughtError instanceof Error ? caughtError.message : "We couldn't load the packages.",
-          );
+          setPackagesError(caughtError instanceof Error ? caughtError.message : t("dashboard.retryLoad"));
         }
       } finally {
         if (!controller.signal.aborted) setIsLoadingPackages(false);
@@ -68,7 +68,7 @@ export function PackagesAndRequest() {
     });
 
     return () => controller.abort();
-  }, []);
+  }, [t]);
 
   function handleChoose(packageId: string) {
     setSelectedPackageId(packageId);
@@ -120,20 +120,20 @@ export function PackagesAndRequest() {
     <>
       <section id="packages" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="max-w-xl">
-          <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">Packages</h2>
+          <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("nav.packages")}</h2>
           <p className="mt-2 text-[14px] text-muted-foreground">
-            Two fixed-price packages you can request directly, and a custom build we scope together.
+            {t("marketing.packagesIntro")}
           </p>
         </div>
 
         {isLoadingPackages ? (
-          <p className="mt-10 text-[13px] text-muted-foreground">Loading packages…</p>
+          <p className="mt-10 text-[13px] text-muted-foreground">{t("common.loading")}</p>
         ) : packagesError ? (
           <p role="alert" className="mt-10 text-[13px] text-status-danger">
             {packagesError}
           </p>
         ) : packages.length === 0 ? (
-          <p className="mt-10 text-[13px] text-muted-foreground">No packages are available right now.</p>
+          <p className="mt-10 text-[13px] text-muted-foreground">{t("marketing.noPackages")}</p>
         ) : (
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {packages.map((pkg) => {
@@ -148,12 +148,12 @@ export function PackagesAndRequest() {
                 >
                   {isPopular && (
                     <span className="mb-3 w-fit rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-[12px] font-medium text-brand-accent">
-                      Most popular
+                      {t("marketing.mostPopular")}
                     </span>
                   )}
                   <h3 className="text-[16px] font-semibold">{pkg.name}</h3>
                   <p className="mt-1 text-[28px] font-semibold tracking-tight">
-                    {isCustomPackage(pkg) ? "Custom" : formatMajorCurrency(pkg.price, pkg.currency)}
+                    {isCustomPackage(pkg) ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                   </p>
                   <p className="mt-2 text-[13px] text-muted-foreground">{pkg.description}</p>
                   <ul className="mt-5 flex flex-1 flex-col gap-2.5">
@@ -161,14 +161,14 @@ export function PackagesAndRequest() {
                       <Check className="mt-0.5 size-3.5 shrink-0 text-brand-accent" />
                       <span>
                         {pkg.estimatedDuration
-                          ? `Estimated delivery: ${pkg.estimatedDuration}`
-                          : "Timeline set after scoping"}
+                          ? t("marketing.estimatedDelivery", { duration: pkg.estimatedDuration })
+                          : t("marketing.timelineScoped")}
                       </span>
                     </li>
                   </ul>
                   {isCustomPackage(pkg) ? (
                     <Button className="mt-6" variant="outline" render={<a href="#contact" />}>
-                      Talk to us
+                      {t("marketing.talkToUs")}
                     </Button>
                   ) : (
                     <Button
@@ -176,7 +176,7 @@ export function PackagesAndRequest() {
                       variant={isPopular ? "default" : "outline"}
                       onClick={() => handleChoose(pkg.id)}
                     >
-                      Request this package
+                      {t("marketing.requestPackage")}
                     </Button>
                   )}
                 </div>
@@ -189,15 +189,14 @@ export function PackagesAndRequest() {
       {!isLoadingPackages && !packagesError && standardPackages.length > 0 && (
         <section id="request-form" className="border-t border-border bg-secondary/40">
         <div className="mx-auto max-w-xl px-4 py-20 sm:px-6">
-          <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">Request a package</h2>
+          <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("marketing.requestPackageTitle")}</h2>
           <p className="mt-2 text-[14px] text-muted-foreground">
-            Tell us a bit about your project. We&apos;ll review your request and follow up by email —
-            nothing is charged until you approve and pay a deposit.
+            {t("marketing.requestPackageIntro")}
           </p>
 
           {submitted ? (
             <div className="mt-8 rounded-lg border border-border bg-background p-6">
-              <p className="text-[14px] font-medium">Request received.</p>
+            <p className="text-[14px] font-medium">{t("marketing.requestReceived")}</p>
               <p className="mt-1 text-[13px] text-muted-foreground">
                 We&apos;ll email you once it&apos;s been reviewed. You can submit another request anytime.
               </p>
@@ -208,7 +207,7 @@ export function PackagesAndRequest() {
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="package">Package</Label>
+                <Label htmlFor="package">{t("nav.packages")}</Label>
                 <Select
                   value={selectedPackageId}
                   onValueChange={(value) => value && setSelectedPackageId(value)}
@@ -227,21 +226,21 @@ export function PackagesAndRequest() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="name">Your name</Label>
-                  <Input id="name" name="name" required placeholder="Ava Marlowe" />
+                  <Label htmlFor="name">{t("marketing.yourName")}</Label>
+                  <Input id="name" name="name" required placeholder={t("marketing.namePlaceholder")} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="companyName">Company</Label>
-                  <Input id="companyName" name="companyName" placeholder="Marlowe & Finch" />
+                  <Label htmlFor="companyName">{t("marketing.company")}</Label>
+                  <Input id="companyName" name="companyName" placeholder={t("marketing.companyPlaceholder")} />
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" required placeholder="you@company.com" />
+                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Input id="email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="message">What are you looking to build? (optional)</Label>
-                <Textarea id="message" name="message" rows={4} placeholder="A landing page for a product launch in September..." />
+                <Label htmlFor="message">{t("marketing.messageOptional")}</Label>
+                <Textarea id="message" name="message" rows={4} placeholder={t("marketing.messagePlaceholder")} />
               </div>
               {submitError && (
                 <p
@@ -252,7 +251,7 @@ export function PackagesAndRequest() {
                 </p>
               )}
               <Button type="submit" disabled={pending} className="mt-2">
-                {pending ? "Submitting…" : "Submit request"}
+                {pending ? t("marketing.submitting") : t("marketing.submitRequest")}
               </Button>
             </form>
           )}

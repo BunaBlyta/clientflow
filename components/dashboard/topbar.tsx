@@ -20,6 +20,9 @@ import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { getNotificationDestination } from "@/lib/notification-destination";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSelect } from "@/components/language-select";
+import { useLocale } from "@/lib/i18n";
 import type { Notification } from "@/lib/types";
 
 type CurrentUser = {
@@ -31,6 +34,7 @@ type CurrentUser = {
 
 export function Topbar() {
   const router = useRouter();
+  const { t } = useLocale();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
@@ -173,7 +177,7 @@ export function Topbar() {
             <button
               type="button"
               className="relative flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Notifications"
+              aria-label={t("nav.notifications")}
             />
           }
         >
@@ -184,9 +188,9 @@ export function Topbar() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 p-0">
           <div className="flex items-center justify-between px-3 py-2.5">
-            <p className="text-[13px] font-medium text-foreground">Notifications</p>
+            <p className="text-[13px] font-medium text-foreground">{t("nav.notifications")}</p>
             {unreadCount > 0 && (
-              <span className="text-[11px] text-muted-foreground">Unread notifications</span>
+              <span className="text-[11px] text-muted-foreground">{t("notifications.unread")}</span>
             )}
           </div>
           <DropdownMenuSeparator className="m-0" />
@@ -199,13 +203,13 @@ export function Topbar() {
             {isLoading ? (
               <div className="flex items-center justify-center gap-2 px-3 py-6 text-[13px] text-muted-foreground">
                 <LoaderCircle className="size-3.5 animate-spin text-brand-accent" />
-                Loading…
+                {t("common.loading")}
               </div>
             ) : error ? (
               <p className="px-3 py-6 text-center text-[13px] text-status-danger">{error}</p>
             ) : notifications.length === 0 ? (
               <p className="px-3 py-6 text-center text-[13px] text-muted-foreground">
-                No notifications yet.
+                {t("notifications.noNotifications")}
               </p>
             ) : (
               notifications.slice(0, 8).map((n) => {
@@ -240,7 +244,7 @@ export function Topbar() {
             href="/dashboard/notifications"
             className="block px-3 py-2.5 text-center text-[13px] text-brand-accent hover:underline"
           >
-            View all
+            {t("notifications.viewAll")}
           </Link>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -265,12 +269,12 @@ export function Topbar() {
                 {userError}
               </p>
               <DropdownMenuItem onClick={() => void loadCurrentUser()}>
-                Try again
+                {t("common.tryAgain")}
               </DropdownMenuItem>
             </>
           ) : (
             <p className="px-2 py-1.5 text-[12px] font-normal text-muted-foreground">
-              {isLoadingUser ? "Loading account…" : currentUser?.email ?? "Account unavailable"}
+              {isLoadingUser ? t("common.loading") : currentUser?.email ?? t("common.unknown")}
             </p>
           )}
           <DropdownMenuSeparator />
@@ -281,10 +285,14 @@ export function Topbar() {
             ) : (
               <LogOut className="size-4" />
             )}
-            {isLoggingOut ? "Logging out…" : "Log out"}
+            {isLoggingOut ? t("common.loading") : t("common.logOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <div className="absolute left-6 flex items-center gap-2">
+        <LanguageSelect />
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
