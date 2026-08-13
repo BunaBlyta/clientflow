@@ -88,6 +88,18 @@ describe('PATCH /api/notifications/:id', () => {
     expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'notif-1' },
       data: { readAt: expect.any(Date) },
+      select: expect.objectContaining({
+        projectId: true,
+        invoiceId: true,
+        requestId: true,
+      }),
+    }));
+    expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({
+        projectId: true,
+        invoiceId: true,
+        requestId: true,
+      }),
     }));
   });
 

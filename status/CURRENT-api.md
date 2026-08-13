@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-13 15:30 by Codex — notification navigation contract
+Last updated: 2026-08-13 15:41 by Codex — regenerate notification Prisma client
 
 ## What changed
 
@@ -46,3 +46,25 @@ committed.
   notification text or infer targets from notification type.
 - The untracked `public/logo.png` belongs to another lane and was not touched
   or staged.
+
+## Runtime Prisma follow-up
+
+- Confirmed `prisma/schema.prisma` and migration
+  `20260813133233_add_notification_navigation_targets` both define nullable
+  `projectId`, `invoiceId`, and `requestId` on `Notification`, with indexes and
+  `SET NULL` foreign keys.
+- Ran `npx prisma generate` to refresh the runtime Prisma Client. The generated
+  client is ignored and is not committed.
+- Added explicit PATCH route assertions that the three fields are selected on
+  both the initial read and the mark-read update.
+- The Next.js process serving the app must be restarted after generation so it
+  stops using its already-loaded stale client module.
+
+## Follow-up verification
+
+- `npx prisma generate`: passed.
+- `npm run test`: passed — 34 test files, 138 tests.
+- `npm run typecheck`: passed.
+- `npm run lint`: passed.
+- `npx next build --webpack`: passed.
+- `git diff --check`: passed.
