@@ -41,7 +41,7 @@ vi.mock('@/app/api/_lib/resend', () => ({
   sendRejectionEmail: mocks.sendRejectionEmail,
 }));
 
-import { PATCH } from './route';
+import { GET, PATCH } from './route';
 
 const pendingRequest = {
   id: 'req-1',
@@ -276,5 +276,69 @@ describe('PATCH /api/requests/:id', () => {
     });
     expect(consoleError).toHaveBeenCalledOnce();
     consoleError.mockRestore();
+  });
+});
+
+describe('GET /api/requests/:id', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns request details with the linked client and all of that client’s projects', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue({
+      ...pendingRequest,
+      status: 'APPROVED',
+      clientId: 'client-1',
+      client: {
+        id: 'client-1',
+        userId: 'user-1',
+        name: 'Alex Morgan',
+        email: 'alex@example.com',
+        companyName: 'Alex Studio',
+        phone: null,
+        createdAt: new Date('2026-08-11T10:05:00.000Z'),
+        projects: [{
+          id: 'project-1',
+          clientId: 'client-1',
+          packageId: 'pkg-1',
+          package: { id: 'pkg-1', name: 'Full Website', price: '6500.00', currency: 'usd' },
+          name: 'Alex Studio — Full Website',
+          status: 'PENDING',
+          createdAt: new Date('2026-08-11T10:05:00.000Z'),
+          updatedAt: new Date('2026-08-11T10:05:00.000Z'),
+          targetLaunchDate: null,
+        }],
+      },
+    });
+
+    const response = await GET(new Request('http://localhost/api/requests/req-1') as unknown as NextRequest, params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: 'req-1',
+      status: 'APPROVED',
+      clientId: 'client-1',
+      package: { id: 'pkg-1', name: 'Full Website', price: 6500, currency: 'usd' },
+      client: {
+        id: 'client-1',
+        companyName: 'Alex Studio',
+        contactName: 'Alex Morgan',
+        email: 'alex@example.com',
+      },
+      projects: [{
+        id: 'project-1',
+        name: 'Alex Studio — Full Website',
+        status: 'PENDING',
+      }],
+    });
+  });
+
+  it('keeps request details staff-only', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+
+    const response = await GET(new Request('http://localhost/api/requests/req-1') as unknown as NextRequest, params());
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'Staff access required' });
+    expect(mocks.findUnique).not.toHaveBeenCalled();
   });
 });

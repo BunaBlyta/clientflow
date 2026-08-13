@@ -266,6 +266,36 @@ including staff invitations, expire in 30 minutes. `POST
 has the same `{ "emailSent": boolean }` response and 401/403/404 behavior as the
 client resend route.
 
+## Staff detail read contracts
+
+`GET /api/clients/:id` requires a session and returns the client contact record
+plus all of that client's projects and invoices:
+
+```json
+{
+  "id": "client-1",
+  "userId": "user-client-1",
+  "companyName": "Riverside Coffee",
+  "contactName": "Jordan Ellis",
+  "email": "jordan@example.com",
+  "createdAt": "2026-06-01T09:00:00.000Z",
+  "projects": [/* the same project shape as GET /api/projects */],
+  "invoices": [/* the same invoice shape as GET /api/invoices */]
+}
+```
+
+Staff can read any client. A client can read only its own client record; another
+client's ID is returned as 404. The aggregate response is intended to let the
+staff client view show a client's identity and all related projects together,
+without making the web UI reconstruct that relationship from separate tables.
+
+`GET /api/requests/:id` is staff-only and returns the request detail fields,
+the serialized package, the linked client when approval has happened, and that
+client's projects. `GET /api/contact-leads/:id` is staff-only and returns the
+inquiry detail fields, the existing client with the same email when one exists,
+and that client's projects. An existing client match is context only; it is not
+proof that this particular inquiry was converted.
+
 ## Table action write contracts
 
 `PATCH /api/invoices/:id` is staff-only and accepts:
