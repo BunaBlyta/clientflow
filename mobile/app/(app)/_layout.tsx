@@ -2,11 +2,13 @@ import { Tabs } from 'expo-router';
 import { Bell, FolderKanban, User } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color } from '../../lib/theme';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
 export default function AppTabsLayout() {
+  const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
   const refreshNotifications = useDataStore((s) => s.refreshNotifications);
   const unread = useDataStore((s) => s.unreadNotificationCount());
@@ -22,6 +24,7 @@ export default function AppTabsLayout() {
         tabBarActiveTintColor: color.accent,
         tabBarInactiveTintColor: color.textMuted,
         tabBarStyle: {
+          height: 64 + insets.bottom,
           borderTopColor: color.border,
           borderTopWidth: StyleSheet.hairlineWidth,
         },

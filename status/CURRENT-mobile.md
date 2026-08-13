@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 15:12 by Codex — final tab label and Account spacing polish
+Last updated: 2026-08-13 15:16 by Codex — taller bottom tab footer
 
 ## Completed
 
@@ -59,6 +59,9 @@ Last updated: 2026-08-13 15:12 by Codex — final tab label and Account spacing 
 - Removed the remaining custom tab-label font override so Expo Router's native
   label sizing is used without clipping. Added a small lower offset to both the
   confirmation message and the `Clientflow · v1.0.0` footer.
+- The bottom tab footer now has a 64px content height plus the device safe-area
+  inset, making the footer visibly taller toward the top without changing the
+  working native label sizing.
 
 ## Verification
 
@@ -81,6 +84,8 @@ Last updated: 2026-08-13 15:12 by Codex — final tab label and Account spacing 
   root typecheck, root lint, and `git diff --check` passed.
 - Final tab label and Account spacing polish: mobile TypeScript, root tests,
   root typecheck, root lint, and `git diff --check` passed.
+- Taller bottom tab footer: mobile TypeScript, root tests, root typecheck, root
+  lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
