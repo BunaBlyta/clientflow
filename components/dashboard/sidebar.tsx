@@ -17,7 +17,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
       <div className="flex h-16 items-center px-6">
         <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight">
           Clientflow

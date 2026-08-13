@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 16:12 by Codex — dashboard shell and project workflow polish
+Last updated: 2026-08-13 16:16 by Codex — fixed dashboard navigation shell
 
 ## What changed
 
@@ -10,6 +10,7 @@ Last updated: 2026-08-13 16:12 by Codex — dashboard shell and project workflow
 - Put the Projects tab search and status filter on the same row as the Projects / Requests / Custom inquiries tabs while preserving the existing filtering behavior.
 - Added an average reference line, y-axis values, and interactive points to the revenue-over-time chart so the trend is easier to read at a glance.
 - Added Accept and Deny actions to standard project-request detail pages at `/dashboard/requests/:requestId`, using the existing request PATCH endpoint and rejection confirmation flow.
+- Made the sidebar explicitly fixed to the viewport and the topbar pinned above the content scroll region, so neither navigation surface moves or becomes scrollable with page content.
 
 ## Verification
 
@@ -18,6 +19,7 @@ Last updated: 2026-08-13 16:12 by Codex — dashboard shell and project workflow
 - `npm run test`: passed — 34 files, 141 tests.
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
+- Focused navigation-shell fix rechecked with the same typecheck, lint, test, and webpack build commands: passed.
 - `npm run verify`: typecheck, lint, and tests passed; the default Turbopack build was blocked by the sandbox refusing a worker port bind while processing `app/globals.css`. The webpack build passed independently.
 
 ## Handoff notes

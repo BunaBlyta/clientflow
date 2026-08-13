@@ -166,7 +166,7 @@ export function Topbar() {
   }, [loadCurrentUser]);
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-end gap-2 border-b border-border px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end gap-2 border-b border-border bg-background px-6">
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
