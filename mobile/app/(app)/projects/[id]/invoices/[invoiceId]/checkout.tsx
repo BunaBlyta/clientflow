@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { AppState, type AppStateStatus } from 'react-native';
 import {
+  ArrowLeft,
   CheckCircle2,
   Lock,
   XCircle,
@@ -25,7 +26,7 @@ import { ApiError, checkoutRequest } from '../../../../../../lib/api';
 type Step = 'select' | 'processing' | 'success' | 'failed';
 
 export default function CheckoutScreen() {
-  const { invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
+  const { id, invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
   const router = useRouter();
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const token = useAuthStore((s) => s.token);
@@ -95,6 +96,10 @@ export default function CheckoutScreen() {
   if (!invoice) {
     return (
       <Screen>
+        <Pressable onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)} style={styles.backControl}>
+          <ArrowLeft size={16} color={color.accent} />
+          <Text style={styles.backControlText}>Back to invoice</Text>
+        </Pressable>
         <Text>Invoice not found.</Text>
       </Screen>
     );
@@ -102,6 +107,10 @@ export default function CheckoutScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
+      <Pressable onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)} style={styles.backControl}>
+        <ArrowLeft size={16} color={color.accent} />
+        <Text style={styles.backControlText}>Back to invoice</Text>
+      </Pressable>
       <View style={styles.disclaimer}>
         <Lock size={12} color={color.textMuted} />
         <Text style={styles.disclaimerText}>
@@ -146,7 +155,10 @@ export default function CheckoutScreen() {
             {formatCurrency(invoice.amountCents)} for "{invoice.label}" was confirmed by Stripe.
           </Text>
           <View style={{ height: spacing.lg }} />
-          <Button label="Return to invoice" onPress={() => router.back()} />
+          <Button
+            label="Return to invoice"
+            onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)}
+          />
         </View>
       )}
 
@@ -160,7 +172,7 @@ export default function CheckoutScreen() {
           <View style={{ height: spacing.lg }} />
           <Button label="Try again" onPress={() => setStep('select')} />
           <View style={{ height: spacing.sm }} />
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)}>
             <Text style={styles.backLink}>Return to invoice</Text>
           </Pressable>
         </View>
@@ -176,6 +188,19 @@ export default function CheckoutScreen() {
 const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
+  },
+  backControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  backControlText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.accent,
   },
   disclaimer: {
     flexDirection: 'row',

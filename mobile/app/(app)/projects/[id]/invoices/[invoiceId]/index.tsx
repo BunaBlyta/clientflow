@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { CheckCircle2, FileText } from 'lucide-react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ArrowLeft, CheckCircle2, FileText } from 'lucide-react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Button } from '../../../../../../components/ui/Button';
 import { EmptyState } from '../../../../../../components/ui/EmptyState';
@@ -43,12 +43,24 @@ export default function InvoiceDetailScreen() {
   }, [invoiceId, refreshInvoice, token]);
 
   if (loading && !invoice) {
-    return <Screen><ActivityIndicator color={color.accent} /></Screen>;
+    return (
+      <Screen>
+        <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
+          <ArrowLeft size={16} color={color.accent} />
+          <Text style={styles.backControlText}>Back to invoices</Text>
+        </Pressable>
+        <ActivityIndicator color={color.accent} />
+      </Screen>
+    );
   }
 
   if (!invoice) {
     return (
       <Screen>
+        <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
+          <ArrowLeft size={16} color={color.accent} />
+          <Text style={styles.backControlText}>Back to invoices</Text>
+        </Pressable>
         <EmptyState icon={FileText} title="Invoice not found" />
       </Screen>
     );
@@ -63,6 +75,11 @@ export default function InvoiceDetailScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: invoice.label }} />
+
+      <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
+        <ArrowLeft size={16} color={color.accent} />
+        <Text style={styles.backControlText}>Back to invoices</Text>
+      </Pressable>
 
       <Text style={styles.kind}>{INVOICE_KIND_LABEL[invoice.kind]}</Text>
       {unreachable && <Text style={styles.error}>Live invoice data is unavailable. Showing saved data.</Text>}
@@ -120,6 +137,19 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  backControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  backControlText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.accent,
+  },
   kind: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,

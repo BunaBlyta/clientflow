@@ -47,6 +47,10 @@ export default function ProjectDetailScreen() {
   if (!project) {
     return (
       <Screen>
+        <Pressable onPress={() => router.replace('/projects')} style={styles.backToProjects}>
+          <ArrowLeft size={16} color={color.accent} />
+          <Text style={styles.backToProjectsText}>Back to projects</Text>
+        </Pressable>
         <EmptyState icon={FileText} title="Project not found" />
       </Screen>
     );
@@ -70,7 +74,7 @@ export default function ProjectDetailScreen() {
       <Stack.Screen options={{ title: project.name }} />
 
       <Pressable
-        onPress={() => router.navigate('/projects')}
+        onPress={() => router.replace('/projects')}
         style={styles.backToProjects}
       >
         <ArrowLeft size={16} color={color.accent} />

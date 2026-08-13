@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 14:31 by Codex — project detail previews and return navigation
+Last updated: 2026-08-13 14:46 by Codex — deterministic nested-screen back controls
 
 ## Completed
 
@@ -30,26 +30,36 @@ Last updated: 2026-08-13 14:31 by Codex — project detail previews and return n
   unchanged.
 - The homepage now has a visible “Back to projects” control that navigates to
   the `/projects` tab route, rather than merely dismissing the nested stack.
+- All nested project screens now show an in-screen back control that uses a
+  deterministic absolute route: project detail returns to `/projects`, notes
+  and invoices return to `/projects/<projectId>`, invoice detail returns to
+  `/projects/<projectId>/invoices`, and checkout returns to
+  `/projects/<projectId>/invoices/<invoiceId>`.
+- These controls use `router.replace`, so they still work when Expo web loads a
+  nested URL directly after a browser refresh. The native automatic header
+  back behavior remains available as an enhancement.
+- Checkout's success and declined-payment return actions use the same absolute
+  invoice route. Stripe opening, AppState refresh, invoice refresh, and the
+  webhook-confirmed `PAID` success gate were not changed.
 - The note preview bug was caused by taking the last two items from a
   newest-first selector; it now takes the first two live/saved notes.
 
 ## Verification
 
 - `npx tsc --noEmit` from `mobile/`: passed.
-- Root `npm run test`: passed — 29 test files, 107 tests.
+- Root `npm run test`: passed — 32 test files, 132 tests.
 - Root `npm run typecheck`: passed.
 - Root `npm run lint`: passed.
 - `npx next build --webpack`: passed.
 - `npm run verify`: typecheck, lint, and tests passed; the Turbopack build
   could not fetch Inter from Google Fonts in the sandbox.
+- `npx next build --webpack`: passed.
 - `git diff --check`: passed.
 - No device or simulator testing was performed.
-- In-app browser inspection was unavailable in this session. HTTP route and
-  generated-bundle verification were performed instead.
-- Expo web smoke check: the existing server on `http://localhost:8081` returned
-  HTTP 200 for `/projects/proj-1` and `/projects/proj-1/invoices`, and its
-  refreshed bundle contained the new project-detail preview and `/projects`
-  navigation code.
+- Expo web smoke check was not completed: no Expo server was listening on
+  `http://localhost:8081`, and the temporary `npx expo start --web` process did
+  not bind a port in the sandbox. No browser, device, simulator, or native
+  deep-link testing was performed.
 
 ## Notes for the next session
 

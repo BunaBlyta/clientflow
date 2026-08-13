@@ -1,5 +1,5 @@
-import { useLocalSearchParams } from 'expo-router';
-import { MessageSquare, Send } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ArrowLeft, MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectNotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const postNote = useDataStore((s) => s.postNote);
@@ -73,6 +74,10 @@ export default function ProjectNotesScreen() {
   if (loading && notes.length === 0) {
     return (
       <Screen>
+        <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
+          <ArrowLeft size={16} color={color.accent} />
+          <Text style={styles.backControlText}>Back to project</Text>
+        </Pressable>
         <ActivityIndicator color={color.accent} style={styles.loading} />
       </Screen>
     );
@@ -90,6 +95,10 @@ export default function ProjectNotesScreen() {
         contentContainerStyle={styles.content}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
+        <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
+          <ArrowLeft size={16} color={color.accent} />
+          <Text style={styles.backControlText}>Back to project</Text>
+        </Pressable>
         {unreachable && (
           <Text style={styles.error}>
             Live notes are unavailable. Showing saved note data.
@@ -150,6 +159,19 @@ const styles = StyleSheet.create({
   },
   loading: {
     marginTop: spacing.xxl,
+  },
+  backControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  backControlText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.accent,
   },
   error: {
     fontFamily: fontFamily.regular,
