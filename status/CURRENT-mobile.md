@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 16:54 by Codex — premium project status tracker
+Last updated: 2026-08-13 16:57 by Codex — centered status tracker glow
 
 ## Completed
 
@@ -25,6 +25,9 @@ Last updated: 2026-08-13 16:54 by Codex — premium project status tracker
   accent glow, future stages have clearer contrast, and the tracker has clean
   elevation and spacing. Cancelled/on-hold states use a narrow semantic accent
   instead of a heavy bordered box.
+- Corrected the tracker geometry so every indicator uses the same centered
+  footprint. Replaced the square native shadow halo with a circular SVG radial
+  gradient and explicitly centered the check icon.
 
 - Added a persisted mobile appearance preference with System, Light, and Dark
   choices. The initial appearance follows the device/browser system theme; an
@@ -136,6 +139,8 @@ Last updated: 2026-08-13 16:54 by Codex — premium project status tracker
   typecheck, lint, and `git diff --check` passed.
 - Premium project status tracker: mobile TypeScript, Expo web export, root
   tests, typecheck, lint, and `git diff --check` passed.
+- Centered status tracker glow: mobile TypeScript, Expo web export, root tests,
+  typecheck, lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
