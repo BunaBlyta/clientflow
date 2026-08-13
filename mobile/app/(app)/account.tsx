@@ -21,7 +21,11 @@ export default function AccountScreen() {
   }
 
   return (
-    <Screen contentContainerStyle={{ paddingBottom: spacing.xxl + insets.bottom }}>
+    <Screen
+      contentContainerStyle={{
+        paddingBottom: 64 + insets.bottom + spacing.md,
+      }}
+    >
       <Text style={styles.heading}>Account</Text>
 
       <View style={styles.avatarWrap}>
@@ -50,7 +54,11 @@ export default function AccountScreen() {
             </Pressable>
             <Pressable
               onPress={handleLogout}
-              style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.logoutButton,
+                styles.confirmLogoutButton,
+                pressed && styles.pressed,
+              ]}
             >
               <LogOut size={16} color={color.danger} />
               <Text style={styles.logoutText}>Log out</Text>
@@ -154,7 +162,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   logoutButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -165,6 +172,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.dangerBorder,
     backgroundColor: color.dangerBg,
+  },
+  confirmLogoutButton: {
+    flex: 1,
   },
   confirmBlock: {
     gap: spacing.md,

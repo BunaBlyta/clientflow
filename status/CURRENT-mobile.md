@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 14:59 by Codex — tab footer and logout confirmation sizing
+Last updated: 2026-08-13 15:02 by Codex — Account footer clearance and logout sizing
 
 ## Completed
 
@@ -48,6 +48,10 @@ Last updated: 2026-08-13 14:59 by Codex — tab footer and logout confirmation s
   screens.
 - The logout confirmation now gives Cancel and Log out equal-width halves of
   the action row, while retaining the destructive action's existing styling.
+- The standalone Log out action no longer inherits confirmation-row flex sizing
+  and is full width again. The Account screen also reserves the full tab-footer
+  height plus a buffer below its version label so the white tab footer cannot
+  cover the bottom of the text.
 
 ## Verification
 
@@ -64,6 +68,8 @@ Last updated: 2026-08-13 14:59 by Codex — tab footer and logout confirmation s
   tests, root typecheck, and root lint all passed.
 - Tab footer and equal-width logout actions: mobile TypeScript, root tests,
   root typecheck, root lint, and `git diff --check` passed.
+- Account footer clearance and standalone Log out sizing: mobile TypeScript,
+  root tests, root typecheck, root lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
