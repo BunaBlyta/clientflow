@@ -58,7 +58,11 @@ export default async function PaymentSuccessPage({
 
         <div className="mt-6 flex justify-center">
           {isMobileReturn ? (
-            <MobileReturnAction href={actionHref} fallbackHref="/dashboard/invoices" />
+            <MobileReturnAction
+              href={actionHref}
+              fallbackHref="/dashboard/invoices"
+              expoWebHref={`http://localhost:8081/projects/${encodeURIComponent(projectId)}/invoices/${encodeURIComponent(invoiceId)}/checkout`}
+            />
           ) : (
             <Button nativeButton={false} render={<a href={actionHref} />}>
               {actionLabel}

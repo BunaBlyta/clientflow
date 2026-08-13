@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 11:18 by Codex — mobile Stripe return contract
+Last updated: 2026-08-13 11:54 by Codex — Expo web payment return verification
 
 ## Completed
 
@@ -18,6 +18,12 @@ Last updated: 2026-08-13 11:18 by Codex — mobile Stripe return contract
   `clientflow://projects/<projectId>/invoices/<invoiceId>/checkout`: the app
   still declares the `clientflow` scheme and the Expo Router route remains the
   existing checkout screen.
+- Verified the web fallback route directly at
+  `http://localhost:8081/projects/<projectId>/invoices/<invoiceId>/checkout`.
+  Expo returned the web app shell, and the generated Metro bundle included the
+  exact checkout route module.
+- No mobile routing or configuration change was required; the current Expo
+  Router file structure already resolves this path in web mode.
 
 ## Verification
 
@@ -30,6 +36,8 @@ Last updated: 2026-08-13 11:18 by Codex — mobile Stripe return contract
   could not fetch Inter from Google Fonts in the sandbox.
 - `git diff --check`: passed.
 - No device or simulator testing was performed.
+- In-app browser inspection was unavailable in this session. HTTP route and
+  generated-bundle verification were performed instead.
 
 ## Notes for the next session
 

@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 11:45 by Codex — reliable mobile Stripe return fallback
+Last updated: 2026-08-13 11:54 by Codex — Expo web payment return fallback
 
 ## What changed
 
@@ -77,6 +77,10 @@ Last updated: 2026-08-13 11:45 by Codex — reliable mobile Stripe return fallba
   Expo Router has the matching `[id]/invoices/[invoiceId]/checkout` route. No mobile
   source change was needed; native deep-link handling remains unverified because no
   device or simulator was available.
+- On localhost development payment results, the mobile return action now also shows
+  an explicit “Open Expo web app” button. It points only to the fixed local Expo web
+  route at `http://localhost:8081/projects/<projectId>/invoices/<invoiceId>/checkout`;
+  production pages do not show this localhost fallback.
 
 ## Verification
 
@@ -146,6 +150,8 @@ Last updated: 2026-08-13 11:45 by Codex — reliable mobile Stripe return fallba
 - This task's `npm run test` passed all 123 tests, `npm run typecheck` passed,
   `npm run lint` passed, `git diff --check` passed, and `npx next build --webpack`
   passed. Native-device deep-link testing was not performed.
+- No mobile source, API route, webhook, or database file was changed for the Expo web
+  fallback.
 
 ## Hard rule
 

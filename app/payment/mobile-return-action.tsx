@@ -1,17 +1,29 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+
+const subscribeToNothing = () => () => {};
+const getLocalDevelopmentSnapshot = () =>
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const getServerSnapshot = () => false;
 
 export function MobileReturnAction({
   href,
   fallbackHref,
+  expoWebHref,
 }: {
   href: string;
   fallbackHref: string;
+  expoWebHref: string;
 }) {
   const [openFailed, setOpenFailed] = useState(false);
+  const isLocalDevelopment = useSyncExternalStore(
+    subscribeToNothing,
+    getLocalDevelopmentSnapshot,
+    getServerSnapshot,
+  );
 
   function handleOpen(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -52,6 +64,15 @@ export function MobileReturnAction({
         </a>
         .
       </p>
+      {isLocalDevelopment && (
+        <Button
+          variant="secondary"
+          nativeButton={false}
+          render={<a href={expoWebHref} />}
+        >
+          Open Expo web app
+        </Button>
+      )}
       {openFailed && (
         <p className="text-[12px] text-status-warning" role="status">
           Clientflow did not open here. Continue in the browser instead.
