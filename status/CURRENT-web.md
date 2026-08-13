@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 11:20 by Codex — payment-gated project phases and mobile Stripe return
+Last updated: 2026-08-13 11:45 by Codex — reliable mobile Stripe return fallback
 
 ## What changed
 
@@ -69,6 +69,14 @@ Last updated: 2026-08-13 11:20 by Codex — payment-gated project phases and mob
   mobile return marker and both safe identifiers are present; incomplete or invalid
   parameters use the existing web invoices fallback. The copy makes clear that the
   invoice waits for Stripe webhook confirmation before becoming paid.
+- The mobile Stripe return action now launches the custom scheme from a client-side
+  click handler and detects when the browser stayed visible after the attempt. It
+  shows an explicit fallback explaining that Expo web cannot handle `clientflow://`
+  and always offers the web invoices page instead of silently doing nothing.
+- Investigation confirmed that `mobile/app.json` declares the `clientflow` scheme and
+  Expo Router has the matching `[id]/invoices/[invoiceId]/checkout` route. No mobile
+  source change was needed; native deep-link handling remains unverified because no
+  device or simulator was available.
 
 ## Verification
 
@@ -135,6 +143,9 @@ Last updated: 2026-08-13 11:20 by Codex — payment-gated project phases and mob
   `npx next build --webpack` passed with the contact-lead routes and dashboard
   Projects page included.
 - No known follow-up is required for the two fixes in this task.
+- This task's `npm run test` passed all 123 tests, `npm run typecheck` passed,
+  `npm run lint` passed, `git diff --check` passed, and `npx next build --webpack`
+  passed. Native-device deep-link testing was not performed.
 
 ## Hard rule
 

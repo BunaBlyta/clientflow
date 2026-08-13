@@ -1,8 +1,9 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobileReturnAction } from "@/app/payment/mobile-return-action";
 
 export const metadata = {
-  title: "Payment received · Clientflow",
+  title: "Payment submitted · Clientflow",
 };
 
 /**
@@ -56,9 +57,13 @@ export default async function PaymentSuccessPage({
         </p>
 
         <div className="mt-6 flex justify-center">
-          <Button nativeButton={false} render={<a href={actionHref} />}>
-            {actionLabel}
-          </Button>
+          {isMobileReturn ? (
+            <MobileReturnAction href={actionHref} fallbackHref="/dashboard/invoices" />
+          ) : (
+            <Button nativeButton={false} render={<a href={actionHref} />}>
+              {actionLabel}
+            </Button>
+          )}
         </div>
       </div>
     </main>
