@@ -41,6 +41,8 @@ function ProjectsPageInner() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
 
   return (
     <div className="flex flex-col gap-6">
@@ -57,13 +59,41 @@ function ProjectsPageInner() {
           router.replace(value === "projects" ? "/dashboard/projects" : `/dashboard/projects?tab=${value}`);
         }}
       >
-        <TabsList>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="requests">Requests</TabsTrigger>
-          <TabsTrigger value="custom">Custom inquiries</TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList>
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="requests">Requests</TabsTrigger>
+            <TabsTrigger value="custom">Custom inquiries</TabsTrigger>
+          </TabsList>
+          {tab === "projects" && (
+            <TableToolbar
+              search={projectSearch}
+              onSearchChange={setProjectSearch}
+              placeholder="Search projects..."
+            >
+              <Select
+                value={projectStatusFilter}
+                onValueChange={(value) => value && setProjectStatusFilter(value as ProjectStatus | "ALL")}
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_FILTERS.map((filter) => (
+                    <SelectItem key={filter.value} value={filter.value}>
+                      {filter.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TableToolbar>
+          )}
+        </div>
         <TabsContent value="projects" className="mt-4">
-          <ProjectsTable />
+          <ProjectsTable
+            search={projectSearch}
+            statusFilter={projectStatusFilter}
+          />
         </TabsContent>
         <TabsContent value="requests" className="mt-4">
           <RequestsTable />
@@ -84,14 +114,18 @@ export default function ProjectsPage() {
   );
 }
 
-function ProjectsTable() {
+function ProjectsTable({
+  search,
+  statusFilter,
+}: {
+  search: string;
+  statusFilter: ProjectStatus | "ALL";
+}) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
 
   const loadProjects = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -186,21 +220,6 @@ function ProjectsTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder="Search projects...">
-        <Select value={statusFilter} onValueChange={(v) => v && setStatusFilter(v as ProjectStatus | "ALL")}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_FILTERS.map((f) => (
-              <SelectItem key={f.value} value={f.value}>
-                {f.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableToolbar>
-
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-[13px]">
           <thead>

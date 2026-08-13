@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, LoaderCircle, Mail, Phone, RefreshCw, X } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatDate, formatMajorCurrency } from "@/lib/format";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE, REQUEST_STATUS_LABEL } from "@/lib/status";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import type { ProjectRequestDetail } from "@/lib/types";
 
 export default function RequestDetailPage() {
@@ -15,6 +16,8 @@ export default function RequestDetailPage() {
   const [request, setRequest] = useState<ProjectRequestDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<"APPROVED" | "REJECTED" | null>(null);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const loadRequest = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true); setError(null);
     try {
@@ -28,6 +31,29 @@ export default function RequestDetailPage() {
   }, [id]);
   useEffect(() => { const controller = new AbortController(); void Promise.resolve().then(() => loadRequest(controller.signal)); return () => controller.abort(); }, [loadRequest]);
 
+  async function updateRequest(status: "APPROVED" | "REJECTED") {
+    setUpdatingStatus(status);
+    setError(null);
+    try {
+      await fetchJson<unknown>(
+        `/api/requests/${encodeURIComponent(id)}`,
+        "We couldn't update this request.",
+        undefined,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        },
+      );
+      setIsRejectDialogOpen(false);
+      await loadRequest();
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "We couldn't update this request.");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
   if (isLoading) return <State label="Loading request…" />;
   if (error) return <ErrorState error={error} onRetry={() => void loadRequest()} />;
   if (!request) return <State label="This request doesn't exist." />;
@@ -35,7 +61,7 @@ export default function RequestDetailPage() {
 
   return <div className="flex flex-col gap-6">
     <BackLink />
-    <div><h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{request.companyName ?? request.prospectName}</h1><p className="mt-1 text-[13px] text-muted-foreground">Project request from {request.prospectName}</p></div>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{request.companyName ?? request.prospectName}</h1><p className="mt-1 text-[13px] text-muted-foreground">Project request from {request.prospectName}</p></div>{request.status === "PENDING" && <div className="flex items-center gap-2"><Button variant="outline" onClick={() => void updateRequest("APPROVED")} disabled={updatingStatus !== null}><Check className="text-status-success" />{updatingStatus === "APPROVED" ? "Accepting…" : "Accept"}</Button><Button variant="outline" onClick={() => setIsRejectDialogOpen(true)} disabled={updatingStatus !== null}><X className="text-status-danger" />Deny</Button></div>}</div>
     <section className="rounded-lg border border-border p-5"><dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       <div><dt className="text-[12px] text-muted-foreground">Status</dt><dd className={`mt-1 text-[13px] ${statusTone}`}>{REQUEST_STATUS_LABEL[request.status]}</dd></div>
       <div><dt className="text-[12px] text-muted-foreground">Package</dt><dd className="mt-1 text-[13px] font-medium">{request.package?.name ?? "Unknown package"}</dd><dd className="text-[12px] text-muted-foreground">{request.package ? formatMajorCurrency(request.package.price, request.package.currency) : "—"}</dd></div>
@@ -44,6 +70,7 @@ export default function RequestDetailPage() {
     </dl></section>
     <section className="rounded-lg border border-border p-5"><h2 className="text-[15px] font-medium">Prospect information</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2"><div><dt className="text-[12px] text-muted-foreground">Name</dt><dd className="mt-1 text-[13px]">{request.prospectName}</dd></div><div><dt className="text-[12px] text-muted-foreground">Email</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Mail className="size-3.5 text-muted-foreground" />{request.prospectEmail}</dd></div><div><dt className="text-[12px] text-muted-foreground">Phone</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Phone className="size-3.5 text-muted-foreground" />{request.prospectPhone ?? "—"}</dd></div></dl>{request.message && <div className="mt-5 border-t border-border pt-4"><dt className="text-[12px] text-muted-foreground">Request message</dt><dd className="mt-1 whitespace-pre-wrap text-[13px]">{request.message}</dd></div>}</section>
     <section className="flex flex-col gap-4"><h2 className="text-[15px] font-medium">Linked client and projects</h2>{request.client ? <div className="rounded-lg border border-border p-5"><p className="text-[13px]">This request is linked to <Link className="font-medium hover:text-brand-accent" href={`/dashboard/clients/${request.client.id}`}>{request.client.companyName}</Link>.</p><ProjectList projects={request.projects} /></div> : <p className="text-[13px] text-muted-foreground">No client has been linked to this request.</p>}</section>
+    <ConfirmDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen} title="Deny this request?" description="The prospect will be notified. No client or project record is created — this can't be undone." confirmLabel="Deny request" onConfirm={() => void updateRequest("REJECTED")} />
   </div>;
 }
 

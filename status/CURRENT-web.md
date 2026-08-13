@@ -1,28 +1,28 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 16:01 by Codex — make live notification clicks useful
+Last updated: 2026-08-13 16:12 by Codex — dashboard shell and project workflow polish
 
 ## What changed
 
-- Fixed the real notification navigation failure after checking the authenticated local API: 19 of 20 existing staff notifications have no project, invoice, or request ID, so they previously linked straight back to Notifications and appeared inert.
-- Notifications with IDs still open the exact request or project; invoices continue to open the invoice list because no invoice detail route exists.
-- Older notifications without IDs now open the relevant working area: standard requests, custom inquiries, projects, or invoices according to their notification kind.
-- Clicking now starts navigation immediately and marks unread items in the background, so a slow or failed read-state request cannot block the user from opening the destination.
-- The Projects page now recognizes and stays synchronized with both `?tab=requests` and `?tab=custom`, making both notification fallbacks land on the intended tab.
+- Converted Settings into a modal opened from the account menu. The sidebar no longer contains a Settings navigation item, and the old `/dashboard/settings` URL safely redirects to the dashboard instead of exposing a second full-page settings screen.
+- Kept package management and team invitations in the modal, and removed the unused Business profile section completely.
+- Made the dashboard shell persistent: the sidebar and topbar stay in place while only the main page content scrolls. Sidebar navigation items are now slightly wider, taller, and easier to scan.
+- Put the Projects tab search and status filter on the same row as the Projects / Requests / Custom inquiries tabs while preserving the existing filtering behavior.
+- Added an average reference line, y-axis values, and interactive points to the revenue-over-time chart so the trend is easier to read at a glance.
+- Added Accept and Deny actions to standard project-request detail pages at `/dashboard/requests/:requestId`, using the existing request PATCH endpoint and rejection confirmation flow.
 
 ## Verification
 
-- Authenticated live API inspection confirmed the missing target IDs on existing notifications and one seeded request notification with `requestId: "req-1"`.
-- All five destinations returned HTTP 200: requests tab, custom-inquiries tab, projects list, invoices list, and request detail.
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
 - `npm run test`: passed — 34 files, 141 tests.
-- Production build passed with Next's webpack path. The default Turbopack build remains blocked only by the execution environment denying its worker port.
+- `npx next build --webpack`: passed.
 - `git diff --check`: passed.
+- `npm run verify`: typecheck, lint, and tests passed; the default Turbopack build was blocked by the sandbox refusing a worker port bind while processing `app/globals.css`. The webpack build passed independently.
 
 ## Handoff notes
 
-- The browser plugin had no connected browser, so click automation was unavailable. The live authenticated API, destination routes, click handlers, helper tests, and production compilation were verified directly.
+- The API contract has no accept/deny operation for an already-created project at `/dashboard/projects/:projectId`; the new actions therefore live on the incoming project-request detail route, where the existing API supports approval and rejection. Project status changes remain in the existing status menu.
 - No API, Prisma, mobile, or payment files were changed.
 - Unrelated untracked `public/logo.png` remains untouched.
 

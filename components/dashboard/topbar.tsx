@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LoaderCircle, LogOut, Settings } from "lucide-react";
+import { Bell, LoaderCircle, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { getNotificationDestination } from "@/lib/notification-destination";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import type { Notification } from "@/lib/types";
 
 type CurrentUser = {
@@ -273,10 +274,7 @@ export function Topbar() {
             </p>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
-            <Settings className="size-4" />
-            Settings
-          </DropdownMenuItem>
+          <SettingsDialog />
           <DropdownMenuItem onClick={() => void handleLogout()} disabled={isLoggingOut}>
             {isLoggingOut ? (
               <LoaderCircle className="size-4 animate-spin" />
