@@ -1,8 +1,17 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 16:36 by Codex — mobile theme and localization
+Last updated: 2026-08-13 16:45 by Codex — mobile visual polish
 
 ## Completed
+
+- Polished the themed mobile UI after review feedback: the bottom tab footer now
+  uses a deliberately darker theme surface with a clean edge and restrained
+  shadow, making its labels easier to read without changing tab sizing or
+  positioning.
+- Replaced pill-shaped status badges with compact rounded-rectangle labels and
+  softened secondary, cancel, logout, and language controls by removing hard
+  borders and using subtle surface contrast/shadows. Primary buttons retain a
+  restrained accent glow.
 
 - Added a persisted mobile appearance preference with System, Light, and Dark
   choices. The initial appearance follows the device/browser system theme; an
@@ -114,8 +123,10 @@ Last updated: 2026-08-13 16:36 by Codex — mobile theme and localization
   root lint, and `git diff --check` passed.
 - Mobile theme and English/Albanian/German localization: mobile TypeScript,
   Expo web export, and `git diff --check` passed. Root tests and lint passed;
-  root typecheck remains blocked by unrelated web-agent errors in
-  `lib/i18n.tsx`.
+  the root typecheck was blocked during the initial implementation by web
+  changes, then passed in the final polish verification.
+- Mobile visual polish: mobile TypeScript, Expo web export, root tests,
+  typecheck, lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did

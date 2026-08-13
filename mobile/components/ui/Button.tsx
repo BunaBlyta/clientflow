@@ -69,11 +69,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   primary: {
     backgroundColor: color.accent,
+    shadowColor: color.accent,
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   secondary: {
-    backgroundColor: color.surface,
-    borderWidth: 1,
-    borderColor: color.border,
+    backgroundColor: color.surfaceMuted,
+    shadowColor: color.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   ghost: {
     backgroundColor: 'transparent',

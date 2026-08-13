@@ -28,8 +28,14 @@ export default function AppTabsLayout() {
         tabBarInactiveTintColor: color.textMuted,
         tabBarStyle: {
           height: 64 + insets.bottom,
-          borderTopColor: color.border,
+          backgroundColor: color.neutralBg,
+          borderTopColor: color.borderStrong,
           borderTopWidth: StyleSheet.hairlineWidth,
+          shadowColor: color.shadow,
+          shadowOpacity: 0.16,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -4 },
+          elevation: 12,
         },
         tabBarItemStyle: {
           paddingVertical: spacing.sm,
@@ -48,6 +54,11 @@ export default function AppTabsLayout() {
         options={{
           title: t('tabs.notifications'),
           tabBarBadge: unread > 0 ? unread : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: color.accent,
+            color: color.textOnAccent,
+            fontFamily: 'Inter_600SemiBold',
+          },
           tabBarIcon: ({ color: c, size }) => <Bell color={c} size={size} />,
         }}
       />

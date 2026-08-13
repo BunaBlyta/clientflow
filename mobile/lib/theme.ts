@@ -30,6 +30,7 @@ export interface ThemeColors {
   neutral: string;
   neutralBg: string;
   neutralBorder: string;
+  shadow: string;
 }
 
 export const lightColors: ThemeColors = {
@@ -57,6 +58,7 @@ export const lightColors: ThemeColors = {
   neutral: '#5B6270',
   neutralBg: '#F0F1F3',
   neutralBorder: '#DFE1E5',
+  shadow: '#1A2A38',
 };
 
 export const darkColors: ThemeColors = {
@@ -84,6 +86,7 @@ export const darkColors: ThemeColors = {
   neutral: '#C1C9D3',
   neutralBg: '#29313A',
   neutralBorder: '#414B57',
+  shadow: '#000000',
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;

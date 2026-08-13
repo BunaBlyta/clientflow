@@ -19,10 +19,9 @@ export function StatusPill({ label, text, bg, border }: StatusPillProps) {
 const styles = StyleSheet.create({
   pill: {
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
+    paddingVertical: spacing.xs,
   },
   label: {
     fontFamily: fontFamily.medium,
