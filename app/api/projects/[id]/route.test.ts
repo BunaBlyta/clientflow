@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
   findUnique: vi.fn(),
+  invoiceFindFirst: vi.fn(),
   update: vi.fn(),
   createNote: vi.fn(),
   clientFindUnique: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock('@/app/api/_lib/auth', () => ({
 vi.mock('@/app/api/_lib/prisma', () => ({
   prisma: {
     project: { findUnique: mocks.findUnique },
+    invoice: { findFirst: mocks.invoiceFindFirst },
     $transaction: mocks.transaction,
   },
 }));
@@ -53,6 +55,10 @@ function params() {
   return { params: Promise.resolve({ id: 'proj-1' }) };
 }
 
+const pendingProject = { ...project, status: 'PENDING' as const };
+const customPendingProject = { ...pendingProject, packageId: null, package: null };
+const discoveryProject = { ...project, status: 'DISCOVERY' as const };
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -81,6 +87,16 @@ describe('GET /api/projects/:id', () => {
 });
 
 describe('PATCH /api/projects/:id', () => {
+  it('refuses unauthenticated requests', async () => {
+    mocks.authenticate.mockResolvedValue(null);
+
+    const response = await PATCH(request('DESIGN'), params());
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'Authentication required' });
+    expect(mocks.findUnique).not.toHaveBeenCalled();
+  });
+
   it('refuses clients', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'CLIENT' });
 
@@ -89,6 +105,82 @@ describe('PATCH /api/projects/:id', () => {
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ error: 'Staff access required' });
     expect(mocks.findUnique).not.toHaveBeenCalled();
+  });
+
+  it.each(['DESIGN', 'CANCELLED'] as const)(
+    'rejects an unpaid PENDING project moving to %s',
+    async (status) => {
+      mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+      mocks.findUnique.mockResolvedValue(pendingProject);
+      mocks.invoiceFindFirst.mockResolvedValue({ status: 'SENT' });
+
+      const response = await PATCH(request(status), params());
+
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error:
+          'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
+      });
+      expect(mocks.invoiceFindFirst).toHaveBeenCalledWith({
+        where: { projectId: 'proj-1', type: 'DEPOSIT' },
+        orderBy: { createdAt: 'asc' },
+        select: { status: true },
+      });
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects staff from manually setting PENDING to DISCOVERY', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(pendingProject);
+
+    const response = await PATCH(request('DISCOVERY'), params());
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error:
+        'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
+    });
+    expect(mocks.invoiceFindFirst).not.toHaveBeenCalled();
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('keeps custom PENDING projects available for their existing manual non-Discovery flow', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(customPendingProject);
+    mocks.invoiceFindFirst.mockResolvedValue(null);
+    mocks.update.mockResolvedValue({ ...customPendingProject, status: 'DESIGN' });
+    mocks.clientFindUnique.mockResolvedValue(null);
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      project: { update: mocks.update },
+      note: { create: mocks.createNote },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('DESIGN'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: 'DESIGN', packageId: null, package: null });
+  });
+
+  it('allows valid manual changes once a project is already in Discovery or later', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(discoveryProject);
+    mocks.update.mockResolvedValue({ ...discoveryProject, status: 'DESIGN' });
+    mocks.clientFindUnique.mockResolvedValue(null);
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      project: { update: mocks.update },
+      note: { create: mocks.createNote },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('DESIGN'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: 'DESIGN' });
+    expect(mocks.invoiceFindFirst).not.toHaveBeenCalled();
   });
 
   it('updates the project and records a system status note atomically', async () => {

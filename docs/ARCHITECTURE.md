@@ -267,6 +267,15 @@ from Design to Development.` in the same database transaction as the project
 update. Invalid status values return 400, missing projects return 404, and
 client sessions return 403.
 
+When the current project status is `PENDING`, the route returns 409 for every
+manual phase change until the project's initial `DEPOSIT` invoice is exactly
+`PAID`; a missing, pending, failed, voided, or refunded deposit is not a
+confirmed payment. The route also rejects manual `PENDING → DISCOVERY` even
+after payment, because that transition belongs to the verified Stripe webhook.
+Custom projects use an initial `CUSTOM` invoice rather than a deposit, so their
+existing manual non-Discovery behavior is preserved; `CUSTOM` invoices do not
+trigger the standard deposit gate or the webhook's automatic Discovery change.
+
 ## Client onboarding contracts
 
 `POST /api/requests` is public and accepts a prospect's name, email, active

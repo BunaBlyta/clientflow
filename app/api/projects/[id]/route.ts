@@ -6,6 +6,9 @@ import { ProjectStatus } from '@/lib/generated/prisma/enums';
 
 export const runtime = 'nodejs';
 
+const PAYMENT_GATE_ERROR =
+  'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.';
+
 const projectSelect = {
   id: true,
   clientId: true,
@@ -123,6 +126,23 @@ export async function PATCH(
   const nextStatus = status as ProjectStatus;
   if (project.status === nextStatus) {
     return NextResponse.json(serializeProject(project));
+  }
+
+  if (project.status === 'PENDING') {
+    if (nextStatus === 'DISCOVERY') {
+      return NextResponse.json({ error: PAYMENT_GATE_ERROR }, { status: 409 });
+    }
+
+    const depositInvoice = await prisma.invoice.findFirst({
+      where: { projectId: id, type: 'DEPOSIT' },
+      orderBy: { createdAt: 'asc' },
+      select: { status: true },
+    });
+
+    const depositIsRequired = project.packageId !== null || depositInvoice !== null;
+    if (depositIsRequired && depositInvoice?.status !== 'PAID') {
+      return NextResponse.json({ error: PAYMENT_GATE_ERROR }, { status: 409 });
+    }
   }
 
   const updatedProject = await prisma.$transaction(async (transaction) => {

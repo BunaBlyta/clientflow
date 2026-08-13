@@ -1,46 +1,36 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-13 08:45 by Codex — custom package workflow
+Last updated: 2026-08-13 11:10 by Codex — project payment-gate enforcement
 
-## Completed
+## What changed
 
-- Moved the staff invite POST handler to the actual Next.js route file
-  `app/api/staff/invite/route.ts`, which handles `POST /api/staff/invite`.
-- Kept `app/api/staff/route.ts` as the staff-only `GET /api/staff` handler and
-  removed its duplicate invite POST, so the invite behavior is exposed at one
-  endpoint only.
-- Split shared staff serialization, selection, validation, and unique-error
-  helpers into `app/api/staff/_lib.ts`; the invite implementation lives in
-  `app/api/staff/_invite.ts` and is called only by the invite route.
-- Moved invite tests to `app/api/staff/invite/route.test.ts`, importing the real
-  invite route file. The suite also checks that the route file exists at the
-  `/api/staff/invite` directory path.
-- Added the public `POST /api/contact-leads` intake route. It validates and
-  stores a custom-package inquiry and creates an in-app notification for every
-  staff user.
-- Added staff-only `GET /api/contact-leads` and
-  `POST /api/contact-leads/:id/convert`. Conversion atomically creates or reuses
-  the client, creates a package-less pending project, and creates a custom draft
-  or sent invoice. New or inactive clients receive the existing verification
-  email after the transaction commits.
-- Added focused tests for public intake, staff access, conversion, invitation
-  email failure, missing inquiries, and staff-email conflicts. No Prisma schema
-  or migration change was required.
+- `PATCH /api/projects/[id]` now enforces the project payment gate at the API
+  boundary. A standard `PENDING` project cannot move manually to any phase until
+  its initial `DEPOSIT` invoice is exactly `PAID`; missing, pending, failed,
+  voided, and refunded deposits remain blocked with HTTP 409.
+- Staff cannot manually set `PENDING → DISCOVERY`, even after payment.
+  Discovery remains owned by the verified Stripe webhook.
+- Projects already in `DISCOVERY` or a later phase keep their existing manual
+  status behavior. Custom projects still use their existing `CUSTOM` invoice
+  flow and manual non-Discovery behavior; the standard `DEPOSIT` gate is not
+  applied to them.
+- Added focused route tests for unpaid transitions to Design and Cancelled,
+  manual Discovery rejection, custom-project behavior, later-phase changes, and
+  unauthenticated/client authorization responses.
+- Documented the status-write rule in `docs/ARCHITECTURE.md`.
 
 ## Verification
 
-- `npm run test`: 29 test files passed, 101 tests passed.
+- `npm run test`: passed — 29 test files, 107 tests.
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
 - `git diff --check`: passed.
-- `npx next build --webpack`: passed; the new contact-lead routes compiled.
+- `npm run verify`: typecheck, lint, and tests passed; the Turbopack build was
+  blocked because the sandbox could not fetch Inter from Google Fonts.
+- `npx next build --webpack`: passed; all app and API routes compiled.
 
 ## Handoff
 
-- The custom workflow contract is documented in `docs/ARCHITECTURE.md` and the
-  feature is marked built in `docs/SPEC.md`.
-- No Prisma schema or migration change was needed. Converted state in the staff
-  list is derived from a lead email matching a client record; the conversion
-  endpoint returns 409 for staff-email conflicts and concurrent client-creation
-  races.
-- `POST /api/staff` is no longer exported, preventing a second invite endpoint.
+- No Prisma schema or migration change was needed.
+- The untracked `public/clientflow-logo-mark.png` was pre-existing and was not
+  touched or staged.
