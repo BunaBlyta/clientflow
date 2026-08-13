@@ -1,7 +1,8 @@
 import { Check, PauseCircle, XCircle } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
-import { color, fontFamily, fontSize, spacing } from '../lib/theme';
-import { PROJECT_STAGES, PROJECT_STATUS_LABEL } from '../lib/status';
+import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
+import { getProjectStatusLabel, PROJECT_STAGES } from '../lib/status';
+import { useI18n } from '../lib/i18n';
 import type { ProjectStatus } from '../lib/types';
 
 interface ProjectStageTrackerProps {
@@ -9,6 +10,9 @@ interface ProjectStageTrackerProps {
 }
 
 export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   if (status === 'CANCELLED' || status === 'ON_HOLD') {
     const isCancelled = status === 'CANCELLED';
     const Icon = isCancelled ? XCircle : PauseCircle;
@@ -20,8 +24,8 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
         <Icon size={18} color={tint} strokeWidth={2} />
         <Text style={[styles.bannerText, { color: tint }]}>
           {isCancelled
-            ? 'This project has been cancelled.'
-            : 'This project is currently on hold. Check the notes below for details.'}
+            ? t('status.cancelledDescription')
+            : t('status.onHoldDescription')}
         </Text>
       </View>
     );
@@ -72,10 +76,10 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
                   !completed && !current && styles.labelFuture,
                 ]}
               >
-                {PROJECT_STATUS_LABEL[stage]}
+                {getProjectStatusLabel(stage, t)}
               </Text>
               {current && (
-                <Text style={styles.currentMeta}>Currently in progress</Text>
+                <Text style={styles.currentMeta}>{t('status.inProgress')}</Text>
               )}
             </View>
           </View>
@@ -87,7 +91,8 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
 
 const CIRCLE_SIZE = 22;
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   row: {
     flexDirection: 'row',
   },
@@ -162,4 +167,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     lineHeight: 18,
   },
-});
+  });
+}

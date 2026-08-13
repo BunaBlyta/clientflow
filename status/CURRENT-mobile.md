@@ -1,8 +1,22 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 15:26 by Codex — clickable notification targets
+Last updated: 2026-08-13 16:36 by Codex — mobile theme and localization
 
 ## Completed
+
+- Added a persisted mobile appearance preference with System, Light, and Dark
+  choices. The initial appearance follows the device/browser system theme; an
+  explicit choice is stored locally with SecureStore on native and localStorage
+  on Expo web.
+- Applied centralized light/dark theme tokens to authentication, projects,
+  project details, notes, invoices, checkout, notifications, account, shared
+  controls, empty states, loading states, errors, tab navigation, and headers.
+- Added an account language selector for English, Albanian, and German. Static
+  mobile UI/status/error copy uses the selected language with English fallback;
+  user-generated project/note/invoice content and API notification messages stay
+  unchanged.
+- Preserved all existing navigation, deep-link routes, Stripe browser opening,
+  AppState refresh, API invoice refresh, and webhook-confirmed PAID success gate.
 
 - Mobile note reads and posting are live through the notes API.
 - Mobile notification reads, single mark-read, and mark-all read are live
@@ -98,6 +112,10 @@ Last updated: 2026-08-13 15:26 by Codex — clickable notification targets
   lint, and `git diff --check` passed.
 - Clickable notification targets: mobile TypeScript, root tests, root typecheck,
   root lint, and `git diff --check` passed.
+- Mobile theme and English/Albanian/German localization: mobile TypeScript,
+  Expo web export, and `git diff --check` passed. Root tests and lint passed;
+  root typecheck remains blocked by unrelated web-agent errors in
+  `lib/i18n.tsx`.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did

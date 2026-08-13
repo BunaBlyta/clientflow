@@ -6,7 +6,8 @@ import { InvoiceRow } from '../../../../../components/InvoiceRow';
 import { Divider } from '../../../../../components/ui/Divider';
 import { EmptyState } from '../../../../../components/ui/EmptyState';
 import { Screen } from '../../../../../components/ui/Screen';
-import { color, fontFamily, fontSize, spacing } from '../../../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../../../lib/theme';
+import { useI18n } from '../../../../../lib/i18n';
 import { useDataStore } from '../../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '../../../../../store/auth-store';
@@ -14,6 +15,9 @@ import { useAuthStore } from '../../../../../store/auth-store';
 export default function ProjectInvoicesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const refreshInvoices = useDataStore((s) => s.refreshInvoices);
   const [loading, setLoading] = useState(true);
@@ -44,7 +48,7 @@ export default function ProjectInvoicesScreen() {
       <Screen>
         <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
           <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>Back to project</Text>
+          <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
         </Pressable>
         <ActivityIndicator color={color.accent} />
       </Screen>
@@ -56,12 +60,12 @@ export default function ProjectInvoicesScreen() {
       <Screen>
         <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
           <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>Back to project</Text>
+          <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
         </Pressable>
         <EmptyState
           icon={FileText}
-          title="No invoices yet"
-          subtitle="Invoices will show up here once the studio sends one."
+          title={t('invoices.emptyTitle')}
+          subtitle={t('invoices.emptySubtitle')}
         />
       </Screen>
     );
@@ -71,9 +75,9 @@ export default function ProjectInvoicesScreen() {
     <Screen scroll={false}>
       <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
         <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backControlText}>Back to project</Text>
+        <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
       </Pressable>
-      {unreachable && <Text style={styles.error}>Live invoices are unavailable. Showing saved invoice data.</Text>}
+      {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       <View style={styles.list}>
         {invoices.map((invoice, index) => (
           <View key={invoice.id}>
@@ -89,7 +93,8 @@ export default function ProjectInvoicesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   backControl: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -115,4 +120,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.meta,
     color: color.warning,
   },
-});
+  });
+}

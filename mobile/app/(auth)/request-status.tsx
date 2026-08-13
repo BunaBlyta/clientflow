@@ -5,12 +5,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { getPackageById, MOCK_REQUESTS } from '../../lib/mock-data';
-import { REQUEST_STATUS_META } from '../../lib/status';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { getRequestStatusMeta } from '../../lib/status';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { ProjectRequest } from '../../lib/types';
 
 export default function RequestStatusScreen() {
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const [email, setEmail] = useState('');
   const [searched, setSearched] = useState(false);
   const [result, setResult] = useState<ProjectRequest | null>(null);
@@ -23,7 +27,7 @@ export default function RequestStatusScreen() {
     setSearched(true);
   }
 
-  const meta = result ? REQUEST_STATUS_META[result.status] : null;
+  const meta = result ? getRequestStatusMeta(result.status, color, t) : null;
   const pkg = result ? getPackageById(result.packageId) : null;
 
   return (
@@ -32,32 +36,30 @@ export default function RequestStatusScreen() {
         <ArrowLeft size={20} color={color.textPrimary} />
       </Pressable>
 
-      <Text style={styles.heading}>Check your request</Text>
+      <Text style={styles.heading}>{t('auth.checkYourRequest')}</Text>
       <Text style={styles.subheading}>
-        Enter the email you used when you submitted your project request on our
-        website.
+        {t('auth.requestSubheading')}
       </Text>
 
       <TextField
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={(t) => {
           setEmail(t);
           setSearched(false);
         }}
-        placeholder="you@company.com"
+        placeholder={t('auth.emailPlaceholder')}
         keyboardType="email-address"
         autoComplete="email"
-        helperText="Demo emails: dana@brightlaunch.io, marcus@webbstudio.com, priya@shahconsulting.com"
+        helperText={t('auth.demoEmails')}
       />
 
-      <Button label="Check status" onPress={handleCheck} disabled={!email.trim()} />
+      <Button label={t('auth.checkStatus')} onPress={handleCheck} disabled={!email.trim()} />
 
       {searched && !result && (
         <View style={[styles.resultCard, styles.notFound]}>
           <Text style={styles.notFoundText}>
-            We couldn't find a request for that email. Double-check for typos,
-            or submit a new request from our website.
+            {t('auth.noRequestDetails')}
           </Text>
         </View>
       )}
@@ -75,12 +77,9 @@ export default function RequestStatusScreen() {
           <Text style={styles.resultName}>{result.prospectName}</Text>
           {pkg && <Text style={styles.resultMeta}>{pkg.name}</Text>}
           <Text style={styles.resultCopy}>
-            {result.status === 'PENDING' &&
-              "We're reviewing your request and will be in touch soon. No action needed yet."}
-            {result.status === 'APPROVED' &&
-              'Your request was approved! Check your email for an invite link to set up your account and pay your deposit.'}
-            {result.status === 'REJECTED' &&
-              "We aren't able to move forward with this request right now. We've sent details to your email."}
+            {result.status === 'PENDING' && t('auth.pendingRequest')}
+            {result.status === 'APPROVED' && t('auth.approvedRequest')}
+            {result.status === 'REJECTED' && t('auth.rejectedRequest')}
           </Text>
         </View>
       )}
@@ -88,7 +87,8 @@ export default function RequestStatusScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.background,
@@ -162,4 +162,5 @@ const styles = StyleSheet.create({
     color: color.textSecondary,
     lineHeight: 19,
   },
-});
+  });
+}

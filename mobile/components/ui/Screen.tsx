@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
-import { color, spacing } from '../../lib/theme';
+import { spacing, useTheme } from '../../lib/theme';
 
 interface ScreenProps extends PropsWithChildren {
   scroll?: boolean;
@@ -14,6 +14,8 @@ export function Screen({
   style,
   contentContainerStyle,
 }: ScreenProps) {
+  const { color } = useTheme();
+  const styles = createStyles(color);
   if (!scroll) {
     return <View style={[styles.container, style]}>{children}</View>;
   }
@@ -29,7 +31,8 @@ export function Screen({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.background,
@@ -38,4 +41,5 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-});
+  });
+}

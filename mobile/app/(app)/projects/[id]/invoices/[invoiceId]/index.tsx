@@ -8,17 +8,21 @@ import { Screen } from '../../../../../../components/ui/Screen';
 import { StatusPill } from '../../../../../../components/ui/StatusPill';
 import { formatCurrency, formatDate, isPastDue } from '../../../../../../lib/format';
 import {
-  INVOICE_KIND_LABEL,
-  INVOICE_STATUS_META,
-  OVERDUE_META,
+  getInvoiceKindLabel,
+  getInvoiceStatusMeta,
+  getOverdueMeta,
 } from '../../../../../../lib/status';
-import { color, fontFamily, fontSize, spacing } from '../../../../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../../../../lib/theme';
+import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
 
 export default function InvoiceDetailScreen() {
   const { id, invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const refreshInvoice = useDataStore((s) => s.refreshInvoice);
@@ -47,7 +51,7 @@ export default function InvoiceDetailScreen() {
       <Screen>
         <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
           <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>Back to invoices</Text>
+          <Text style={styles.backControlText}>{t('common.backToInvoices')}</Text>
         </Pressable>
         <ActivityIndicator color={color.accent} />
       </Screen>
@@ -59,9 +63,9 @@ export default function InvoiceDetailScreen() {
       <Screen>
         <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
           <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>Back to invoices</Text>
+          <Text style={styles.backControlText}>{t('common.backToInvoices')}</Text>
         </Pressable>
-        <EmptyState icon={FileText} title="Invoice not found" />
+        <EmptyState icon={FileText} title={t('invoices.invoiceNotFound')} />
       </Screen>
     );
   }
@@ -69,7 +73,7 @@ export default function InvoiceDetailScreen() {
   const overdue =
     (invoice.status === 'SENT' || invoice.status === 'FAILED') &&
     isPastDue(invoice.dueDate);
-  const meta = overdue ? OVERDUE_META : INVOICE_STATUS_META[invoice.status];
+  const meta = overdue ? getOverdueMeta(color, t) : getInvoiceStatusMeta(invoice.status, color, t);
   const payable = invoice.status === 'SENT' || invoice.status === 'FAILED';
 
   return (
@@ -78,30 +82,29 @@ export default function InvoiceDetailScreen() {
 
       <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
         <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backControlText}>Back to invoices</Text>
+        <Text style={styles.backControlText}>{t('common.backToInvoices')}</Text>
       </Pressable>
 
-      <Text style={styles.kind}>{INVOICE_KIND_LABEL[invoice.kind]}</Text>
-      {unreachable && <Text style={styles.error}>Live invoice data is unavailable. Showing saved data.</Text>}
+      <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
+      {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
       <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
       <StatusPill label={meta.label} text={meta.text} bg={meta.bg} border={meta.border} />
 
       <View style={styles.detailsBlock}>
-        <DetailRow label="Invoice" value={invoice.label} />
-        <DetailRow label="Created" value={formatDate(invoice.createdAt)} />
+        <DetailRow styles={styles} label={t('invoices.description')} value={invoice.label} />
+        <DetailRow styles={styles} label={t('invoices.issued')} value={formatDate(invoice.createdAt)} />
         {invoice.dueDate && (
-          <DetailRow label="Due" value={formatDate(invoice.dueDate)} />
+          <DetailRow styles={styles} label={t('invoices.due')} value={formatDate(invoice.dueDate)} />
         )}
         {invoice.paidAt && (
-          <DetailRow label="Paid" value={formatDate(invoice.paidAt)} />
+          <DetailRow styles={styles} label={t('invoices.paid')} value={formatDate(invoice.paidAt)} />
         )}
       </View>
 
       {invoice.status === 'PAYMENT_PENDING' && (
         <View style={styles.processingBanner}>
           <Text style={styles.processingText}>
-            We're confirming your payment with Stripe. This can take a moment —
-            check back shortly.
+            {t('invoices.paymentProcessing')}
           </Text>
         </View>
       )}
@@ -110,14 +113,14 @@ export default function InvoiceDetailScreen() {
         <View style={styles.paidBanner}>
           <CheckCircle2 size={16} color={color.success} />
           <Text style={styles.paidText}>
-            Paid{invoice.paidAt ? ` on ${formatDate(invoice.paidAt)}` : ''}
+            {t('invoices.paid')}{invoice.paidAt ? ` ${formatDate(invoice.paidAt)}` : ''}
           </Text>
         </View>
       )}
 
       {payable && (
         <Button
-          label={invoice.status === 'FAILED' ? 'Retry payment' : 'Pay now'}
+          label={invoice.status === 'FAILED' ? t('invoices.retryPayment') : t('invoices.payNow')}
           onPress={() =>
             router.push(`/projects/${id}/invoices/${invoiceId}/checkout`)
           }
@@ -127,7 +130,7 @@ export default function InvoiceDetailScreen() {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value, styles }: { label: string; value: string; styles: ReturnType<typeof createStyles> }) {
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -136,7 +139,8 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   backControl: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -220,4 +224,5 @@ const styles = StyleSheet.create({
     color: color.warning,
     marginTop: spacing.sm,
   },
-});
+  });
+}

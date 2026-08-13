@@ -4,7 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ProjectCard } from '../../../components/ProjectCard';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
-import { color, fontFamily, fontSize, spacing } from '../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
@@ -12,6 +13,9 @@ import { useEffect } from 'react';
 
 export default function ProjectsListScreen() {
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const client = useAuthStore((s) => s.client);
   const token = useAuthStore((s) => s.token);
   const projects = useDataStore(useShallow((s) => s.projects));
@@ -24,7 +28,7 @@ export default function ProjectsListScreen() {
   return (
     <Screen>
       <Text style={styles.greeting}>
-        {client ? `Hi, ${client.name.split(' ')[0]}` : 'Your projects'}
+        {client ? `${t('projects.hi')}, ${client.name.split(' ')[0]}` : t('projects.greeting')}
       </Text>
       {client?.companyName && (
         <Text style={styles.company}>{client.companyName}</Text>
@@ -34,8 +38,8 @@ export default function ProjectsListScreen() {
         {projects.length === 0 ? (
           <EmptyState
             icon={FolderKanban}
-            title="No projects yet"
-            subtitle="Once a request is approved, your projects will show up here."
+            title={t('projects.emptyTitle')}
+            subtitle={t('projects.emptySubtitle')}
           />
         ) : (
           projects.map((project) => (
@@ -51,7 +55,8 @@ export default function ProjectsListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   greeting: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,
@@ -68,4 +73,5 @@ const styles = StyleSheet.create({
   list: {
     marginTop: spacing.md,
   },
-});
+  });
+}

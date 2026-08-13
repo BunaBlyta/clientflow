@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 
 interface TextFieldProps {
   label: string;
@@ -37,6 +37,8 @@ export function TextField({
   maxLength,
   helperText,
 }: TextFieldProps) {
+  const { color } = useTheme();
+  const styles = createStyles(color);
   const [hidden, setHidden] = useState(!!secureTextEntry);
   const [focused, setFocused] = useState(false);
 
@@ -84,7 +86,8 @@ export function TextField({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   wrapper: {
     marginBottom: spacing.lg,
   },
@@ -129,4 +132,5 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     marginTop: spacing.xs,
   },
-});
+  });
+}

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatRelativeTime } from '../lib/format';
-import { color, fontFamily, fontSize, radius, spacing } from '../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import type { Notification } from '../lib/types';
 
 const ICONS: Record<Notification['type'], typeof Bell> = {
@@ -31,6 +31,8 @@ interface NotificationRowProps {
 }
 
 export function NotificationRow({ notification, onPress }: NotificationRowProps) {
+  const { color } = useTheme();
+  const styles = createStyles(color);
   const Icon = ICONS[notification.type] ?? Bell;
   const isAlert =
     notification.type === 'PAYMENT_FAILED' ||
@@ -66,7 +68,8 @@ export function NotificationRow({ notification, onPress }: NotificationRowProps)
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -121,4 +124,5 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     marginTop: spacing.xs,
   },
-});
+  });
+}

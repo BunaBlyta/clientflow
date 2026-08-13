@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
 
@@ -20,6 +20,8 @@ export function Button({
   loading = false,
   fullWidth = true,
 }: ButtonProps) {
+  const { color } = useTheme();
+  const styles = createStyles(color);
   const isDisabled = disabled || loading;
   return (
     <Pressable
@@ -56,7 +58,8 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   base: {
     height: 48,
     borderRadius: radius.md,
@@ -94,4 +97,5 @@ const styles = StyleSheet.create({
   labelAccent: {
     color: color.accent,
   },
-});
+  });
+}

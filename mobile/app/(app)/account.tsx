@@ -1,9 +1,11 @@
 import { Building2, LogOut, Mail, User as UserIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import type { ThemeMode } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 
 export default function AccountScreen() {
@@ -11,6 +13,9 @@ export default function AccountScreen() {
   const logout = useAuthStore((s) => s.logout);
   const insets = useSafeAreaInsets();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const { color, mode, setMode } = useTheme();
+  const { language, setLanguage, t } = useI18n();
+  const styles = createStyles(color);
 
   function handleLogout() {
     if (confirmingLogout) {
@@ -26,7 +31,7 @@ export default function AccountScreen() {
         paddingBottom: 64 + insets.bottom + spacing.md,
       }}
     >
-      <Text style={styles.heading}>Account</Text>
+      <Text style={styles.heading}>{t('account.title')}</Text>
 
       <View style={styles.avatarWrap}>
         <Text style={styles.avatarInitial}>
@@ -37,10 +42,27 @@ export default function AccountScreen() {
       <Text style={styles.company}>{client?.companyName}</Text>
 
       <View style={styles.infoBlock}>
-        <InfoRow icon={Mail} label="Email" value={client?.email ?? ''} />
-        <InfoRow icon={Building2} label="Company" value={client?.companyName ?? ''} />
-        <InfoRow icon={UserIcon} label="Contact" value={client?.name ?? ''} />
+        <InfoRow icon={Mail} label={t('account.email')} value={client?.email ?? ''} />
+        <InfoRow icon={Building2} label={t('account.company')} value={client?.companyName ?? ''} />
+        <InfoRow icon={UserIcon} label={t('account.contact')} value={client?.name ?? ''} />
       </View>
+
+      <PreferenceGroup label={t('account.theme')}>
+        {(['system', 'light', 'dark'] as ThemeMode[]).map((option) => (
+          <PreferenceOption
+            key={option}
+            label={t(`account.${option}` as 'account.system' | 'account.light' | 'account.dark')}
+            selected={mode === option}
+            onPress={() => setMode(option)}
+            styles={styles}
+          />
+        ))}
+      </PreferenceGroup>
+      <PreferenceGroup label={t('account.language')}>
+        <PreferenceOption label={t('account.english')} selected={language === 'en'} onPress={() => setLanguage('en')} styles={styles} />
+        <PreferenceOption label={t('account.albanian')} selected={language === 'sq'} onPress={() => setLanguage('sq')} styles={styles} />
+        <PreferenceOption label={t('account.german')} selected={language === 'de'} onPress={() => setLanguage('de')} styles={styles} />
+      </PreferenceGroup>
 
       {confirmingLogout ? (
         <View style={styles.confirmBlock}>
@@ -49,7 +71,7 @@ export default function AccountScreen() {
               onPress={() => setConfirmingLogout(false)}
               style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </Pressable>
             <Pressable
               onPress={handleLogout}
@@ -60,10 +82,10 @@ export default function AccountScreen() {
               ]}
             >
               <LogOut size={16} color={color.danger} />
-              <Text style={styles.logoutText}>Log out</Text>
+              <Text style={styles.logoutText}>{t('account.logOut')}</Text>
             </Pressable>
           </View>
-          <Text style={styles.confirmText}>Confirm log out?</Text>
+          <Text style={styles.confirmText}>{t('account.confirmLogOut')}</Text>
         </View>
       ) : (
         <Pressable
@@ -71,11 +93,11 @@ export default function AccountScreen() {
           style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
         >
           <LogOut size={16} color={color.danger} />
-          <Text style={styles.logoutText}>Log out</Text>
+          <Text style={styles.logoutText}>{t('account.logOut')}</Text>
         </Pressable>
       )}
 
-      <Text style={styles.footer}>Clientflow · v1.0.0</Text>
+      <Text style={styles.footer}>{t('account.version')}</Text>
     </Screen>
   );
 }
@@ -89,6 +111,8 @@ function InfoRow({
   label: string;
   value: string;
 }) {
+  const { color } = useTheme();
+  const styles = createStyles(color);
   return (
     <View style={styles.infoRow}>
       <Icon size={16} color={color.textMuted} />
@@ -100,7 +124,27 @@ function InfoRow({
   );
 }
 
-const styles = StyleSheet.create({
+function PreferenceGroup({ label, children }: { label: string; children: ReactNode }) {
+  const { color } = useTheme();
+  const styles = createStyles(color);
+  return (
+    <View style={styles.preferenceGroup}>
+      <Text style={styles.preferenceLabel}>{label}</Text>
+      <View style={styles.preferenceOptions}>{children}</View>
+    </View>
+  );
+}
+
+function PreferenceOption({ label, selected, onPress, styles }: { label: string; selected: boolean; onPress: () => void; styles: ReturnType<typeof createStyles> }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.preferenceOption, selected && styles.preferenceOptionSelected]}>
+      <Text style={[styles.preferenceOptionText, selected && styles.preferenceOptionTextSelected]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   heading: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,
@@ -223,4 +267,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xxl + spacing.md,
   },
-});
+  preferenceGroup: {
+    marginBottom: spacing.lg,
+  },
+  preferenceLabel: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  preferenceOptions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  preferenceOption: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  preferenceOptionSelected: {
+    backgroundColor: color.accentSoft,
+    borderColor: color.accent,
+  },
+  preferenceOptionText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
+    color: color.textSecondary,
+  },
+  preferenceOptionTextSelected: {
+    color: color.accentPressed,
+  },
+  });
+}

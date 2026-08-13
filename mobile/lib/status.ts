@@ -1,25 +1,8 @@
-import { color } from './theme';
+import type { Translate } from './i18n';
+import type { ThemeColors } from './theme';
 import type { InvoiceStatus, ProjectStatus, RequestStatus } from './types';
 
-export const PROJECT_STAGES: ProjectStatus[] = [
-  'PENDING',
-  'DISCOVERY',
-  'DESIGN',
-  'DEVELOPMENT',
-  'REVIEW',
-  'LAUNCHED',
-];
-
-export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
-  PENDING: 'Pending',
-  DISCOVERY: 'Discovery',
-  DESIGN: 'Design',
-  DEVELOPMENT: 'Development',
-  REVIEW: 'Review',
-  LAUNCHED: 'Launched',
-  CANCELLED: 'Cancelled',
-  ON_HOLD: 'On Hold',
-};
+export const PROJECT_STAGES: ProjectStatus[] = ['PENDING', 'DISCOVERY', 'DESIGN', 'DEVELOPMENT', 'REVIEW', 'LAUNCHED'];
 
 interface StatusMeta {
   label: string;
@@ -28,44 +11,56 @@ interface StatusMeta {
   border: string;
 }
 
-export const PROJECT_STATUS_META: Record<ProjectStatus, StatusMeta> = {
-  PENDING: { label: 'Pending', text: color.neutral, bg: color.neutralBg, border: color.neutralBorder },
-  DISCOVERY: { label: 'Discovery', text: color.accentPressed, bg: color.accentSoft, border: '#C7E5FF' },
-  DESIGN: { label: 'Design', text: color.accentPressed, bg: color.accentSoft, border: '#C7E5FF' },
-  DEVELOPMENT: { label: 'Development', text: color.accentPressed, bg: color.accentSoft, border: '#C7E5FF' },
-  REVIEW: { label: 'Review', text: color.accentPressed, bg: color.accentSoft, border: '#C7E5FF' },
-  LAUNCHED: { label: 'Launched', text: color.success, bg: color.successBg, border: color.successBorder },
-  CANCELLED: { label: 'Cancelled', text: color.danger, bg: color.dangerBg, border: color.dangerBorder },
-  ON_HOLD: { label: 'On Hold', text: color.warning, bg: color.warningBg, border: color.warningBorder },
+const projectStatusKeys: Record<ProjectStatus, Parameters<Translate>[0]> = {
+  PENDING: 'status.pending', DISCOVERY: 'status.discovery', DESIGN: 'status.design', DEVELOPMENT: 'status.development',
+  REVIEW: 'status.review', LAUNCHED: 'status.launched', CANCELLED: 'status.cancelled', ON_HOLD: 'status.onHold',
 };
 
-export const INVOICE_STATUS_META: Record<InvoiceStatus, StatusMeta> = {
-  DRAFT: { label: 'Draft', text: color.neutral, bg: color.neutralBg, border: color.neutralBorder },
-  SENT: { label: 'Due', text: color.warning, bg: color.warningBg, border: color.warningBorder },
-  PAYMENT_PENDING: { label: 'Processing', text: color.warning, bg: color.warningBg, border: color.warningBorder },
-  PAID: { label: 'Paid', text: color.success, bg: color.successBg, border: color.successBorder },
-  FAILED: { label: 'Failed', text: color.danger, bg: color.dangerBg, border: color.dangerBorder },
-  VOIDED: { label: 'Voided', text: color.neutral, bg: color.neutralBg, border: color.neutralBorder },
-  REFUNDED: { label: 'Refunded', text: color.neutral, bg: color.neutralBg, border: color.neutralBorder },
+const invoiceStatusKeys: Record<InvoiceStatus, Parameters<Translate>[0]> = {
+  DRAFT: 'status.draft', SENT: 'status.due', PAYMENT_PENDING: 'status.processing', PAID: 'status.paid',
+  FAILED: 'status.failed', VOIDED: 'status.voided', REFUNDED: 'status.refunded',
 };
 
-// An overdue SENT/FAILED invoice gets its own pill rather than reusing "Due".
-export const OVERDUE_META: StatusMeta = {
-  label: 'Overdue',
-  text: color.danger,
-  bg: color.dangerBg,
-  border: color.dangerBorder,
+const requestStatusKeys: Record<RequestStatus, Parameters<Translate>[0]> = {
+  PENDING: 'status.pendingReview', APPROVED: 'status.approved', REJECTED: 'status.notApproved',
 };
 
-export const REQUEST_STATUS_META: Record<RequestStatus, StatusMeta> = {
-  PENDING: { label: 'Pending review', text: color.warning, bg: color.warningBg, border: color.warningBorder },
-  APPROVED: { label: 'Approved', text: color.success, bg: color.successBg, border: color.successBorder },
-  REJECTED: { label: 'Not approved', text: color.danger, bg: color.dangerBg, border: color.dangerBorder },
+export function getProjectStatusLabel(status: ProjectStatus, t: Translate) {
+  return t(projectStatusKeys[status]);
+}
+
+export function getProjectStatusMeta(status: ProjectStatus, colors: ThemeColors, t: Translate): StatusMeta {
+  const label = getProjectStatusLabel(status, t);
+  if (status === 'LAUNCHED') return { label, text: colors.success, bg: colors.successBg, border: colors.successBorder };
+  if (status === 'CANCELLED') return { label, text: colors.danger, bg: colors.dangerBg, border: colors.dangerBorder };
+  if (status === 'ON_HOLD') return { label, text: colors.warning, bg: colors.warningBg, border: colors.warningBorder };
+  if (status === 'PENDING') return { label, text: colors.neutral, bg: colors.neutralBg, border: colors.neutralBorder };
+  return { label, text: colors.accentPressed, bg: colors.accentSoft, border: colors.accentSoft };
+}
+
+export function getInvoiceStatusMeta(status: InvoiceStatus, colors: ThemeColors, t: Translate): StatusMeta {
+  const label = t(invoiceStatusKeys[status]);
+  if (status === 'PAID') return { label, text: colors.success, bg: colors.successBg, border: colors.successBorder };
+  if (status === 'FAILED') return { label, text: colors.danger, bg: colors.dangerBg, border: colors.dangerBorder };
+  if (status === 'SENT' || status === 'PAYMENT_PENDING') return { label, text: colors.warning, bg: colors.warningBg, border: colors.warningBorder };
+  return { label, text: colors.neutral, bg: colors.neutralBg, border: colors.neutralBorder };
+}
+
+export function getOverdueMeta(colors: ThemeColors, t: Translate): StatusMeta {
+  return { label: t('status.overdue'), text: colors.danger, bg: colors.dangerBg, border: colors.dangerBorder };
+}
+
+export function getRequestStatusMeta(status: RequestStatus, colors: ThemeColors, t: Translate): StatusMeta {
+  const label = t(requestStatusKeys[status]);
+  if (status === 'APPROVED') return { label, text: colors.success, bg: colors.successBg, border: colors.successBorder };
+  if (status === 'REJECTED') return { label, text: colors.danger, bg: colors.dangerBg, border: colors.dangerBorder };
+  return { label, text: colors.warning, bg: colors.warningBg, border: colors.warningBorder };
+}
+
+const invoiceKindKeys: Record<string, Parameters<Translate>[0]> = {
+  DEPOSIT: 'status.deposit', FINAL: 'status.finalPayment', EXTRA: 'status.extra', CUSTOM: 'status.custom',
 };
 
-export const INVOICE_KIND_LABEL: Record<string, string> = {
-  DEPOSIT: 'Deposit',
-  FINAL: 'Final payment',
-  EXTRA: 'Extra',
-  CUSTOM: 'Custom charge',
-};
+export function getInvoiceKindLabel(kind: string, t: Translate) {
+  return t(invoiceKindKeys[kind] ?? 'status.custom');
+}

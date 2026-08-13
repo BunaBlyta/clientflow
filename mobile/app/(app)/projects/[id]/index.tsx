@@ -9,7 +9,8 @@ import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatCurrency } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
-import { color, fontFamily, fontSize, spacing } from '../../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../../lib/theme';
+import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useEffect, useState } from 'react';
@@ -18,6 +19,9 @@ import { useShallow } from 'zustand/react/shallow';
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);
@@ -49,9 +53,9 @@ export default function ProjectDetailScreen() {
       <Screen>
         <Pressable onPress={() => router.replace('/projects')} style={styles.backToProjects}>
           <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backToProjectsText}>Back to projects</Text>
+          <Text style={styles.backToProjectsText}>{t('common.backToProjects')}</Text>
         </Pressable>
-        <EmptyState icon={FileText} title="Project not found" />
+        <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
       </Screen>
     );
   }
@@ -78,12 +82,12 @@ export default function ProjectDetailScreen() {
         style={styles.backToProjects}
       >
         <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backToProjectsText}>Back to projects</Text>
+        <Text style={styles.backToProjectsText}>{t('common.backToProjects')}</Text>
       </Pressable>
 
       {unreachable && (
         <Text style={styles.error}>
-          Live notes or invoices are unavailable. Showing saved data.
+          {t('common.error')}
         </Text>
       )}
 
@@ -93,7 +97,7 @@ export default function ProjectDetailScreen() {
       <View style={styles.statRow}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{formatCurrency(paidTotal)}</Text>
-          <Text style={styles.statLabel}>Paid to date</Text>
+          <Text style={styles.statLabel}>{t('projects.paidToDate')}</Text>
         </View>
         <View style={styles.stat}>
           <Text
@@ -104,41 +108,41 @@ export default function ProjectDetailScreen() {
           >
             {formatCurrency(outstandingTotal)}
           </Text>
-          <Text style={styles.statLabel}>Outstanding</Text>
+          <Text style={styles.statLabel}>{t('projects.outstanding')}</Text>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Status</Text>
+      <Text style={styles.sectionTitle}>{t('projects.status')}</Text>
       <ProjectStageTracker status={project.status} />
 
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Notes</Text>
+        <Text style={styles.sectionTitle}>{t('projects.notes')}</Text>
         <Pressable
           onPress={() => router.push(`/projects/${project.id}/notes`)}
           style={styles.viewAllRow}
         >
-          <Text style={styles.viewAllText}>View all</Text>
+          <Text style={styles.viewAllText}>{t('common.viewAll')}</Text>
           <ChevronRight size={14} color={color.accent} />
         </Pressable>
       </View>
       {recentNotes.length === 0 ? (
-        <EmptyState icon={MessageSquare} title="No notes yet" />
+        <EmptyState icon={MessageSquare} title={t('projects.noNotes')} />
       ) : (
         recentNotes.map((note) => <NoteBubble key={note.id} note={note} />)
       )}
 
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Invoices</Text>
+        <Text style={styles.sectionTitle}>{t('projects.invoices')}</Text>
         <Pressable
           onPress={() => router.push(`/projects/${project.id}/invoices`)}
           style={styles.viewAllRow}
         >
-          <Text style={styles.viewAllText}>View all</Text>
+          <Text style={styles.viewAllText}>{t('common.viewAll')}</Text>
           <ChevronRight size={14} color={color.accent} />
         </Pressable>
       </View>
       {visibleInvoices.length === 0 ? (
-        <EmptyState icon={FileText} title="No invoices yet" />
+        <EmptyState icon={FileText} title={t('projects.noInvoices')} />
       ) : (
         <>
           {invoicePreviews.map((invoice, index) => (
@@ -151,7 +155,7 @@ export default function ProjectDetailScreen() {
             </View>
           ))}
           <Text style={styles.invoiceSummary}>
-            {visibleInvoices.length} invoice{visibleInvoices.length === 1 ? '' : 's'} on this project
+            {t('projects.invoiceCount', { count: visibleInvoices.length })}
           </Text>
         </>
       )}
@@ -159,7 +163,8 @@ export default function ProjectDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   backToProjects: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -237,4 +242,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     color: color.textMuted,
   },
-});
+  });
+}

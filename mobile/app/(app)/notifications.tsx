@@ -6,7 +6,8 @@ import { NotificationRow } from '../../components/NotificationRow';
 import { Divider } from '../../components/ui/Divider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
-import { color, fontFamily, fontSize, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import type { Notification } from '../../lib/types';
@@ -14,6 +15,9 @@ import { useShallow } from 'zustand/react/shallow';
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const markNotificationRead = useDataStore((s) => s.markNotificationRead);
   const markAllNotificationsRead = useDataStore((s) => s.markAllNotificationsRead);
@@ -47,7 +51,7 @@ export default function NotificationsScreen() {
       setMarkingId(notification.id);
       const ok = await markNotificationRead(notification.id, token);
       setMarkingId(null);
-      if (!ok) setActionError('Unable to mark this notification as read.');
+      if (!ok) setActionError(t('notifications.markFailed'));
     }
     const target = getNotificationTarget(notification);
     if (target) router.push(target);
@@ -59,32 +63,32 @@ export default function NotificationsScreen() {
     setMarkingAll(true);
     const ok = await markAllNotificationsRead(token);
     setMarkingAll(false);
-    if (!ok) setActionError('Some notifications could not be marked as read.');
+    if (!ok) setActionError(t('notifications.markAllFailed'));
   }
 
   return (
     <Screen scroll={notifications.length > 0}>
       <View style={styles.headerRow}>
-        <Text style={styles.heading}>Notifications</Text>
+        <Text style={styles.heading}>{t('notifications.title')}</Text>
         {unread > 0 && (
           <Pressable
             onPress={() => void handleMarkAll()}
             disabled={markingAll || markingId !== null}
             style={[styles.markAllButton, (markingAll || markingId !== null) && styles.markAllDisabled]}
           >
-            <Text style={styles.markAllText}>{markingAll ? 'Marking…' : 'Mark all read'}</Text>
+            <Text style={styles.markAllText}>{markingAll ? t('notifications.marking') : t('notifications.markAll')}</Text>
           </Pressable>
         )}
       </View>
       {unreachable && (
         <Text style={styles.error}>
-          Live notifications are unavailable. Showing saved notification data.
+          {t('notifications.unavailable')}
         </Text>
       )}
       {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
 
       {notifications.length === 0 ? (
-        <EmptyState icon={Bell} title="You're all caught up" />
+        <EmptyState icon={Bell} title={t('notifications.caughtUp')} />
       ) : (
         notifications.map((notification, index) => (
           <View key={notification.id}>
@@ -110,7 +114,8 @@ function getNotificationTarget(notification: Notification): string | null {
   return null;
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,4 +146,5 @@ const styles = StyleSheet.create({
     color: color.warning,
     marginBottom: spacing.md,
   },
-});
+  });
+}

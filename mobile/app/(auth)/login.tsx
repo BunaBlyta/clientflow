@@ -12,12 +12,16 @@ import {
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { MOCK_CLIENT } from '../../lib/mock-data';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 
 export default function LoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ banner?: string }>();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const login = useAuthStore((s) => s.login);
 
   const [email, setEmail] = useState(MOCK_CLIENT.email);
@@ -28,13 +32,13 @@ export default function LoginScreen() {
   async function handleLogin() {
     setError('');
     if (!email.trim() || !password) {
-      setError('Enter your email and password.');
+      setError(t('auth.emailPasswordRequired'));
       return;
     }
     setLoading(true);
     const ok = await login(email, password);
     setLoading(false);
-    if (!ok) setError('Invalid email or password.');
+    if (!ok) setError(t('auth.invalidCredentials'));
   }
 
   return (
@@ -50,9 +54,9 @@ export default function LoginScreen() {
           <Text style={styles.brand}>Clientflow</Text>
         </View>
 
-        <Text style={styles.heading}>Welcome back</Text>
+        <Text style={styles.heading}>{t('auth.welcome')}</Text>
         <Text style={styles.subheading}>
-          Log in to check your project status, notes, and invoices.
+          {t('auth.loginSubheading')}
         </Text>
 
         {params.banner ? (
@@ -64,15 +68,15 @@ export default function LoginScreen() {
 
         <View style={styles.form}>
           <TextField
-            label="Email"
+            label={t('auth.email')}
             value={email}
             onChangeText={setEmail}
-            placeholder="you@company.com"
+            placeholder={t('auth.emailPlaceholder')}
             keyboardType="email-address"
             autoComplete="email"
           />
           <TextField
-            label="Password"
+            label={t('auth.password')}
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
@@ -85,24 +89,24 @@ export default function LoginScreen() {
             onPress={() => router.push('/(auth)/forgot-password')}
             style={styles.forgotLink}
           >
-            <Text style={styles.forgotLinkText}>Forgot password?</Text>
+          <Text style={styles.forgotLinkText}>{t('auth.forgotPassword')}</Text>
           </Pressable>
 
-          <Button label="Log in" onPress={handleLogin} loading={loading} />
+          <Button label={t('auth.logIn')} onPress={handleLogin} loading={loading} />
 
           <Text style={styles.demoHint}>
-            Use the email and password provided by your studio.
+            {t('auth.demoHint')}
           </Text>
         </View>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
+          <Text style={styles.dividerText}>{t('auth.or')}</Text>
           <View style={styles.dividerLine} />
         </View>
 
         <Button
-          label="I have an invite code"
+          label={t('auth.inviteCode')}
           variant="secondary"
           onPress={() => router.push('/(auth)/verify-code?mode=invite')}
         />
@@ -112,7 +116,7 @@ export default function LoginScreen() {
           style={styles.statusLink}
         >
           <Text style={styles.statusLinkText}>
-            Submitted a request already? Check its status
+            {t('auth.checkRequest')}
           </Text>
         </Pressable>
       </View>
@@ -120,7 +124,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.background },
   container: {
     flex: 1,
@@ -226,4 +231,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     color: color.accent,
   },
-});
+  });
+}

@@ -10,6 +10,8 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/auth-store';
+import { I18nProvider } from '../lib/i18n';
+import { ThemeProvider, useTheme } from '../lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -38,10 +40,19 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <RootNavigator />
+      <ThemeProvider>
+        <I18nProvider>
+          <ThemedStatusBar />
+          <RootNavigator />
+        </I18nProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
+}
+
+function ThemedStatusBar() {
+  const { resolvedMode } = useTheme();
+  return <StatusBar style={resolvedMode === 'dark' ? 'light' : 'dark'} />;
 }
 
 function RootNavigator() {

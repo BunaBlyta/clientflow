@@ -5,10 +5,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { verificationCheckRequest, verificationSendRequest } from '../../lib/api';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const params = useLocalSearchParams<{ mode?: string; email?: string }>();
   const mode = params.mode === 'reset' ? 'reset' : 'invite';
 
@@ -94,41 +98,41 @@ export default function VerifyCodeScreen() {
       </View>
 
       <Text style={styles.heading}>
-        {mode === 'invite' ? 'Verify your email' : 'Enter your reset code'}
+        {mode === 'invite' ? t('auth.verifyEmail') : t('auth.enterResetCode')}
       </Text>
       <Text style={styles.subheading}>
         {mode === 'invite'
-          ? "We sent a 6-digit code to your email to activate your account."
-          : "We sent a 6-digit code to your email to reset your password."}
+          ? t('auth.inviteCodeSubheading')
+          : t('auth.resetCodeSubheading')}
       </Text>
 
       <TextField
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
-        placeholder="you@company.com"
+        placeholder={t('auth.emailPlaceholder')}
         keyboardType="email-address"
         autoComplete="email"
       />
 
       <TextField
-        label="Verification code"
+        label={t('auth.verificationCode')}
         value={code}
         onChangeText={(t) => setCode(t.replace(/[^0-9]/g, '').slice(0, 6))}
         placeholder="123456"
         keyboardType="number-pad"
         maxLength={6}
-        helperText={!error ? 'Enter the 6-digit code from your email.' : undefined}
+        helperText={!error ? t('auth.codeHelper') : undefined}
         error={
           error === 'invalid'
-            ? "That code isn't right. Check your email and try again."
+            ? t('auth.invalidCode')
             : error === 'expired'
-              ? 'This code has expired. Request a new one below.'
+              ? t('auth.expiredCode')
               : undefined
         }
       />
 
-      <Button label="Continue" onPress={handleContinue} loading={loading} />
+      <Button label={t('auth.continue')} onPress={handleContinue} loading={loading} />
 
       <Pressable
         onPress={handleResend}
@@ -141,14 +145,15 @@ export default function VerifyCodeScreen() {
             cooldown > 0 && styles.resendTextDisabled,
           ]}
         >
-          {cooldown > 0 ? `Resend code (${cooldown}s)` : 'Resend code'}
+          {cooldown > 0 ? `${t('auth.resend')} (${cooldown}s)` : t('auth.resend')}
         </Text>
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.background,
@@ -198,4 +203,5 @@ const styles = StyleSheet.create({
   resendTextDisabled: {
     color: color.textMuted,
   },
-});
+  });
+}

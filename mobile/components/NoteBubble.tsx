@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDateTime } from '../lib/format';
-import { color, fontFamily, fontSize, radius, spacing } from '../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Note } from '../lib/types';
 
 interface NoteBubbleProps {
@@ -8,6 +9,9 @@ interface NoteBubbleProps {
 }
 
 export function NoteBubble({ note }: NoteBubbleProps) {
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   if (note.authorRole === 'SYSTEM') {
     return (
       <View style={styles.systemRow}>
@@ -24,7 +28,7 @@ export function NoteBubble({ note }: NoteBubbleProps) {
     <View style={styles.wrap}>
       <View style={styles.headerRow}>
         <Text style={styles.author}>{note.authorName}</Text>
-        <Text style={styles.roleTag}>{isClient ? 'You' : 'Studio'}</Text>
+        <Text style={styles.roleTag}>{isClient ? t('notes.you') : t('notes.studio')}</Text>
         <Text style={styles.time}>{formatDateTime(note.createdAt)}</Text>
       </View>
       <View
@@ -39,7 +43,8 @@ export function NoteBubble({ note }: NoteBubbleProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   wrap: {
     marginBottom: spacing.lg,
   },
@@ -72,7 +77,7 @@ const styles = StyleSheet.create({
   },
   bubbleClient: {
     backgroundColor: color.accentSoft,
-    borderColor: '#C7E5FF',
+    borderColor: color.accentSoft,
   },
   bubbleStaff: {
     backgroundColor: color.surfaceMuted,
@@ -108,4 +113,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.meta,
     color: color.textMuted,
   },
-});
+  });
+}

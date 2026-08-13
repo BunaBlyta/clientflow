@@ -2,8 +2,9 @@ import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatDate } from '../lib/format';
 import { getPackageById } from '../lib/mock-data';
-import { PROJECT_STATUS_META } from '../lib/status';
-import { color, fontFamily, fontSize, radius, spacing } from '../lib/theme';
+import { getProjectStatusMeta } from '../lib/status';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Project } from '../lib/types';
 import { StatusPill } from './ui/StatusPill';
 
@@ -13,8 +14,11 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onPress }: ProjectCardProps) {
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const pkg = getPackageById(project.packageId);
-  const meta = PROJECT_STATUS_META[project.status];
+  const meta = getProjectStatusMeta(project.status, color, t);
 
   return (
     <Pressable
@@ -37,7 +41,7 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
         />
         {project.targetLaunchDate && project.status !== 'LAUNCHED' && (
           <Text style={styles.meta}>
-            Target: {formatDate(project.targetLaunchDate)}
+            {t('common.target')}: {formatDate(project.targetLaunchDate)}
           </Text>
         )}
       </View>
@@ -45,7 +49,8 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: color.border,
@@ -86,4 +91,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.meta,
     color: color.textMuted,
   },
-});
+  });
+}

@@ -1,8 +1,9 @@
 import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatCurrency, formatDate, isPastDue } from '../lib/format';
-import { INVOICE_KIND_LABEL, INVOICE_STATUS_META, OVERDUE_META } from '../lib/status';
-import { color, fontFamily, fontSize, spacing } from '../lib/theme';
+import { getInvoiceKindLabel, getInvoiceStatusMeta, getOverdueMeta } from '../lib/status';
+import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Invoice } from '../lib/types';
 import { StatusPill } from './ui/StatusPill';
 
@@ -12,10 +13,13 @@ interface InvoiceRowProps {
 }
 
 export function InvoiceRow({ invoice, onPress }: InvoiceRowProps) {
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const overdue =
     (invoice.status === 'SENT' || invoice.status === 'FAILED') &&
     isPastDue(invoice.dueDate);
-  const meta = overdue ? OVERDUE_META : INVOICE_STATUS_META[invoice.status];
+  const meta = overdue ? getOverdueMeta(color, t) : getInvoiceStatusMeta(invoice.status, color, t);
 
   return (
     <Pressable
@@ -27,11 +31,11 @@ export function InvoiceRow({ invoice, onPress }: InvoiceRowProps) {
           {invoice.label}
         </Text>
         <Text style={styles.meta}>
-          {INVOICE_KIND_LABEL[invoice.kind]}
+          {getInvoiceKindLabel(invoice.kind, t)}
           {invoice.dueDate && invoice.status !== 'PAID'
-            ? ` · Due ${formatDate(invoice.dueDate)}`
+            ? ` · ${t('invoices.due')} ${formatDate(invoice.dueDate)}`
             : ''}
-          {invoice.paidAt ? ` · Paid ${formatDate(invoice.paidAt)}` : ''}
+          {invoice.paidAt ? ` · ${t('invoices.paid')} ${formatDate(invoice.paidAt)}` : ''}
         </Text>
       </View>
       <View style={styles.right}>
@@ -48,7 +52,8 @@ export function InvoiceRow({ invoice, onPress }: InvoiceRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -81,4 +86,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     color: color.textPrimary,
   },
-});
+  });
+}

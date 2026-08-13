@@ -5,11 +5,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { ApiError, setPasswordRequest } from '../../lib/api';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 
 export default function SetPasswordScreen() {
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const params = useLocalSearchParams<{ mode?: string; email?: string; code?: string }>();
   const mode = params.mode === 'reset' ? 'reset' : 'invite';
   const startSession = useAuthStore((s) => s.startSession);
@@ -22,17 +26,17 @@ export default function SetPasswordScreen() {
   async function handleSubmit() {
     setError('');
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('auth.passwordMin'));
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
     const email = params.email?.trim().toLowerCase();
     const code = params.code?.trim();
     if (!email || !code) {
-      setError('This password link is missing its verification code. Start again.');
+      setError(t('auth.missingCode'));
       return;
     }
     setLoading(true);
@@ -44,7 +48,7 @@ export default function SetPasswordScreen() {
       setError(
         caught instanceof ApiError
           ? caught.message
-          : 'Unable to set your password. Please try again.'
+          : t('auth.setPasswordFailed')
       );
     } finally {
       setLoading(false);
@@ -62,21 +66,21 @@ export default function SetPasswordScreen() {
       </View>
 
       <Text style={styles.heading}>
-        {mode === 'invite' ? 'Set your password' : 'Choose a new password'}
+        {mode === 'invite' ? t('auth.setPassword') : t('auth.chooseNewPassword')}
       </Text>
       <Text style={styles.subheading}>
-        {params.email ? `For ${params.email}. ` : ''}Use at least 8 characters.
+        {params.email ? `${t('auth.forEmail', { email: params.email })} ` : ''}{t('auth.passwordMinimum')}
       </Text>
 
       <TextField
-        label="New password"
+        label={t('auth.newPassword')}
         value={password}
         onChangeText={setPassword}
         placeholder="••••••••"
         secureTextEntry
       />
       <TextField
-        label="Confirm password"
+        label={t('auth.confirmPassword')}
         value={confirm}
         onChangeText={setConfirm}
         placeholder="••••••••"
@@ -85,7 +89,7 @@ export default function SetPasswordScreen() {
       />
 
       <Button
-        label={mode === 'invite' ? 'Set password' : 'Update password'}
+        label={mode === 'invite' ? t('auth.setPasswordButton') : t('auth.updatePassword')}
         onPress={handleSubmit}
         loading={loading}
       />
@@ -93,7 +97,8 @@ export default function SetPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.background,
@@ -131,4 +136,5 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     lineHeight: 20,
   },
-});
+  });
+}

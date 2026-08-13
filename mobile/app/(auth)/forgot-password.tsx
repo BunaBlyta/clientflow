@@ -5,10 +5,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { ApiError, verificationSendRequest } from '../../lib/api';
-import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { color } = useTheme();
+  const { t } = useI18n();
+  const styles = createStyles(color);
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +21,7 @@ export default function ForgotPasswordScreen() {
     setError('');
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !normalizedEmail.includes('@')) {
-      setError('Enter a valid email address.');
+      setError(t('auth.validEmail'));
       return;
     }
     setLoading(true);
@@ -30,7 +34,7 @@ export default function ForgotPasswordScreen() {
       setError(
         caught instanceof ApiError
           ? caught.message
-          : 'Unable to send a reset code. Please try again.'
+          : t('auth.sendResetFailed')
       );
     } finally {
       setLoading(false);
@@ -47,28 +51,28 @@ export default function ForgotPasswordScreen() {
         <Send size={20} color={color.accent} />
       </View>
 
-      <Text style={styles.heading}>Reset your password</Text>
+      <Text style={styles.heading}>{t('auth.resetPassword')}</Text>
       <Text style={styles.subheading}>
-        Enter the email on your account and we'll send you a code to reset your
-        password.
+        {t('auth.resetSubheading')}
       </Text>
 
       <TextField
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
-        placeholder="you@company.com"
+        placeholder={t('auth.emailPlaceholder')}
         keyboardType="email-address"
         autoComplete="email"
         error={error || undefined}
       />
 
-      <Button label="Send reset code" onPress={handleSend} loading={loading} />
+      <Button label={t('auth.sendCode')} onPress={handleSend} loading={loading} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(color: ReturnType<typeof useTheme>['color']) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.background,
@@ -106,4 +110,5 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     lineHeight: 20,
   },
-});
+  });
+}

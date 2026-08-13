@@ -1,7 +1,10 @@
 import { Stack } from 'expo-router';
-import { color, fontFamily, fontSize } from '../../../lib/theme';
+import { fontFamily, fontSize, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
 
 export default function ProjectsStackLayout() {
+  const { color } = useTheme();
+  const { t } = useI18n();
   return (
     <Stack
       screenOptions={{
@@ -16,14 +19,14 @@ export default function ProjectsStackLayout() {
         },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Projects' }} />
+      <Stack.Screen name="index" options={{ title: t('tabs.projects') }} />
       <Stack.Screen name="[id]/index" options={{ title: '' }} />
-      <Stack.Screen name="[id]/notes" options={{ title: 'Notes' }} />
-      <Stack.Screen name="[id]/invoices/index" options={{ title: 'Invoices' }} />
-      <Stack.Screen name="[id]/invoices/[invoiceId]/index" options={{ title: 'Invoice' }} />
+      <Stack.Screen name="[id]/notes" options={{ title: t('projects.notes') }} />
+      <Stack.Screen name="[id]/invoices/index" options={{ title: t('projects.invoices') }} />
+      <Stack.Screen name="[id]/invoices/[invoiceId]/index" options={{ title: t('invoices.invoice') }} />
       <Stack.Screen
         name="[id]/invoices/[invoiceId]/checkout"
-        options={{ title: 'Checkout', presentation: 'modal' }}
+        options={{ title: t('checkout.title'), presentation: 'modal' }}
       />
     </Stack>
   );
