@@ -1,27 +1,27 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 14:35 by Codex — mobile Stripe cancellation return
+Last updated: 2026-08-13 15:17 by Codex — package deletion option
 
 ## What changed
 
-- Updated `app/payment/cancelled/page.tsx` to read Stripe’s `return_to=mobile`, `project_id`, and `invoice_id` parameters.
-- Valid mobile returns now use the existing Expo-web convention and point to `http://localhost:8081/projects/<projectId>/invoices`, allowing the client app to hydrate the invoice list rather than opening a specific invoice route.
-- The action is labeled “Continue to web app” for valid mobile returns. Missing, repeated, or invalid parameters use the normal `/dashboard/invoices` fallback.
-- The cancellation message still states that no payment was taken and the invoice remains unchanged. No webhook or payment status logic was changed.
+- Added a confirmed “Delete package” action to the Settings → Packages edit dialog.
+- The action uses the existing `PATCH /api/packages/:id` contract with `isActive: false`, so the package is removed from active pricing and new requests without breaking historical project or invoice records.
+- On success, the package is removed from the active Settings list and a toast explains that existing projects and invoices are unchanged.
+- Failed deletion requests retain the dialog and show the API error. No API, Prisma, mobile, or architecture files were changed.
 
 ## Verification
 
 - `npm run test`: passed — 32 files, 132 tests.
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
-- `npx next build --webpack`: passed; `/payment/cancelled` remained dynamic and compiled successfully.
+- `npx next build --webpack`: passed.
 - `git diff --check`: passed.
 
 ## Handoff notes
 
-- Only `app/payment/cancelled/page.tsx` and this web lane’s status/log files are part of this task.
-- Concurrent API-lane changes in `app/api/stripe/checkout/**` and `docs/ARCHITECTURE.md` were left untouched and unstaged.
-- An unrelated untracked `public/clientflow-logo-mark.png` remains untouched.
+- This is a safe deactivation, not a destructive database delete; the current API contract explicitly says packages are never deleted.
+- Concurrent mobile-lane changes in `mobile/**` and `status/CURRENT-mobile.md` were left untouched and unstaged.
+- An unrelated untracked `public/logo.png` remains untouched.
 
 ## Hard rule
 

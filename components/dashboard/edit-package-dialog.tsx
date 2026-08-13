@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -16,16 +16,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import type { ManagedPackage } from "@/lib/types";
 
 export function EditPackageDialog({
   pkg,
   onUpdated,
+  onDeactivated,
 }: {
   pkg: ManagedPackage;
   onUpdated: (pkg: ManagedPackage) => void;
+  onDeactivated: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,8 +73,38 @@ export function EditPackageDialog({
     }
   }
 
+  async function handleDeactivate() {
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/packages/${encodeURIComponent(pkg.id)}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: false }),
+      });
+      const result = (await response.json().catch(() => null)) as ManagedPackage | { error?: string } | null;
+      if (!response.ok) {
+        throw new Error(
+          result && "error" in result && typeof result.error === "string"
+            ? result.error
+            : "We couldn't delete this package.",
+        );
+      }
+      if (!result || !("id" in result)) throw new Error("The server returned an unexpected package response.");
+      onDeactivated();
+      setOpen(false);
+      toast.success(`${pkg.name} deleted`, {
+        description: "It is no longer available for new requests. Existing projects and invoices are unchanged.",
+      });
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "We couldn't delete this package.");
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" size="sm" />}>
         <Pencil />
         Edit
@@ -130,10 +164,29 @@ export function EditPackageDialog({
             </p>
           )}
           <DialogFooter>
+            <Button
+              type="button"
+              variant="destructive"
+              className="mr-auto"
+              onClick={() => setConfirmingDeactivation(true)}
+              disabled={pending}
+            >
+              <Trash2 />
+              Delete package
+            </Button>
             <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmingDeactivation}
+        onOpenChange={setConfirmingDeactivation}
+        title={`Delete ${pkg.name}?`}
+        description="This removes the package from active pricing and new requests. Existing projects and invoices will keep their historical package details."
+        confirmLabel="Delete package"
+        onConfirm={handleDeactivate}
+      />
+    </>
   );
 }

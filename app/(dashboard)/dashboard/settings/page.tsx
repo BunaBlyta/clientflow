@@ -125,6 +125,9 @@ function PackagesSection() {
                   ),
                 )
               }
+              onDeactivated={() =>
+                setPackages((current) => current.filter((currentPackage) => currentPackage.id !== pkg.id))
+              }
             />
           </div>
         ))}
