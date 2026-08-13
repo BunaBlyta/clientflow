@@ -17,6 +17,7 @@ import { fetchJson } from "@/lib/fetch-json";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
+import { getNotificationDestination } from "@/lib/notification-destination";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { Notification } from "@/lib/types";
 
@@ -35,6 +36,8 @@ export function Topbar() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [markingNotificationId, setMarkingNotificationId] = useState<string | null>(null);
+  const [notificationActionError, setNotificationActionError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   async function handleLogout() {
@@ -83,6 +86,45 @@ export function Topbar() {
   }, [loadNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markNotificationRead = useCallback(async (notificationId: string) => {
+    setMarkingNotificationId(notificationId);
+    setNotificationActionError(null);
+
+    try {
+      const updatedNotification = await fetchJson<Notification>(
+        `/api/notifications/${encodeURIComponent(notificationId)}`,
+        "We couldn't mark this notification as read.",
+        undefined,
+        { method: "PATCH" },
+      );
+      setNotifications((currentNotifications) =>
+        currentNotifications.map((notification) =>
+          notification.id === updatedNotification.id ? updatedNotification : notification,
+        ),
+      );
+      return true;
+    } catch (caughtError) {
+      setNotificationActionError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "We couldn't mark this notification as read.",
+      );
+      return false;
+    } finally {
+      setMarkingNotificationId(null);
+    }
+  }, []);
+
+  async function handleNotificationClick(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    notification: Notification,
+  ) {
+    if (notification.read) return;
+    event.preventDefault();
+    if (!(await markNotificationRead(notification.id))) return;
+    router.push(getNotificationDestination(notification));
+  }
 
   const loadCurrentUser = useCallback(async (signal?: AbortSignal) => {
     setIsLoadingUser(true);
@@ -143,10 +185,15 @@ export function Topbar() {
           <div className="flex items-center justify-between px-3 py-2.5">
             <p className="text-[13px] font-medium text-foreground">Notifications</p>
             {unreadCount > 0 && (
-              <span className="text-[11px] text-muted-foreground">Read state is not wired up yet.</span>
+              <span className="text-[11px] text-muted-foreground">Unread notifications</span>
             )}
           </div>
           <DropdownMenuSeparator className="m-0" />
+          {notificationActionError && (
+            <p role="alert" className="border-b border-status-danger/30 bg-status-danger/5 px-3 py-2 text-[12px] text-status-danger">
+              {notificationActionError}
+            </p>
+          )}
           <div className="max-h-80 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center gap-2 px-3 py-6 text-[13px] text-muted-foreground">
@@ -165,10 +212,13 @@ export function Topbar() {
                 return (
                   <Link
                     key={n.id}
-                    href={n.link ?? "/dashboard/notifications"}
+                    href={getNotificationDestination(n)}
+                    onClick={(event) => void handleNotificationClick(event, n)}
+                    aria-disabled={markingNotificationId === n.id}
                     className={cn(
                       "flex items-start gap-2.5 border-b border-border px-3 py-2.5 last:border-0 hover:bg-muted",
-                      !n.read && "bg-brand-accent/5"
+                      !n.read && "bg-brand-accent/5",
+                      markingNotificationId === n.id && "pointer-events-none opacity-60",
                     )}
                   >
                     <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />

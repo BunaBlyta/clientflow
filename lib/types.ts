@@ -180,5 +180,8 @@ export interface Notification {
   body: string;
   read: boolean;
   createdAt: string;
+  projectId?: string | null;
+  invoiceId?: string | null;
+  requestId?: string | null;
   link?: string;
 }

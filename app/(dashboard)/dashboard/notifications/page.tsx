@@ -7,6 +7,7 @@ import { LoaderCircle, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
+import { getNotificationDestination } from "@/lib/notification-destination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/types";
@@ -187,7 +188,7 @@ export default function NotificationsPage() {
             markingId={markingId}
             onRead={async (notification) => {
               if (!notification.read && !(await markNotificationRead(notification.id))) return false;
-              router.push(notification.link ?? "/dashboard/notifications");
+              router.push(getNotificationDestination(notification));
               return true;
             }}
           />
@@ -199,7 +200,7 @@ export default function NotificationsPage() {
             markingId={markingId}
             onRead={async (notification) => {
               if (!(await markNotificationRead(notification.id))) return false;
-              router.push(notification.link ?? "/dashboard/notifications");
+              router.push(getNotificationDestination(notification));
               return true;
             }}
           />
@@ -235,7 +236,7 @@ function NotificationList({
         return (
           <Link
             key={n.id}
-            href={n.link ?? "/dashboard/notifications"}
+            href={getNotificationDestination(n)}
             onClick={(event) => {
               if (n.read) return;
               event.preventDefault();
