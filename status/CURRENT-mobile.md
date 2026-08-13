@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 16:50 by Codex — nested project UI cleanup
+Last updated: 2026-08-13 16:54 by Codex — premium project status tracker
 
 ## Completed
 
@@ -20,6 +20,11 @@ Last updated: 2026-08-13 16:50 by Codex — nested project UI cleanup
 - Reworked note rows into clean authored sections with intentional separators
   and spacing. Invoice rows retain clear dividers and now use a quieter text
   hierarchy for amount, metadata, and status.
+- Rebuilt the project stage tracker as a premium theme-aware status surface:
+  active stages use an SVG gradient fill, the current stage has a restrained
+  accent glow, future stages have clearer contrast, and the tracker has clean
+  elevation and spacing. Cancelled/on-hold states use a narrow semantic accent
+  instead of a heavy bordered box.
 
 - Added a persisted mobile appearance preference with System, Light, and Dark
   choices. The initial appearance follows the device/browser system theme; an
@@ -129,6 +134,8 @@ Last updated: 2026-08-13 16:50 by Codex — nested project UI cleanup
   typecheck, lint, and `git diff --check` passed.
 - Nested project UI cleanup: mobile TypeScript, Expo web export, root tests,
   typecheck, lint, and `git diff --check` passed.
+- Premium project status tracker: mobile TypeScript, Expo web export, root
+  tests, typecheck, lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
