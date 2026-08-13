@@ -200,14 +200,18 @@ When `returnTo` is omitted, the Stripe success URL remains the web flow:
 `"mobile"`, the server builds the fixed success URL with the invoice and
 project IDs:
 `/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=...&invoice_id=...`.
+The mobile cancel URL is likewise fixed to
+`/payment/cancelled?return_to=mobile&project_id=...&invoice_id=...`; the normal
+web cancel URL remains `/payment/cancelled`.
 Other `returnTo` values are rejected with 400; callers never supply an
 arbitrary redirect URL.
 
 If an invoice already has a Stripe Checkout Session, web requests may reuse it
 as before. Mobile requests reuse it only when Stripe's retrieved `success_url`
 is the Clientflow payment-success path with `return_to=mobile` and matching
-project and invoice IDs. An old web-only session, or a session without a
-verifiable mobile success URL, gets a new mobile Checkout Session instead.
+project and invoice IDs, and its `cancel_url` is the matching Clientflow mobile
+cancel path with the same IDs. An old web-only session, or a session without
+both verifiable mobile URLs, gets a new mobile Checkout Session instead.
 
 ## Package management contracts
 

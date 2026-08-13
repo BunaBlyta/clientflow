@@ -9,6 +9,7 @@ type CheckoutReturnTo = 'mobile';
 type StripeCheckoutSession = {
   url?: string;
   success_url?: string | null;
+  cancel_url?: string | null;
 };
 
 function isMobileReturnTo(value: unknown): value is CheckoutReturnTo {
@@ -26,6 +27,12 @@ function mobileSuccessUrl(
   return `${url.origin}${url.pathname}?session_id=${sessionPlaceholder}&return_to=mobile&project_id=${encodeURIComponent(projectId)}&invoice_id=${encodeURIComponent(invoiceId)}`;
 }
 
+function mobileCancelUrl(appUrl: string, projectId: string, invoiceId: string) {
+  const url = new URL('/payment/cancelled', appUrl);
+
+  return `${url.origin}${url.pathname}?return_to=mobile&project_id=${encodeURIComponent(projectId)}&invoice_id=${encodeURIComponent(invoiceId)}`;
+}
+
 function isMatchingMobileSuccessUrl(
   successUrl: string | null | undefined,
   appUrl: string,
@@ -40,6 +47,29 @@ function isMatchingMobileSuccessUrl(
     return (
       url.origin === expectedOrigin &&
       url.pathname === '/payment/success' &&
+      url.searchParams.get('return_to') === 'mobile' &&
+      url.searchParams.get('project_id') === projectId &&
+      url.searchParams.get('invoice_id') === invoiceId
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isMatchingMobileCancelUrl(
+  cancelUrl: string | null | undefined,
+  appUrl: string,
+  projectId: string,
+  invoiceId: string,
+) {
+  if (!cancelUrl) return false;
+
+  try {
+    const url = new URL(cancelUrl);
+    const expectedOrigin = new URL(appUrl).origin;
+    return (
+      url.origin === expectedOrigin &&
+      url.pathname === '/payment/cancelled' &&
       url.searchParams.get('return_to') === 'mobile' &&
       url.searchParams.get('project_id') === projectId &&
       url.searchParams.get('invoice_id') === invoiceId
@@ -104,6 +134,9 @@ export async function POST(request: NextRequest) {
   const successUrl = returnTo === 'mobile'
     ? mobileSuccessUrl(appUrl, '{CHECKOUT_SESSION_ID}', invoice.projectId, invoice.id)
     : `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = returnTo === 'mobile'
+    ? mobileCancelUrl(appUrl, invoice.projectId, invoice.id)
+    : `${appUrl}/payment/cancelled`;
 
   if (invoice.stripeCheckoutSessionId) {
     const sessionResponse = await fetch(
@@ -112,11 +145,19 @@ export async function POST(request: NextRequest) {
     );
     if (sessionResponse.ok) {
       const session = (await sessionResponse.json()) as StripeCheckoutSession;
-      const canReuse = returnTo !== 'mobile' || isMatchingMobileSuccessUrl(
-        session.success_url,
-        appUrl,
-        invoice.projectId,
-        invoice.id,
+      const canReuse = returnTo !== 'mobile' || (
+        isMatchingMobileSuccessUrl(
+          session.success_url,
+          appUrl,
+          invoice.projectId,
+          invoice.id,
+        ) &&
+        isMatchingMobileCancelUrl(
+          session.cancel_url,
+          appUrl,
+          invoice.projectId,
+          invoice.id,
+        )
       );
       if (session.url && canReuse) {
         return NextResponse.json({
@@ -130,7 +171,7 @@ export async function POST(request: NextRequest) {
   const params = new URLSearchParams({
     mode: 'payment',
     success_url: successUrl,
-    cancel_url: `${appUrl}/payment/cancelled`,
+    cancel_url: cancelUrl,
     'line_items[0][price_data][currency]': invoice.currency,
     'line_items[0][price_data][product_data][name]': invoice.description ?? 'Clientflow invoice',
     'line_items[0][price_data][unit_amount]': String(Math.round(Number(invoice.amount) * 100)),

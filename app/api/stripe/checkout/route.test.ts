@@ -124,6 +124,9 @@ describe('POST /api/stripe/checkout', () => {
     expect(requestBody().get('success_url')).toBe(
       'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
     );
+    expect(requestBody().get('cancel_url')).toBe(
+      'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+    );
     expect(await response.json()).toEqual({
       checkoutSessionId: 'cs-new',
       checkoutUrl: 'https://checkout.stripe.test/cs-new',
@@ -173,6 +176,8 @@ describe('POST /api/stripe/checkout', () => {
       url: 'https://checkout.stripe.test/cs-existing-mobile',
       success_url:
         'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+      cancel_url:
+        'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
     }));
 
     const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
@@ -195,6 +200,7 @@ describe('POST /api/stripe/checkout', () => {
       .mockResolvedValueOnce(stripeResponse({
         url: 'https://checkout.stripe.test/cs-existing-web',
         success_url: 'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: 'https://app.clientflow.test/payment/cancelled',
       }))
       .mockResolvedValueOnce(createSessionResponse());
 
@@ -209,10 +215,40 @@ describe('POST /api/stripe/checkout', () => {
     expect(requestBody(1).get('success_url')).toBe(
       'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
     );
+    expect(requestBody(1).get('cancel_url')).toBe(
+      'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+    );
     expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
       where: { id: 'inv-1' },
       data: { stripeCheckoutSessionId: 'cs-new', status: 'PAYMENT_PENDING' },
     });
+  });
+
+  it('replaces a mobile session when its cancel URL is still web-only', async () => {
+    mocks.invoiceFindFirst.mockResolvedValue({
+      ...invoice,
+      stripeCheckoutSessionId: 'cs-existing-mobile-with-web-cancel',
+    });
+    mocks.fetch
+      .mockResolvedValueOnce(stripeResponse({
+        url: 'https://checkout.stripe.test/cs-existing-mobile-with-web-cancel',
+        success_url:
+          'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+        cancel_url: 'https://app.clientflow.test/payment/cancelled',
+      }))
+      .mockResolvedValueOnce(createSessionResponse());
+
+    const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      checkoutSessionId: 'cs-new',
+      checkoutUrl: 'https://checkout.stripe.test/cs-new',
+    });
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    expect(requestBody(1).get('cancel_url')).toBe(
+      'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+    );
   });
 
   it.each([
