@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageSelect } from "@/components/language-select";
 import { useLocale } from "@/lib/i18n";
 
 const links = [
@@ -20,23 +18,21 @@ export function Navbar() {
         <Link href="/" className="text-[15px] font-semibold tracking-tight">
           Clientflow
         </Link>
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-10 md:flex">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-normal text-muted-foreground transition-colors hover:text-foreground"
+              className="text-[15px] font-normal text-muted-foreground transition-colors hover:text-foreground"
             >
               {t(link.key)}
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <LanguageSelect />
-          <ThemeToggle />
+        <div className="flex items-center gap-5 sm:gap-6">
           <Link
             href="/login"
-            className="hidden text-sm font-normal text-muted-foreground hover:text-foreground sm:inline"
+            className="hidden text-[15px] font-normal text-muted-foreground hover:text-foreground sm:inline"
           >
             {t("nav.staffLogin")}
           </Link>

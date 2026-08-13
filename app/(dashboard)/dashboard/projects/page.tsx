@@ -60,17 +60,18 @@ function ProjectsPageInner() {
           router.replace(value === "projects" ? "/dashboard/projects" : `/dashboard/projects?tab=${value}`);
         }}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-start gap-2">
           <TabsList>
-          <TabsTrigger value="projects">{t("projects.tabProjects")}</TabsTrigger>
-          <TabsTrigger value="requests">{t("projects.tabRequests")}</TabsTrigger>
-          <TabsTrigger value="custom">{t("projects.tabCustom")}</TabsTrigger>
+            <TabsTrigger value="projects">{t("projects.tabProjects")}</TabsTrigger>
+            <TabsTrigger value="requests">{t("projects.tabRequests")}</TabsTrigger>
+            <TabsTrigger value="custom">{t("projects.tabCustom")}</TabsTrigger>
           </TabsList>
           {tab === "projects" && (
             <TableToolbar
               search={projectSearch}
               onSearchChange={setProjectSearch}
               placeholder={t("projects.search")}
+              className="flex-nowrap gap-2"
             >
               <Select
                 value={projectStatusFilter}

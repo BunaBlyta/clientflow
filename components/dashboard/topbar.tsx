@@ -20,8 +20,6 @@ import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { getNotificationDestination } from "@/lib/notification-destination";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageSelect } from "@/components/language-select";
 import { useLocale } from "@/lib/i18n";
 import type { Notification } from "@/lib/types";
 
@@ -199,7 +197,7 @@ export function Topbar() {
               {notificationActionError}
             </p>
           )}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="scrollbar-none max-h-80 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center gap-2 px-3 py-6 text-[13px] text-muted-foreground">
                 <LoaderCircle className="size-3.5 animate-spin text-brand-accent" />
@@ -289,10 +287,6 @@ export function Topbar() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <div className="absolute left-6 flex items-center gap-2">
-        <LanguageSelect />
-        <ThemeToggle />
-      </div>
     </header>
   );
 }

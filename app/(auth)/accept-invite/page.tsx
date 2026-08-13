@@ -4,8 +4,6 @@ import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 import { AcceptInviteForm } from "@/components/auth/accept-invite-form";
 import { LocaleText } from "@/components/locale-text";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageSelect } from "@/components/language-select";
 
 export const metadata: Metadata = {
   title: "Accept invitation | Clientflow",
@@ -57,7 +55,6 @@ export default function AcceptInvitePage() {
           <Suspense fallback={<div className="h-56" />}>
             <AcceptInviteForm />
           </Suspense>
-          <div className="mt-6 flex items-center justify-end gap-2"><LanguageSelect /><ThemeToggle /></div>
         </div>
       </section>
     </main>

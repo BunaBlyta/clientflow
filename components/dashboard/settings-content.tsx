@@ -15,22 +15,51 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { LanguageSelect } from "@/components/language-select";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SettingsContent() {
   const { t } = useLocale();
   return (
     <Tabs defaultValue="packages">
-      <TabsList>
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="packages">{t("nav.packages")}</TabsTrigger>
         <TabsTrigger value="team">{t("settings.team")}</TabsTrigger>
+        <TabsTrigger value="display">{t("settings.display")}</TabsTrigger>
       </TabsList>
-      <TabsContent value="packages" className="mt-4">
+      <TabsContent value="packages" keepMounted className="mt-4">
         <PackagesSection />
       </TabsContent>
-      <TabsContent value="team" className="mt-4">
+      <TabsContent value="team" keepMounted className="mt-4">
         <TeamSection />
       </TabsContent>
+      <TabsContent value="display" keepMounted className="mt-4">
+        <DisplaySection />
+      </TabsContent>
     </Tabs>
+  );
+}
+
+function DisplaySection() {
+  const { t } = useLocale();
+
+  return (
+    <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
+      <div className="flex items-center justify-between gap-4 p-4">
+        <div>
+          <p className="text-[14px] font-medium">{t("settings.theme")}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.themeIntro")}</p>
+        </div>
+        <ThemeToggle />
+      </div>
+      <div className="flex items-center justify-between gap-4 p-4">
+        <div>
+          <p className="text-[14px] font-medium">{t("settings.language")}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.languageIntro")}</p>
+        </div>
+        <LanguageSelect />
+      </div>
+    </div>
   );
 }
 
@@ -257,10 +286,18 @@ function TeamSection() {
           <h2 className="text-[15px] font-medium">{t("settings.inviteTitle")}</h2>
           <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.inviteIntro")}</p>
         </div>
-        <form onSubmit={handleInvite} className="flex max-w-xl flex-wrap items-end gap-2">
-          <div className="flex min-w-40 flex-1 flex-col gap-1.5"><Label htmlFor="invite-name">{t("settings.name")}</Label><Input id="invite-name" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required /></div>
-          <div className="flex flex-1 flex-col gap-1.5"><Label htmlFor="invite-email">{t("auth.email")}</Label><Input id="invite-email" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required /></div>
-          <Button type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
+        <form onSubmit={handleInvite} className="flex max-w-xl flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="invite-name">{t("settings.name")}</Label>
+            <Input id="invite-name" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="invite-email">{t("auth.email")}</Label>
+            <Input id="invite-email" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          </div>
+          <div>
+            <Button type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
+          </div>
         </form>
       </div>
     </div>

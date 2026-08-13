@@ -1,14 +1,16 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 16:42 by Codex — theme and web localization
+Last updated: 2026-08-13 16:49 by Codex — dashboard layout and settings refinements
 
 ## What changed
 
-- Added a persisted light/dark theme toggle using `next-themes`. The default follows the operating system, and the provider applies the theme before the page paints to prevent a flash of the wrong theme.
-- Kept theme colors token-driven through the existing CSS variables and added dark-mode values for the brand accents. Marketing, auth, dashboard, dialogs, dropdowns, tables, charts, notifications, and payment-result pages use the shared tokens.
-- Added a shared locale provider and translation dictionary for English, German, and Albanian. Language selection is available from the marketing navbar, auth pages, and dashboard topbar, persists locally, updates the document language, and falls back to English when a key is missing.
-- Localized shared navigation, dashboard headings, tables, status labels, notification controls, auth forms, marketing content/forms, settings/package/team dialogs, invoice/project actions, and payment-result UI.
-- API responses and user-generated values remain unchanged: project names, invoice labels/descriptions, notification titles/messages, prospect/client content, and server error messages are not translated or altered.
+- Kept the Projects tabs, search field, and status filter together in one toolbar row on wider screens, with responsive wrapping when the available width is too narrow.
+- Made the staff sidebar navigation labels larger with more vertical spacing. Marketing navigation labels and spacing were also opened up.
+- Moved the language selector and theme toggle into a new equal-width Display tab in the Settings modal. The settings panels stay mounted while tabs change, so package and team sections do not remount or refetch on every tab selection.
+- Put teammate name, teammate email, and Send invite on separate rows in the team settings form.
+- Kept the notifications dropdown scrollable while hiding its scrollbar chrome.
+- Removed duplicate language/theme controls from the marketing navbar, auth pages, and dashboard topbar so dashboard display preferences have one clear home.
+- Added German and Albanian translations for the new Display settings labels and updated the settings introduction.
 
 ## Verification
 
@@ -18,12 +20,13 @@ Last updated: 2026-08-13 16:42 by Codex — theme and web localization
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
 
-The build still reports the repository’s existing middleware-to-proxy deprecation warning. The unrelated untracked `public/logo.png` remains untouched.
+The webpack build still reports the repository’s existing middleware-to-proxy deprecation warning. The unrelated untracked `public/logo.png` remains untouched.
 
 ## Handoff notes
 
-- No API, Prisma, mobile, or architecture files were changed.
-- Locale keys are centralized in `lib/i18n.tsx`; adding another language only requires adding a message map and the locale selector entry.
+- No API, Prisma, mobile, architecture, or other lane files were changed.
+- The notification scrollbar uses a shared CSS utility that preserves scrolling and hides the visible scrollbar.
+- The settings Display tab uses the existing persisted theme and locale providers, so no new storage or API behavior was introduced.
 
 ## Hard rule
 

@@ -25,7 +25,7 @@ export function Sidebar() {
           Clientflow
         </Link>
       </div>
-      <nav className="flex flex-col gap-1 px-4">
+      <nav className="flex flex-col gap-3 px-4">
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -35,7 +35,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2.5 text-[14px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                "flex items-center gap-3 rounded-md px-3.5 py-3 text-[15px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
                 isActive && "bg-sidebar-accent font-medium text-foreground"
               )}
             >
