@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 by Codex — live topbar identity
+Last updated: 2026-08-13 08:45 by Codex — custom package workflow
 
 ## What changed
 
@@ -25,11 +25,14 @@ Last updated: 2026-08-13 by Codex — live topbar identity
 - The topbar identity now loads from `GET /api/auth/me` with an account loading
   state, an inline retry path on failure, and the same notification and logout
   behavior as before.
-- The custom web app contact section is intentionally disabled per the deferred
-  SPEC decision. It keeps the existing copy and links prospects to
-  `buna@tetbit.studio` instead of accepting a submission that the app cannot
-  deliver to staff. The dead frontend `ContactLead` type, fixture data, and
-  Zustand action were removed; the API lane’s Prisma schema was not changed.
+- The public custom web app contact section now submits to
+  `POST /api/contact-leads`, with required name, email, and brief fields plus
+  visible pending, error, and success states.
+- The dashboard Projects page now has a Custom inquiries tab. Staff can search
+  inquiries and convert one into a client/project/invoice through the API,
+  choosing whether the custom invoice is sent immediately or kept as a draft.
+  The UI reports invitation-email failures separately from successful record
+  creation.
 - Analytics revenue and turnaround calculations now receive the live package
   records from `GET /api/packages`; the overview and analytics pages both load
   those records before calculating package charts. This fixes the Landing Page
@@ -99,9 +102,10 @@ Last updated: 2026-08-13 by Codex — live topbar identity
 - The logout request depends on the API lane’s shipped `POST /api/auth/logout`
   route; the UI also navigates away if the request returns an error or cannot
   complete.
-- The custom package flow remains deferred: staff manually creates the client,
-  project, and invoice after an outside conversation. Do not restore an online
-  contact submission until a real delivery path and staff UI exist.
+- The custom package flow now has a real public intake and staff conversion
+  path. The staff conversion dialog supplies the agreed project and invoice
+  details; the API remains the source of truth for record creation and client
+  invitation delivery.
 - Package analytics must continue to consume `ManagedPackage` records from the
   API rather than the public marketing fixture package list.
 - The analytics insight route uses Groq’s OpenAI-compatible endpoint with
@@ -112,6 +116,10 @@ Last updated: 2026-08-13 by Codex — live topbar identity
   invite body is `{ name, email }`, and a successful response is `{ user, emailSent }`.
   The web form refreshes the list after the write so the server remains the source
   of truth even if email delivery fails.
+- Latest custom-package workflow verification: `npm run test` passed all 101
+  tests, `npm run typecheck` passed, `npm run lint` passed, and
+  `npx next build --webpack` passed with the contact-lead routes and dashboard
+  Projects page included.
 
 ## Hard rule
 

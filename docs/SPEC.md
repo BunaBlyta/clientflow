@@ -12,7 +12,7 @@ App: Clientflow (working name) — a client and project management CRM for a sma
 | 2 | Staff auth | Register (bootstraps the first staff account), invite-a-teammate flow from Settings, login, forgot-password, email verification via a code (sent through Resend). Works end to end, including the error states (wrong code, expired code, already-registered email). | **partially cut 2026-08-13 — see "Deferred and cut" below.** Login and invite-a-teammate work. Register and forgot-password are still cut. |
 | 3 | Client auth (mobile) | The same underlying auth system, used by clients: account is created/activated on request-approval or by staff for custom work, client sets a password via an emailed verification code, logs in, forgot-password works. Never a self-registration entry point for clients. | not started |
 | 4 | Project request → approval flow | Prospect submits a request for a standard package, lands in a `Pending` queue. Staff reviews and approves or rejects from the dashboard. Approval creates/activates the `Client` and sends the app-invitation email. Rejection notifies the prospect and creates nothing further. | not started |
-| 5 | Custom package flow | Prospect submits the contact form. Staff manually creates the `Client`, `Project`, and a custom `Invoice` after their own conversation with the prospect (outside the app). | **deferred 2026-08-12 — see "Deferred and cut" below.** The contact form is disabled with a visible note rather than silently discarding a submission. |
+| 5 | Custom package flow | Prospect submits the contact form. Staff reviews the inquiry, then creates the `Client`, `Project`, and a custom `Invoice` from the dashboard after their conversation with the prospect. The client receives the existing verification-code invitation flow. | **built 2026-08-13** |
 | 6 | Staff dashboard — Projects, Clients, Invoices tables | Three tables with search and filtering, status badges, an overdue-payment indicator on invoices. Density and composition follow the design direction (hairline row separators, no default pill-badge-on-everything). | not started |
 | 7 | Table actions | Approve/reject a request, change a project's status (any direction, staff-driven, except the payment-gated Approved→Discovery transition), create/send an invoice, void an invoice, resend a client's app invitation. Confirmation dialog before anything destructive (reject, void, cancel). **An invoice can never be marked paid manually** — `prisma/invoice-state.ts` makes `PAID` reachable only from `PAYMENT_PENDING`, which the Stripe webhook owns. That is a deliberate integrity rule. | send/void invoice + project status done 11 Aug; request approve/reject and resend invitation still to do |
 | 8 | Project detail page | One page, rendered differently by role. Staff view: full control — status, invoice list and creation, the shared note feed, client info. Client view (mobile): stage tracker, shared notes, invoice list, Pay button. Every status change writes a system-generated entry to the shared note feed (this is the audit trail). | not started |
@@ -26,9 +26,9 @@ App: Clientflow (working name) — a client and project management CRM for a sma
 
 ## Deferred and cut (decided 2026-08-12)
 
-Two rows in the table above are not being built. Both are deliberate calls made
+One row in the table above is not being built. This is a deliberate call made
 with two days left, written down here so they read as decisions rather than as
-things that were missed.
+something that was missed.
 
 **#2 Staff auth — register and forgot-password: cut; invite-a-teammate is built.** The
 mentor's requirement was auth with email verification codes, and the client
@@ -39,14 +39,6 @@ in that chain is mocked. Staff accounts come from the seed script, and Settings
 can now invite another staff member with the same verification-code mechanism.
 Register and forgot-password remain cut. Login, invitation email delivery, and
 route protection for staff are done and stay.
-
-**#5 Custom package flow: deferred.** It needs `POST /api/clients` and
-`POST /api/projects`, neither of which exists, plus manual creation UI for both.
-The contact form is disabled with a short line saying it is not wired up yet — the
-same treatment as the project note composer — so nothing silently discards what a
-prospect types. The custom-invoice half of the flow is still real: `POST /api/invoices`
-supports a custom invoice raised against an existing project, which is what
-SPEC #7 needs anyway.
 
 **#13 / #14 Mobile push notifications: cut. In-app notifications stay.** Expo push
 needs a physical device, push credentials and an EAS build, none of which have ever
@@ -92,7 +84,7 @@ These came up during planning as the failure modes most likely to look fine in a
 
 **Flow A — standard package (Landing Page or Full Website).** Visitor browses the landing page, picks a package, submits a short project-request form. They get an account in `Pending` state — not yet active. Staff sees the request in the dashboard, reviews it, and approves or rejects it. On approval, the client's account activates and an app-invitation email goes out. Client downloads the mobile app, verifies their email with the code, logs in, sees the approved request, and pays the deposit through Stripe. Once the webhook confirms payment, the project moves to `Discovery` and appears in the staff Projects table.
 
-**Flow B — custom package (Web App Build).** Visitor submits the contact form instead. Staff has an actual conversation with them outside the app, then manually creates the `Client`, the `Project`, and a custom `Invoice` directly in the dashboard. The client is invited to the mobile app the same way as Flow A — verification code, login, pays the deposit there.
+**Flow B — custom package (Web App Build).** Visitor submits the contact form instead. The inquiry appears in the staff dashboard's Custom inquiries tab, where staff can capture the agreed project and invoice details. Conversion creates or reuses the client account, creates a `PENDING` project without a package, and creates a one-off custom invoice as `DRAFT` or `SENT`. New or inactive clients receive the same verification-code invitation used by Flow A; the client then logs in, reviews the invoice, and pays it through the app.
 
 **Flow C — running a project day to day.** Staff opens a project from the table and advances its status through the stages (`Discovery → Design → Development → Review → Launched`) as work actually happens — every transition after the initial payment-gated one is a manual staff action, and can move in either direction. Staff can post notes the client sees. If the client wants a mid-project change, they post a note from the mobile app; staff sees it and, if it costs more, raises an extra invoice through the same invoice flow — no separate approval system. Near completion, staff raises the final invoice; the client pays from the app; staff marks the project `Launched`. Every status change along the way writes a system note to the shared feed automatically.
 

@@ -106,6 +106,15 @@ export interface ProjectRequest {
   reviewedAt?: string;
 }
 
+export interface CustomLead {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  createdAt: string;
+  clientId?: string;
+}
+
 export interface ProjectPackage {
   id: string;
   name: string;

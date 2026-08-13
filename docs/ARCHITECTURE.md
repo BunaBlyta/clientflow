@@ -34,6 +34,7 @@ this low-volume, read-only summary.
 | Codex CLI owns the backend (schema, API, Stripe/webhooks, auth logic, seed script); Claude Code owns all frontend on both platforms (web + mobile), parallelized via subagents | Matches the user's stated tool preference and gives each agent clean, non-overlapping file ownership — Codex touches `prisma/` and API routes only, Claude Code touches frontend directories only. | 2026-08-10 |
 | Stateless signed auth token, returned in JSON and set as an HTTP-only cookie | Web can use the secure cookie while Expo can store the same token and send it as `Authorization: Bearer <token>`, without adding a session table or making mobile cookie handling a dependency. | 2026-08-11 |
 | API dates are serialized as ISO 8601 strings and project responses keep top-level IDs while adding only the package summary needed by consuming screens | Both frontend type files expect string dates and project IDs; `packageId` remains top-level for compatibility, while the related package's name, price, and currency avoid a second lookup on project detail screens. | 2026-08-11 |
+| Custom package inquiries use the existing `ContactLead` record and a staff conversion transaction | A custom prospect needs a lightweight public intake, but the resulting client, package-less project, and one-off invoice must be created together. Keeping the existing schema avoids a migration while the staff list derives converted state from the lead email matching a client. | 2026-08-13 |
 | Design language pulls specifically from Linear, Attio, and Stripe | The user responded strongly to all three, and they share a describable philosophy (restraint, typography-led hierarchy, status communicated through layout rather than pill badges, dense-but-readable tables) that directly serves "premium, not a generic AI-template look" — see AGENTS.md section 5 for the full translation into typography/color/spacing rules. | 2026-08-10 |
 
 Keep this log even for decisions that seem obvious at the time — it's what stops an agent (or you, in three weeks) from "fixing" something that was deliberate.
@@ -327,6 +328,28 @@ the generic `Invalid or expired verification code` error.
 `POST /api/auth/verification/send` still returns `{ "sent": true }` for unknown
 emails. That generic response is intentional and remains the account-
 enumeration protection for the endpoint.
+
+`POST /api/contact-leads` is public and accepts `{ "name": string, "email":
+string, "message": string }`. It creates a `ContactLead` and notifies every
+staff user with a `REQUEST_SUBMITTED` in-app notification. It returns 201 with
+the lead's `id`, name, email, message, and ISO `createdAt`; invalid JSON, names
+over 120 characters, messages over 2,000 characters, and invalid emails return
+400.
+
+`GET /api/contact-leads` is staff-only and returns the leads newest first. When a
+lead email matches a `Client`, the response includes that client's `clientId`
+so the dashboard can show it as converted. The dashboard's conversion action
+calls `POST /api/contact-leads/:id/convert` with `{ "projectName": string,
+"companyName"?: string, "description"?: string, "amount": number | string,
+"currency": string, "invoiceDescription"?: string, "dueDate"?: string,
+"sendInvoice"?: boolean }`. The route runs the client lookup/creation,
+package-less `PENDING` project, and `CUSTOM` invoice in one transaction. The
+invoice is `DRAFT` unless `sendInvoice` is true, in which case it follows the
+normal `DRAFT` → `SENT` transition and creates an `INVOICE_ISSUED`
+notification. New or inactive clients receive a verification-code invitation
+after the transaction commits; an email failure does not roll back the
+created records and is returned as `emailSent: false`. Staff-email conflicts
+and concurrent client creation races return 409.
 
 ## Notification side effects
 

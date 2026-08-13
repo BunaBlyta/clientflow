@@ -10,6 +10,7 @@ import { REQUEST_STATUS_LABEL } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { CustomLeadsTable } from "@/components/dashboard/custom-leads-table";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -51,12 +52,16 @@ function ProjectsPageInner() {
         <TabsList>
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>
+          <TabsTrigger value="custom">Custom inquiries</TabsTrigger>
         </TabsList>
         <TabsContent value="projects" className="mt-4">
           <ProjectsTable />
         </TabsContent>
         <TabsContent value="requests" className="mt-4">
           <RequestsTable />
+        </TabsContent>
+        <TabsContent value="custom" className="mt-4">
+          <CustomLeadsTable />
         </TabsContent>
       </Tabs>
     </div>
