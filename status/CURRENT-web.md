@@ -1,32 +1,29 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 15:28 by Codex — clickable notification navigation
+Last updated: 2026-08-13 15:35 by Codex — notification loading diagnosis
 
 ## What changed
 
-- Added `getNotificationDestination` in `lib/notification-destination.ts` as the single notification destination mapping:
-  - `invoiceId` → `/dashboard/invoices`
-  - `requestId` → `/dashboard/requests/:requestId`
-  - `projectId` → `/dashboard/projects/:projectId`
-  - no target → `/dashboard/notifications`
-- Added nullable optional `projectId`, `invoiceId`, and `requestId` fields to the web `Notification` type. Destinations use only these explicit IDs, with encoded path segments; legacy notification links and notification text/types are not used for routing.
-- Applied the helper to the full Notifications page and the staff topbar dropdown.
-- Unread notifications on both surfaces are marked read through `PATCH /api/notifications/:id` before navigation. Existing loading/error states remain, and the clicked dropdown item is disabled while its read update is pending.
-- Added focused destination-helper tests.
+- Reproduced the notification loading path against the running Next server and inspected both web consumers: `/dashboard/notifications` and the topbar dropdown.
+- Both surfaces use `fetchJson<Notification[]>("/api/notifications", ...)`, retain their loading/error/retry states, and do not render notification links until the response resolves. The target-ID destination helper is not reached when the API request fails.
+- The live server log shows the authenticated notification request fails inside Prisma with:
+  `PrismaClientValidationError: Unknown field projectId for select statement on model Notification. Available options are marked with ?.`
+  The same mismatch applies to `invoiceId` and `requestId`.
+- Direct unauthenticated verification of `GET /api/notifications` returned HTTP 401 with `{"error":"Authentication required"}`, confirming auth handling is active. Authenticated requests reached the Prisma validation error in the live server log.
+- No web code change was appropriate: the failure is the API agent’s in-progress notification target schema/client mismatch, not an invalid web link, response rendering issue, or fetchJson state transition.
 
 ## Verification
 
-- Focused `npx vitest run lib/notification-destination.test.ts`: passed — 4 tests.
 - `npm run lint`: passed.
 - `git diff --check`: passed.
-- An earlier full `npm run test` run passed 33 files and 136 tests before concurrent API edits landed. The final shared-checkout rerun currently fails 8 API tests because API tests still expect notification creates without the new target fields.
-- The final `npm run typecheck` currently fails in API-owned routes because the concurrent Prisma notification target schema/client work is not complete. Web-owned changes introduce no type errors in the focused test.
+- `npm run test`: final shared-checkout run is blocked by 8 API tests failing because the API notification target payload changes are incomplete. The focused web notification helper test remains passing.
+- `npm run typecheck`: final shared-checkout run is blocked by API routes selecting/creating notification target fields that the generated Prisma client does not yet expose.
+- Browser-control reproduction was unavailable because no browser instance was available. The running Next server log provided the authenticated Prisma error above; direct unauthenticated curl returned the expected 401.
 
 ## Handoff notes
 
-- No API, Prisma, or mobile files were changed. The web consumes the API agent’s new optional notification target fields.
-- The API agent needs to finish Prisma client generation/schema updates and update the affected API notification expectations before the repository-wide test/typecheck gate can pass.
-- Concurrent mobile/Prisma changes and an unrelated untracked `public/logo.png` were left untouched and unstaged.
+- API agent action required: finish the notification target migration and regenerate/use the matching Prisma client, then update the affected API tests. The web consumers already accept nullable `projectId`, `invoiceId`, and `requestId` response fields.
+- No API, Prisma, or mobile files were changed. Concurrent API migration work and unrelated untracked `public/logo.png` were left untouched.
 
 ## Hard rule
 
