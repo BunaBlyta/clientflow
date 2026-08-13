@@ -1,32 +1,31 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-13 00:51 by Codex — harden staff invitation flow
+Last updated: 2026-08-13 08:28 by Codex — fix staff invite route mapping
 
 ## Completed
 
-- Staff invites now catch a Prisma `P2002` unique-email error from the actual
-  create operation, so concurrent invites return the existing 409 conflict
-  response instead of an unhandled error.
-- Staff invite creation and resend now generate an `/accept-invite?email=...`
-  URL. The origin uses `APP_URL` when configured and the incoming request origin
-  as the fallback, with no hardcoded production domain.
-- Client verification emails remain code-only because only staff invitation calls
-  provide the optional invite URL.
-- Corrected verification email copy from 10 minutes to the actual 30-minute code
-  lifetime.
-- Added focused tests for the unique-constraint race, configured/fallback URL
-  generation, staff email content, and preserving client email behavior.
-- Updated `docs/ARCHITECTURE.md` with the race-safety and email URL contract.
+- Moved the staff invite POST handler to the actual Next.js route file
+  `app/api/staff/invite/route.ts`, which handles `POST /api/staff/invite`.
+- Kept `app/api/staff/route.ts` as the staff-only `GET /api/staff` handler and
+  removed its duplicate invite POST, so the invite behavior is exposed at one
+  endpoint only.
+- Split shared staff serialization, selection, validation, and unique-error
+  helpers into `app/api/staff/_lib.ts`; the invite implementation lives in
+  `app/api/staff/_invite.ts` and is called only by the invite route.
+- Moved invite tests to `app/api/staff/invite/route.test.ts`, importing the real
+  invite route file. The suite also checks that the route file exists at the
+  `/api/staff/invite` directory path.
 
 ## Verification
 
-- `npm run test`: 26 test files passed, 92 tests passed.
+- `npm run test`: 27 test files passed, 93 tests passed.
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
 - `git diff --check`: passed.
 
 ## Handoff
 
-- No Prisma schema, migration, install, web, or mobile files were changed.
-- Staff invitation emails rely on the existing `APP_URL` convention used by the
-  Stripe checkout route; if it is absent, Vercel/local request origin is used.
+- No Prisma schema, migration, install, web, mobile, or architecture-contract
+  changes were needed. The documented API contract already named
+  `POST /api/staff/invite`; this change makes the filesystem route match it.
+- `POST /api/staff` is no longer exported, preventing a second invite endpoint.
