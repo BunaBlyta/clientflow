@@ -3,7 +3,7 @@ import { Bell, FolderKanban, User } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color } from '../../lib/theme';
+import { color, spacing } from '../../lib/theme';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
@@ -27,6 +27,9 @@ export default function AppTabsLayout() {
           height: 64 + insets.bottom,
           borderTopColor: color.border,
           borderTopWidth: StyleSheet.hairlineWidth,
+        },
+        tabBarItemStyle: {
+          paddingVertical: spacing.sm,
         },
       }}
     >
