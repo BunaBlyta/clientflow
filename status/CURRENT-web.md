@@ -1,30 +1,26 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 13:52 by Codex — staff table navigation and detail pages
+Last updated: 2026-08-13 14:35 by Codex — mobile Stripe cancellation return
 
 ## What changed
 
-- Project, client, standard request, and custom inquiry table rows are keyboard-reachable and navigate to their detail pages.
-- Existing project status, client invitation, request approve/reject, and custom inquiry conversion controls remain usable without triggering row navigation.
-- Added `/dashboard/clients/[id]`, backed by `GET /api/clients/:id`, showing client contact details, related projects, and related invoices.
-- Added `/dashboard/requests/[id]`, backed by `GET /api/requests/:id`, showing prospect details, selected package, request message/status, linked client, and related projects.
-- Added `/dashboard/inquiries/[id]`, backed by `GET /api/contact-leads/:id`, showing inquiry details, brief, honest email-match conversion context, and related projects.
-- Related project links consistently open `/dashboard/projects/[id]`. Existing Projects tabs, request filtering, and custom inquiry filtering are unchanged.
-- Added shared table-row interaction detection in `lib/table-navigation.ts` so nested links/buttons do not bubble into row navigation.
+- Updated `app/payment/cancelled/page.tsx` to read Stripe’s `return_to=mobile`, `project_id`, and `invoice_id` parameters.
+- Valid mobile returns now use the existing Expo-web convention and point to `http://localhost:8081/projects/<projectId>/invoices`, allowing the client app to hydrate the invoice list rather than opening a specific invoice route.
+- The action is labeled “Continue to web app” for valid mobile returns. Missing, repeated, or invalid parameters use the normal `/dashboard/invoices` fallback.
+- The cancellation message still states that no payment was taken and the invoice remains unchanged. No webhook or payment status logic was changed.
 
 ## Verification
 
-- `npm run test`: passed — 32 files, 131 tests.
+- `npm run test`: passed — 32 files, 132 tests.
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
-- `npx next build --webpack`: passed; generated all three new dashboard detail routes.
+- `npx next build --webpack`: passed; `/payment/cancelled` remained dynamic and compiled successfully.
 - `git diff --check`: passed.
-- `npm run verify`: typecheck, lint, and tests passed; the Turbopack build was blocked by the sandbox failing to fetch Inter from Google Fonts. The webpack build above passed as the fallback.
 
 ## Handoff notes
 
-- No API, Prisma, mobile, or architecture files were changed. The detail pages consume the API contracts from commit `7e5a18c`.
-- Custom inquiry conversion is displayed as the API’s email-matched client context, not as a newly invented conversion state.
+- Only `app/payment/cancelled/page.tsx` and this web lane’s status/log files are part of this task.
+- Concurrent API-lane changes in `app/api/stripe/checkout/**` and `docs/ARCHITECTURE.md` were left untouched and unstaged.
 - An unrelated untracked `public/clientflow-logo-mark.png` remains untouched.
 
 ## Hard rule
