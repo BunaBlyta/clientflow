@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     color: color.textPrimary,
     textAlign: 'center',
+    marginTop: spacing.sm,
   },
   confirmActions: {
     flexDirection: 'row',
@@ -220,6 +221,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.meta,
     color: color.textMuted,
     textAlign: 'center',
-    marginTop: spacing.xxl,
+    marginTop: spacing.xxl + spacing.md,
   },
 });

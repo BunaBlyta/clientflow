@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 15:04 by Codex — tab label clipping and logout confirmation order
+Last updated: 2026-08-13 15:12 by Codex — final tab label and Account spacing polish
 
 ## Completed
 
@@ -56,6 +56,9 @@ Last updated: 2026-08-13 15:04 by Codex — tab label clipping and logout confir
   vertical padding; this removes the white clipping strip that was covering tab
   labels. The logout confirmation message now appears below the equal-width
   Cancel and Log out buttons.
+- Removed the remaining custom tab-label font override so Expo Router's native
+  label sizing is used without clipping. Added a small lower offset to both the
+  confirmation message and the `Clientflow · v1.0.0` footer.
 
 ## Verification
 
@@ -75,6 +78,8 @@ Last updated: 2026-08-13 15:04 by Codex — tab label clipping and logout confir
 - Account footer clearance and standalone Log out sizing: mobile TypeScript,
   root tests, root typecheck, root lint, and `git diff --check` passed.
 - Tab label clipping and confirmation order: mobile TypeScript, root tests,
+  root typecheck, root lint, and `git diff --check` passed.
+- Final tab label and Account spacing polish: mobile TypeScript, root tests,
   root typecheck, root lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
