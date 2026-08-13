@@ -238,8 +238,8 @@ function NotificationList({
             key={n.id}
             href={getNotificationDestination(n)}
             onClick={(event) => {
-              if (n.read) return;
               event.preventDefault();
+              if (markingId === n.id) return;
               void onRead(n);
             }}
             aria-disabled={markingId === n.id}

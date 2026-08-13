@@ -117,12 +117,14 @@ export function Topbar() {
   }, []);
 
   async function handleNotificationClick(
-    event: React.MouseEvent<HTMLAnchorElement>,
+    event: React.MouseEvent<HTMLElement>,
     notification: Notification,
   ) {
-    if (notification.read) return;
     event.preventDefault();
-    if (!(await markNotificationRead(notification.id))) return;
+    if (markingNotificationId === notification.id) return;
+    if (!notification.read) {
+      if (!(await markNotificationRead(notification.id))) return;
+    }
     router.push(getNotificationDestination(notification));
   }
 
@@ -210,9 +212,9 @@ export function Topbar() {
               notifications.slice(0, 8).map((n) => {
                 const Icon = NOTIFICATION_ICON[n.type];
                 return (
-                  <Link
+                  <DropdownMenuItem
                     key={n.id}
-                    href={getNotificationDestination(n)}
+                    render={<Link href={getNotificationDestination(n)} />}
                     onClick={(event) => void handleNotificationClick(event, n)}
                     aria-disabled={markingNotificationId === n.id}
                     className={cn(
@@ -229,7 +231,7 @@ export function Topbar() {
                     <span className="shrink-0 text-[11px] text-muted-foreground">
                       {formatRelativeTime(n.createdAt)}
                     </span>
-                  </Link>
+                  </DropdownMenuItem>
                 );
               })
             )}
