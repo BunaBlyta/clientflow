@@ -33,7 +33,7 @@ export function ProjectStatusMenu({
   onProjectUpdated: (project: Project) => void;
 }) {
   const [isUpdating, setIsUpdating] = useState(false);
-  const isAwaitingDeposit = project.status === "PENDING";
+  const isAwaitingDeposit = project.status === "PENDING" && Boolean(project.packageId);
 
   async function updateStatus(status: ProjectStatus) {
     setIsUpdating(true);
@@ -58,34 +58,43 @@ export function ProjectStatusMenu({
     }
   }
 
+  const statusControl = (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-auto gap-1 px-1 text-[13px] font-normal hover:opacity-70"
+      disabled={isUpdating || isAwaitingDeposit}
+      title={
+        isAwaitingDeposit ? "Phase changes become available after the deposit is paid." : undefined
+      }
+    >
+      <span className={PROJECT_STATUS_TONE[project.status]}>
+        {PROJECT_STATUS_LABEL[project.status]}
+      </span>
+      {isUpdating ? (
+        <LoaderCircle className="size-3 animate-spin text-brand-accent" />
+      ) : (
+        <ChevronDown className="size-3 text-muted-foreground" />
+      )}
+    </Button>
+  );
+
+  if (isAwaitingDeposit) {
+    return (
+      <div className="flex flex-col items-start gap-0.5">
+        {statusControl}
+        <span className="px-1 text-[11px] leading-tight text-muted-foreground">
+          Phase changes become available after the deposit is paid.
+        </span>
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-auto gap-1 px-1 text-[13px] font-normal hover:opacity-70"
-            disabled={isUpdating}
-          />
-        }
-      >
-        <span className={PROJECT_STATUS_TONE[project.status]}>
-          {PROJECT_STATUS_LABEL[project.status]}
-        </span>
-        {isUpdating ? (
-          <LoaderCircle className="size-3 animate-spin text-brand-accent" />
-        ) : (
-          <ChevronDown className="size-3 text-muted-foreground" />
-        )}
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger render={statusControl} />
       <DropdownMenuContent align="start" className="w-44">
-        {isAwaitingDeposit && (
-          <p className="px-2 py-1.5 text-[12px] text-muted-foreground">
-            Moves to Discovery automatically once the deposit is paid.
-          </p>
-        )}
-        {SELECTABLE_STATUSES.filter((s) => s !== "DISCOVERY" || !isAwaitingDeposit).map(
+        {SELECTABLE_STATUSES.filter((s) => s !== "DISCOVERY" || project.status !== "PENDING").map(
           (status) => (
             <DropdownMenuItem
               key={status}

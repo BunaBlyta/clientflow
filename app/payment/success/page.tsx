@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +17,30 @@ export const metadata = {
  * Not behind auth: the payer arrives from Stripe, often on a mobile browser
  * with no web session.
  */
-export default function PaymentSuccessPage() {
+type PaymentSuccessSearchParams = Promise<{
+  return_to?: string | string[];
+  project_id?: string | string[];
+  invoice_id?: string | string[];
+}>;
+
+function isValidIdentifier(value: string | string[] | undefined): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]+$/.test(value);
+}
+
+export default async function PaymentSuccessPage({
+  searchParams,
+}: {
+  searchParams: PaymentSuccessSearchParams;
+}) {
+  const params = await searchParams;
+  const projectId = isValidIdentifier(params.project_id) ? params.project_id : null;
+  const invoiceId = isValidIdentifier(params.invoice_id) ? params.invoice_id : null;
+  const isMobileReturn = params.return_to === "mobile" && projectId !== null && invoiceId !== null;
+  const actionHref = isMobileReturn
+    ? `clientflow://projects/${encodeURIComponent(projectId)}/invoices/${encodeURIComponent(invoiceId)}/checkout`
+    : "/dashboard/invoices";
+  const actionLabel = isMobileReturn ? "Return to app" : "View invoices";
+
   return (
     <main className="flex min-h-dvh items-center justify-center px-6 py-16">
       <div className="w-full max-w-md rounded-lg border border-border p-8 text-center">
@@ -26,15 +48,17 @@ export default function PaymentSuccessPage() {
           <Check className="size-5 text-brand-accent" />
         </div>
 
-        <h1 className="mt-5 text-lg font-semibold tracking-tight">Payment received</h1>
+        <h1 className="mt-5 text-lg font-semibold tracking-tight">Payment submitted</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          Thank you — your payment went through. The invoice updates to paid as soon
-          as Stripe confirms it, usually within a few seconds. You can close this tab
-          and head back to the app.
+          Thank you — Stripe received your payment submission. The invoice updates to
+          paid only after Stripe confirms it, usually within a few seconds. You can
+          close this tab and head back to the app.
         </p>
 
         <div className="mt-6 flex justify-center">
-          <Button nativeButton={false} render={<Link href="/dashboard/invoices" />}>View invoices</Button>
+          <Button nativeButton={false} render={<a href={actionHref} />}>
+            {actionLabel}
+          </Button>
         </div>
       </div>
     </main>

@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 08:45 by Codex — custom package workflow
+Last updated: 2026-08-13 11:20 by Codex — payment-gated project phases and mobile Stripe return
 
 ## What changed
 
@@ -61,6 +61,14 @@ Last updated: 2026-08-13 08:45 by Codex — custom package workflow
 - Removed the unused staff-invite action and the other uncalled mock actions that
   depended on the hardcoded staff identity from `lib/store.ts`. The remaining mock
   store actions are unrelated open work.
+- Standard PENDING projects now show a disabled phase control with an explanation
+  that phase changes become available after the deposit is paid. Custom PENDING
+  projects keep their manual phase choices, and later phases remain unchanged.
+- The unauthenticated Stripe success page now returns mobile checkouts to
+  `clientflow://projects/<projectId>/invoices/<invoiceId>/checkout` only when the
+  mobile return marker and both safe identifiers are present; incomplete or invalid
+  parameters use the existing web invoices fallback. The copy makes clear that the
+  invoice waits for Stripe webhook confirmation before becoming paid.
 
 ## Verification
 
@@ -91,6 +99,12 @@ Last updated: 2026-08-13 08:45 by Codex — custom package workflow
   Turbopack build hit the sandbox-only port-binding restriction; `npx next build
   --webpack` passed and included `/accept-invite`, `/api/staff`, and the staff resend
   route. The in-app browser was unavailable for a click-through in this session.
+- This task's `npm run test` passed all 123 tests, `npm run typecheck` passed,
+  `npm run lint` passed, and `git diff --check` passed. `npx next build --webpack`
+  passed and included the updated project menu and payment-success route.
+- `npm run verify` passed typecheck, lint, and tests but its normal Turbopack build
+  was blocked when `next/font` could not fetch Inter from Google Fonts in the
+  sandbox. The webpack build passed as the fallback verification.
 
 ## Handoff notes
 
@@ -120,6 +134,7 @@ Last updated: 2026-08-13 08:45 by Codex — custom package workflow
   tests, `npm run typecheck` passed, `npm run lint` passed, and
   `npx next build --webpack` passed with the contact-lead routes and dashboard
   Projects page included.
+- No known follow-up is required for the two fixes in this task.
 
 ## Hard rule
 
