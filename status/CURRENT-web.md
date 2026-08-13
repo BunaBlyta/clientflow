@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 11:54 by Codex — Expo web payment return fallback
+Last updated: 2026-08-13 12:04 by Codex — Expo web return as temporary primary action
 
 ## What changed
 
@@ -81,6 +81,10 @@ Last updated: 2026-08-13 11:54 by Codex — Expo web payment return fallback
   an explicit “Open Expo web app” button. It points only to the fixed local Expo web
   route at `http://localhost:8081/projects/<projectId>/invoices/<invoiceId>/checkout`;
   production pages do not show this localhost fallback.
+- The temporary mobile success action now uses the Expo web route as its primary
+  “Continue to web app” destination. The native `clientflow://` action was removed
+  from the payment-result page until Xcode/native builds are available. No established
+  Expo web URL environment variable exists, so it uses the requested local fallback.
 
 ## Verification
 
@@ -152,6 +156,9 @@ Last updated: 2026-08-13 11:54 by Codex — Expo web payment return fallback
   passed. Native-device deep-link testing was not performed.
 - No mobile source, API route, webhook, or database file was changed for the Expo web
   fallback.
+- Verified the exact Expo web checkout URL on port 8081 with HTTP 200 after starting
+  the existing Expo web server temporarily. The server was stopped after verification.
+- Native deep-link support was not tested and is intentionally deferred.
 
 ## Hard rule
 
