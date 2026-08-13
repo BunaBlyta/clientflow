@@ -1,8 +1,10 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronRight, FileText, MessageSquare } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, FileText, MessageSquare } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { ProjectStageTracker } from '../../../../components/ProjectStageTracker';
+import { InvoiceRow } from '../../../../components/InvoiceRow';
+import { Divider } from '../../../../components/ui/Divider';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatCurrency } from '../../../../lib/format';
@@ -10,7 +12,7 @@ import { getPackageById } from '../../../../lib/mock-data';
 import { color, fontFamily, fontSize, spacing } from '../../../../lib/theme';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectDetailScreen() {
@@ -20,15 +22,27 @@ export default function ProjectDetailScreen() {
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);
   const refreshNotes = useDataStore((s) => s.refreshNotes);
+  const refreshInvoices = useDataStore((s) => s.refreshInvoices);
   const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
+  const [unreachable, setUnreachable] = useState(false);
 
   useEffect(() => {
-    if (id && token) {
-      void refreshProject(id, token);
-      void refreshNotes(token, id);
-    }
-  }, [id, refreshNotes, refreshProject, token]);
+    if (!id || !token) return;
+
+    void refreshProject(id, token);
+    let active = true;
+    void Promise.all([
+      refreshNotes(token, id),
+      refreshInvoices(token, id),
+    ]).then(([notesReachable, invoicesReachable]) => {
+      if (active) setUnreachable(!notesReachable || !invoicesReachable);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [id, refreshInvoices, refreshNotes, refreshProject, token]);
 
   if (!project) {
     return (
@@ -47,11 +61,27 @@ export default function ProjectDetailScreen() {
     .filter((i) => i.status === 'SENT' || i.status === 'FAILED' || i.status === 'PAYMENT_PENDING')
     .reduce((sum, i) => sum + i.amountCents, 0);
 
-  const recentNotes = notes.slice(-2);
+  // notesForProject sorts newest first, so the first two are the recent preview.
+  const recentNotes = notes.slice(0, 2);
+  const invoicePreviews = visibleInvoices.slice(0, 2);
 
   return (
     <Screen>
       <Stack.Screen options={{ title: project.name }} />
+
+      <Pressable
+        onPress={() => router.navigate('/projects')}
+        style={styles.backToProjects}
+      >
+        <ArrowLeft size={16} color={color.accent} />
+        <Text style={styles.backToProjectsText}>Back to projects</Text>
+      </Pressable>
+
+      {unreachable && (
+        <Text style={styles.error}>
+          Live notes or invoices are unavailable. Showing saved data.
+        </Text>
+      )}
 
       <Text style={styles.name}>{project.name}</Text>
       {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
@@ -106,15 +136,45 @@ export default function ProjectDetailScreen() {
       {visibleInvoices.length === 0 ? (
         <EmptyState icon={FileText} title="No invoices yet" />
       ) : (
-        <Text style={styles.invoiceSummary}>
-          {visibleInvoices.length} invoice{visibleInvoices.length === 1 ? '' : 's'} on this project
-        </Text>
+        <>
+          {invoicePreviews.map((invoice, index) => (
+            <View key={invoice.id}>
+              <InvoiceRow
+                invoice={invoice}
+                onPress={() => router.push(`/projects/${id}/invoices/${invoice.id}`)}
+              />
+              {index < invoicePreviews.length - 1 && <Divider />}
+            </View>
+          ))}
+          <Text style={styles.invoiceSummary}>
+            {visibleInvoices.length} invoice{visibleInvoices.length === 1 ? '' : 's'} on this project
+          </Text>
+        </>
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  backToProjects: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  backToProjectsText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.accent,
+  },
+  error: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.warning,
+    marginBottom: spacing.md,
+  },
   name: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,

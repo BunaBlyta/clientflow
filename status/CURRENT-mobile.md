@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 11:54 by Codex — Expo web payment return verification
+Last updated: 2026-08-13 14:31 by Codex — project detail previews and return navigation
 
 ## Completed
 
@@ -24,6 +24,14 @@ Last updated: 2026-08-13 11:54 by Codex — Expo web payment return verification
   exact checkout route module.
 - No mobile routing or configuration change was required; the current Expo
   Router file structure already resolves this path in web mode.
+- The project homepage now refreshes live notes and invoices when it opens,
+  shows the two newest note previews, and shows up to two visible invoice rows.
+  DRAFT invoices remain hidden, while totals and “View all” links are
+  unchanged.
+- The homepage now has a visible “Back to projects” control that navigates to
+  the `/projects` tab route, rather than merely dismissing the nested stack.
+- The note preview bug was caused by taking the last two items from a
+  newest-first selector; it now takes the first two live/saved notes.
 
 ## Verification
 
@@ -38,6 +46,10 @@ Last updated: 2026-08-13 11:54 by Codex — Expo web payment return verification
 - No device or simulator testing was performed.
 - In-app browser inspection was unavailable in this session. HTTP route and
   generated-bundle verification were performed instead.
+- Expo web smoke check: the existing server on `http://localhost:8081` returned
+  HTTP 200 for `/projects/proj-1` and `/projects/proj-1/invoices`, and its
+  refreshed bundle contained the new project-detail preview and `/projects`
+  navigation code.
 
 ## Notes for the next session
 
