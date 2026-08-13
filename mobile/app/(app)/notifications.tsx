@@ -49,13 +49,8 @@ export default function NotificationsScreen() {
       setMarkingId(null);
       if (!ok) setActionError('Unable to mark this notification as read.');
     }
-    if (notification.projectId && notification.invoiceId) {
-      router.push(
-        `/projects/${notification.projectId}/invoices/${notification.invoiceId}`
-      );
-    } else if (notification.projectId) {
-      router.push(`/projects/${notification.projectId}`);
-    }
+    const target = getNotificationTarget(notification);
+    if (target) router.push(target);
   }
 
   async function handleMarkAll() {
@@ -103,6 +98,16 @@ export default function NotificationsScreen() {
       )}
     </Screen>
   );
+}
+
+function getNotificationTarget(notification: Notification): string | null {
+  if (notification.projectId && notification.invoiceId) {
+    return `/projects/${notification.projectId}/invoices/${notification.invoiceId}`;
+  }
+  if (notification.projectId && (notification.requestId || !notification.invoiceId)) {
+    return `/projects/${notification.projectId}`;
+  }
+  return null;
 }
 
 const styles = StyleSheet.create({

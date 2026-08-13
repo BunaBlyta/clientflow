@@ -104,4 +104,5 @@ export interface Notification {
   createdAt: string;
   projectId?: string;
   invoiceId?: string;
+  requestId?: string;
 }

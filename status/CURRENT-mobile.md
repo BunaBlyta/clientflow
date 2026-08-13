@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 15:18 by Codex — centered bottom tab items
+Last updated: 2026-08-13 15:26 by Codex — clickable notification targets
 
 ## Completed
 
@@ -64,6 +64,12 @@ Last updated: 2026-08-13 15:18 by Codex — centered bottom tab items
   working native label sizing.
 - Tab items now use symmetric vertical padding inside the taller footer so each
   icon and label group remains vertically centered.
+- Mobile notifications now consume optional `projectId`, `invoiceId`, and
+  `requestId` target fields. Invoice-plus-project notifications open invoice
+  detail; project notifications open project detail; notifications without a
+  usable mobile target only mark themselves read and stay on Notifications.
+- Notification refresh and mark-read responses are stored without reshaping,
+  so the target IDs supplied by the API remain available after refreshes.
 
 ## Verification
 
@@ -90,6 +96,8 @@ Last updated: 2026-08-13 15:18 by Codex — centered bottom tab items
   lint, and `git diff --check` passed.
 - Centered bottom tab items: mobile TypeScript, root tests, root typecheck, root
   lint, and `git diff --check` passed.
+- Clickable notification targets: mobile TypeScript, root tests, root typecheck,
+  root lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
