@@ -155,6 +155,8 @@ export async function POST(request: NextRequest) {
       data: {
         userId: client.userId,
         type: type === 'EXTRA' ? 'EXTRA_CHARGE_CREATED' : 'INVOICE_ISSUED',
+        invoiceId: invoice.id,
+        projectId: invoice.projectId,
         title: 'New invoice',
         message: description
           ? `${description} was added to ${project.name}.`

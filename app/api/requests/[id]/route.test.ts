@@ -164,6 +164,7 @@ describe('PATCH /api/requests/:id', () => {
       data: {
         userId: 'user-1',
         type: 'REQUEST_REJECTED',
+        requestId: 'req-1',
         title: 'Project request update',
         message: 'Your project request was not approved at this time.',
       },
@@ -209,6 +210,8 @@ describe('PATCH /api/requests/:id', () => {
       data: {
         userId: 'user-1',
         type: 'REQUEST_APPROVED',
+        requestId: 'req-1',
+        projectId: 'project-1',
         title: 'Project request approved',
         message: 'Your project is ready. Your deposit invoice is available to pay.',
       },

@@ -170,6 +170,7 @@ export async function PATCH(
         data: {
           userId: client.userId,
           type: 'PROJECT_STAGE_CHANGED',
+          projectId: id,
           title: `${project.name} moved to ${formatProjectStatus(nextStatus)}`,
           message: `Your project moved from ${formatProjectStatus(project.status)} to ${formatProjectStatus(nextStatus)}.`,
         },

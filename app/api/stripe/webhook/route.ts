@@ -88,6 +88,8 @@ async function markInvoicePaid(
       data: {
         userId: await clientUserId(transaction, invoice.clientId),
         type: 'PAYMENT_SUCCEEDED',
+        invoiceId: invoice.id,
+        projectId: invoice.projectId,
         title: 'Payment received',
         message: 'Your invoice payment was confirmed.',
       },
@@ -108,7 +110,7 @@ async function markInvoiceFailed(
 
     const invoice = await transaction.invoice.findUnique({
       where: { id: invoiceId },
-      select: { clientId: true },
+      select: { id: true, clientId: true, projectId: true },
     });
     if (!invoice) return;
 
@@ -116,6 +118,8 @@ async function markInvoiceFailed(
       data: {
         userId: await clientUserId(transaction, invoice.clientId),
         type: 'PAYMENT_FAILED',
+        invoiceId,
+        projectId: invoice.projectId,
         title: 'Payment failed',
         message: 'Your invoice payment could not be completed.',
       },

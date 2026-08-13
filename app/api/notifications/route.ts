@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
       message: true,
       readAt: true,
       createdAt: true,
+      projectId: true,
+      invoiceId: true,
+      requestId: true,
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -31,9 +34,11 @@ export async function GET(request: NextRequest) {
       type: notification.type,
       title: notification.title,
       body: notification.message,
+      projectId: notification.projectId,
+      invoiceId: notification.invoiceId,
+      requestId: notification.requestId,
       read: notification.readAt !== null,
       createdAt: notification.createdAt.toISOString(),
     })),
   );
 }
-

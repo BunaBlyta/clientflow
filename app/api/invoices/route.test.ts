@@ -115,6 +115,8 @@ describe('POST /api/invoices notification types', () => {
       expect(mocks.notificationCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           type: type === 'EXTRA' ? 'EXTRA_CHARGE_CREATED' : 'INVOICE_ISSUED',
+          invoiceId: 'inv-new',
+          projectId: 'proj-1',
         }),
       });
     },

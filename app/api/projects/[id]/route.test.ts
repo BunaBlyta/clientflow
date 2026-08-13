@@ -214,6 +214,7 @@ describe('PATCH /api/projects/:id', () => {
       data: {
         userId: 'user-1',
         type: 'PROJECT_STAGE_CHANGED',
+        projectId: 'proj-1',
         title: 'Riverside Cafe — Full Website moved to Development',
         message: 'Your project moved from Design to Development.',
       },

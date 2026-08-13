@@ -90,6 +90,7 @@ describe('POST /api/requests', () => {
       data: {
         userId: 'staff-1',
         type: 'REQUEST_SUBMITTED',
+        requestId: 'req-1',
         title: 'New project request',
         message: 'Alex Morgan from Alex Studio requested a Full Website.',
       },

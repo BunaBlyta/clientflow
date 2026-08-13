@@ -182,6 +182,34 @@ both the notification ID and session user ID, so another user's notification is
 reported as 404. Repeating the request for an already-read notification returns
 200 without writing again.
 
+Both notification endpoints include nullable navigation targets directly from
+the database; clients must use these IDs rather than parsing notification text
+or inferring a target from the notification type:
+
+```json
+{
+  "id": "notif-1",
+  "userId": "user-client-1",
+  "type": "PAYMENT_SUCCEEDED",
+  "title": "Payment received",
+  "body": "Your invoice payment was confirmed.",
+  "projectId": "proj-1",
+  "invoiceId": "inv-1",
+  "requestId": null,
+  "read": false,
+  "createdAt": "2026-08-12T10:00:00.000Z"
+}
+```
+
+Target metadata is written when the notification is created: submitted,
+approved, and rejected standard project requests carry `requestId`; approved
+requests also carry `projectId`; invoice-issued, payment-success, payment-
+failure, and extra-charge notifications carry both `invoiceId` and
+`projectId`; project-stage and new-note notifications carry `projectId`.
+Custom inquiries continue to use the existing `REQUEST_SUBMITTED` notification
+type, but have no `ProjectRequest` record and therefore return all three target
+fields as `null`.
+
 ## Stripe checkout contracts
 
 `POST /api/stripe/checkout` accepts `{ "invoiceId": string, "returnTo"?:
@@ -426,13 +454,16 @@ and concurrent client creation races return 409.
 The following user-facing events create in-app notifications in the same
 transaction as their database change:
 
-| Event | Recipient | Type |
-|-------|-----------|------|
-| A project request is submitted | Every staff user | `REQUEST_SUBMITTED` |
-| A request is approved | The newly onboarded client | `REQUEST_APPROVED` |
-| A request is rejected | An already-linked client, if one exists | `REQUEST_REJECTED` |
-| An invoice moves to `SENT` | The invoice's client | `INVOICE_ISSUED` |
-| A project status changes | The project's client | `PROJECT_STAGE_CHANGED` |
+| Event | Recipient | Type | Navigation targets |
+|-------|-----------|------|--------------------|
+| A project request is submitted | Every staff user | `REQUEST_SUBMITTED` | `requestId` |
+| A request is approved | The newly onboarded client | `REQUEST_APPROVED` | `requestId`, `projectId` |
+| A request is rejected | An already-linked client, if one exists | `REQUEST_REJECTED` | `requestId` |
+| An invoice moves to `SENT` | The invoice's client | `INVOICE_ISSUED` | `invoiceId`, `projectId` |
+| A payment succeeds or fails | The invoice's client | `PAYMENT_SUCCEEDED` / `PAYMENT_FAILED` | `invoiceId`, `projectId` |
+| An extra invoice is created | The project's client | `EXTRA_CHARGE_CREATED` | `invoiceId`, `projectId` |
+| A project status changes | The project's client | `PROJECT_STAGE_CHANGED` | `projectId` |
+| A note is posted | The other side of the project conversation | `NEW_NOTE` | `projectId` |
 
 Rejection normally happens before a prospect has an account, so the route does
 not create a user just to deliver an in-app notification. An existing linked

@@ -121,6 +121,8 @@ export async function PATCH(
           data: {
             userId: client.userId,
             type: 'INVOICE_ISSUED',
+            invoiceId: updated.id,
+            projectId: updated.projectId,
             title: 'Invoice sent',
             message: invoice.description
               ? `${invoice.description} is ready to review and pay.`

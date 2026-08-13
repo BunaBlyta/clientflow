@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: staffUser.id,
             type: 'NEW_NOTE',
+            projectId: project.id,
             title: 'New note from a client',
             message: noteBody,
           },
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: project.client.userId,
           type: 'NEW_NOTE',
+          projectId: project.id,
           title: 'New note from the studio',
           message: noteBody,
         },

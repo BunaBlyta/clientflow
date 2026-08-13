@@ -131,6 +131,8 @@ describe('PATCH /api/invoices/:id', () => {
       data: {
         userId: 'user-1',
         type: 'INVOICE_ISSUED',
+        invoiceId: 'inv-1',
+        projectId: 'proj-1',
         title: 'Invoice sent',
         message: 'Deposit is ready to review and pay.',
       },

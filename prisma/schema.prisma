@@ -132,6 +132,7 @@ model ProjectRequest {
 
   package     Package              @relation(fields: [packageId], references: [id], onDelete: Restrict)
   client      Client?              @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  notifications Notification[]
 
   @@index([status])
   @@index([email])
@@ -165,6 +166,7 @@ model Project {
   package     Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)
   invoices    Invoice[]
   notes       Note[]
+  notifications Notification[]
 
   @@index([clientId])
   @@index([status])
@@ -189,6 +191,7 @@ model Invoice {
 
   project                  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   client                   Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  notifications            Notification[]
 
   @@index([projectId])
   @@index([clientId])
@@ -218,9 +221,18 @@ model Notification {
   message   String
   readAt    DateTime?
   createdAt DateTime         @default(now())
+  projectId String?
+  invoiceId String?
+  requestId String?
 
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  invoice   Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  request   ProjectRequest?  @relation(fields: [requestId], references: [id], onDelete: SetNull)
 
   @@index([userId, readAt])
   @@index([createdAt])
+  @@index([projectId])
+  @@index([invoiceId])
+  @@index([requestId])
 }

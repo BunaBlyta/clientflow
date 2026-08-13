@@ -379,20 +379,20 @@ async function main() {
   }
 
   const notifications = [
-    ['notif-1', 'PAYMENT_FAILED', 'Payment failed', "Your payment for 'Extra — Additional landing sections' didn't go through. Tap to try again.", false, '2026-08-02T07:00:00.000Z'],
-    ['notif-2', 'NEW_NOTE', 'New note from Sam Torres', 'The staging link is ready for your review — let us know about any final tweaks.', false, '2026-08-08T16:05:00.000Z'],
-    ['notif-3', 'PROJECT_STAGE_CHANGED', 'Riverside Cafe — Landing Page Refresh moved to Review', 'Your project is now in the Review stage.', false, '2026-08-08T16:00:00.000Z'],
-    ['notif-4', 'EXTRA_CHARGE_CREATED', 'New invoice: Extra — Rush timeline fee', 'A new invoice for $200.00 was added to Riverside Cafe — Full Website.', true, '2026-08-09T09:00:00.000Z'],
-    ['notif-5', 'PROJECT_STAGE_CHANGED', 'Riverside Cafe — Full Website moved to Development', 'Your project is now in the Development stage.', true, '2026-07-20T09:00:00.000Z'],
-    ['notif-6', 'PAYMENT_SUCCEEDED', 'Payment received', "Thanks! Your final payment for 'Riverside Cafe — Brand Site Relaunch' was received.", true, '2026-03-18T13:40:00.000Z'],
-    ['notif-7', 'PROJECT_STAGE_CHANGED', 'Riverside Cafe — Seasonal Menu Microsite moved to On Hold', "We've paused this project. Post a note when you're ready to resume.", true, '2026-07-28T10:00:00.000Z'],
+    ['notif-1', 'PAYMENT_FAILED', 'Payment failed', "Your payment for 'Extra — Additional landing sections' didn't go through. Tap to try again.", false, '2026-08-02T07:00:00.000Z', 'proj-1', 'inv-2', undefined],
+    ['notif-2', 'NEW_NOTE', 'New note from Sam Torres', 'The staging link is ready for your review — let us know about any final tweaks.', false, '2026-08-08T16:05:00.000Z', 'proj-2', undefined, undefined],
+    ['notif-3', 'PROJECT_STAGE_CHANGED', 'Riverside Cafe — Landing Page Refresh moved to Review', 'Your project is now in the Review stage.', false, '2026-08-08T16:00:00.000Z', 'proj-2', undefined, undefined],
+    ['notif-4', 'EXTRA_CHARGE_CREATED', 'New invoice: Extra — Rush timeline fee', 'A new invoice for $200.00 was added to Riverside Cafe — Full Website.', true, '2026-08-09T09:00:00.000Z', 'proj-1', 'inv-3', undefined],
+    ['notif-5', 'PROJECT_STAGE_CHANGED', 'Riverside Cafe — Full Website moved to Development', 'Your project is now in the Development stage.', true, '2026-07-20T09:00:00.000Z', 'proj-1', undefined, undefined],
+    ['notif-6', 'PAYMENT_SUCCEEDED', 'Payment received', "Thanks! Your final payment for 'Riverside Cafe — Brand Site Relaunch' was received.", true, '2026-03-18T13:40:00.000Z', 'proj-3', 'inv-7', undefined],
+    ['notif-7', 'PROJECT_STAGE_CHANGED', 'Riverside Cafe — Seasonal Menu Microsite moved to On Hold', "We've paused this project. Post a note when you're ready to resume.", true, '2026-07-28T10:00:00.000Z', 'proj-4', undefined, undefined],
   ] as const;
 
-  for (const [id, type, title, message, read, createdAt] of notifications) {
+  for (const [id, type, title, message, read, createdAt, projectId, invoiceId, requestId] of notifications) {
     await prisma.notification.upsert({
       where: { id },
-      update: { userId: clientUser.id, type, title, message, readAt: read ? date(createdAt) : null, createdAt: date(createdAt) },
-      create: { id, userId: clientUser.id, type, title, message, readAt: read ? date(createdAt) : undefined, createdAt: date(createdAt) },
+      update: { userId: clientUser.id, type, title, message, projectId, invoiceId, requestId, readAt: read ? date(createdAt) : null, createdAt: date(createdAt) },
+      create: { id, userId: clientUser.id, type, title, message, projectId, invoiceId, requestId, readAt: read ? date(createdAt) : undefined, createdAt: date(createdAt) },
     });
   }
 
@@ -403,6 +403,7 @@ async function main() {
       type: 'REQUEST_SUBMITTED',
       title: 'New project request',
       message: 'A new project request is waiting for review.',
+      requestId: null,
       readAt: null,
       createdAt: date('2026-08-12T08:05:00.000Z'),
     },
@@ -429,6 +430,11 @@ async function main() {
       create: { id, name, email, companyName, packageId, status, clientId: id === 'req-2' ? client.id : undefined, createdAt: date(createdAt), reviewedAt: reviewedAt ? date(reviewedAt) : undefined },
     });
   }
+
+  await prisma.notification.update({
+    where: { id: 'notif-8' },
+    data: { requestId: 'req-1' },
+  });
 
   console.log(`Seeded ${packages.length} packages, ${projects.length} projects, ${invoices.length} invoices, ${notes.length} notes, ${notifications.length + 1} notifications, and ${requests.length} requests.`);
 }

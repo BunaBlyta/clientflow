@@ -30,6 +30,9 @@ const notification = {
   message: 'A note was posted.',
   readAt: null,
   createdAt: new Date('2026-08-12T10:00:00.000Z'),
+  projectId: 'proj-1',
+  invoiceId: 'inv-1',
+  requestId: null,
 };
 
 function request() {
@@ -76,6 +79,9 @@ describe('PATCH /api/notifications/:id', () => {
       type: 'NEW_NOTE',
       title: 'New note',
       body: 'A note was posted.',
+      projectId: 'proj-1',
+      invoiceId: 'inv-1',
+      requestId: null,
       read: true,
       createdAt: '2026-08-12T10:00:00.000Z',
     });

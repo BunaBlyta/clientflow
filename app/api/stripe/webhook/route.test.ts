@@ -129,6 +129,8 @@ describe('POST /api/stripe/webhook', () => {
       data: expect.objectContaining({
         userId: 'user-client-1',
         type: 'PAYMENT_SUCCEEDED',
+        invoiceId,
+        projectId: 'project-1',
       }),
     });
   });
@@ -159,7 +161,11 @@ describe('POST /api/stripe/webhook', () => {
       alreadyFailed = true;
       return { count: 1 };
     });
-    mocks.invoiceFindUnique.mockResolvedValue({ clientId: 'client-1' });
+    mocks.invoiceFindUnique.mockResolvedValue({
+      id: invoiceId,
+      clientId: 'client-1',
+      projectId: 'project-1',
+    });
     mocks.clientFindUnique.mockResolvedValue({ userId: 'user-client-1' });
 
     const event = paymentEvent('payment_intent.payment_failed');
@@ -173,11 +179,13 @@ describe('POST /api/stripe/webhook', () => {
       where: { id: invoiceId, status: { notIn: ['PAID', 'FAILED'] } },
       data: { status: 'FAILED', stripePaymentIntentId: 'payment-intent-1' },
     });
-    expect(mocks.notificationCreate).toHaveBeenCalledTimes(1);
+      expect(mocks.notificationCreate).toHaveBeenCalledTimes(1);
     expect(mocks.notificationCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: 'user-client-1',
         type: 'PAYMENT_FAILED',
+        invoiceId,
+        projectId: 'project-1',
       }),
     });
   });

@@ -255,6 +255,7 @@ export async function PATCH(
             data: {
               userId: client.userId,
               type: 'REQUEST_REJECTED',
+              requestId: id,
               title: 'Project request update',
               message: 'Your project request was not approved at this time.',
             },
@@ -363,6 +364,8 @@ export async function PATCH(
       data: {
         userId: userRecord.id,
         type: 'REQUEST_APPROVED',
+        requestId: pendingRequest.id,
+        projectId: project.id,
         title: 'Project request approved',
         message: 'Your project is ready. Your deposit invoice is available to pay.',
       },

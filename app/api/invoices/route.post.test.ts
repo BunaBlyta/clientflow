@@ -138,6 +138,8 @@ describe('POST /api/invoices', () => {
       data: {
         userId: 'user-client-1',
         type: 'EXTRA_CHARGE_CREATED',
+        invoiceId: 'inv-new',
+        projectId: 'proj-1',
         title: 'New invoice',
         message: 'Extra landing sections was added to Riverside Cafe — Full Website.',
       },

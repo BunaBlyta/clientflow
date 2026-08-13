@@ -111,6 +111,7 @@ describe('POST /api/notes', () => {
       data: {
         userId: 'staff-1',
         type: 'NEW_NOTE',
+        projectId: 'proj-1',
         title: 'New note from a client',
         message: 'Could we add a testimonials section?',
       },
@@ -144,6 +145,7 @@ describe('POST /api/notes', () => {
       data: {
         userId: 'user-client-1',
         type: 'NEW_NOTE',
+        projectId: 'proj-1',
         title: 'New note from the studio',
         message: 'The staging link is ready.',
       },

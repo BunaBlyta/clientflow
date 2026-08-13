@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: staffUser.id,
           type: 'REQUEST_SUBMITTED',
+          requestId: createdRequest.id,
           title: 'New project request',
           message: `${name}${companyName ? ` from ${companyName}` : ''} requested a ${packageRecord.name}.`,
         },

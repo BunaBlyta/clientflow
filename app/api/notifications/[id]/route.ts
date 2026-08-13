@@ -12,6 +12,9 @@ function serializeNotification(notification: {
   message: string;
   readAt: Date | null;
   createdAt: Date;
+  projectId: string | null;
+  invoiceId: string | null;
+  requestId: string | null;
 }) {
   return {
     id: notification.id,
@@ -19,6 +22,9 @@ function serializeNotification(notification: {
     type: notification.type,
     title: notification.title,
     body: notification.message,
+    projectId: notification.projectId,
+    invoiceId: notification.invoiceId,
+    requestId: notification.requestId,
     read: notification.readAt !== null,
     createdAt: notification.createdAt.toISOString(),
   };
@@ -44,6 +50,9 @@ export async function PATCH(
       message: true,
       readAt: true,
       createdAt: true,
+      projectId: true,
+      invoiceId: true,
+      requestId: true,
     },
   });
 
@@ -64,6 +73,9 @@ export async function PATCH(
           message: true,
           readAt: true,
           createdAt: true,
+          projectId: true,
+          invoiceId: true,
+          requestId: true,
         },
       });
 

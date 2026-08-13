@@ -222,6 +222,8 @@ export async function POST(
           data: {
             userId: (existingUser?.id ?? client.userId),
             type: 'INVOICE_ISSUED',
+            invoiceId: invoice.id,
+            projectId: invoice.projectId,
             title: 'Invoice issued',
             message: `${invoice.description ?? 'A custom invoice'} is ready to review and pay.`,
           },
