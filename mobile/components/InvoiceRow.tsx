@@ -5,7 +5,6 @@ import { getInvoiceKindLabel, getInvoiceStatusMeta, getOverdueMeta } from '../li
 import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import type { Invoice } from '../lib/types';
-import { StatusPill } from './ui/StatusPill';
 
 interface InvoiceRowProps {
   invoice: Invoice;
@@ -40,12 +39,7 @@ export function InvoiceRow({ invoice, onPress }: InvoiceRowProps) {
       </View>
       <View style={styles.right}>
         <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
-        <StatusPill
-          label={meta.label}
-          text={meta.text}
-          bg={meta.bg}
-          border={meta.border}
-        />
+        <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
       </View>
       <ChevronRight size={18} color={color.textMuted} style={{ marginLeft: spacing.sm }} />
     </Pressable>
@@ -85,6 +79,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.body,
     color: color.textPrimary,
+  },
+  statusText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
   },
   });
 }

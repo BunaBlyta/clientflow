@@ -1,12 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { AppState, type AppStateStatus } from 'react-native';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Lock,
-  XCircle,
-} from 'lucide-react-native';
+import { CheckCircle2, Lock, XCircle } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -100,10 +95,6 @@ export default function CheckoutScreen() {
   if (!invoice) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToInvoice')}</Text>
-        </Pressable>
         <Text style={styles.notFound}>{t('checkout.notFound')}</Text>
       </Screen>
     );
@@ -111,10 +102,6 @@ export default function CheckoutScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
-      <Pressable onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)} style={styles.backControl}>
-        <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backControlText}>{t('common.backToInvoice')}</Text>
-      </Pressable>
       <View style={styles.disclaimer}>
         <Lock size={12} color={color.textMuted} />
         <Text style={styles.disclaimerText}>
@@ -192,19 +179,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   content: {
     flexGrow: 1,
-  },
-  backControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  backControlText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accent,
   },
   disclaimer: {
     flexDirection: 'row',

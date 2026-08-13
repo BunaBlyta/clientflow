@@ -43,7 +43,6 @@ export function NotificationRow({ notification, onPress }: NotificationRowProps)
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      {!notification.read && <View style={styles.unreadDot} />}
       <View
         style={[
           styles.iconWrap,
@@ -78,15 +77,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   pressed: {
     opacity: 0.6,
-  },
-  unreadDot: {
-    position: 'absolute',
-    left: -spacing.sm,
-    top: spacing.lg,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: color.accent,
   },
   iconWrap: {
     width: 32,

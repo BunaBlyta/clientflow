@@ -14,7 +14,6 @@ export default function AppTabsLayout() {
   const { t } = useI18n();
   const token = useAuthStore((s) => s.token);
   const refreshNotifications = useDataStore((s) => s.refreshNotifications);
-  const unread = useDataStore((s) => s.unreadNotificationCount());
 
   useEffect(() => {
     if (token) void refreshNotifications(token);
@@ -53,12 +52,6 @@ export default function AppTabsLayout() {
         name="notifications"
         options={{
           title: t('tabs.notifications'),
-          tabBarBadge: unread > 0 ? unread : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: color.accent,
-            color: color.textOnAccent,
-            fontFamily: 'Inter_600SemiBold',
-          },
           tabBarIcon: ({ color: c, size }) => <Bell color={c} size={size} />,
         }}
       />

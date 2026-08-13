@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, FileText } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FileText } from 'lucide-react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../../../../components/InvoiceRow';
 import { Divider } from '../../../../../components/ui/Divider';
@@ -46,10 +46,6 @@ export default function ProjectInvoicesScreen() {
   if (loading && invoices.length === 0) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
-        </Pressable>
         <ActivityIndicator color={color.accent} />
       </Screen>
     );
@@ -58,10 +54,6 @@ export default function ProjectInvoicesScreen() {
   if (invoices.length === 0) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
-        </Pressable>
         <EmptyState
           icon={FileText}
           title={t('invoices.emptyTitle')}
@@ -73,10 +65,6 @@ export default function ProjectInvoicesScreen() {
 
   return (
     <Screen scroll={false}>
-      <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
-        <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
-      </Pressable>
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       <View style={styles.list}>
         {invoices.map((invoice, index) => (
@@ -95,20 +83,6 @@ export default function ProjectInvoicesScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  backControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  backControlText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accent,
-  },
   list: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,

@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 16:45 by Codex — mobile visual polish
+Last updated: 2026-08-13 16:50 by Codex — nested project UI cleanup
 
 ## Completed
 
@@ -12,6 +12,14 @@ Last updated: 2026-08-13 16:45 by Codex — mobile visual polish
   softened secondary, cancel, logout, and language controls by removing hard
   borders and using subtle surface contrast/shadows. Primary buttons retain a
   restrained accent glow.
+- Removed all in-content project back controls so nested project screens use
+  the existing top navigation bar consistently.
+- Removed status/unread badges from the mobile UI. Project and invoice status
+  now appears as plain semantic text, while notification read state and
+  mark-read behavior remain functional.
+- Reworked note rows into clean authored sections with intentional separators
+  and spacing. Invoice rows retain clear dividers and now use a quieter text
+  hierarchy for amount, metadata, and status.
 
 - Added a persisted mobile appearance preference with System, Light, and Dark
   choices. The initial appearance follows the device/browser system theme; an
@@ -51,16 +59,8 @@ Last updated: 2026-08-13 16:45 by Codex — mobile visual polish
   shows the two newest note previews, and shows up to two visible invoice rows.
   DRAFT invoices remain hidden, while totals and “View all” links are
   unchanged.
-- The homepage now has a visible “Back to projects” control that navigates to
-  the `/projects` tab route, rather than merely dismissing the nested stack.
-- All nested project screens now show an in-screen back control that uses a
-  deterministic absolute route: project detail returns to `/projects`, notes
-  and invoices return to `/projects/<projectId>`, invoice detail returns to
-  `/projects/<projectId>/invoices`, and checkout returns to
-  `/projects/<projectId>/invoices/<invoiceId>`.
-- These controls use `router.replace`, so they still work when Expo web loads a
-  nested URL directly after a browser refresh. The native automatic header
-  back behavior remains available as an enhancement.
+- The homepage and all nested project screens use the existing top navigation
+  bar for back navigation; nested route destinations and links remain intact.
 - Checkout's success and declined-payment return actions use the same absolute
   invoice route. Stripe opening, AppState refresh, invoice refresh, and the
   webhook-confirmed `PAID` success gate were not changed.
@@ -126,6 +126,8 @@ Last updated: 2026-08-13 16:45 by Codex — mobile visual polish
   the root typecheck was blocked during the initial implementation by web
   changes, then passed in the final polish verification.
 - Mobile visual polish: mobile TypeScript, Expo web export, root tests,
+  typecheck, lint, and `git diff --check` passed.
+- Nested project UI cleanup: mobile TypeScript, Expo web export, root tests,
   typecheck, lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on

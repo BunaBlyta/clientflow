@@ -1,11 +1,10 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, CheckCircle2, FileText } from 'lucide-react-native';
+import { CheckCircle2, FileText } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Button } from '../../../../../../components/ui/Button';
 import { EmptyState } from '../../../../../../components/ui/EmptyState';
 import { Screen } from '../../../../../../components/ui/Screen';
-import { StatusPill } from '../../../../../../components/ui/StatusPill';
 import { formatCurrency, formatDate, isPastDue } from '../../../../../../lib/format';
 import {
   getInvoiceKindLabel,
@@ -49,10 +48,6 @@ export default function InvoiceDetailScreen() {
   if (loading && !invoice) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToInvoices')}</Text>
-        </Pressable>
         <ActivityIndicator color={color.accent} />
       </Screen>
     );
@@ -61,10 +56,6 @@ export default function InvoiceDetailScreen() {
   if (!invoice) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToInvoices')}</Text>
-        </Pressable>
         <EmptyState icon={FileText} title={t('invoices.invoiceNotFound')} />
       </Screen>
     );
@@ -80,15 +71,10 @@ export default function InvoiceDetailScreen() {
     <Screen>
       <Stack.Screen options={{ title: invoice.label }} />
 
-      <Pressable onPress={() => router.replace(`/projects/${id}/invoices`)} style={styles.backControl}>
-        <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backControlText}>{t('common.backToInvoices')}</Text>
-      </Pressable>
-
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
       <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
-      <StatusPill label={meta.label} text={meta.text} bg={meta.bg} border={meta.border} />
+      <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
 
       <View style={styles.detailsBlock}>
         <DetailRow styles={styles} label={t('invoices.description')} value={invoice.label} />
@@ -141,18 +127,10 @@ function DetailRow({ label, value, styles }: { label: string; value: string; sty
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  backControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  backControlText: {
+  statusText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    color: color.accent,
+    marginTop: spacing.xs,
   },
   kind: {
     fontFamily: fontFamily.medium,

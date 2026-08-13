@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, MessageSquare, Send } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -23,7 +23,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 export default function ProjectNotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -78,10 +77,6 @@ export default function ProjectNotesScreen() {
   if (loading && notes.length === 0) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
-        </Pressable>
         <ActivityIndicator color={color.accent} style={styles.loading} />
       </Screen>
     );
@@ -99,10 +94,6 @@ export default function ProjectNotesScreen() {
         contentContainerStyle={styles.content}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
-        <Pressable onPress={() => router.replace(`/projects/${id}`)} style={styles.backControl}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backControlText}>{t('common.backToProject')}</Text>
-        </Pressable>
         {unreachable && (
           <Text style={styles.error}>
             {t('notes.unavailable')}
@@ -163,19 +154,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   loading: {
     marginTop: spacing.xxl,
-  },
-  backControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  backControlText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accent,
   },
   error: {
     fontFamily: fontFamily.regular,

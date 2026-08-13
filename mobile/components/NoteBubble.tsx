@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDateTime } from '../lib/format';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import type { Note } from '../lib/types';
 
@@ -31,12 +31,7 @@ export function NoteBubble({ note }: NoteBubbleProps) {
         <Text style={styles.roleTag}>{isClient ? t('notes.you') : t('notes.studio')}</Text>
         <Text style={styles.time}>{formatDateTime(note.createdAt)}</Text>
       </View>
-      <View
-        style={[
-          styles.bubble,
-          isClient ? styles.bubbleClient : styles.bubbleStaff,
-        ]}
-      >
+      <View style={styles.bodyWrap}>
         <Text style={styles.body}>{note.body}</Text>
       </View>
     </View>
@@ -47,6 +42,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   wrap: {
     marginBottom: spacing.lg,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border,
   },
   headerRow: {
     flexDirection: 'row',
@@ -70,18 +68,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
     marginLeft: 'auto',
   },
-  bubble: {
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-  },
-  bubbleClient: {
-    backgroundColor: color.accentSoft,
-    borderColor: color.accentSoft,
-  },
-  bubbleStaff: {
-    backgroundColor: color.surfaceMuted,
-    borderColor: color.border,
+  bodyWrap: {
+    paddingTop: spacing.xs,
   },
   body: {
     fontFamily: fontFamily.regular,
@@ -94,6 +82,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     gap: spacing.sm,
     marginBottom: spacing.lg,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border,
   },
   systemDot: {
     width: 4,

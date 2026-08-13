@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, ChevronRight, FileText, MessageSquare } from 'lucide-react-native';
+import { ChevronRight, FileText, MessageSquare } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { ProjectStageTracker } from '../../../../components/ProjectStageTracker';
@@ -51,10 +51,6 @@ export default function ProjectDetailScreen() {
   if (!project) {
     return (
       <Screen>
-        <Pressable onPress={() => router.replace('/projects')} style={styles.backToProjects}>
-          <ArrowLeft size={16} color={color.accent} />
-          <Text style={styles.backToProjectsText}>{t('common.backToProjects')}</Text>
-        </Pressable>
         <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
       </Screen>
     );
@@ -76,14 +72,6 @@ export default function ProjectDetailScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: project.name }} />
-
-      <Pressable
-        onPress={() => router.replace('/projects')}
-        style={styles.backToProjects}
-      >
-        <ArrowLeft size={16} color={color.accent} />
-        <Text style={styles.backToProjectsText}>{t('common.backToProjects')}</Text>
-      </Pressable>
 
       {unreachable && (
         <Text style={styles.error}>
@@ -165,19 +153,6 @@ export default function ProjectDetailScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  backToProjects: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  backToProjectsText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accent,
-  },
   error: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,

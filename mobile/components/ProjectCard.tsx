@@ -6,7 +6,6 @@ import { getProjectStatusMeta } from '../lib/status';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import type { Project } from '../lib/types';
-import { StatusPill } from './ui/StatusPill';
 
 interface ProjectCardProps {
   project: Project;
@@ -33,12 +32,7 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
       </View>
       {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
       <View style={styles.footer}>
-        <StatusPill
-          label={meta.label}
-          text={meta.text}
-          bg={meta.bg}
-          border={meta.border}
-        />
+        <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
         {project.targetLaunchDate && project.status !== 'LAUNCHED' && (
           <Text style={styles.meta}>
             {t('common.target')}: {formatDate(project.targetLaunchDate)}
@@ -90,6 +84,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
+  },
+  statusText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
   },
   });
 }
