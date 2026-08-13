@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   logoutButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -177,13 +178,14 @@ const styles = StyleSheet.create({
   confirmActions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
   },
   cancelButton: {
-    height: 40,
+    flex: 1,
+    height: 48,
     paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: color.border,
     backgroundColor: color.surface,

@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 14:56 by Codex — account footer and logout confirmation polish
+Last updated: 2026-08-13 14:59 by Codex — tab footer and logout confirmation sizing
 
 ## Completed
 
@@ -43,10 +43,11 @@ Last updated: 2026-08-13 14:56 by Codex — account footer and logout confirmati
   webhook-confirmed `PAID` success gate were not changed.
 - The note preview bug was caused by taking the last two items from a
   newest-first selector; it now takes the first two live/saved notes.
-- The Account screen now adds the device safe-area inset below its footer so
-  the version text remains fully visible above the tab bar or home indicator.
-- The logout confirmation now keeps the destructive “Log out” action prominent
-  while making “Cancel” a smaller, compact secondary control.
+- The app tab footer now has explicit height, safe-area padding, and label line
+  height so Projects, Notifications, and Account remain fully visible on small
+  screens.
+- The logout confirmation now gives Cancel and Log out equal-width halves of
+  the action row, while retaining the destructive action's existing styling.
 
 ## Verification
 
@@ -61,6 +62,8 @@ Last updated: 2026-08-13 14:56 by Codex — account footer and logout confirmati
 - `git diff --check`: passed.
 - Account footer and logout confirmation changes: mobile TypeScript, root
   tests, root typecheck, and root lint all passed.
+- Tab footer and equal-width logout actions: mobile TypeScript, root tests,
+  root typecheck, root lint, and `git diff --check` passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
