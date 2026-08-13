@@ -39,7 +39,7 @@ export default async function PaymentSuccessPage({
   const invoiceId = isValidIdentifier(params.invoice_id) ? params.invoice_id : null;
   const isMobileReturn = params.return_to === "mobile" && projectId !== null && invoiceId !== null;
   const actionHref = isMobileReturn
-    ? `${EXPO_WEB_BASE_URL}/projects/${encodeURIComponent(projectId)}/invoices/${encodeURIComponent(invoiceId)}/checkout`
+    ? `${EXPO_WEB_BASE_URL}/projects/${encodeURIComponent(projectId)}`
     : "/dashboard/invoices";
   const actionLabel = isMobileReturn ? "Continue to web app" : "View invoices";
 

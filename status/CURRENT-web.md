@@ -3,7 +3,7 @@
 You own `app/(marketing)/`, `app/(dashboard)/`, `app/(auth)/`, `middleware.ts`,
 `components/` and `lib/` only. You are the only writer of this file.
 
-Last updated: 2026-08-13 12:04 by Codex — Expo web return as temporary primary action
+Last updated: 2026-08-13 13:06 by Codex — Expo project return redirect
 
 ## What changed
 
@@ -85,6 +85,12 @@ Last updated: 2026-08-13 12:04 by Codex — Expo web return as temporary primary
   “Continue to web app” destination. The native `clientflow://` action was removed
   from the payment-result page until Xcode/native builds are available. No established
   Expo web URL environment variable exists, so it uses the requested local fallback.
+- Because the Expo web app does not yet hydrate the returned invoice reliably, the
+  temporary mobile return now opens the project screen at
+  `http://localhost:8081/projects/<projectId>` without the invoice ID.
+- The valid mobile success-page action keeps the “Continue to web app” label while
+  using the project-level Expo route, so the app can hydrate the project before the
+  client opens an invoice.
 
 ## Verification
 
@@ -159,6 +165,10 @@ Last updated: 2026-08-13 12:04 by Codex — Expo web return as temporary primary
 - Verified the exact Expo web checkout URL on port 8081 with HTTP 200 after starting
   the existing Expo web server temporarily. The server was stopped after verification.
 - Native deep-link support was not tested and is intentionally deferred.
+- The project-level Expo web redirect task passed all relevant checks and keeps the
+  Stripe webhook as the only payment confirmation source.
+- Verified `http://localhost:8081/projects/proj-1` returned HTTP 200 from the existing
+  Expo web server. The temporary server was stopped after the check.
 
 ## Hard rule
 
