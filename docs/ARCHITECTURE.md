@@ -182,6 +182,33 @@ both the notification ID and session user ID, so another user's notification is
 reported as 404. Repeating the request for an already-read notification returns
 200 without writing again.
 
+## Stripe checkout contracts
+
+`POST /api/stripe/checkout` accepts `{ "invoiceId": string, "returnTo"?:
+"mobile" }` for an authenticated owner of the invoice (staff may pay any
+invoice). The response shape is unchanged:
+
+```json
+{
+  "checkoutSessionId": "cs_...",
+  "checkoutUrl": "https://checkout.stripe.com/..."
+}
+```
+
+When `returnTo` is omitted, the Stripe success URL remains the web flow:
+`/payment/success?session_id={CHECKOUT_SESSION_ID}`. When `returnTo` is
+`"mobile"`, the server builds the fixed success URL with the invoice and
+project IDs:
+`/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=...&invoice_id=...`.
+Other `returnTo` values are rejected with 400; callers never supply an
+arbitrary redirect URL.
+
+If an invoice already has a Stripe Checkout Session, web requests may reuse it
+as before. Mobile requests reuse it only when Stripe's retrieved `success_url`
+is the Clientflow payment-success path with `return_to=mobile` and matching
+project and invoice IDs. An old web-only session, or a session without a
+verifiable mobile success URL, gets a new mobile Checkout Session instead.
+
 ## Package management contracts
 
 `GET /api/packages` remains public and returns active packages ordered by

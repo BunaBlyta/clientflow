@@ -4,6 +4,51 @@ import { prisma } from '@/app/api/_lib/prisma';
 
 export const runtime = 'nodejs';
 
+type CheckoutReturnTo = 'mobile';
+
+type StripeCheckoutSession = {
+  url?: string;
+  success_url?: string | null;
+};
+
+function isMobileReturnTo(value: unknown): value is CheckoutReturnTo {
+  return value === 'mobile';
+}
+
+function mobileSuccessUrl(
+  appUrl: string,
+  sessionPlaceholder: string,
+  projectId: string,
+  invoiceId: string,
+) {
+  const url = new URL('/payment/success', appUrl);
+
+  return `${url.origin}${url.pathname}?session_id=${sessionPlaceholder}&return_to=mobile&project_id=${encodeURIComponent(projectId)}&invoice_id=${encodeURIComponent(invoiceId)}`;
+}
+
+function isMatchingMobileSuccessUrl(
+  successUrl: string | null | undefined,
+  appUrl: string,
+  projectId: string,
+  invoiceId: string,
+) {
+  if (!successUrl) return false;
+
+  try {
+    const url = new URL(successUrl);
+    const expectedOrigin = new URL(appUrl).origin;
+    return (
+      url.origin === expectedOrigin &&
+      url.pathname === '/payment/success' &&
+      url.searchParams.get('return_to') === 'mobile' &&
+      url.searchParams.get('project_id') === projectId &&
+      url.searchParams.get('invoice_id') === invoiceId
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const user = await getAuthenticatedUser(request);
   if (!user) {
@@ -21,7 +66,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
   }
 
-  const invoiceId = (body as { invoiceId: string }).invoiceId;
+  const values = body as { invoiceId: string; returnTo?: unknown };
+  if (values.returnTo !== undefined && !isMobileReturnTo(values.returnTo)) {
+    return NextResponse.json({ error: 'returnTo must be "mobile" when provided' }, { status: 400 });
+  }
+
+  const invoiceId = values.invoiceId;
+  const returnTo = values.returnTo as CheckoutReturnTo | undefined;
   const invoice = await prisma.invoice.findFirst({
     where: {
       id: invoiceId,
@@ -49,14 +100,25 @@ export async function POST(request: NextRequest) {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) return NextResponse.json({ error: 'Stripe is not configured' }, { status: 503 });
 
+  const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
+  const successUrl = returnTo === 'mobile'
+    ? mobileSuccessUrl(appUrl, '{CHECKOUT_SESSION_ID}', invoice.projectId, invoice.id)
+    : `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
+
   if (invoice.stripeCheckoutSessionId) {
     const sessionResponse = await fetch(
       `https://api.stripe.com/v1/checkout/sessions/${invoice.stripeCheckoutSessionId}`,
       { headers: { Authorization: `Bearer ${secretKey}` } },
     );
     if (sessionResponse.ok) {
-      const session = (await sessionResponse.json()) as { url?: string };
-      if (session.url) {
+      const session = (await sessionResponse.json()) as StripeCheckoutSession;
+      const canReuse = returnTo !== 'mobile' || isMatchingMobileSuccessUrl(
+        session.success_url,
+        appUrl,
+        invoice.projectId,
+        invoice.id,
+      );
+      if (session.url && canReuse) {
         return NextResponse.json({
           checkoutSessionId: invoice.stripeCheckoutSessionId,
           checkoutUrl: session.url,
@@ -65,10 +127,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
   const params = new URLSearchParams({
     mode: 'payment',
-    success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: successUrl,
     cancel_url: `${appUrl}/payment/cancelled`,
     'line_items[0][price_data][currency]': invoice.currency,
     'line_items[0][price_data][product_data][name]': invoice.description ?? 'Clientflow invoice',
