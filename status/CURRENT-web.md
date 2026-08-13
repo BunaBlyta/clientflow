@@ -1,16 +1,15 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 16:49 by Codex — dashboard layout and settings refinements
+Last updated: 2026-08-13 16:59 by Codex — dashboard polish and public header refinement
 
 ## What changed
 
-- Kept the Projects tabs, search field, and status filter together in one toolbar row on wider screens, with responsive wrapping when the available width is too narrow.
-- Made the staff sidebar navigation labels larger with more vertical spacing. Marketing navigation labels and spacing were also opened up.
-- Moved the language selector and theme toggle into a new equal-width Display tab in the Settings modal. The settings panels stay mounted while tabs change, so package and team sections do not remount or refetch on every tab selection.
-- Put teammate name, teammate email, and Send invite on separate rows in the team settings form.
-- Kept the notifications dropdown scrollable while hiding its scrollbar chrome.
-- Removed duplicate language/theme controls from the marketing navbar, auth pages, and dashboard topbar so dashboard display preferences have one clear home.
-- Added German and Albanian translations for the new Display settings labels and updated the settings introduction.
+- Gave the Settings modal a stable 680px-or-viewport-sized frame with an internal scroll area, so its outer shape does not jump between Packages, Team, and Display content.
+- Kept the Settings tabs equal-width and restyled them as a higher-contrast pill switcher. The Send invite action now stretches across the form width.
+- Kept the Projects tabs, search, and status filter on one horizontal toolbar rail; narrow screens can scroll the rail instead of moving search below the tabs.
+- Applied softer shared geometry across buttons, inputs, textareas, selects, dropdowns, popovers, dialogs, cards, badges, tabs, and tooltips.
+- Added `public/logo.png` before the Clientflow name in the public marketing navbar and dashboard sidebar.
+- Made the marketing header full width, with the Packages / How it works / Contact links centered in the viewport and language/theme controls placed in the right utility area beside the staff and CTA controls.
 
 ## Verification
 
@@ -20,13 +19,13 @@ Last updated: 2026-08-13 16:49 by Codex — dashboard layout and settings refine
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
 
-The webpack build still reports the repository’s existing middleware-to-proxy deprecation warning. The unrelated untracked `public/logo.png` remains untouched.
+The standard `npm run verify` Turbopack build remains subject to the known sandbox port-binding restriction; the webpack production build passed. The other lane's existing mobile edits remain untouched.
 
 ## Handoff notes
 
 - No API, Prisma, mobile, architecture, or other lane files were changed.
-- The notification scrollbar uses a shared CSS utility that preserves scrolling and hides the visible scrollbar.
-- The settings Display tab uses the existing persisted theme and locale providers, so no new storage or API behavior was introduced.
+- The logo is an existing user-provided asset and is staged with this web change.
+- Language/theme remain available in dashboard Settings → Display; the public marketing header also provides the controls for unauthenticated visitors.
 
 ## Hard rule
 

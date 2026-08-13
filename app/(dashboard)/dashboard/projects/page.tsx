@@ -60,7 +60,7 @@ function ProjectsPageInner() {
           router.replace(value === "projects" ? "/dashboard/projects" : `/dashboard/projects?tab=${value}`);
         }}
       >
-        <div className="flex flex-wrap items-center justify-start gap-2">
+        <div className="flex items-center gap-3 overflow-x-auto pb-1">
           <TabsList>
             <TabsTrigger value="projects">{t("projects.tabProjects")}</TabsTrigger>
             <TabsTrigger value="requests">{t("projects.tabRequests")}</TabsTrigger>

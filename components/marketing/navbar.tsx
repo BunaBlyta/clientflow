@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSelect } from "@/components/language-select";
 import { useLocale } from "@/lib/i18n";
 
 const links = [
@@ -14,11 +17,12 @@ export function Navbar() {
   const { t } = useLocale();
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="text-[15px] font-semibold tracking-tight">
+      <div className="relative flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
+        <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+          <Image src="/logo.png" alt="" width={30} height={30} className="size-7 object-contain" priority />
           Clientflow
         </Link>
-        <nav className="hidden items-center gap-10 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
           {links.map((link) => (
             <a
               key={link.href}
@@ -29,7 +33,9 @@ export function Navbar() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-5 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <LanguageSelect />
+          <ThemeToggle />
           <Link
             href="/login"
             className="hidden text-[15px] font-normal text-muted-foreground hover:text-foreground sm:inline"

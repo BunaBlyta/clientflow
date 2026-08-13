@@ -296,7 +296,7 @@ function TeamSection() {
             <Input id="invite-email" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
           </div>
           <div>
-            <Button type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
+            <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
           </div>
         </form>
       </div>
