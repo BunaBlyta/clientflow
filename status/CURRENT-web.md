@@ -1,29 +1,28 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 15:35 by Codex — notification loading diagnosis
+Last updated: 2026-08-13 15:46 by Codex — notification target data diagnosis
 
 ## What changed
 
-- Reproduced the notification loading path against the running Next server and inspected both web consumers: `/dashboard/notifications` and the topbar dropdown.
-- Both surfaces use `fetchJson<Notification[]>("/api/notifications", ...)`, retain their loading/error/retry states, and do not render notification links until the response resolves. The target-ID destination helper is not reached when the API request fails.
-- The live server log shows the authenticated notification request fails inside Prisma with:
-  `PrismaClientValidationError: Unknown field projectId for select statement on model Notification. Available options are marked with ?.`
-  The same mismatch applies to `invoiceId` and `requestId`.
-- Direct unauthenticated verification of `GET /api/notifications` returned HTTP 401 with `{"error":"Authentication required"}`, confirming auth handling is active. Authenticated requests reached the Prisma validation error in the live server log.
-- No web code change was appropriate: the failure is the API agent’s in-progress notification target schema/client mismatch, not an invalid web link, response rendering issue, or fetchJson state transition.
+- Rechecked both staff notification consumers after the API/Prisma client update: the full `/dashboard/notifications` page and the topbar dropdown still use the shared ID-based destination helper and read-before-navigation behavior.
+- The authenticated live `GET /api/notifications` response is now HTTP 200 and parses correctly. However, every existing notification returned in the live staff account has `projectId: null`, `invoiceId: null`, and `requestId: null`.
+- With no target ID, the required helper destination is `/dashboard/notifications`, so clicking an existing notification returns to the same page and appears to do nothing. The web must not infer a project/request/invoice from notification text or type.
+- No web code change was appropriate: the remaining issue is missing target data in the live database, not fetchJson, authentication, loading/error state, rendering, or invalid URL handling.
 
 ## Verification
 
+- Authenticated live API check: `GET /api/notifications` returned HTTP 200 with a valid array; all current records had nullable targets.
+- `npm run test`: passed — 34 files, 138 tests.
+- `npm run typecheck`: passed.
 - `npm run lint`: passed.
 - `git diff --check`: passed.
-- `npm run test`: final shared-checkout run is blocked by 8 API tests failing because the API notification target payload changes are incomplete. The focused web notification helper test remains passing.
-- `npm run typecheck`: final shared-checkout run is blocked by API routes selecting/creating notification target fields that the generated Prisma client does not yet expose.
-- Browser-control reproduction was unavailable because no browser instance was available. The running Next server log provided the authenticated Prisma error above; direct unauthenticated curl returned the expected 401.
+- Browser automation was unavailable in this session, but the live authenticated response and source click handlers were inspected directly.
 
 ## Handoff notes
 
-- API agent action required: finish the notification target migration and regenerate/use the matching Prisma client, then update the affected API tests. The web consumers already accept nullable `projectId`, `invoiceId`, and `requestId` response fields.
-- No API, Prisma, or mobile files were changed. Concurrent API migration work and unrelated untracked `public/logo.png` were left untouched.
+- API/data action required: apply the notification target migration if it has not been applied, then create or seed notifications through the updated API/seed flow so applicable records contain target IDs. Existing records with all three fields null cannot be repaired safely from web code without violating the no-inference contract.
+- API handoff specifies `npx prisma migrate dev --name add-notification-navigation-targets`; the seed flow should be rerun deliberately if seeded notifications are needed. This web lane did not run either command.
+- No API, Prisma, or mobile files were changed. Unrelated untracked `public/logo.png` remains untouched.
 
 ## Hard rule
 
