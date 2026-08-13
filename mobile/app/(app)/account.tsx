@@ -1,5 +1,6 @@
 import { Building2, LogOut, Mail, User as UserIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { color, fontFamily, fontSize, radius, spacing } from '../../lib/theme';
@@ -8,6 +9,7 @@ import { useAuthStore } from '../../store/auth-store';
 export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
+  const insets = useSafeAreaInsets();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   function handleLogout() {
@@ -19,7 +21,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <Screen>
+    <Screen contentContainerStyle={{ paddingBottom: spacing.xxl + insets.bottom }}>
       <Text style={styles.heading}>Account</Text>
 
       <View style={styles.avatarWrap}>
@@ -157,6 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     height: 48,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: color.dangerBorder,
@@ -174,11 +177,13 @@ const styles = StyleSheet.create({
   confirmActions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   cancelButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: radius.md,
+    height: 40,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: color.border,
     backgroundColor: color.surface,

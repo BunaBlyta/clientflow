@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 14:46 by Codex — deterministic nested-screen back controls
+Last updated: 2026-08-13 14:56 by Codex — account footer and logout confirmation polish
 
 ## Completed
 
@@ -43,6 +43,10 @@ Last updated: 2026-08-13 14:46 by Codex — deterministic nested-screen back con
   webhook-confirmed `PAID` success gate were not changed.
 - The note preview bug was caused by taking the last two items from a
   newest-first selector; it now takes the first two live/saved notes.
+- The Account screen now adds the device safe-area inset below its footer so
+  the version text remains fully visible above the tab bar or home indicator.
+- The logout confirmation now keeps the destructive “Log out” action prominent
+  while making “Cancel” a smaller, compact secondary control.
 
 ## Verification
 
@@ -55,6 +59,8 @@ Last updated: 2026-08-13 14:46 by Codex — deterministic nested-screen back con
   could not fetch Inter from Google Fonts in the sandbox.
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
+- Account footer and logout confirmation changes: mobile TypeScript, root
+  tests, root typecheck, and root lint all passed.
 - No device or simulator testing was performed.
 - Expo web smoke check was not completed: no Expo server was listening on
   `http://localhost:8081`, and the temporary `npx expo start --web` process did
