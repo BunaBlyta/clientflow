@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-13 11:09 by Codex — Stripe mobile return-link investigation
+Last updated: 2026-08-13 11:18 by Codex — mobile Stripe return contract
 
 ## Completed
 
@@ -9,34 +9,29 @@ Last updated: 2026-08-13 11:09 by Codex — Stripe mobile return-link investigat
   through the notification API.
 - The account screen uses an inline logout confirmation instead of a native
   alert.
-
-## Payment return investigation
-
-- Traced the mobile checkout screen, checkout helper, Stripe checkout route,
-  Stripe success URL, web payment success page, and Expo Router entry points.
-- The mobile checkout correctly opens the API's `checkoutUrl`, waits for the
-  browser to return through `AppState`, refetches the invoice, and only shows
-  success after the API reports `PAID`.
-- The current contract cannot be fixed in `mobile/` alone. The API always sets
-  `success_url` to the web payment page, and that page's “View invoices” link
-  is hardcoded to `/dashboard/invoices`, so the mobile app never receives a
-  `clientflow://` target to handle.
-- No mobile source change was made. The exact required cross-lane contract is
-  recorded in the task log: the mobile checkout needs an explicit mobile return
-  mode, and the web success page must render a project/invoice deep link for
-  that mode while keeping the existing staff-dashboard fallback for web users.
+- The Stripe checkout request now sends `{ invoiceId, returnTo: "mobile" }`.
+  This lets the API/payment page return the client to the mobile deep link.
+- The existing checkout flow is unchanged: it opens Stripe's `checkoutUrl`,
+  refreshes the invoice when the app returns through `AppState`, and only shows
+  success after the API returns webhook-confirmed `PAID` status.
+- Verified the intended destination remains
+  `clientflow://projects/<projectId>/invoices/<invoiceId>/checkout`: the app
+  still declares the `clientflow` scheme and the Expo Router route remains the
+  existing checkout screen.
 
 ## Verification
 
-- No mobile source code changed in this investigation.
-- No device or simulator testing was performed; the app is still only verified
-  under the existing web/typecheck workflow, and Expo Go cannot run this SDK.
+- `npx tsc --noEmit` from `mobile/`: passed.
+- Root `npm run test`: passed — 29 test files, 107 tests.
+- Root `npm run typecheck`: passed.
+- Root `npm run lint`: passed.
+- `npx next build --webpack`: passed.
+- `npm run verify`: typecheck, lint, and tests passed; the Turbopack build
+  could not fetch Inter from Google Fonts in the sandbox.
+- `git diff --check`: passed.
+- No device or simulator testing was performed.
 
 ## Notes for the next session
 
-- After the API/payment-page contract is shipped, update the mobile checkout
-  helper to request the mobile return mode and verify the deep link opens the
-  existing checkout route. Keep the existing AppState invoice refresh and
-  webhook-confirmed `PAID` check.
 - The mobile app still uses `http://localhost:3000` unless
   `EXPO_PUBLIC_API_URL` is set to a reachable web/API origin.

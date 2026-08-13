@@ -124,7 +124,7 @@ export interface CheckoutResponse {
 export function checkoutRequest(invoiceId: string, token: string) {
   return request<CheckoutResponse>('/api/stripe/checkout', {
     method: 'POST',
-    body: JSON.stringify({ invoiceId }),
+    body: JSON.stringify({ invoiceId, returnTo: 'mobile' }),
   }, token);
 }
 
