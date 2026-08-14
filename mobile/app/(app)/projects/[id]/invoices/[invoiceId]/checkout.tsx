@@ -193,7 +193,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
   },
   card: {
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
     borderRadius: radius.lg,
     padding: spacing.lg,
@@ -221,7 +221,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     gap: spacing.sm,
     height: 44,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,

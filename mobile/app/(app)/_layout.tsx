@@ -35,7 +35,6 @@ export default function AppTabsLayout() {
           shadowOpacity: 0.08,
           shadowRadius: 8,
           shadowOffset: { width: 0, height: -2 },
-          elevation: 1,
         },
         tabBarItemStyle: {
           paddingTop: spacing.sm,

@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Clock3, ShieldCheck, ShieldX } from 'lucide-react-native';
+import { Clock3, ShieldCheck, ShieldX } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { getPackageById, MOCK_REQUESTS } from '../../lib/mock-data';
@@ -11,10 +11,10 @@ import { useI18n } from '../../lib/i18n';
 import type { ProjectRequest } from '../../lib/types';
 
 export default function RequestStatusScreen() {
-  const router = useRouter();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [searched, setSearched] = useState(false);
   const [result, setResult] = useState<ProjectRequest | null>(null);
@@ -31,11 +31,7 @@ export default function RequestStatusScreen() {
   const pkg = result ? getPackageById(result.packageId) : null;
 
   return (
-    <View style={styles.container}>
-      <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={12}>
-        <ArrowLeft size={20} color={color.textPrimary} />
-      </Pressable>
-
+    <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
       <Text style={styles.heading}>{t('auth.checkYourRequest')}</Text>
       <Text style={styles.subheading}>
         {t('auth.requestSubheading')}
@@ -93,16 +89,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flex: 1,
     backgroundColor: color.background,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    marginLeft: -spacing.sm,
+    paddingTop: spacing.lg,
   },
   heading: {
     fontFamily: fontFamily.semibold,
@@ -119,7 +106,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   resultCard: {
     marginTop: spacing.xl,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
     borderRadius: radius.lg,
     padding: spacing.lg,

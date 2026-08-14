@@ -161,7 +161,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       shadowOpacity: 0.06,
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 3 },
-      elevation: 1,
     },
     row: {
       flexDirection: 'row',
@@ -187,7 +186,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       height: CIRCLE_SIZE,
       borderRadius: CIRCLE_SIZE / 2,
       backgroundColor: color.surfaceMuted,
-      borderWidth: 1,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: color.borderStrong,
     },
     lineTrack: {
@@ -243,7 +242,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       shadowOpacity: 0.06,
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 3 },
-      elevation: 1,
     },
     bannerAccent: {
       width: 3,

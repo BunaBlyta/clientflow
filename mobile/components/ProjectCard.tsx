@@ -56,7 +56,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
-    elevation: 1,
   },
   pressed: {
     opacity: 0.78,

@@ -73,7 +73,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     shadowOpacity: 0.14,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   secondary: {
     backgroundColor: color.surface,

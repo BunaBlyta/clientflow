@@ -184,7 +184,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textPrimary,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,

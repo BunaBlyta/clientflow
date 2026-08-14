@@ -168,7 +168,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   processingBanner: {
     backgroundColor: color.warningBg,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.warningBorder,
     borderRadius: 12,
     padding: spacing.md,
@@ -185,7 +185,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: color.successBg,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.successBorder,
     borderRadius: 12,
     padding: spacing.md,

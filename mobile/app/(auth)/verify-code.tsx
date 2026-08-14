@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, MailCheck } from 'lucide-react-native';
+import { MailCheck } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { verificationCheckRequest, verificationSendRequest } from '../../lib/api';
@@ -13,6 +14,7 @@ export default function VerifyCodeScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ mode?: string; email?: string }>();
   const mode = params.mode === 'reset' ? 'reset' : 'invite';
 
@@ -88,11 +90,7 @@ export default function VerifyCodeScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={12}>
-        <ArrowLeft size={20} color={color.textPrimary} />
-      </Pressable>
-
+    <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
       <View style={styles.iconWrap}>
         <MailCheck size={22} color={color.accent} />
       </View>
@@ -158,16 +156,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flex: 1,
     backgroundColor: color.background,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    marginLeft: -spacing.sm,
+    paddingTop: spacing.lg,
   },
   iconWrap: {
     width: 44,

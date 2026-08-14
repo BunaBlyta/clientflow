@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CheckCircle2, LayoutGrid } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight, LayoutGrid } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { MOCK_CLIENT } from '../../lib/mock-data';
@@ -22,6 +23,7 @@ export default function LoginScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  const insets = useSafeAreaInsets();
   const login = useAuthStore((s) => s.login);
 
   const [email, setEmail] = useState(MOCK_CLIENT.email);
@@ -46,7 +48,7 @@ export default function LoginScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}>
         <View style={styles.brandRow}>
           <View style={styles.logoMark}>
             <LayoutGrid size={20} color={color.textOnAccent} />
@@ -99,17 +101,13 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{t('auth.or')}</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <Button
-          label={t('auth.inviteCode')}
-          variant="secondary"
+        <Pressable
           onPress={() => router.push('/(auth)/verify-code?mode=invite')}
-        />
+          style={({ pressed }) => [styles.inviteLink, pressed && styles.pressed]}
+        >
+          <Text style={styles.inviteLinkText}>{t('auth.inviteCode')}</Text>
+          <ChevronRight size={16} color={color.accent} />
+        </Pressable>
 
         <Pressable
           onPress={() => router.push('/(auth)/request-status')}
@@ -168,7 +166,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: color.successBg,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.successBorder,
     borderRadius: radius.md,
     padding: spacing.md,
@@ -206,21 +204,21 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     textAlign: 'center',
     marginTop: spacing.md,
   },
-  divider: {
+  inviteLink: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    marginVertical: spacing.xl,
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
   },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: color.border,
+  inviteLinkText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.accent,
   },
-  dividerText: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
+  pressed: {
+    opacity: 0.7,
   },
   statusLink: {
     alignItems: 'center',
