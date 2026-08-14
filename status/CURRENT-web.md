@@ -1,15 +1,13 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-13 16:59 by Codex — dashboard polish and public header refinement
+Last updated: 2026-08-14 09:00 by Codex — remove the last live-page mock-store dependency
 
-## What changed
+## Current state
 
-- Gave the Settings modal a stable 680px-or-viewport-sized frame with an internal scroll area, so its outer shape does not jump between Packages, Team, and Display content.
-- Kept the Settings tabs equal-width and restyled them as a higher-contrast pill switcher. The Send invite action now stretches across the form width.
-- Kept the Projects tabs, search, and status filter on one horizontal toolbar rail; narrow screens can scroll the rail instead of moving search below the tabs.
-- Applied softer shared geometry across buttons, inputs, textareas, selects, dropdowns, popovers, dialogs, cards, badges, tabs, and tooltips.
-- Added `public/logo.png` before the Clientflow name in the public marketing navbar and dashboard sidebar.
-- Made the marketing header full width, with the Packages / How it works / Contact links centered in the viewport and language/theme controls placed in the right utility area beside the staff and CTA controls.
+- The dashboard home, analytics, clients, notifications/topbar, projects, invoices, project detail, and settings screens read live API data.
+- The public package cards and request form read `GET /api/packages` and submit to `POST /api/requests`; the custom inquiry form submits to `POST /api/contact-leads`.
+- Request approval/rejection, invoice actions, project status changes, notification read actions, invitations, package editing, invoice creation, and project notes use their live API endpoints.
+- The project detail page had one leftover Zustand call that mirrored live status updates into the unused mock store. It has been removed; the page now keeps its server response as its only local source of truth.
 
 ## Verification
 
@@ -18,14 +16,13 @@ Last updated: 2026-08-13 16:59 by Codex — dashboard polish and public header r
 - `npm run lint`: passed.
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
-
-The standard `npm run verify` Turbopack build remains subject to the known sandbox port-binding restriction; the webpack production build passed. The other lane's existing mobile edits remain untouched.
+- Browser verification was not available: the browser runtime reported no connected browser, and the local dev server was not reachable from this session. Do not describe this task as manually clicked through.
 
 ## Handoff notes
 
 - No API, Prisma, mobile, architecture, or other lane files were changed.
-- The logo is an existing user-provided asset and is staged with this web change.
-- Language/theme remain available in dashboard Settings → Display; the public marketing header also provides the controls for unauthenticated visitors.
+- The old fixture modules remain in `lib/` for now, but no web page reads them after this cleanup; they were not deleted because they are historical scaffolding and may still be useful for reference.
+- The build reports Next’s existing warning that the `middleware` convention is deprecated in favor of `proxy`; this task did not change middleware.
 
 ## Hard rule
 

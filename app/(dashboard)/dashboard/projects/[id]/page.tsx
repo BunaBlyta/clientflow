@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
-import { useAppStore } from "@/lib/store";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, formatMajorCurrency } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -21,7 +20,6 @@ export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const { t } = useLocale();
   const projectId = params.id;
-  const applyProjectUpdate = useAppStore((s) => s.applyProjectUpdate);
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -103,7 +101,6 @@ export default function ProjectDetailPage() {
   const handleProjectUpdated = useCallback(
     (updatedProject: Project) => {
       setProject(updatedProject);
-      applyProjectUpdate(updatedProject);
 
       // Re-read the feed after the PATCH transaction completes; do not predict or append its note locally.
       void fetchNotes()
@@ -112,7 +109,7 @@ export default function ProjectDetailPage() {
           setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the project activity.");
         });
     },
-    [applyProjectUpdate, fetchNotes],
+    [fetchNotes],
   );
 
   const handleInvoiceUpdated = useCallback((updatedInvoice: Invoice) => {
