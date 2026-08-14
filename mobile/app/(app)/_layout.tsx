@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Bell, FolderKanban, User } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { useTheme } from '../../lib/theme';
+import { spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
@@ -38,7 +38,8 @@ export default function AppTabsLayout() {
           elevation: 12,
         },
         tabBarItemStyle: {
-          paddingVertical: 0,
+          paddingTop: spacing.sm,
+          paddingBottom: 0,
         },
       }}
     >
