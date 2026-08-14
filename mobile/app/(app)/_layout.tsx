@@ -41,6 +41,9 @@ export default function AppTabsLayout() {
           paddingTop: spacing.sm,
           paddingBottom: 0,
         },
+        tabBarIconStyle: {
+          transform: [{ translateY: -spacing.xs }],
+        },
       }}
     >
       <Tabs.Screen
