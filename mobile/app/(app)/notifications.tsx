@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { NotificationRow } from '../../components/NotificationRow';
 import { Divider } from '../../components/ui/Divider';
@@ -18,6 +19,7 @@ export default function NotificationsScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
   const markNotificationRead = useDataStore((s) => s.markNotificationRead);
   const markAllNotificationsRead = useDataStore((s) => s.markAllNotificationsRead);
@@ -67,7 +69,10 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <Screen scroll={notifications.length > 0}>
+    <Screen
+      scroll={notifications.length > 0}
+      contentContainerStyle={{ paddingTop: insets.top + spacing.lg }}
+    >
       <View style={styles.headerRow}>
         <Text style={styles.heading}>{t('notifications.title')}</Text>
         {unread > 0 && (

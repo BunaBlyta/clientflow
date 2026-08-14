@@ -28,6 +28,7 @@ export default function AccountScreen() {
   return (
     <Screen
       contentContainerStyle={{
+        paddingTop: insets.top + spacing.lg,
         paddingBottom: 64 + insets.bottom + spacing.md,
       }}
     >
