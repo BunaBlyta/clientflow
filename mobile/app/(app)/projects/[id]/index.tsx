@@ -79,7 +79,6 @@ export default function ProjectDetailScreen() {
         </Text>
       )}
 
-      <Text style={styles.name}>{project.name}</Text>
       {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
 
       <View style={styles.statRow}>

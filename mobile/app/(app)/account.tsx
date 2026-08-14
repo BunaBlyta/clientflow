@@ -34,18 +34,22 @@ export default function AccountScreen() {
     >
       <Text style={styles.heading}>{t('account.title')}</Text>
 
-      <View style={styles.avatarWrap}>
-        <Text style={styles.avatarInitial}>
-          {client?.name?.charAt(0).toUpperCase() ?? '?'}
-        </Text>
+      <View style={styles.profileHeader}>
+        <View style={styles.avatarWrap}>
+          <Text style={styles.avatarInitial}>
+            {client?.name?.charAt(0).toUpperCase() ?? '?'}
+          </Text>
+        </View>
+        <View style={styles.profileCopy}>
+          <Text style={styles.name}>{client?.name}</Text>
+          <Text style={styles.company}>{client?.companyName}</Text>
+        </View>
       </View>
-      <Text style={styles.name}>{client?.name}</Text>
-      <Text style={styles.company}>{client?.companyName}</Text>
 
-      <View style={styles.infoBlock}>
+      <View style={styles.infoSection}>
         <InfoRow icon={Mail} label={t('account.email')} value={client?.email ?? ''} />
         <InfoRow icon={Building2} label={t('account.company')} value={client?.companyName ?? ''} />
-        <InfoRow icon={UserIcon} label={t('account.contact')} value={client?.name ?? ''} />
+        <InfoRow icon={UserIcon} label={t('account.contact')} value={client?.name ?? ''} last />
       </View>
 
       <PreferenceGroup label={t('account.theme')}>
@@ -59,6 +63,7 @@ export default function AccountScreen() {
           />
         ))}
       </PreferenceGroup>
+
       <PreferenceGroup label={t('account.language')}>
         <PreferenceOption label={t('account.english')} selected={language === 'en'} onPress={() => setLanguage('en')} styles={styles} />
         <PreferenceOption label={t('account.albanian')} selected={language === 'sq'} onPress={() => setLanguage('sq')} styles={styles} />
@@ -66,7 +71,7 @@ export default function AccountScreen() {
       </PreferenceGroup>
 
       {confirmingLogout ? (
-        <View style={styles.confirmBlock}>
+        <View style={styles.logoutSection}>
           <View style={styles.confirmActions}>
             <Pressable
               onPress={() => setConfirmingLogout(false)}
@@ -76,13 +81,8 @@ export default function AccountScreen() {
             </Pressable>
             <Pressable
               onPress={handleLogout}
-              style={({ pressed }) => [
-                styles.logoutButton,
-                styles.confirmLogoutButton,
-                pressed && styles.pressed,
-              ]}
+              style={({ pressed }) => [styles.confirmLogoutButton, pressed && styles.pressed]}
             >
-              <LogOut size={16} color={color.danger} />
               <Text style={styles.logoutText}>{t('account.logOut')}</Text>
             </Pressable>
           </View>
@@ -107,19 +107,23 @@ function InfoRow({
   icon: Icon,
   label,
   value,
+  last = false,
 }: {
   icon: typeof Mail;
   label: string;
   value: string;
+  last?: boolean;
 }) {
   const { color } = useTheme();
   const styles = createStyles(color);
   return (
-    <View style={styles.infoRow}>
-      <Icon size={16} color={color.textMuted} />
+    <View style={[styles.infoRow, last && styles.infoRowLast]}>
+      <View style={styles.infoIcon}>
+        <Icon size={15} color={color.accentPressed} />
+      </View>
       <View style={styles.infoTextCol}>
         <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value}</Text>
+        <Text style={styles.infoValue} numberOfLines={1}>{value}</Text>
       </View>
     </View>
   );
@@ -136,181 +140,213 @@ function PreferenceGroup({ label, children }: { label: string; children: ReactNo
   );
 }
 
-function PreferenceOption({ label, selected, onPress, styles }: { label: string; selected: boolean; onPress: () => void; styles: ReturnType<typeof createStyles> }) {
+function PreferenceOption({
+  label,
+  selected,
+  onPress,
+  styles,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
-    <Pressable onPress={onPress} style={[styles.preferenceOption, selected && styles.preferenceOptionSelected]}>
-      <Text style={[styles.preferenceOptionText, selected && styles.preferenceOptionTextSelected]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[styles.preferenceOption, selected && styles.preferenceOptionSelected]}
+    >
+      <Text style={[styles.preferenceOptionText, selected && styles.preferenceOptionTextSelected]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  heading: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.headingLg,
-    color: color.textPrimary,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  avatarWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: color.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarInitial: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.heading,
-    color: color.accentPressed,
-  },
-  name: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.sectionTitle,
-    color: color.textPrimary,
-  },
-  company: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.caption,
-    color: color.textMuted,
-    marginTop: 2,
-    marginBottom: spacing.xl,
-  },
-  infoBlock: {
-    borderTopWidth: 1,
-    borderTopColor: color.border,
-    marginBottom: spacing.xl,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: color.border,
-  },
-  infoTextCol: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-  },
-  infoValue: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.textPrimary,
-    marginTop: 1,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    height: 48,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: color.dangerBg,
-    shadowColor: color.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  confirmLogoutButton: {
-    flex: 1,
-  },
-  confirmBlock: {
-    gap: spacing.md,
-  },
-  confirmText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.body,
-    color: color.textPrimary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
-  confirmActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'stretch',
-    justifyContent: 'space-between',
-  },
-  cancelButton: {
-    flex: 1,
-    height: 48,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: color.surfaceMuted,
-    shadowColor: color.shadow,
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.body,
-    color: color.textSecondary,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  logoutText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.body,
-    color: color.danger,
-  },
-  footer: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xxl + spacing.md,
-  },
-  preferenceGroup: {
-    marginBottom: spacing.lg,
-  },
-  preferenceLabel: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  preferenceOptions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  preferenceOption: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: radius.sm,
-    backgroundColor: color.surfaceMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-  },
-  preferenceOptionSelected: {
-    backgroundColor: color.accentSoft,
-    shadowColor: color.accent,
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  preferenceOptionText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.meta,
-    color: color.textSecondary,
-  },
-  preferenceOptionTextSelected: {
-    color: color.accentPressed,
-  },
+    heading: {
+      fontFamily: fontFamily.semibold,
+      fontSize: fontSize.headingLg,
+      color: color.textPrimary,
+      marginBottom: spacing.xl,
+    },
+    profileHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.xl,
+    },
+    avatarWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: color.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarInitial: {
+      fontFamily: fontFamily.semibold,
+      fontSize: fontSize.heading,
+      color: color.accentPressed,
+    },
+    profileCopy: {
+      flex: 1,
+      marginLeft: spacing.md,
+    },
+    name: {
+      fontFamily: fontFamily.semibold,
+      fontSize: fontSize.sectionTitle,
+      color: color.textPrimary,
+    },
+    company: {
+      fontFamily: fontFamily.regular,
+      fontSize: fontSize.caption,
+      color: color.textMuted,
+      marginTop: 2,
+    },
+    infoSection: {
+      backgroundColor: color.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.border,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      marginBottom: spacing.xl,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: color.border,
+    },
+    infoRowLast: {
+      borderBottomWidth: 0,
+    },
+    infoIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: color.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.md,
+    },
+    infoTextCol: {
+      flex: 1,
+    },
+    infoLabel: {
+      fontFamily: fontFamily.regular,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
+    },
+    infoValue: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.caption,
+      color: color.textPrimary,
+      marginTop: 2,
+    },
+    preferenceGroup: {
+      marginBottom: spacing.lg,
+    },
+    preferenceLabel: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.caption,
+      color: color.textSecondary,
+      marginBottom: spacing.sm,
+    },
+    preferenceOptions: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+      padding: spacing.xs,
+      borderRadius: radius.md,
+      backgroundColor: color.surfaceMuted,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.border,
+    },
+    preferenceOption: {
+      flex: 1,
+      minHeight: 36,
+      borderRadius: radius.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xs,
+    },
+    preferenceOptionSelected: {
+      backgroundColor: color.surface,
+      shadowColor: color.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 5,
+      shadowOffset: { width: 0, height: 1 },
+      elevation: 1,
+    },
+    preferenceOptionText: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
+    },
+    preferenceOptionTextSelected: {
+      color: color.textPrimary,
+    },
+    logoutButton: {
+      height: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.dangerBorder,
+      borderRadius: radius.md,
+      backgroundColor: color.surface,
+    },
+    logoutSection: {
+      gap: spacing.md,
+    },
+    confirmActions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    cancelButton: {
+      flex: 1,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: color.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    confirmLogoutButton: {
+      flex: 1,
+      height: 44,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.dangerBorder,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cancelText: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.caption,
+      color: color.textSecondary,
+    },
+    logoutText: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.caption,
+      color: color.danger,
+    },
+    confirmText: {
+      fontFamily: fontFamily.regular,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
+      textAlign: 'center',
+    },
+    pressed: {
+      opacity: 0.72,
+    },
+    footer: {
+      fontFamily: fontFamily.regular,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xxl,
+    },
   });
 }
