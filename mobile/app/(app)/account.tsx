@@ -29,7 +29,7 @@ export default function AccountScreen() {
     <Screen
       contentContainerStyle={{
         paddingTop: insets.top + spacing.lg,
-        paddingBottom: 52 + insets.bottom + spacing.md,
+        paddingBottom: 49 + insets.bottom + spacing.md,
       }}
     >
       <Text style={styles.heading}>{t('account.title')}</Text>

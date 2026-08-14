@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-14 09:09 by Codex — compact iPhone tab footer
+Last updated: 2026-08-14 09:12 by Codex — restore native iPhone tab sizing
 
 ## Current state
 
@@ -9,17 +9,18 @@ Last updated: 2026-08-14 09:09 by Codex — compact iPhone tab footer
   notifications. Push notifications remain deliberately cut from v1.
 - Account and Notifications are headerless bottom-tab screens. Their content
   starts below the iPhone status bar using the device's safe-area inset.
-- The bottom tab footer now uses 52px of content height plus the device bottom
-  inset, with compact internal padding. Account's scroll clearance matches the
-  same 52px height, so the footer no longer rises unnecessarily high.
+- The bottom tab layout now leaves height and vertical padding to Expo Router's
+  native iOS tab-bar sizing. Expo Router calculates 49px of tab content plus
+  the device bottom inset and applies that inset internally, avoiding the
+  oversized footer caused by a custom height.
 - The app still uses `http://localhost:3000` unless
   `EXPO_PUBLIC_API_URL` is set to a reachable web/API origin.
 
 ## Latest change
 
-- Reduced the tab bar content height from 64px to 52px and changed tab item
-  padding from 8px to 4px. The iPhone safe-area inset remains intact, so the
-  footer stays clear of the home indicator without taking extra screen space.
+- Removed the custom tab-bar height and item padding overrides.
+- Updated Account's scroll clearance to match the native 49px tab content plus
+  the bottom safe-area inset.
 
 ## Verification
 

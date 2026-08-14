@@ -2,16 +2,12 @@ import { Tabs } from 'expo-router';
 import { Bell, FolderKanban, User } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing, useTheme } from '../../lib/theme';
+import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
-const TAB_BAR_CONTENT_HEIGHT = 52;
-
 export default function AppTabsLayout() {
-  const insets = useSafeAreaInsets();
   const { color } = useTheme();
   const { t } = useI18n();
   const token = useAuthStore((s) => s.token);
@@ -28,7 +24,6 @@ export default function AppTabsLayout() {
         tabBarActiveTintColor: color.accent,
         tabBarInactiveTintColor: color.textMuted,
         tabBarStyle: {
-          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
           backgroundColor: color.neutralBg,
           borderTopColor: color.borderStrong,
           borderTopWidth: StyleSheet.hairlineWidth,
@@ -37,9 +32,6 @@ export default function AppTabsLayout() {
           shadowRadius: 12,
           shadowOffset: { width: 0, height: -4 },
           elevation: 12,
-        },
-        tabBarItemStyle: {
-          paddingVertical: spacing.xs,
         },
       }}
     >
