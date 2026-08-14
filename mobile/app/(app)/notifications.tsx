@@ -95,15 +95,17 @@ export default function NotificationsScreen() {
       {notifications.length === 0 ? (
         <EmptyState icon={Bell} title={t('notifications.caughtUp')} />
       ) : (
-        notifications.map((notification, index) => (
-          <View key={notification.id}>
-            <NotificationRow
-              notification={notification}
-              onPress={() => void handlePress(notification)}
-            />
-            {index < notifications.length - 1 && <Divider />}
-          </View>
-        ))
+        <View style={styles.listGroup}>
+          {notifications.map((notification, index) => (
+            <View key={notification.id}>
+              <NotificationRow
+                notification={notification}
+                onPress={() => void handlePress(notification)}
+              />
+              {index < notifications.length - 1 && <Divider />}
+            </View>
+          ))}
+        </View>
       )}
     </Screen>
   );
@@ -150,6 +152,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontSize: fontSize.meta,
     color: color.warning,
     marginBottom: spacing.md,
+  },
+  listGroup: {
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    borderRadius: spacing.lg,
+    paddingHorizontal: spacing.md,
+    overflow: 'hidden',
   },
   });
 }

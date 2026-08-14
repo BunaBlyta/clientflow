@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
@@ -26,6 +27,7 @@ export default function ProjectNotesScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const postNote = useDataStore((s) => s.postNote);
@@ -91,17 +93,18 @@ export default function ProjectNotesScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.flex}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing.lg },
+        ]}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
+        <Text style={styles.screenTitle}>{t('projects.notes')}</Text>
         {unreachable && (
           <Text style={styles.error}>
             {t('notes.unavailable')}
           </Text>
         )}
-        <Text style={styles.intro}>
-          {t('notes.intro')}
-        </Text>
         {notes.length === 0 ? (
           <EmptyState
             icon={MessageSquare}
@@ -149,8 +152,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.background },
   content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
   },
   loading: {
     marginTop: spacing.xxl,
@@ -161,34 +165,36 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.warning,
     marginBottom: spacing.md,
   },
-  intro: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-    marginBottom: spacing.lg,
-    lineHeight: 17,
+  screenTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.headingLg,
+    color: color.textPrimary,
+    marginBottom: spacing.xl,
   },
   composer: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border,
-    backgroundColor: color.surface,
+    backgroundColor: color.background,
   },
   composerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   input: {
     flex: 1,
+    minHeight: 40,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textPrimary,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
+    borderColor: '#D5E2E8',
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    textAlignVertical: 'center',
     maxHeight: 100,
   },
   sendButton: {

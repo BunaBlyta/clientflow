@@ -10,7 +10,9 @@ export default function AuthLayout() {
         headerShown: true,
         headerStyle: { backgroundColor: color.background },
         headerShadowVisible: false,
-        headerTintColor: color.accent,
+        headerTintColor: color.textPrimary,
+        headerBackVisible: true,
+        headerBackButtonDisplayMode: 'minimal',
         headerBackTitle: '',
         headerTitleStyle: {
           fontFamily: fontFamily.semibold,

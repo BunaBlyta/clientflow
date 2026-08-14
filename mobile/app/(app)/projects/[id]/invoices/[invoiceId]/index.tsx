@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CheckCircle2, FileText } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -69,8 +69,7 @@ export default function InvoiceDetailScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: invoice.label }} />
-
+      <Text style={styles.screenTitle}>{invoice.label}</Text>
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
       <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
@@ -131,6 +130,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
     marginTop: spacing.xs,
+  },
+  screenTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.headingLg,
+    color: color.textPrimary,
+    marginBottom: spacing.xs,
   },
   kind: {
     fontFamily: fontFamily.medium,

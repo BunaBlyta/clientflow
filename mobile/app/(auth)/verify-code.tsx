@@ -8,6 +8,7 @@ import { TextField } from '../../components/ui/TextField';
 import { verificationCheckRequest, verificationSendRequest } from '../../lib/api';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
@@ -91,6 +92,7 @@ export default function VerifyCodeScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <CyanBackdrop />
       <View style={styles.iconWrap}>
         <MailCheck size={22} color={color.accent} />
       </View>

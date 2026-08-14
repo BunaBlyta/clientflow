@@ -9,6 +9,7 @@ import { ApiError, setPasswordRequest } from '../../lib/api';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
+import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 
 export default function SetPasswordScreen() {
   const router = useRouter();
@@ -59,6 +60,7 @@ export default function SetPasswordScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <CyanBackdrop />
       <View style={styles.iconWrap}>
         <KeyRound size={22} color={color.accent} />
       </View>

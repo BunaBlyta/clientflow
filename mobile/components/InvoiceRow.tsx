@@ -9,9 +9,10 @@ import type { Invoice } from '../lib/types';
 interface InvoiceRowProps {
   invoice: Invoice;
   onPress: () => void;
+  preview?: boolean;
 }
 
-export function InvoiceRow({ invoice, onPress }: InvoiceRowProps) {
+export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProps) {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -23,7 +24,7 @@ export function InvoiceRow({ invoice, onPress }: InvoiceRowProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, preview && styles.previewRow, pressed && styles.pressed]}
     >
       <View style={styles.left}>
         <Text style={styles.label} numberOfLines={1}>
@@ -51,14 +52,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  previewRow: {
     paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.sm,
   },
   pressed: {
     opacity: 0.6,
   },
   left: {
     flex: 1,
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
   },
   label: {
     fontFamily: fontFamily.medium,

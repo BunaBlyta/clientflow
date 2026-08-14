@@ -1,10 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CheckCircle2, ChevronRight, LayoutGrid } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Image,
   StyleSheet,
   Text,
   View,
@@ -16,6 +17,7 @@ import { MOCK_CLIENT } from '../../lib/mock-data';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
+import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -49,10 +51,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.container, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}>
+        <CyanBackdrop />
         <View style={styles.brandRow}>
-          <View style={styles.logoMark}>
-            <LayoutGrid size={20} color={color.textOnAccent} />
-          </View>
+          <Image source={require('../../assets/icon.png')} style={styles.logoMark} />
           <Text style={styles.brand}>Clientflow</Text>
         </View>
 
@@ -140,9 +141,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     width: 32,
     height: 32,
     borderRadius: radius.sm,
-    backgroundColor: color.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: color.accentSoft,
   },
   brand: {
     fontFamily: fontFamily.semibold,

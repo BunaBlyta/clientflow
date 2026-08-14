@@ -46,6 +46,7 @@ export default function ProjectInvoicesScreen() {
   if (loading && invoices.length === 0) {
     return (
       <Screen>
+        <Text style={styles.title}>{t('projects.invoices')}</Text>
         <ActivityIndicator color={color.accent} />
       </Screen>
     );
@@ -54,6 +55,7 @@ export default function ProjectInvoicesScreen() {
   if (invoices.length === 0) {
     return (
       <Screen>
+        <Text style={styles.title}>{t('projects.invoices')}</Text>
         <EmptyState
           icon={FileText}
           title={t('invoices.emptyTitle')}
@@ -64,9 +66,10 @@ export default function ProjectInvoicesScreen() {
   }
 
   return (
-    <Screen scroll={false}>
+    <Screen>
+      <Text style={styles.title}>{t('projects.invoices')}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
-      <View style={styles.list}>
+      <View style={styles.listGroup}>
         {invoices.map((invoice, index) => (
           <View key={invoice.id}>
             <InvoiceRow
@@ -84,12 +87,26 @@ export default function ProjectInvoicesScreen() {
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   list: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  listGroup: {
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    borderRadius: spacing.lg,
+    paddingHorizontal: spacing.md,
+    overflow: 'hidden',
+    marginTop: spacing.md,
+  },
+  title: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.headingLg,
+    color: color.textPrimary,
+    marginBottom: spacing.md,
   },
   error: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.warning,

@@ -102,6 +102,7 @@ export default function CheckoutScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
+      <Text style={styles.screenTitle}>{t('checkout.title')}</Text>
       <View style={styles.disclaimer}>
         <Lock size={12} color={color.textMuted} />
         <Text style={styles.disclaimerText}>
@@ -187,16 +188,22 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     justifyContent: 'center',
     marginBottom: spacing.xl,
   },
+  screenTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.headingLg,
+    color: color.textPrimary,
+    marginBottom: spacing.lg,
+  },
   disclaimerText: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
   },
   card: {
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
     marginBottom: spacing.xl,
   },
   merchant: {
@@ -225,7 +232,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderColor: color.border,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: color.surfaceMuted,
+    backgroundColor: color.surface,
     marginBottom: spacing.sm,
   },
   fieldMockText: {

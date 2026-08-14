@@ -52,7 +52,9 @@ export default function AppTabsLayout() {
       <Tabs.Screen
         name="projects"
         options={{
-          title: t('tabs.projects'),
+          title: '',
+          tabBarLabel: '',
+          tabBarShowLabel: false,
           tabBarIcon: ({ color: c, size }) => <FolderKanban color={c} size={size} />,
         }}
       />

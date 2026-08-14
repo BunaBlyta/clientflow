@@ -6,9 +6,10 @@ import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { getPackageById, MOCK_REQUESTS } from '../../lib/mock-data';
 import { getRequestStatusMeta } from '../../lib/status';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { ProjectRequest } from '../../lib/types';
+import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 
 export default function RequestStatusScreen() {
   const { color } = useTheme();
@@ -32,6 +33,7 @@ export default function RequestStatusScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <CyanBackdrop />
       <Text style={styles.heading}>{t('auth.checkYourRequest')}</Text>
       <Text style={styles.subheading}>
         {t('auth.requestSubheading')}
@@ -106,10 +108,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   resultCard: {
     marginTop: spacing.xl,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
   },
   resultHeader: {
     flexDirection: 'row',

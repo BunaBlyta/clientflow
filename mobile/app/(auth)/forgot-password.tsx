@@ -8,6 +8,7 @@ import { TextField } from '../../components/ui/TextField';
 import { ApiError, verificationSendRequest } from '../../lib/api';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -45,6 +46,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <CyanBackdrop />
       <View style={styles.iconWrap}>
         <Send size={20} color={color.accent} />
       </View>

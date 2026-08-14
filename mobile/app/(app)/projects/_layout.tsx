@@ -1,17 +1,18 @@
 import { Stack } from 'expo-router';
 import { fontFamily, fontSize, useTheme } from '../../../lib/theme';
-import { useI18n } from '../../../lib/i18n';
 
 export default function ProjectsStackLayout() {
   const { color } = useTheme();
-  const { t } = useI18n();
   return (
     <Stack
       screenOptions={{
+        headerShown: true,
+        headerTitle: '',
+        headerBackVisible: true,
+        headerBackButtonDisplayMode: 'minimal',
         headerStyle: { backgroundColor: color.background },
         headerShadowVisible: false,
-        headerTintColor: color.accent,
-        headerBackTitle: '',
+        headerTintColor: color.textPrimary,
         headerTitleStyle: {
           fontFamily: fontFamily.semibold,
           fontSize: fontSize.sectionTitle,
@@ -19,14 +20,14 @@ export default function ProjectsStackLayout() {
         },
       }}
     >
-      <Stack.Screen name="index" options={{ title: t('tabs.projects') }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="[id]/index" options={{ title: '' }} />
-      <Stack.Screen name="[id]/notes" options={{ title: t('projects.notes') }} />
-      <Stack.Screen name="[id]/invoices/index" options={{ title: t('projects.invoices') }} />
-      <Stack.Screen name="[id]/invoices/[invoiceId]/index" options={{ title: t('invoices.invoice') }} />
+      <Stack.Screen name="[id]/notes" options={{ title: '' }} />
+      <Stack.Screen name="[id]/invoices/index" options={{ title: '' }} />
+      <Stack.Screen name="[id]/invoices/[invoiceId]/index" options={{ title: '' }} />
       <Stack.Screen
         name="[id]/invoices/[invoiceId]/checkout"
-        options={{ title: t('checkout.title'), presentation: 'modal' }}
+        options={{ presentation: 'modal' }}
       />
     </Stack>
   );
