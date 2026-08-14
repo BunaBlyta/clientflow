@@ -81,12 +81,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   iconWrap: {
     width: 32,
     height: 32,
-    borderRadius: radius.sm,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapNeutral: {
     backgroundColor: color.accentSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.accentSoft,
   },
   iconWrapAlert: {
     backgroundColor: color.dangerBg,

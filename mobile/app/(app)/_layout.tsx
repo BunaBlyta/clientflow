@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Bell, FolderKanban, User } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { spacing, useTheme } from '../../lib/theme';
+import { fontFamily, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
@@ -28,14 +28,14 @@ export default function AppTabsLayout() {
         tabBarStyle: {
           height: TAB_BAR_HEIGHT,
           paddingBottom: 0,
-          backgroundColor: color.neutralBg,
-          borderTopColor: color.borderStrong,
+          backgroundColor: color.surface,
+          borderTopColor: color.border,
           borderTopWidth: StyleSheet.hairlineWidth,
           shadowColor: color.shadow,
-          shadowOpacity: 0.16,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: -4 },
-          elevation: 12,
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -2 },
+          elevation: 1,
         },
         tabBarItemStyle: {
           paddingTop: spacing.sm,
@@ -43,6 +43,10 @@ export default function AppTabsLayout() {
         },
         tabBarIconStyle: {
           transform: [{ translateY: -spacing.xs }],
+        },
+        tabBarLabelStyle: {
+          fontFamily: fontFamily.medium,
+          fontSize: 10,
         },
       }}
     >

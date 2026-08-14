@@ -61,7 +61,7 @@ export function Button({
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   base: {
-    height: 48,
+    height: 50,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -70,24 +70,21 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   primary: {
     backgroundColor: color.accent,
     shadowColor: color.accent,
-    shadowOpacity: 0.24,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   secondary: {
-    backgroundColor: color.surfaceMuted,
-    shadowColor: color.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.76,
   },
   disabled: {
     opacity: 0.5,

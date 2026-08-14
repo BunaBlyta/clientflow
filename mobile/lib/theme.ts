@@ -34,18 +34,18 @@ export interface ThemeColors {
 }
 
 export const lightColors: ThemeColors = {
-  background: '#FFFFFF',
+  background: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceMuted: '#F7F8FA',
+  surfaceMuted: '#F2F6F9',
   accent: '#5AB2FF',
   accentPressed: '#4098E0',
   accentSoft: '#EAF5FF',
-  textPrimary: '#14171A',
-  textSecondary: '#5B6270',
-  textMuted: '#8B92A0',
+  textPrimary: '#14212B',
+  textSecondary: '#596A79',
+  textMuted: '#8998A6',
   textOnAccent: '#FFFFFF',
-  border: '#E6E8EB',
-  borderStrong: '#D6D9DE',
+  border: '#E4EBF0',
+  borderStrong: '#D4DFE7',
   success: '#15803D',
   successBg: '#E7F6EC',
   successBorder: '#BEE6C9',
@@ -55,10 +55,10 @@ export const lightColors: ThemeColors = {
   danger: '#C0362C',
   dangerBg: '#FCEAE8',
   dangerBorder: '#F3C3BE',
-  neutral: '#5B6270',
-  neutralBg: '#F0F1F3',
-  neutralBorder: '#DFE1E5',
-  shadow: '#1A2A38',
+  neutral: '#596A79',
+  neutralBg: '#F3F6F8',
+  neutralBorder: '#DDE6EC',
+  shadow: '#173248',
 };
 
 export const darkColors: ThemeColors = {
@@ -90,7 +90,7 @@ export const darkColors: ThemeColors = {
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
+export const radius = { sm: 10, md: 12, lg: 14, pill: 999 } as const;
 export const fontFamily = {
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',

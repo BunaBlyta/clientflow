@@ -46,15 +46,20 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   card: {
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
     backgroundColor: color.surface,
+    shadowColor: color.shadow,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.78,
   },
   header: {
     flexDirection: 'row',
