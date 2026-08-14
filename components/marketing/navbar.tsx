@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSelect } from "@/components/language-select";
@@ -19,7 +19,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="relative flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-          <Image src="/logo.png" alt="" width={30} height={30} className="size-7 object-contain" priority />
+          <BrandLogo />
           Clientflow
         </Link>
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">

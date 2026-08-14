@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { BarChart3, FolderKanban, Receipt, TrendingUp, Users } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n";
 
@@ -23,7 +23,7 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
       <div className="flex h-16 items-center px-6">
         <Link href="/dashboard" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-          <Image src="/logo.png" alt="" width={30} height={30} className="size-7 object-contain" priority />
+          <BrandLogo />
           Clientflow
         </Link>
       </div>
