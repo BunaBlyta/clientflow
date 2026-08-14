@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { transitionInvoiceStatus } from '@/prisma/invoice-state';
 
 export const runtime = 'nodejs';
 
@@ -127,6 +128,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invoice cannot be paid' }, { status: 409 });
   }
 
+  let paymentPendingStatus;
+  try {
+    paymentPendingStatus = transitionInvoiceStatus(invoice.status, 'PAYMENT_PENDING');
+  } catch {
+    return NextResponse.json(
+      { error: `Invoice cannot transition from ${invoice.status} to PAYMENT_PENDING` },
+      { status: 409 },
+    );
+  }
+
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) return NextResponse.json({ error: 'Stripe is not configured' }, { status: 503 });
 
@@ -160,6 +171,12 @@ export async function POST(request: NextRequest) {
         )
       );
       if (session.url && canReuse) {
+        if (invoice.status !== 'PAYMENT_PENDING') {
+          await prisma.invoice.update({
+            where: { id: invoice.id },
+            data: { status: paymentPendingStatus },
+          });
+        }
         return NextResponse.json({
           checkoutSessionId: invoice.stripeCheckoutSessionId,
           checkoutUrl: session.url,
@@ -200,7 +217,7 @@ export async function POST(request: NextRequest) {
 
   await prisma.invoice.update({
     where: { id: invoice.id },
-    data: { stripeCheckoutSessionId: session.id, status: 'PAYMENT_PENDING' },
+    data: { stripeCheckoutSessionId: session.id, status: paymentPendingStatus },
   });
 
   return NextResponse.json({ checkoutSessionId: session.id, checkoutUrl: session.url });

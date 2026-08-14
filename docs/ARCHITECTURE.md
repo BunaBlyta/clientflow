@@ -240,6 +240,11 @@ is the Clientflow payment-success path with `return_to=mobile` and matching
 project and invoice IDs, and its `cancel_url` is the matching Clientflow mobile
 cancel path with the same IDs. An old web-only session, or a session without
 both verifiable mobile URLs, gets a new mobile Checkout Session instead.
+Checkout can only start from `SENT`, `PAYMENT_PENDING`, or `FAILED`; it moves
+the invoice to `PAYMENT_PENDING` through the shared invoice state helper before
+returning a reusable or newly-created session. Draft invoices must be sent
+first, and the signed webhook only accepts `PAYMENT_PENDING` invoices for the
+success or failure transition.
 
 ## Package management contracts
 
@@ -389,9 +394,11 @@ used by `GET /api/requests`.
 or `{ "status": "REJECTED" }`. Authentication and authorization errors are
 returned before body validation; invalid bodies return 400, missing requests
 404, and already-reviewed requests 409. Approval atomically creates the client
-user and client record when they do not already exist, links an existing user
-or client by email when present, and marks the request approved. Rejection only
-marks the request rejected and creates no user, client, or project.
+user and client record when they do not already exist, links an existing client
+user by email when present, and marks the request approved. A staff account
+using the request email is rejected with 409 rather than being given a client
+record. Rejection only marks the request rejected and creates no user, client,
+or project.
 
 Approval also atomically creates the first project and deposit invoice for a
 standard-package request. The project name is `<company name or prospect name>
@@ -403,6 +410,11 @@ transition with an issue date so the client can pay immediately. The remaining
 half is deliberately left for a later staff-created final invoice. Requests
 without a package are rejected explicitly rather than producing a zero-value
 invoice.
+
+The approval transaction first claims the request with a conditional
+`PENDING` → `APPROVED` update. A second approval arriving at the same time gets
+409 after the first transaction wins, and its rollback leaves no duplicate
+project, deposit, client, or notification.
 
 After an approval transaction commits, the verification code is generated and
 the email is sent in a separate operation. The approval remains successful if
@@ -468,6 +480,8 @@ transaction as their database change:
 Rejection normally happens before a prospect has an account, so the route does
 not create a user just to deliver an in-app notification. An existing linked
 client is notified when that relationship is present. Payment success and
-failure notifications remain owned by the Stripe webhook; new-note and
-extra-charge notifications belong to the write endpoints that will create
-those records.
+failure notifications remain owned by the Stripe webhook. The webhook claims
+an unpaid invoice with a conditional update before writing the project
+transition, audit note, and payment notification, so duplicate or concurrent
+Stripe deliveries cannot repeat those side effects. New-note and extra-charge
+notifications belong to the write endpoints that create those records.

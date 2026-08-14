@@ -8,6 +8,13 @@ import { transitionInvoiceStatus } from '@/prisma/invoice-state';
 
 export const runtime = 'nodejs';
 
+class RequestApprovalConflict extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RequestApprovalConflict';
+  }
+}
+
 const requestSelect = {
   id: true,
   packageId: true,
@@ -287,101 +294,119 @@ export async function PATCH(
     });
   }
 
-  const approval = await prisma.$transaction(async (transaction) => {
-    const pendingRequest = await transaction.projectRequest.findUnique({
-      where: { id },
-      select: requestSelect,
-    });
+  let approval;
+  try {
+    approval = await prisma.$transaction(async (transaction) => {
+      const reviewedAt = new Date();
+      const claim = await transaction.projectRequest.updateMany({
+        where: { id, status: 'PENDING' },
+        data: { status: 'APPROVED', reviewedAt },
+      });
 
-    if (!pendingRequest) throw new Error('Project request not found');
-    if (pendingRequest.status !== 'PENDING') {
-      throw new Error(`Project request cannot transition from ${pendingRequest.status} to APPROVED`);
+      if (claim.count !== 1) {
+        const currentRequest = await transaction.projectRequest.findUnique({
+          where: { id },
+          select: { status: true },
+        });
+        throw new RequestApprovalConflict(
+          currentRequest
+            ? `Project request cannot transition from ${currentRequest.status} to APPROVED`
+            : 'Project request not found',
+        );
+      }
+
+      const existingUser = await transaction.user.findUnique({
+        where: { email: projectRequest.email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          client: { select: { id: true } },
+        },
+      });
+
+      if (existingUser?.role === 'STAFF') {
+        throw new RequestApprovalConflict('A staff account already uses this request email');
+      }
+
+      const userRecord = existingUser ?? await transaction.user.create({
+        data: {
+          email: projectRequest.email,
+          name: projectRequest.name,
+          role: 'CLIENT',
+          isActive: false,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          client: { select: { id: true } },
+        },
+      });
+
+      const client = userRecord.client ?? await transaction.client.create({
+        data: {
+          userId: userRecord.id,
+          name: projectRequest.name,
+          email: projectRequest.email,
+          ...(projectRequest.companyName ? { companyName: projectRequest.companyName } : {}),
+        },
+        select: { id: true },
+      });
+
+      const project = await transaction.project.create({
+        data: {
+          clientId: client.id,
+          packageId: projectRequest.packageId,
+          name: `${projectRequest.companyName ?? projectRequest.name} — ${projectRequest.package.name}`,
+          status: 'PENDING',
+        },
+        select: { id: true },
+      });
+
+      await transaction.invoice.create({
+        data: {
+          projectId: project.id,
+          clientId: client.id,
+          type: 'DEPOSIT',
+          description: `Deposit — ${projectRequest.package.name}`,
+          amount: calculateDepositAmount(projectRequest.package.price),
+          currency: projectRequest.package.currency,
+          status: transitionInvoiceStatus('DRAFT', 'SENT'),
+          issuedAt: new Date(),
+        },
+      });
+
+      await transaction.notification.create({
+        data: {
+          userId: userRecord.id,
+          type: 'REQUEST_APPROVED',
+          requestId: projectRequest.id,
+          projectId: project.id,
+          title: 'Project request approved',
+          message: 'Your project is ready. Your deposit invoice is available to pay.',
+        },
+      });
+
+      const approvedRequest = await transaction.projectRequest.update({
+        where: { id },
+        data: { clientId: client.id },
+        select: requestSelect,
+      });
+
+      return {
+        projectRequest: approvedRequest,
+        user: { id: userRecord.id, email: userRecord.email, name: userRecord.name },
+      };
+    });
+  } catch (error) {
+    if (error instanceof RequestApprovalConflict) {
+      const status = error.message === 'Project request not found' ? 404 : 409;
+      return NextResponse.json({ error: error.message }, { status });
     }
-
-    if (!pendingRequest.package) {
-      throw new Error('A package is required before approving this request');
-    }
-
-    const existingUser = await transaction.user.findUnique({
-      where: { email: pendingRequest.email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        client: { select: { id: true } },
-      },
-    });
-
-    const userRecord = existingUser ?? await transaction.user.create({
-      data: {
-        email: pendingRequest.email,
-        name: pendingRequest.name,
-        role: 'CLIENT',
-        isActive: false,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        client: { select: { id: true } },
-      },
-    });
-
-    const client = userRecord.client ?? await transaction.client.create({
-      data: {
-        userId: userRecord.id,
-        name: pendingRequest.name,
-        email: pendingRequest.email,
-        ...(pendingRequest.companyName ? { companyName: pendingRequest.companyName } : {}),
-      },
-      select: { id: true },
-    });
-
-    const project = await transaction.project.create({
-      data: {
-        clientId: client.id,
-        packageId: pendingRequest.packageId,
-        name: `${pendingRequest.companyName ?? pendingRequest.name} — ${pendingRequest.package.name}`,
-        status: 'PENDING',
-      },
-      select: { id: true },
-    });
-
-    await transaction.invoice.create({
-      data: {
-        projectId: project.id,
-        clientId: client.id,
-        type: 'DEPOSIT',
-        description: `Deposit — ${pendingRequest.package.name}`,
-        amount: calculateDepositAmount(pendingRequest.package.price),
-        currency: pendingRequest.package.currency,
-        status: transitionInvoiceStatus('DRAFT', 'SENT'),
-        issuedAt: new Date(),
-      },
-    });
-
-    await transaction.notification.create({
-      data: {
-        userId: userRecord.id,
-        type: 'REQUEST_APPROVED',
-        requestId: pendingRequest.id,
-        projectId: project.id,
-        title: 'Project request approved',
-        message: 'Your project is ready. Your deposit invoice is available to pay.',
-      },
-    });
-
-    const approvedRequest = await transaction.projectRequest.update({
-      where: { id },
-      data: { status: 'APPROVED', clientId: client.id, reviewedAt: new Date() },
-      select: requestSelect,
-    });
-
-    return {
-      projectRequest: approvedRequest,
-      user: { id: userRecord.id, email: userRecord.email, name: userRecord.name },
-    };
-  });
+    throw error;
+  }
 
   let emailSent = true;
   try {

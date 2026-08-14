@@ -1,70 +1,43 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-13 15:41 by Codex — regenerate notification Prisma client
+Last updated: 2026-08-14 09:08 by Codex — harden Flow A payment and approval integrity
 
 ## What changed
 
-- Added nullable `projectId`, `invoiceId`, and `requestId` fields to the
-  Prisma `Notification` model, with nullable relations and indexes.
-- `GET /api/notifications` and `PATCH /api/notifications/:id` now return all
-  three target IDs directly, including `null` when a notification has no target.
-- Added target metadata to every standard notification flow: project requests,
-  invoices, Stripe payment success/failure, project status changes, and notes.
-- Updated seed notification records with project and invoice targets. The seed
-  request notification links to `req-1` after its request is created.
-- Added focused serialization and creation-metadata tests, and documented the
-  contract in `docs/ARCHITECTURE.md`.
-
-Custom inquiries still use the existing `REQUEST_SUBMITTED` type but are not
-`ProjectRequest` records, so their three target fields remain `null`. No false
-foreign-key target was introduced.
-
-## Migration for Buna
-
-Run this exact command after reviewing and deploying the change:
-
-```sh
-npx prisma migrate dev --name add-notification-navigation-targets
-```
-
-This task did not run a migration. `npx prisma validate` and `npx prisma
-generate` were run locally; generated client output is ignored and was not
-committed.
+- Made request approval claim the `PENDING` request atomically before creating
+  the client, project, deposit invoice, and approval notification. A competing
+  approval now returns 409 and cannot create duplicates.
+- Prevented a standard request from attaching a client record to an existing
+  staff account; that email conflict returns 409 and rolls the transaction back.
+- Made Stripe checkout use the shared invoice state rules. Draft invoices must
+  be sent before checkout, reusable sessions still move the invoice to
+  `PAYMENT_PENDING`, and new sessions use the same state transition.
+- Made success and failure webhook updates conditional on
+  `PAYMENT_PENDING`. Duplicate or concurrent deliveries cannot repeat the paid
+  state, project Discovery transition, audit note, or notification, and an
+  invoice in another state is left unchanged.
+- Added regression tests for approval races, staff-email conflicts, draft
+  checkout rejection, webhook idempotency, and invalid payment-state changes.
+- Documented these API invariants in `docs/ARCHITECTURE.md`.
 
 ## Verification
 
-- `npm run test`: passed — 34 test files, 138 tests.
-- `npm run typecheck`: passed.
-- `npm run lint`: passed.
-- `npx prisma validate`: passed.
-- `npx next build --webpack`: passed; all app and API routes compiled.
-- `git diff --check`: passed.
+- `npm run test` — passed: 34 files, 145 tests.
+- `npm run typecheck` — passed.
+- `npm run lint` — passed.
+- `npm run verify` — typecheck, lint, and tests passed; the Turbopack build
+  hit the known sandbox-only port-binding restriction.
+- `npx next build --webpack` — passed; all routes compiled.
+- `git diff --check` — passed.
+- No Prisma schema change, migration, install, or live database mutation was
+  needed for this task.
 
 ## Handoff
 
-- Frontends should navigate using the serialized target IDs and never parse
-  notification text or infer targets from notification type.
-- The untracked `public/logo.png` belongs to another lane and was not touched
-  or staged.
-
-## Runtime Prisma follow-up
-
-- Confirmed `prisma/schema.prisma` and migration
-  `20260813133233_add_notification_navigation_targets` both define nullable
-  `projectId`, `invoiceId`, and `requestId` on `Notification`, with indexes and
-  `SET NULL` foreign keys.
-- Ran `npx prisma generate` to refresh the runtime Prisma Client. The generated
-  client is ignored and is not committed.
-- Added explicit PATCH route assertions that the three fields are selected on
-  both the initial read and the mark-read update.
-- The Next.js process serving the app must be restarted after generation so it
-  stops using its already-loaded stale client module.
-
-## Follow-up verification
-
-- `npx prisma generate`: passed.
-- `npm run test`: passed — 34 test files, 138 tests.
-- `npm run typecheck`: passed.
-- `npm run lint`: passed.
-- `npx next build --webpack`: passed.
-- `git diff --check`: passed.
+- The API still uses the existing invoice lifecycle: `SENT` →
+  `PAYMENT_PENDING` → `PAID` or `FAILED`, with Stripe's signed webhook as the
+  only confirmation path.
+- The two modified mobile files and other agents' staged files were not
+  touched or staged by this lane.
+- A live Neon payment/approval walkthrough was not repeated in this sandbox;
+  the new behavior is covered by the focused route tests and the full suite.

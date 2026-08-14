@@ -67,7 +67,7 @@ function configureTransaction() {
   }));
 }
 
-function configureInvoice(type: 'DEPOSIT' | 'FINAL' | 'EXTRA' | 'CUSTOM', status = 'SENT') {
+function configureInvoice(type: 'DEPOSIT' | 'FINAL' | 'EXTRA' | 'CUSTOM', status = 'PAYMENT_PENDING') {
   mocks.invoiceFindUnique.mockResolvedValue({
     id: invoiceId,
     projectId: 'project-1',
@@ -76,6 +76,7 @@ function configureInvoice(type: 'DEPOSIT' | 'FINAL' | 'EXTRA' | 'CUSTOM', status
     status,
   });
   mocks.invoiceUpdate.mockResolvedValue({});
+  mocks.invoiceUpdateMany.mockResolvedValue({ count: 1 });
   mocks.projectFindUnique.mockResolvedValue({ status: 'PENDING' });
   mocks.clientFindUnique.mockResolvedValue({ userId: 'user-client-1' });
 }
@@ -89,8 +90,13 @@ beforeEach(() => {
 
 describe('POST /api/stripe/webhook', () => {
   it('marks a deposit paid, advances a pending project, and notifies once', async () => {
-    let invoiceStatus = 'SENT';
+    let invoiceStatus = 'PAYMENT_PENDING';
     configureInvoice('DEPOSIT');
+    mocks.invoiceUpdateMany.mockImplementation(async () => {
+      if (invoiceStatus === 'PAID') return { count: 0 };
+      invoiceStatus = 'PAID';
+      return { count: 1 };
+    });
     mocks.invoiceFindUnique.mockImplementation(async () => ({
       id: invoiceId,
       projectId: 'project-1',
@@ -109,9 +115,9 @@ describe('POST /api/stripe/webhook', () => {
 
     expect(firstResponse.status).toBe(200);
     expect(secondResponse.status).toBe(200);
-    expect(mocks.invoiceUpdate).toHaveBeenCalledTimes(1);
-    expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
-      where: { id: invoiceId },
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledTimes(2);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
       data: expect.objectContaining({
         status: 'PAID',
         stripeCheckoutSessionId: 'checkout-session-1',
@@ -135,6 +141,19 @@ describe('POST /api/stripe/webhook', () => {
     });
   });
 
+  it('does not create success side effects when the paid-state claim loses a race', async () => {
+    configureInvoice('DEPOSIT');
+    mocks.invoiceUpdateMany.mockResolvedValue({ count: 0 });
+
+    const response = await POST(request(paymentEvent('checkout.session.completed'), 'sig_test'));
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceFindUnique).not.toHaveBeenCalled();
+    expect(mocks.projectUpdate).not.toHaveBeenCalled();
+    expect(mocks.noteCreate).not.toHaveBeenCalled();
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
+  });
+
   it.each(['FINAL', 'EXTRA', 'CUSTOM'] as const)(
     'does not advance a pending project for a %s invoice',
     async (type) => {
@@ -143,8 +162,8 @@ describe('POST /api/stripe/webhook', () => {
       const response = await POST(request(paymentEvent('checkout.session.completed'), 'sig_test'));
 
       expect(response.status).toBe(200);
-      expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
-        where: { id: invoiceId },
+      expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+        where: { id: invoiceId, status: 'PAYMENT_PENDING' },
         data: expect.objectContaining({ status: 'PAID' }),
       });
       expect(mocks.projectFindUnique).toHaveBeenCalledTimes(1);
@@ -176,10 +195,10 @@ describe('POST /api/stripe/webhook', () => {
     expect(secondResponse.status).toBe(200);
     expect(mocks.invoiceUpdateMany).toHaveBeenCalledTimes(2);
     expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
-      where: { id: invoiceId, status: { notIn: ['PAID', 'FAILED'] } },
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
       data: { status: 'FAILED', stripePaymentIntentId: 'payment-intent-1' },
     });
-      expect(mocks.notificationCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.notificationCreate).toHaveBeenCalledTimes(1);
     expect(mocks.notificationCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: 'user-client-1',

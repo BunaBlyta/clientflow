@@ -50,14 +50,8 @@ async function markInvoicePaid(
   stripeObject: NonNullable<StripeEvent['data']>['object'],
 ) {
   await prisma.$transaction(async (transaction) => {
-    const invoice = await transaction.invoice.findUnique({
-      where: { id: invoiceId },
-      select: { id: true, projectId: true, clientId: true, type: true, status: true },
-    });
-    if (!invoice || invoice.status === 'PAID') return;
-
-    await transaction.invoice.update({
-      where: { id: invoice.id },
+    const result = await transaction.invoice.updateMany({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
       data: {
         status: 'PAID',
         paidAt: new Date(),
@@ -65,6 +59,13 @@ async function markInvoicePaid(
         stripePaymentIntentId: stripeObject?.payment_intent,
       },
     });
+    if (result.count !== 1) return;
+
+    const invoice = await transaction.invoice.findUnique({
+      where: { id: invoiceId },
+      select: { id: true, projectId: true, clientId: true, type: true, status: true },
+    });
+    if (!invoice) return;
 
     const project = await transaction.project.findUnique({
       where: { id: invoice.projectId },
@@ -103,7 +104,7 @@ async function markInvoiceFailed(
 ) {
   await prisma.$transaction(async (transaction) => {
     const result = await transaction.invoice.updateMany({
-      where: { id: invoiceId, status: { notIn: ['PAID', 'FAILED'] } },
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
       data: { status: 'FAILED', stripePaymentIntentId: stripeObject?.payment_intent },
     });
     if (result.count !== 1) return;

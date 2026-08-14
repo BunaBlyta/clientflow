@@ -164,7 +164,10 @@ describe('POST /api/stripe/checkout', () => {
       checkoutUrl: 'https://checkout.stripe.test/cs-existing',
     });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.invoiceUpdate).not.toHaveBeenCalled();
+    expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
+      where: { id: 'inv-1' },
+      data: { status: 'PAYMENT_PENDING' },
+    });
   });
 
   it('reuses an existing mobile checkout session only when its success URL matches the invoice', async () => {
@@ -188,7 +191,10 @@ describe('POST /api/stripe/checkout', () => {
       checkoutUrl: 'https://checkout.stripe.test/cs-existing-mobile',
     });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.invoiceUpdate).not.toHaveBeenCalled();
+    expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
+      where: { id: 'inv-1' },
+      data: { status: 'PAYMENT_PENDING' },
+    });
   });
 
   it('creates a mobile session instead of reusing an existing web-only session', async () => {
@@ -263,6 +269,19 @@ describe('POST /api/stripe/checkout', () => {
     expect(response.status).toBe(expectedStatus);
     expect(await response.json()).toEqual({ error });
     expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not open checkout for a draft invoice', async () => {
+    mocks.invoiceFindFirst.mockResolvedValue({ ...invoice, status: 'DRAFT' });
+
+    const response = await POST(request({ invoiceId: 'inv-1' }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'Invoice cannot transition from DRAFT to PAYMENT_PENDING',
+    });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.invoiceUpdate).not.toHaveBeenCalled();
   });
 
   it('returns 404 for a missing or non-owned invoice', async () => {

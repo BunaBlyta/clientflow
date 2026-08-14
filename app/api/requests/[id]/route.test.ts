@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   transaction: vi.fn(),
   transactionRequestFindUnique: vi.fn(),
+  transactionRequestUpdateMany: vi.fn(),
   transactionRequestUpdate: vi.fn(),
   userFindUnique: vi.fn(),
   userCreate: vi.fn(),
@@ -78,6 +79,7 @@ function setupTransaction() {
     callback({
       projectRequest: {
         findUnique: mocks.transactionRequestFindUnique,
+        updateMany: mocks.transactionRequestUpdateMany,
         update: mocks.transactionRequestUpdate,
       },
       user: {
@@ -174,7 +176,7 @@ describe('PATCH /api/requests/:id', () => {
   it('approves by creating exactly one user and one client in one transaction', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(pendingRequest);
-    mocks.transactionRequestFindUnique.mockResolvedValue(pendingRequest);
+    mocks.transactionRequestUpdateMany.mockResolvedValue({ count: 1 });
     mocks.userFindUnique.mockResolvedValue(null);
     mocks.userCreate.mockResolvedValue({
       id: 'user-1',
@@ -202,6 +204,10 @@ describe('PATCH /api/requests/:id', () => {
       emailSent: true,
     });
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
+    expect(mocks.transactionRequestUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'req-1', status: 'PENDING' },
+      data: expect.objectContaining({ status: 'APPROVED', reviewedAt: expect.any(Date) }),
+    });
     expect(mocks.userCreate).toHaveBeenCalledTimes(1);
     expect(mocks.clientCreate).toHaveBeenCalledTimes(1);
     expect(mocks.projectCreate).toHaveBeenCalledTimes(1);
@@ -239,7 +245,7 @@ describe('PATCH /api/requests/:id', () => {
     });
     expect(mocks.transactionRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'req-1' },
-      data: expect.objectContaining({ status: 'APPROVED', clientId: 'client-1' }),
+      data: { clientId: 'client-1' },
     }));
     expect(mocks.issueVerificationEmail).toHaveBeenCalledWith({
       id: 'user-1',
@@ -252,7 +258,7 @@ describe('PATCH /api/requests/:id', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(pendingRequest);
-    mocks.transactionRequestFindUnique.mockResolvedValue(pendingRequest);
+    mocks.transactionRequestUpdateMany.mockResolvedValue({ count: 1 });
     mocks.userFindUnique.mockResolvedValue({
       id: 'user-1',
       email: pendingRequest.email,
@@ -279,6 +285,48 @@ describe('PATCH /api/requests/:id', () => {
     });
     expect(consoleError).toHaveBeenCalledOnce();
     consoleError.mockRestore();
+  });
+
+  it('returns 409 when the transaction cannot claim an already-reviewed request', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(pendingRequest);
+    mocks.transactionRequestUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.transactionRequestFindUnique.mockResolvedValue({ status: 'APPROVED' });
+    setupTransaction();
+
+    const response = await PATCH(request('APPROVED'), params());
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'Project request cannot transition from APPROVED to APPROVED',
+    });
+    expect(mocks.projectCreate).not.toHaveBeenCalled();
+    expect(mocks.invoiceCreate).not.toHaveBeenCalled();
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
+  });
+
+  it('does not attach a client record to an existing staff account', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(pendingRequest);
+    mocks.transactionRequestUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.userFindUnique.mockResolvedValue({
+      id: 'staff-1',
+      email: pendingRequest.email,
+      name: 'Studio Staff',
+      role: 'STAFF',
+      client: null,
+    });
+    setupTransaction();
+
+    const response = await PATCH(request('APPROVED'), params());
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'A staff account already uses this request email',
+    });
+    expect(mocks.clientCreate).not.toHaveBeenCalled();
+    expect(mocks.projectCreate).not.toHaveBeenCalled();
+    expect(mocks.invoiceCreate).not.toHaveBeenCalled();
   });
 });
 
