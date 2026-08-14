@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-14 09:06 by Codex — iPhone tab safe-area spacing
+Last updated: 2026-08-14 09:09 by Codex — compact iPhone tab footer
 
 ## Current state
 
@@ -8,22 +8,22 @@ Last updated: 2026-08-14 09:06 by Codex — iPhone tab safe-area spacing
   project status tracking, shared notes, invoices, Stripe Checkout, and in-app
   notifications. Push notifications remain deliberately cut from v1.
 - Account and Notifications are headerless bottom-tab screens. Their content
-  now starts below the iPhone status bar using the device's safe-area inset;
-  nested project screens were left unchanged so stack headers do not gain a
-  duplicate top inset.
+  starts below the iPhone status bar using the device's safe-area inset.
+- The bottom tab footer now uses 52px of content height plus the device bottom
+  inset, with compact internal padding. Account's scroll clearance matches the
+  same 52px height, so the footer no longer rises unnecessarily high.
 - The app still uses `http://localhost:3000` unless
   `EXPO_PUBLIC_API_URL` is set to a reachable web/API origin.
 
 ## Latest change
 
-- Added the top safe-area inset to the Account and Notifications scroll content.
-  This keeps headings, controls, and notification rows clear of the time,
-  battery, and Wi‑Fi indicators on iPhone while preserving the existing bottom
-  tab clearance and scrolling behavior.
+- Reduced the tab bar content height from 64px to 52px and changed tab item
+  padding from 8px to 4px. The iPhone safe-area inset remains intact, so the
+  footer stays clear of the home indicator without taking extra screen space.
 
 ## Verification
 
-- `cd mobile && npx tsc --noEmit`: passed.
+- `cd mobile && npx tsc --noEmit` under Node 22.23.2: passed.
 - `cd mobile && npx expo start --web` under Node 22.23.2: started successfully;
   `http://127.0.0.1:8081` returned HTTP 200. The temporary server was stopped
   after the smoke check.

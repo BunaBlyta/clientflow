@@ -8,6 +8,8 @@ import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
+const TAB_BAR_CONTENT_HEIGHT = 52;
+
 export default function AppTabsLayout() {
   const insets = useSafeAreaInsets();
   const { color } = useTheme();
@@ -26,7 +28,7 @@ export default function AppTabsLayout() {
         tabBarActiveTintColor: color.accent,
         tabBarInactiveTintColor: color.textMuted,
         tabBarStyle: {
-          height: 64 + insets.bottom,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
           backgroundColor: color.neutralBg,
           borderTopColor: color.borderStrong,
           borderTopWidth: StyleSheet.hairlineWidth,
@@ -37,7 +39,7 @@ export default function AppTabsLayout() {
           elevation: 12,
         },
         tabBarItemStyle: {
-          paddingVertical: spacing.sm,
+          paddingVertical: spacing.xs,
         },
       }}
     >
