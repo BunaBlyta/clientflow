@@ -118,7 +118,9 @@ export function PackagesAndRequest() {
 
   return (
     <>
-      <section id="packages" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <section id="packages" className="packages-section relative isolate overflow-visible">
+        <div className="hero-package-sides pointer-events-none absolute inset-x-0 top-[-50vh] bottom-0 z-0" />
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pt-24 pb-40 sm:px-6">
         <div className="max-w-xl">
           <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("nav.packages")}</h2>
           <p className="mt-2 text-[14px] text-muted-foreground">
@@ -135,30 +137,30 @@ export function PackagesAndRequest() {
         ) : packages.length === 0 ? (
           <p className="mt-10 text-[13px] text-muted-foreground">{t("marketing.noPackages")}</p>
         ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="packages-shell package-housing mt-10 rounded-2xl border border-brand-sky/40 p-2 sm:p-3 dark:border-brand-accent/30">
+          <div className="grid gap-2 md:grid-cols-3">
             {packages.map((pkg) => {
               const isPopular = pkg.slug === mostPopularSlug;
               return (
                 <div
                   key={pkg.id}
                   className={cn(
-                    "flex flex-col rounded-lg border border-border bg-background p-6",
-                    isPopular && "border-2 border-brand-accent",
+                    "premium-card package-card group relative flex flex-col rounded-lg p-6 transition-[transform] duration-150 hover:-translate-y-0.5",
                   )}
                 >
                   {isPopular && (
-                    <span className="mb-3 w-fit rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-[12px] font-medium text-brand-accent">
+                    <span className="popular-stamp absolute top-5 right-5 flex size-16 items-center justify-center rounded-full border border-brand-sky/70 px-2 text-center text-[9px] leading-[1.1] font-semibold uppercase tracking-[0.12em] text-brand-sky">
                       {t("marketing.mostPopular")}
                     </span>
                   )}
                   <h3 className="text-[16px] font-semibold">{pkg.name}</h3>
-                  <p className="mt-1 text-[28px] font-semibold tracking-tight">
+                  <p className="package-price mt-1 text-[28px] font-semibold tracking-tight transition-[text-shadow] duration-200">
                     {isCustomPackage(pkg) ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                   </p>
                   <p className="mt-2 text-[13px] text-muted-foreground">{pkg.description}</p>
                   <ul className="mt-5 flex flex-1 flex-col gap-2.5">
                     <li className="flex items-start gap-2 text-[13px]">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-brand-accent" />
+                      <Check className="mt-0.5 size-4 shrink-0 text-brand-sky dark:rounded-full dark:bg-brand-accent/25 dark:p-0.5 dark:text-foreground" />
                       <span>
                         {pkg.estimatedDuration
                           ? t("marketing.estimatedDelivery", { duration: pkg.estimatedDuration })
@@ -167,13 +169,19 @@ export function PackagesAndRequest() {
                     </li>
                   </ul>
                   {isCustomPackage(pkg) ? (
-                    <Button className="mt-6" variant="outline" render={<a href="#contact" />}>
+                    <Button
+                      className="mt-6 bg-[#DDF8FF] text-foreground hover:bg-[#CAF4FF] dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/80"
+                      render={<a href="#contact" />}
+                    >
                       {t("marketing.talkToUs")}
                     </Button>
                   ) : (
                     <Button
-                      className="mt-6"
-                      variant={isPopular ? "default" : "outline"}
+                      className={cn(
+                        "mt-6 bg-[#DDF8FF] text-foreground hover:bg-[#CAF4FF] dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/80",
+                        isPopular &&
+                          "bg-[#78CFFF] text-foreground hover:bg-[#78CFFF]/80 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/80",
+                      )}
                       onClick={() => handleChoose(pkg.id)}
                     >
                       {t("marketing.requestPackage")}
@@ -183,12 +191,18 @@ export function PackagesAndRequest() {
               );
             })}
           </div>
+          </div>
         )}
+        </div>
       </section>
 
       {!isLoadingPackages && !packagesError && standardPackages.length > 0 && (
-        <section id="request-form" className="border-t border-border bg-secondary/40">
-        <div className="mx-auto max-w-xl px-4 py-20 sm:px-6">
+        <section id="request-form" className="request-strip request-section relative isolate z-10 overflow-visible">
+        <div className="request-bubble pointer-events-none absolute -top-28 right-[4%] z-0 size-80 rounded-full border border-white/80 bg-white/55 dark:hidden" />
+        <div className="request-bubble pointer-events-none absolute -bottom-32 left-[-6rem] z-0 size-[26rem] rounded-full border border-brand-sky/30 bg-brand-sky/40 dark:hidden" />
+        <div className="request-bubble pointer-events-none absolute top-[42%] left-[12%] z-0 size-32 rounded-full border border-white/70 bg-white/45 dark:hidden" />
+        <div className="request-bubble pointer-events-none absolute right-[16%] bottom-[18%] z-0 size-44 rounded-full border border-brand-sky/25 bg-brand-sky-light/40 dark:hidden" />
+        <div className="relative z-10 mx-auto max-w-xl px-4 py-20 sm:px-6">
           <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("marketing.requestPackageTitle")}</h2>
           <p className="mt-2 text-[14px] text-muted-foreground">
             {t("marketing.requestPackageIntro")}
@@ -212,7 +226,7 @@ export function PackagesAndRequest() {
                   value={selectedPackageId}
                   onValueChange={(value) => value && setSelectedPackageId(value)}
                 >
-                  <SelectTrigger id="package" className="w-full">
+                  <SelectTrigger id="package" className="request-field w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -227,20 +241,44 @@ export function PackagesAndRequest() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="name">{t("marketing.yourName")}</Label>
-                  <Input id="name" name="name" required placeholder={t("marketing.namePlaceholder")} />
+                  <Input
+                    id="name"
+                    name="name"
+                    required
+                    placeholder={t("marketing.namePlaceholder")}
+                    className="request-field"
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="companyName">{t("marketing.company")}</Label>
-                  <Input id="companyName" name="companyName" placeholder={t("marketing.companyPlaceholder")} />
+                  <Input
+                    id="companyName"
+                    name="companyName"
+                    placeholder={t("marketing.companyPlaceholder")}
+                    className="request-field"
+                  />
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="email">{t("auth.email")}</Label>
-                <Input id="email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder={t("marketing.emailPlaceholder")}
+                  className="request-field"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="message">{t("marketing.messageOptional")}</Label>
-                <Textarea id="message" name="message" rows={4} placeholder={t("marketing.messagePlaceholder")} />
+                <Textarea
+                  id="message"
+                  name="message"
+                  rows={4}
+                  placeholder={t("marketing.messagePlaceholder")}
+                  className="request-field"
+                />
               </div>
               {submitError && (
                 <p
@@ -250,7 +288,11 @@ export function PackagesAndRequest() {
                   {submitError}
                 </p>
               )}
-              <Button type="submit" disabled={pending} className="mt-2">
+              <Button
+                type="submit"
+                disabled={pending}
+                className="mt-2 bg-[#CAF4FF] text-foreground hover:bg-[#CAF4FF]/80 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/80"
+              >
                 {pending ? t("marketing.submitting") : t("marketing.submitRequest")}
               </Button>
             </form>

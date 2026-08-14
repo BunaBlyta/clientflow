@@ -3,7 +3,7 @@ import { Footer } from "@/components/marketing/footer";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="marketing-page flex flex-1 flex-col">
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />

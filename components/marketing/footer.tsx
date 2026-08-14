@@ -6,8 +6,8 @@ import { useLocale } from "@/lib/i18n";
 export function Footer() {
   const { t } = useLocale();
   return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <footer className="marketing-footer border-t border-border">
+      <div className="mx-auto flex w-full max-w-none flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <p className="text-[13px] text-muted-foreground">
           &copy; {new Date().getFullYear()} Clientflow Studio. All rights reserved.
         </p>

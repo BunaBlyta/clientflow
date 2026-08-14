@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSelect } from "@/components/language-select";
 import { useLocale } from "@/lib/i18n";
@@ -16,7 +15,7 @@ const links = [
 export function Navbar() {
   const { t } = useLocale();
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="marketing-header sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="relative flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
           <BrandLogo />
@@ -34,17 +33,16 @@ export function Navbar() {
           ))}
         </nav>
         <div className="flex items-center gap-2 sm:gap-4">
-          <LanguageSelect />
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <LanguageSelect compact />
+            <ThemeToggle />
+          </div>
           <Link
             href="/login"
-            className="hidden text-[15px] font-normal text-muted-foreground hover:text-foreground sm:inline"
+            className="marketing-staff-login hidden text-[15px] font-normal text-muted-foreground hover:text-foreground sm:inline"
           >
             {t("nav.staffLogin")}
           </Link>
-          <Button size="sm" render={<a href="#packages" />}>
-            {t("nav.startProject")}
-          </Button>
         </div>
       </div>
     </header>

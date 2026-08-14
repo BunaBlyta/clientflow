@@ -17,6 +17,7 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
+      className="theme-toggle"
       aria-label={t("theme.toggle")}
       title={isDark ? t("theme.light") : t("theme.dark")}
       onClick={() => setTheme(isDark ? "light" : "dark")}

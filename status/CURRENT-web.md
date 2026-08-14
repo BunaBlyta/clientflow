@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-14 09:19 by Codex — select theme-specific logo assets
+Last updated: 2026-08-14 15:22 by Codex — make light buttons visible cyan
 
 ## Current state
 
@@ -9,6 +9,88 @@ Last updated: 2026-08-14 09:19 by Codex — select theme-specific logo assets
 - Request approval/rejection, invoice actions, project status changes, notification read actions, invitations, package editing, invoice creation, and project notes use their live API endpoints.
 - The project detail page had one leftover Zustand call that mirrored live status updates into the unused mock store. It has been removed; the page now keeps its server response as its only local source of truth.
 - The marketing navbar and dashboard sidebar now use the theme-specific assets: `/light-logo.png` in light mode and `/dark-logo.png` in dark mode, through the shared `BrandLogo` component.
+- Removed the public marketing “Start a project” button and changed its language control to a globe-only trigger. Dashboard Settings keeps the full language selector so staff can still see the active language name.
+- Tightened the gap between the public globe language trigger and light/dark theme toggle without changing staff-login spacing.
+- Changed the shared blue action/icon accent to `#CAF4FF` and adjusted primary button text to a dark foreground for contrast.
+- Added a restrained `.premium-card` treatment with a faint cyan gradient, inset highlight, and low-opacity depth shadow to public package cards only; dashboard stat tiles remain flat and restrained.
+- Replaced the popular package’s harsh 2px accent border with the existing label, a subtle cyan surface wash, and a soft lift shadow while keeping the shared hairline border.
+- Kept the two coordinated hero shades but softened them to `#CAF4FF` at 30% opacity and `#A0DEFF` at 40%.
+- Moved that gradient from the hero-only layer to the marketing layout background so the landing page carries a faint ambient wash throughout without stacking the effect twice.
+- Restored the gradient to the hero-only layer after review; the marketing layout is back to its original plain background.
+- Increased the hero gradient opacity in light mode so the ambient color is visible against white; dark mode keeps the previously approved softer opacity.
+- Strengthened the light-mode gradient again to a clearly visible treatment at 72% and 82% opacity; dark mode remains unchanged.
+- Restored the earlier balanced light-mode gradient at 48% and 56% opacity after review; dark mode remains unchanged.
+- Restored the original light-mode gradient treatment using the landing-page `#CAF4FF` and `#A0DEFF` variables directly; dark mode remains unchanged.
+- Softened only the right-side light-mode radial center to 56% opacity so it does not overpower the rest of the hero.
+- Updated dark mode so both gradient layers use only `#CAF4FF`, preserving their existing soft 30% and 40% opacity levels.
+- Reduced the dark-mode right-side gradient center from 40% to 30% opacity to remove the harsh hotspot.
+- Removed the dark-mode right-side radial entirely; the dark hero now uses only the centered `#CAF4FF` glow.
+- Restored the dark-mode right-side radial at a very subtle 14% opacity so it remains visible without creating a hotspot.
+- Added a soft ambient halo to Packages, a connected step line with icon nodes to How it works, and a split contact layout with an elevated form panel; copy and live form behavior are unchanged.
+- Applied the same split composition to Request a package, with a clipboard cue, ambient halo, and elevated form panel; fields and submission behavior are unchanged.
+- Kept Request a package simple again and moved the visual treatment into a soft two-tone cyan strip background; fields and submission behavior remain unchanged.
+- Replaced the side-to-side wash with a quieter top-down cyan fade on the page background so the strip matches the hero and landing-page visual language.
+- Softened only the Custom web build card with a lighter gradient, hairline border, and no lift shadow; standard and popular package cards are unchanged.
+- Restored the Custom web build contact strip background and softened only its form card with a lighter gradient, neutral hairline border, and no lift shadow.
+- Added two restrained, opposing cyan glows to the Request a package strip background so the simple form has more visual depth without changing its layout.
+- Softened all package cards with a lighter cyan wash, quieter border tint, lower inset highlight, and reduced shadow; Most popular is softer too.
+- Raised the package-card treatment to a middle ground: 8% wash, 20% border tint, 12% inset highlight, and 58% shadow; Most popular is set to a restrained 4% wash and 60% shadow.
+- Added a subtle layered card surface and fine cyan accent trace at the top of each package card to create depth without increasing the shadow treatment.
+- Simplified the package cards by removing the layered surface graphics and keeping only the quiet top accent trace over the existing premium card treatment.
+- Removed the package-card accent trace entirely; cards now use only the clean premium surface, border, and restrained depth treatment.
+- Added a restrained hover lift, border response, and price color emphasis so package cards feel more alive without adding static decoration.
+- Lowered package-card border contrast to 50% and reduced the hover border accent to 20% for a softer separation.
+- Removed the package cards’ lower drop shadows, including Most popular, while preserving the quiet border and hover lift.
+- Replaced the directional package-card shadows with a subtle all-around cyan glow.
+- Removed the package-card gradient and applied a translucent, blurred glass surface with a soft edge highlight and cyan glow.
+- Corrected the shared button, ring, sidebar, and brand accent tokens from `#5AB2FF` to `#CAF4FF`, restored the landing accent pair to `#CAF4FF` / `#A0DEFF`, and softened the glass tint, edge highlights, and glow substantially.
+- Removed visible borders from package cards and shifted the glass definition into layered inset shadows plus a restrained cyan bloom.
+- Removed the bloom and simplified cards to a low-opacity `#CAF4FF` surface tint over the base color, with only a quiet inner highlight and a subtle dark-mode tint over the card surface.
+- Removed all package-card shadows and set a clearer cyan surface tint directly: 6% in light mode and 9% in dark mode, with no visible border.
+- Reset the package cards to a quieter surface: no blur, glow, border, or shadow; only a faint direct `#CAF4FF` wash at 4% in light mode and 6% in dark mode.
+- Reverted the lower-section consistency pass after review; Request a package, How it works, Track your project, and Custom web build are back to their prior individual treatments.
+- Spread the Custom web build strip’s cyan gradient across the full section with broad, low-intensity fades using only `#CAF4FF`; removed the concentrated corner glow.
+- Re-anchored that gradient at the bottom center so the cyan diffuses upward through the Custom web build strip.
+- Moved the gradient origin to the bottom-left while preserving its broad, soft upward diffusion.
+- Added a restrained cyan-tinted frame and soft depth to the Marlowe & Finch project preview, keeping its inner tracker clean.
+- Replaced the How it works top-down fade with a soft horizontal gradient that follows the process timeline.
+- Extended the How it works gradient layer across the full section so it no longer cuts off midway through the content.
+- Lowered both How it works gradient stops for a softer, quieter result while preserving the full-section horizontal flow.
+- Mirrored the Custom web app strip’s bottom-left cyan gradient with an equally soft top-right gradient in both themes.
+- Extended the hero gradient layer across the full hero and added a soft bottom-origin `#CAF4FF` radial so it rises from the Request a package boundary.
+- Removed the bottom-origin radial from the hero and placed it at the bottom of Packages, where it softly rises from the boundary above Request a package.
+- Matched the Packages boundary to the hero’s two-radial gradient style, mirrored from the bottom edge with a main glow and softer secondary glow.
+- Extended the Packages boundary gradient to the same 560px depth as the hero for an equally spacious spread.
+- Extended the Packages boundary fade to 720px and lowered its intensity for a softer, more stretched treatment; dark package cards now use an opaque page-background surface so the gradient does not tint them.
+- Removed the hero’s “web design & dev studio” pill and tightened the heading spacing; moved the Packages gradient from the bottom edge to a broad left-side wash.
+- Removed the Packages gradient entirely; the hero gradient remains unchanged.
+- Increased the Packages section’s vertical padding to give the cards and surrounding content more breathing room without changing the Request section.
+- Increased only the Packages section’s bottom padding to 40 spacing units, creating a larger transition into Request a package.
+- Made the hero fill the first viewport beneath the navbar so Packages is not visible on initial page load.
+- Grouped all package options inside one quiet rounded outer container, keeping each package as an individual column within it.
+- Extended the hero gradient depth from 560px to 680px so it carries farther down the taller first viewport.
+- Removed the Most popular card’s special cyan background so all package surfaces match; the label remains its visual distinction.
+- Increased only light-mode visibility for the package shell/cards and How it works gradient; dark-mode values remain unchanged.
+- Increased light-mode cyan presence materially across Request a package, How it works, the package shell, and package cards; dark-mode values remain unchanged.
+- Made light-mode details visibly read against white: added a cyan outer package boundary, stronger hero-matched process gradient, and cyan-backed icon treatments across the lower marketing sections.
+- Kept those cyan details for dark mode but switched light-mode package surfaces, package frame, icons, step nodes, connectors, and contact cue to neutral gray for clearer contrast.
+- Increased light-mode contrast materially: package surfaces are now 8–10% gray, outer frame and icon/node edges are 20% gray, icon fills are 10% gray, and the process connector is 20–30% gray.
+- Replaced the light-mode gray accents with darker `#A0DEFF` cyan and strengthened the lower-section gradients to hero-like 22–32% opacity; dark-mode values remain unchanged.
+- Restored the earlier light-mode visual language: `#5AB2FF` UI accent, visible hairline borders, plain light package cards, simpler request/process/contact surfaces, and direct accent-colored icons. Dark mode keeps the current cyan treatment.
+- Restored light-mode visual scaffolding to match dark-mode readability: stronger section gradients, visible `#A0DEFF` separators and form borders, defined package frame/cards, and a more visible Marlowe & Finch frame/icons.
+- Forced explicit light-mode contrast for section separators, package/form borders, gradients, and icon nodes so they visibly render against white; dark-mode styling remains untouched.
+- Switched light-mode structural details back to readable gray while increasing cyan gradient opacity to 50%/38%; dark-mode styling remains unchanged.
+- Softened light-mode separators, borders, icon surfaces, and Marlowe frame; widened all light-mode cyan gradients so they fade across more area instead of creating concentrated bands.
+- Harmonized Request a package and How it works around the same broad two-radial cyan treatment, with How it works intentionally quieter.
+- Simplified those light-mode gradients to one clean broad cyan wash each and changed light-mode buttons/rings/sidebar actions to the darker cyan `#A0DEFF`; dark mode remains `#CAF4FF`.
+- Aligned the light-mode How it works connector, nodes, icons, and step labels with the same darker cyan `#A0DEFF`; dark mode remains unchanged.
+- Fixed the later light-mode contrast override that was forcing the How it works nodes black and the connector gray; both now render in `#A0DEFF`.
+- Matched the How it works light-mode gradient to the dark-mode horizontal placement and spread, using a stronger `#A0DEFF` treatment for white.
+- Fixed the How it works gradient stacking order: it now sits above the section background but below the content, with light opacity raised to 35%/18% so it is visible.
+- Applied the same stacking fix to Request a package: its gradient now renders in a dedicated layer above the strip background and below the form.
+- Added a restrained 10% `#A0DEFF` surface tint to light-mode package cards so they feel less flat without adding shadows or decorative borders.
+- Updated light-mode outline buttons to use visible cyan fills/borders and made Most popular slightly darker cyan; dark-mode button variants remain unchanged.
+- Removed visible borders from buttons and package cards. Package cards now use a very restrained cyan-tinted surface with an inset tonal highlight so they feel lifted without a boxed outline.
 
 ## Verification
 
@@ -18,6 +100,7 @@ Last updated: 2026-08-14 09:19 by Codex — select theme-specific logo assets
 - `npx next build --webpack`: passed.
 - `git diff --check`: passed.
 - Theme-specific logo selection is covered by the production build; both assets are served through the shared component without a hydration-time theme read.
+- The public header change passed `npm run test`, `npm run typecheck`, `npm run lint`, and `npx next build --webpack`.
 - Browser verification was not available: the browser runtime reported no connected browser, and the local dev server was not reachable from this session. Do not describe this task as manually clicked through.
 
 ## Handoff notes
@@ -25,7 +108,184 @@ Last updated: 2026-08-14 09:19 by Codex — select theme-specific logo assets
 - No API, Prisma, mobile, or architecture files were changed.
 - The old fixture modules remain in `lib/` for now, but no web page reads them after this cleanup; they were not deleted because they are historical scaffolding and may still be useful for reference.
 - The previous `/logo.png` asset is no longer used; the supplied light/dark assets are the source of truth.
+- `LanguageSelect` supports a compact globe-only mode for the public header while preserving its existing full mode elsewhere.
+- This accent/card refresh is intentionally uncommitted until Buna asks for checks and a commit.
+- The latest button/card polish is also intentionally uncommitted and unverified until Buna asks for checks and a commit.
+- Moved the restrained cyan-tinted shadow from the individual package cards to the light-mode housing container around all packages; dark mode is unchanged.
+- Increased the light-mode pressed-in treatment on the Request a package fields with a clearer tinted surface, deeper inset shadows, and a slightly more visible focus ring; dark-mode styling remains unchanged.
+- Shifted the public marketing page to a very subtle cool off-white background from the header through the footer; dashboard and dark-mode backgrounds are unchanged.
+- Kept the first light-mode viewport cool off-white, then introduced a soft cyan wash below it as the user scrolls; dark mode is unchanged.
+- Removed all shadow from the light-mode package housing; the gaps remain neutral light gray while cards stay white and borderless.
+- Added two oversized, low-contrast light-mode bubbles inside the package housing, echoing the login page’s soft circular shapes without changing dark mode.
+- Removed the How it works section background gradient; its content, connector, and cyan step accents remain.
+- Lightened the pressed Request a package fields slightly and removed the Request a package section’s dedicated gradient.
+- Increased the light-mode hero gradient opacity and spread so the cyan remains visible further down the hero; dark-mode hero treatment remains unchanged.
+- Tightened the light-mode hero gradient back to its earlier spread while keeping the corrected stacking order that makes it visible.
+- Gave the light-mode Packages section a soft cyan background with two large circular bubbles; package cards stay white and dark mode is unchanged.
+- Added two smaller bubbles at varied positions in the light-mode Packages background for a more layered effect.
+- Increased the light-mode Packages bubbles’ contrast and added a soft inner highlight so they are visibly readable against the cyan section background.
+- Moved the cyan bubble treatment from Packages to Request a package; Packages is clean again, while Request a package now carries the cyan background and bubbles.
+- Set the light-mode Packages section to clean white and added a restrained layered/inset card treatment with a soft cyan lift, without visible card borders; dark mode is unchanged.
+- Shortened the light-mode hero gradient layer so it no longer reaches into the bottom of the hero; the upper hero treatment remains.
+- Removed the hard white Packages section surface so the page background and restored left/right Hero–Packages glows flow continuously; package cards remain white.
+- Changed Custom web app build to one flat soft-cyan background with no gradient, and restyled its form as a borderless translucent white panel with a subtle inset highlight; dark mode is unchanged.
+- Made the light-mode Request a package fields cyan-tinted while preserving their pressed-in depth and leaving the button styling unchanged; dark mode is unchanged.
+- Made How it works explicitly use the same visible cyan opacity as the Request bubble, with no competing section utility; Track your project stays white and dark mode is unchanged.
+- Extended the left/right Hero–Packages glow layer from halfway through Hero to the bottom of Packages, with a broader vertical fade and no center gradient.
+- Made the light-mode Track your project strip visibly light gray with an explicit opaque surface; dark mode is unchanged.
+- Removed the visible divider lines between the marketing sections so their surfaces transition softly into one another; the phone preview’s internal divider remains.
+- Added broad low-contrast fades between the light-mode Request, How it works, and Track your project surfaces so the sections blur into each other instead of switching abruptly; dark mode is unchanged.
+- Restored the previous bottom Request bubble treatment after undoing the blur experiment.
+- Kept the cross-section bubble owned by Request a package, but reduced it to the original 26rem size and shortened its overlap into How it works so it reads as one continuous, restrained shape.
+- Stretched the left/right hero glows wider and lowered their opacity for a softer, more distributed effect.
+- Extended the light-mode Request a package cyan surface upward behind its top bubble so the white bubble is fully visible.
+- Softened that upward cyan extension with a blur so it blends into the section above without a hard edge.
+- Increased the upward cyan extension blur to 42px for a much softer transition.
+- Made How it works’ upper cyan wash blur more strongly, extended cyan farther down the section, and added a blurred lower fade into Track your project.
+- Lightened How it works’ cyan treatment toward `#CAF4FF` and reduced the deeper blue influence while keeping the same blur and fade structure.
+- Matched the Request-to-How it works boundary color to remove the visible separator and increased How it works bottom padding for a more spacious transition into Track your project.
+- Removed the gray from Track your project, returning its light-mode surface to white with only the existing soft transition tints.
+- Shifted Track your project from white to a very light cyan surface while preserving its soft section fades.
+- Restored the light-mode Request a package fields to white and lightened only its Submit request button to `#CAF4FF`; dark mode keeps its current button treatment.
+- Changed the light-mode package-card blue accents to cyan and removed the price text color change on card hover.
+- Replaced the rejected How it works bubbles with a clean solid pale-cyan section surface; the section remains gradient-free and dark mode is unchanged.
+- Made How it works a flat `#E8F8FE` surface with no gradient or blur layers, moved its connector behind the icons, and gave the light-mode icons a solid glossy cyan treatment with darker cyan glyphs.
+- Removed the How it works icon backgrounds and glossy surfaces, keeping only the darker cyan icon treatment and outline.
+- Darkened the How it works light-mode icon glyphs to a deeper cyan for clearer contrast.
+- Added an outer cyan glow to the icon circles and a bright-center shine to the connector line so it reads like light traveling through it.
+- Softened the icon halo, moved the emphasis inward, and increased the connector to a clearer 2px luminous line.
+- Replaced the single fixed timeline line with per-step segments that start at each icon center and connect directly to the next icon, including the first one.
+- Added a subtle staggered float animation to the How it works icons, with reduced-motion support; the connector and text remain still.
+- Replaced passive icon motion with hover interactions: a pulse on step one, a scan sweep/lift on each step, a message-bubble pop on step three, and a rocket launch on step four.
+- Moved those hover animations from the surrounding icon circles onto the actual Lucide glyphs inside them, keeping the circles mostly still.
+- Replaced the credit-card glyph with a money icon and changed its hover interaction to a horizontal 3D spin with a slight scale lift.
+- Made all Marlowe & Finch progress bars fill on preview hover and restored a subtle inner border around the phone card.
+- Staggered the remaining Marlowe progress bars so they fill sequentially on hover and darkened the inner border slightly for clearer definition.
+- Made package-card actions filled cyan, made Most popular slightly darker, replaced its pill with a stamped label, and added a cyan light-shine to package prices on hover.
+- Reworked Most popular into a circular double-ring seal in the card’s top-right space, and changed the package-number hover effect to an internal cyan/white sheen sweep with no glow or shadow.
+- Lightened regular package actions to `#DDF8FF`, kept Most popular’s action darker, darkened the stamp for weight, and softened the darkest number-sheen tone.
+- Changed Track your project back to a clean light-gray surface with no cyan fade.
+- Removed the cyan borders from the Marlowe & Finch preview and increased App Store / Google Play badge visibility with stronger neutral surfaces, borders, and text.
+- Replaced the text placeholders with official-style black App Store and Google Play badges, still marked as coming soon through their accessible labels.
+- Replaced the generic Lucide symbols inside the store badges with the actual Apple and Google Play brand marks.
+- Changed the light-mode How it works icons and connector line from cyan to restrained gray, leaving the section color and dark mode unchanged.
+- Forced the connecting line to a solid neutral gray with no remaining cyan gradient.
+- Shortened each connector segment so it runs from circle edge to circle edge and no longer appears inside the transparent icon circles.
+- Changed the How it works Step labels to the same foreground color as the text beneath them.
+- Removed the remaining blue connector utilities and set the light-mode bar directly to gray.
+- Reverted the pressed-surface experiment for the package housing and card gaps; the prior light-mode housing treatment is restored.
+- Removed the white decorative bubble from the light-mode package housing and added a very soft inset shadow so the housing reads as gently pressed.
+- Gave the light-mode package cards a soft raised-button treatment with a subtle lower ledge, lift shadow, and top highlight.
+- Slowed and softened the light-mode package-price hover sheen so its highlight passes more gently.
+- Made the hover treatment stage softly: the price turns cyan first, then the pale light sweeps across it.
+- Broadened the sheen’s color stops so the pale light diffuses into cyan instead of reading as a sharp streak.
+- Added a soft dark-to-cyan fade at the start of the package-price hover animation before the lighter reflection appears.
+- Increased the hover reflection’s visible cyan center and surrounding fade so it remains perceptible against the light background.
+- Lightened only the center of that reflection to `#E5FAFF`, keeping the surrounding cyan fade intact.
+- Made the center of the package-price sweep pure white, with the cyan fade still framing it.
+- Widened the white center slightly so the hover sweep reads as a fuller, softer highlight.
+- Lightened the interiors of the light-mode How it works circles with a soft white fill while leaving their gray outlines, icons, connector, and dark mode unchanged.
+- Reverted the lighter How it works circle interiors to their previous transparent fill and gray shadow.
+- Added a softer cyan/white inward glow to the light-mode How it works circles while keeping their interiors transparent.
+- Changed the light-mode Request a package fields to a very light cyan surface with a soft inset bevel and restrained cyan edge.
+- Lightened those fields to `#F6FDFF` so they sit visibly above the cyan section background while keeping their tint.
+- Darkened the light-mode Request a package placeholders to a muted cyan for clearer guidance text.
+- Applied the same muted-cyan placeholder color to the light-mode package dropdown when it has no selection.
+- Set the light-mode package dropdown trigger text itself to the same muted cyan, including its selected value.
+- Replaced the outward focus glow on light-mode Request a package fields and dropdown with a deeper inset pressed state.
+- Removed the light-mode Request a package field borders and slightly lightened the muted-cyan placeholder and dropdown text.
+- Deepened the light-mode Request a package controls’ inset bevel so the borderless fields and dropdown read more clearly as pressed.
+- Increased the light-mode Request a package control height slightly for more comfortable spacing inside the boxes.
+- Added a small, restrained visual mark beneath the How it works intro to give the section a more intentional finish without changing its timeline or interactions.
+- Removed the light-mode How it works connector line’s shadow and glow, leaving a clean flat gray line.
+- Reduced the light-mode How it works connector to a 1px hairline.
+- Replaced the straight How it works connector segments with separated, lightly squiggled arrow paths that still connect each circle to the next.
+- Changed those paths to longer separated strokes, darkened and thickened them, and moved the only arrowhead to a final arrow extending beyond Launch.
+- Increased the connector stroke weight again and added more wave cycles for a clearly squiggled path.
+- Increased the spacing between each separated connector stroke to make the breaks more distinct.
+- Gave the light-mode connector a more comic-book feel with bolder strokes, a stronger wave, wider breaks, and a heavier final arrow.
+- Matched the light-mode How it works icon circles to that treatment with darker 2px outlines, keeping their soft inward cyan glow.
+- Shortened the arrow extending past Launch and replaced its thin `>` shape with a compact filled arrowhead.
+- Made the segment after Launch straight instead of squiggled and replaced the malformed arrowhead with a clean filled triangle.
+- Restored a shorter, gentler squiggle after Launch while keeping the clean filled arrowhead.
+- Anchored the final Launch squiggle closer to the rocket’s upper-right tip so it visibly emerges from the icon.
+- Shaped the first bend to rise up and to the right from the rocket tip before returning to the softer squiggle.
+- Angled the final bend and arrowhead up-right so the arrow follows the rocket’s launch direction.
+- Changed the full post-Launch arrow to climb upward from the rocket tip, with only small waves along its rise.
+- Reworked the Launch connector into a vertical upward squiggle that begins at the rocket tip; it no longer extends horizontally after the icon.
+- Removed the Launch arrow entirely after review; How it works keeps only the separated squiggled connectors between the first three steps.
+- Animated the separated How it works squiggles on section hover, slightly lightened the light-mode circle interiors, and made the light-mode icons read as filled shapes; dark mode is unchanged.
+- Restored outlined treatment for the first two light-mode icons so CircleDot and CircleDollarSign remain recognizable, and made the squiggle animation run continuously without hover.
+- Inverted those first two light-mode glyphs with solid fills and white outlines/details so they remain legible inside the circles.
+- Enlarged the How it works glyphs slightly and replaced the first generic dot with a FilePlus icon that better represents making a request.
+- Swapped the first process icon from FilePlus to ClipboardPlus for a clearer request cue.
+- Replaced ClipboardPlus with Send for a more direct visual shorthand for submitting a request.
+- Set all light-mode How it works glyph outlines to the light cyan `#CAF4FF`, including the inverse first two icons.
+- Replaced the uniform light-cyan glyph treatment with semantic light-mode colors: blue Send, green money, violet tracking, and orange rocket; dark mode is unchanged.
+- Replaced the light-mode single-color rocket with a multi-color rocket illustration: pale body, blue window, orange/red fins, yellow flame, and thin dark outlines around each piece.
+- Extended the illustrated treatment to every light-mode How it works icon: paper plane, coin/dollar, chat bubble, and rocket now use colored pieces with thin dark outlines.
+- Updated the illustrated interactions: the paper plane now flies on hover, and the chat dots pop one after another from left to right.
+- Anchored each animated chat dot to its own center so the sequential pop stays contained within the bubble.
+- Added a subtle folding motion to the plane’s blue wing during its hover flight.
+- Changed the plane hover motion to a small circular orbit inside its icon circle while preserving the wing fold.
+- Replaced the plane motion with a horizontal oval orbit that starts at the top and removed the fold animation; added a separate flame-ignition burst to the rocket hover.
+- Changed the plane hover to launch toward the circle edge while clipping it inside the circle, and focused the rocket hover entirely on a stronger flame ignition instead of moving the rocket body.
+- Fixed the animation block syntax after the plane/rocket interaction update.
+- Made the paper plane return from below after launching upward, fading back into its resting position from the bottom.
+- Pushed the plane’s return point fully below the clipped circle before it rises back into place.
+- Shifted that hidden return point to the bottom-left so the plane re-enters diagonally.
+- Changed light-mode Request a package input and textarea placeholders to a soft light gray.
+- Applied the same soft light-gray text color to the light-mode package dropdown.
+- Added a subtle cyan outline slightly outside each light-mode Request a package control, keeping the inner bevel pressed and borderless.
+- Increased the outside frame contrast so it is clearly visible around the pale controls without becoming heavy.
+- Deepened the light-mode Request a package controls’ inset shadows so the fields and dropdown feel more firmly pressed in.
+- Applied the same light-mode pale-cyan surface, offset frame, and deeper pressed inset treatment to the Custom web app form fields.
+- Gave the Custom web app form housing a distinct tray treatment with layered inset depth, a subtle lower ledge, and a small cyan top rail.
+- Removed the decorative icon above the Custom web app heading and the icon beside “Talk to us,” leaving the copy-only treatment.
+- Removed the “Talk to us” line as well, leaving the Custom web app intro without that extra callout.
+- Centered the Custom web app build intro in its column and changed the form card’s short top rail into a full-width separated cyan line.
+- Restored left alignment for the Custom web app build copy and vertically centered it beside the form card.
+- Extended the separated cyan card framing down the left, right, and bottom edges while keeping the segmented top rail.
+- Replaced the dashed edge frame with separated cyan segments matching the top rail on the card’s sides and bottom.
+- Removed the side and bottom cyan segments, leaving only the top segmented rail on the Custom web app form card.
+- Removed the remaining top segmented rail; the Custom web app form card has no decorative line now.
+- Restored the segmented cyan rail across the top of the Custom web app form card only.
+- Increased How it works content top spacing and bottom breathing room to separate it from Request a package without changing any backgrounds.
+- Increased the How it works top and bottom spacing again for a more generous separation.
+- Kept the existing bottom gap unchanged and only increased top padding to push the How it works content down.
+- Set the light-mode marketing footer to the darker cyan `#A0DEFF` accent while leaving dark mode unchanged.
+- Expanded the footer row to the full available width and darkened its light-mode copy and links for stronger contrast.
+- Made the light-mode footer copy and links darker and medium-weight for clearer contrast.
+- Matched the light-mode footer text size to the marketing header navigation at 15px.
+- Added a restrained layered cyan footer background with a soft radial highlight and darker central sweep for more visual depth.
+- Changed the footer base to a subtle symmetric left-to-center-to-right gradient using darker cyan tones.
+- Increased the footer gradient contrast with darker cyan edges and a brighter center so the sweep is more visible.
+- Added an inverse text gradient to the light-mode footer, with lighter text at the darker edges and deeper text through the lighter center.
+- Shifted that text gradient entirely into cyan shades: `#CAF4FF` at the edges and deeper `#167D99` through the center.
+- Deepened the footer text gradient to dark cyan `#167D99` at the edges and near-black `#08090A` through the center.
+- Darkened the footer gradient edge cyan slightly to `#0F6680` while keeping the center near-black.
+- Reversed the footer text gradient so near-black frames the edges and `#0F6680` sits in the center.
+- Softened that direction by bringing the centered cyan down to `#0B4A59` for a quieter transition.
+- Applied the same subtle near-black/dark-cyan gradient to all light-mode marketing headings from `h1` through `h3`; body text and dark mode are unchanged.
+- Lightened only the center of the Request a package and How it works title gradients to `#167D99`.
+- Added a restrained raised-button treatment to marketing buttons, with a lower ledge, soft hover lift, and clear active press state.
+- Replaced that shadow-based button treatment with a simple gradient highlight/press effect and excluded the theme toggle from it.
+- Increased the button gradient contrast so the top highlight and bottom shading read more clearly as a raised control, with a reversed gradient on press.
+- Added physical button edges and a deeper press movement: light top edge, darker lower edge, and inverted edges while active.
+- Removed the button edge borders again; marketing buttons now use only gradients and movement, with no borders or shadows.
+- Added a very subtle light-gray border to light-mode marketing buttons only; dark mode and the theme toggle remain unchanged.
+- Softened the lower dark gradient on light-mode buttons so the underside reads lighter and less harsh.
+- Added an explicitly visible slim cyan page scrollbar with a stable gutter; intentionally hidden component scroll areas remain hidden.
+- Added a white-preserving marketing header treatment with a subtle cyan wash at the lower edge for more depth without affecting the logo background.
+- Made the light-mode header frosted with translucent white, stronger backdrop blur, and a restrained icy cyan lower tint.
+- Added frosted pill treatments to the light-mode header links, language control, theme control, and staff login with a soft cyan hover state.
+- Refined the light-mode language and theme controls into frosted rounded icon tiles and gave Staff login a stronger, medium-weight frosted pill.
+- Softened Staff login to a lower-contrast frosted treatment with normal font weight.
 - The build reports Next’s existing warning that the `middleware` convention is deprecated in favor of `proxy`; this task did not change middleware.
+
+## Latest task
+
+- Changed the public Request a package form’s light-mode placeholders from muted cyan to a soft neutral grey for clearer, quieter field guidance.
 
 ## Hard rule
 

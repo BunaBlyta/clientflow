@@ -47,15 +47,17 @@ export function ContactForm() {
   }
 
   return (
-    <section id="contact" className="border-t border-border bg-brand-sky-light/20">
-      <div className="mx-auto max-w-xl px-4 py-20 sm:px-6">
-        <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("marketing.customBuildTitle")}</h2>
-        <p className="mt-2 text-[14px] text-muted-foreground">
-          {t("marketing.customBuildIntro")}
-        </p>
+    <section id="contact" className="custom-build-gradient relative isolate overflow-hidden">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-stretch lg:gap-16">
+        <div className="flex flex-col justify-center pt-2 text-left">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-[22px]">{t("marketing.customBuildTitle")}</h2>
+          <p className="mt-2 max-w-md text-[14px] leading-relaxed text-muted-foreground">
+            {t("marketing.customBuildIntro")}
+          </p>
+        </div>
 
         {submitted ? (
-          <div className="mt-8 rounded-lg border border-border bg-background p-6">
+          <div className="premium-card contact-form-card rounded-2xl border border-border bg-background/80 p-6 backdrop-blur-sm sm:p-8">
             <p className="text-[14px] font-medium">{t("marketing.thanksInquiry")}</p>
             <p className="mt-1 text-[13px] text-muted-foreground">
               {t("marketing.thanksInquiryIntro")}
@@ -65,15 +67,15 @@ export function ContactForm() {
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="premium-card contact-form-card flex flex-col gap-4 rounded-2xl border border-border bg-background/80 p-6 backdrop-blur-sm sm:p-8">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="contact-name">{t("marketing.yourName")}</Label>
-                <Input id="contact-name" name="name" required placeholder={t("marketing.namePlaceholder")} />
+                <Input id="contact-name" name="name" required placeholder={t("marketing.namePlaceholder")} className="contact-field" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="contact-email">{t("auth.email")}</Label>
-                <Input id="contact-email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} />
+                <Input id="contact-email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} className="contact-field" />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -84,6 +86,7 @@ export function ContactForm() {
                 required
                 rows={5}
                 placeholder={t("marketing.buildPlaceholder")}
+                className="contact-field"
               />
             </div>
             {error && (
