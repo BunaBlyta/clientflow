@@ -299,6 +299,11 @@ Last updated: 2026-08-14 15:22 by Codex — make light buttons visible cyan
 - Expanded the Invite a teammate inputs and button to fill the available Settings modal width.
 - Anchored the Send invite action in a separated footer area beneath the teammate fields.
 - Removed the globe icon from the Settings language control while keeping the full language dropdown.
+- Centered the How it works four-step flow within a narrower max-width so the connector and steps feel more balanced in the section.
+- Centered each How it works step’s icon, label, title, and description within its own column.
+- Restored the How it works grid to the full content width so the centered steps are spaced farther apart.
+- Re-anchored the How it works connectors between the edges of the centered icon circles.
+- Extended the centered connectors across the full column gap so each one reaches the next icon cleanly.
 
 ## Hard rule
 
