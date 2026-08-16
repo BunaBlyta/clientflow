@@ -21,7 +21,7 @@ export function SettingsDialog() {
         <Settings className="size-4" />
         {t("dashboard.settings")}
       </DialogTrigger>
-      <DialogContent className="flex h-[720px] max-h-none w-[1600px] max-w-none flex-col overflow-hidden rounded-2xl p-5 sm:p-6">
+      <DialogContent className="flex h-[720px] max-h-none w-[1000px] max-w-none flex-col overflow-hidden rounded-2xl p-5 sm:max-w-none sm:p-6">
         <DialogHeader>
           <DialogTitle>{t("dashboard.settings")}</DialogTitle>
           <DialogDescription>{t("dashboard.settingsIntro")}</DialogDescription>

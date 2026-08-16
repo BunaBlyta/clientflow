@@ -222,15 +222,11 @@ function NotificationList({
   onRead: (notification: Notification) => void;
 }) {
   if (notifications.length === 0) {
-    return (
-      <div className="rounded-lg border border-border">
-        <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{emptyLabel}</p>
-      </div>
-    );
+    return <div className="border-y border-border"><p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{emptyLabel}</p></div>;
   }
 
   return (
-    <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
+    <div className="border-y border-border">
       {notifications.map((n) => {
         const Icon = NOTIFICATION_ICON[n.type];
         return (
@@ -244,18 +240,17 @@ function NotificationList({
             }}
             aria-disabled={markingId === n.id}
             className={cn(
-              "flex items-start gap-3 px-4 py-3.5 hover:bg-muted/40",
-              !n.read && "bg-brand-accent/5",
+              "group flex items-start gap-4 border-b border-border px-1 py-4 last:border-0 hover:bg-muted/30 sm:px-2",
               markingId === n.id && "pointer-events-none opacity-60",
             )}
           >
-            <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <Icon className={cn("mt-0.5 size-4 shrink-0", n.read ? "text-muted-foreground/70" : "text-brand-accent")} />
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-medium">{n.title}</p>
-              <p className="text-[13px] text-muted-foreground">{n.body}</p>
+              <p className={cn("text-[13px]", !n.read && "font-medium")}>{n.title}</p>
+              <p className="mt-0.5 text-[12px] leading-5 text-muted-foreground">{n.body}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span className="text-[12px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+              <span className="text-[11px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
               {!n.read && <span className="size-1.5 rounded-full bg-brand-accent" />}
             </div>
           </Link>

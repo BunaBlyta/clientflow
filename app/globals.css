@@ -1185,10 +1185,6 @@
     color: var(--brand-accent);
   }
 
-  .notifications-menu-footer {
-    background: var(--popover);
-  }
-
   .dark .hero-section h1 {
     background-image: linear-gradient(90deg, #e8fbff 0%, #c3edf2 50%, #e8fbff 100%);
   }

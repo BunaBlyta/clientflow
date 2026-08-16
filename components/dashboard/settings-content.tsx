@@ -57,7 +57,7 @@ function DisplaySection() {
           <p className="text-[14px] font-medium">{t("settings.language")}</p>
           <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.languageIntro")}</p>
         </div>
-        <LanguageSelect />
+        <LanguageSelect showIcon={false} />
       </div>
     </div>
   );
@@ -66,6 +66,7 @@ function DisplaySection() {
 function PackagesSection() {
   const { t } = useLocale();
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
+  const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,30 +113,57 @@ function PackagesSection() {
         />
       </div>
       <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
-        {packages.map((pkg) => (
-          <div key={pkg.id} className="flex items-start justify-between gap-4 p-5">
-            <div>
-              <p className="text-[14px] font-medium">{pkg.name}</p>
-              <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{pkg.description}</p>
-              <p className="mt-2 text-[13px]">
-                {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? "Duration to be scoped"}
-              </p>
+        {packages.map((pkg) => {
+          const isEditing = editingPackageId === pkg.id;
+          return (
+            <div key={pkg.id} className={isEditing ? "p-5" : "flex items-start justify-between gap-4 p-5"}>
+              {isEditing ? (
+                <EditPackageDialog
+                  pkg={pkg}
+                  isEditing
+                  onEdit={() => setEditingPackageId(pkg.id)}
+                  onCancel={() => setEditingPackageId(null)}
+                  onUpdated={(updatedPackage) => {
+                    setPackages((current) =>
+                      current.map((currentPackage) =>
+                        currentPackage.id === updatedPackage.id ? updatedPackage : currentPackage,
+                      ),
+                    );
+                  }}
+                  onDeactivated={() =>
+                    setPackages((current) => current.filter((currentPackage) => currentPackage.id !== pkg.id))
+                  }
+                />
+              ) : (
+                <>
+                  <div>
+                    <p className="text-[14px] font-medium">{pkg.name}</p>
+                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{pkg.description}</p>
+                    <p className="mt-2 text-[13px]">
+                      {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? "Duration to be scoped"}
+                    </p>
+                  </div>
+                  <EditPackageDialog
+                    pkg={pkg}
+                    isEditing={false}
+                    onEdit={() => setEditingPackageId(pkg.id)}
+                    onCancel={() => setEditingPackageId(null)}
+                    onUpdated={(updatedPackage) =>
+                      setPackages((current) =>
+                        current.map((currentPackage) =>
+                          currentPackage.id === updatedPackage.id ? updatedPackage : currentPackage,
+                        ),
+                      )
+                    }
+                    onDeactivated={() =>
+                      setPackages((current) => current.filter((currentPackage) => currentPackage.id !== pkg.id))
+                    }
+                  />
+                </>
+              )}
             </div>
-            <EditPackageDialog
-              pkg={pkg}
-              onUpdated={(updatedPackage) =>
-                setPackages((current) =>
-                  current.map((currentPackage) =>
-                    currentPackage.id === updatedPackage.id ? updatedPackage : currentPackage,
-                  ),
-                )
-              }
-              onDeactivated={() =>
-                setPackages((current) => current.filter((currentPackage) => currentPackage.id !== pkg.id))
-              }
-            />
-          </div>
-        ))}
+          );
+        })}
         {packages.length === 0 && (
           <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{t("settings.noPackages")}</p>
         )}
@@ -286,7 +314,7 @@ function TeamSection() {
           <h2 className="text-[15px] font-medium">{t("settings.inviteTitle")}</h2>
           <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.inviteIntro")}</p>
         </div>
-        <form onSubmit={handleInvite} className="flex max-w-xl flex-col gap-5">
+        <form onSubmit={handleInvite} className="flex w-full flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="invite-name">{t("settings.name")}</Label>
             <Input id="invite-name" className="h-10" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
@@ -295,7 +323,7 @@ function TeamSection() {
             <Label htmlFor="invite-email">{t("auth.email")}</Label>
             <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
           </div>
-          <div>
+          <div className="mt-1 border-t border-border pt-5">
             <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
           </div>
         </form>

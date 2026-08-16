@@ -3,15 +3,6 @@
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,15 +13,20 @@ import { useLocale } from "@/lib/i18n";
 
 export function EditPackageDialog({
   pkg,
+  isEditing,
+  onEdit,
+  onCancel,
   onUpdated,
   onDeactivated,
 }: {
   pkg: ManagedPackage;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancel: () => void;
   onUpdated: (pkg: ManagedPackage) => void;
   onDeactivated: () => void;
 }) {
   const { t } = useLocale();
-  const [open, setOpen] = useState(false);
   const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +60,7 @@ export function EditPackageDialog({
       }
       if (!result || !("id" in result)) throw new Error("The server returned an unexpected package response.");
       onUpdated(result);
-      setOpen(false);
+      onCancel();
       toast.success(`${pkg.name} updated`, {
         description: "Changes apply to the public pricing page immediately.",
       });
@@ -95,7 +91,7 @@ export function EditPackageDialog({
       }
       if (!result || !("id" in result)) throw new Error("The server returned an unexpected package response.");
       onDeactivated();
-      setOpen(false);
+      onCancel();
       toast.success(`${pkg.name} deleted`, {
         description: "It is no longer available for new requests. Existing projects and invoices are unchanged.",
       });
@@ -106,81 +102,86 @@ export function EditPackageDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>
-        <Pencil />
-        Edit
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("settings.editPackage", { name: pkg.name })}</DialogTitle>
-          <DialogDescription>
-            Feeds both the public pricing page and internal project creation.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="name">{t("settings.name")}</Label>
-            <Input id="name" name="name" defaultValue={pkg.name} required />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-            <Label htmlFor="price">{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                min="0.01"
-                step="0.01"
-                defaultValue={pkg.price}
-                required
-              />
+      {!isEditing ? (
+        <Button variant="outline" size="sm" onClick={onEdit}>
+          <Pencil />
+          Edit
+        </Button>
+      ) : (
+        <div className="w-full rounded-lg bg-muted/30 p-4">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[14px] font-medium">{t("settings.editPackage", { name: pkg.name })}</p>
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                Feeds both the public pricing page and internal project creation.
+              </p>
             </div>
-            <div className="flex flex-col gap-1.5">
-            <Label htmlFor="currency">{t("settings.currency")}</Label>
-              <Input
-                id="currency"
-                name="currency"
-                defaultValue={pkg.currency}
-                maxLength={3}
-                required
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="estimatedDuration">{t("settings.duration")}</Label>
-            <Input
-              id="estimatedDuration"
-              name="estimatedDuration"
-              defaultValue={pkg.estimatedDuration ?? ""}
-              placeholder="6–8 weeks"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="description">{t("settings.description")}</Label>
-            <Textarea id="description" name="description" defaultValue={pkg.description} rows={2} required />
-          </div>
-          {error && (
-            <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
-              {error}
-            </p>
-          )}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="destructive"
-              className="mr-auto"
-              onClick={() => setConfirmingDeactivation(true)}
-              disabled={pending}
-            >
-              <Trash2 />
-              Delete package
+            <Button type="button" variant="ghost" size="sm" onClick={() => { onCancel(); setError(null); }}>
+              {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-      </Dialog>
+          </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
+              <Input id={`edit-package-name-${pkg.id}`} name="name" defaultValue={pkg.name} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`edit-package-price-${pkg.id}`}>{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
+                <Input
+                  id={`edit-package-price-${pkg.id}`}
+                  name="price"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  defaultValue={pkg.price}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`edit-package-currency-${pkg.id}`}>{t("settings.currency")}</Label>
+                <Input
+                  id={`edit-package-currency-${pkg.id}`}
+                  name="currency"
+                  defaultValue={pkg.currency}
+                  maxLength={3}
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`edit-package-duration-${pkg.id}`}>{t("settings.duration")}</Label>
+              <Input
+                id={`edit-package-duration-${pkg.id}`}
+                name="estimatedDuration"
+                defaultValue={pkg.estimatedDuration ?? ""}
+                placeholder="6–8 weeks"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`edit-package-description-${pkg.id}`}>{t("settings.description")}</Label>
+              <Textarea id={`edit-package-description-${pkg.id}`} name="description" defaultValue={pkg.description} rows={2} required />
+            </div>
+            {error && (
+              <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setConfirmingDeactivation(true)}
+                disabled={pending}
+              >
+                <Trash2 />
+                Delete package
+              </Button>
+              <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
+            </div>
+          </form>
+        </div>
+      )}
       <ConfirmDialog
         open={confirmingDeactivation}
         onOpenChange={setConfirmingDeactivation}

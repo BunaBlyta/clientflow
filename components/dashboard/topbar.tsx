@@ -187,9 +187,12 @@ export function Topbar() {
         <DropdownMenuContent align="end" className="notifications-menu w-[22rem] p-0">
           <div className="notifications-menu-header flex items-center justify-between px-4 py-3">
             <p className="text-[13px] font-medium text-foreground">{t("nav.notifications")}</p>
-            {unreadCount > 0 && (
-              <span className="text-[11px] text-muted-foreground">{t("notifications.unread")}</span>
-            )}
+            <Link
+              href="/dashboard/notifications"
+              className="rounded-md px-2 py-1 text-[11px] font-medium text-brand-accent transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {t("notifications.viewAll")}
+            </Link>
           </div>
           <DropdownMenuSeparator className="m-0" />
           {notificationActionError && (
@@ -236,13 +239,6 @@ export function Topbar() {
               })
             )}
           </div>
-          <DropdownMenuSeparator className="m-0" />
-          <Link
-            href="/dashboard/notifications"
-            className="notifications-menu-footer block px-4 py-3 text-center text-[13px] text-brand-accent hover:underline"
-          >
-            {t("notifications.viewAll")}
-          </Link>
         </DropdownMenuContent>
       </DropdownMenu>
 

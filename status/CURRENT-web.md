@@ -285,7 +285,20 @@ Last updated: 2026-08-14 15:22 by Codex — make light buttons visible cyan
 
 ## Latest task
 
-- Removed scrolling from the Settings modal content so the expanded panel stays fixed and non-scrollable.
+- Staff login now always opens the login form instead of redirecting an existing session straight to the dashboard; submitting the form still performs authentication normally.
+- Added the missing German and Albanian translations for the login and invitation hero copy so those auth screens no longer fall back to English.
+- Restyled the full Notifications page as a restrained activity feed with dashboard-style separators, neutral surfaces, and a small unread accent instead of a rounded cyan card.
+- Moved notification “View all” into the dropdown header as a compact action and removed the bottom footer row.
+- Removed the redundant unread label from the notification dropdown header; unread indicators remain.
+- Fixed the Settings modal’s responsive width override so it opens as the intended wide horizontal panel instead of the shared dialog’s narrow default.
+- Reduced the Settings modal from 1600px to a more balanced 1200px width while keeping the wide horizontal layout.
+- Tightened the Settings modal again to 1080px for a more compact horizontal fit.
+- Reduced it slightly further to 1000px for the final tighter balance.
+- Changed package editing in Settings to render inline inside the existing Settings modal instead of opening a second nested modal.
+- Made the inline edit form occupy the full package row so it does not share horizontal space with the package summary.
+- Expanded the Invite a teammate inputs and button to fill the available Settings modal width.
+- Anchored the Send invite action in a separated footer area beneath the teammate fields.
+- Removed the globe icon from the Settings language control while keeping the full language dropdown.
 
 ## Hard rule
 

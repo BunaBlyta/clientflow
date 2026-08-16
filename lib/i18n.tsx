@@ -375,6 +375,11 @@ const albanian: Messages = {
 };
 
 Object.assign(german, {
+  "auth.studioOperations": "Studioabläufe, klar organisiert",
+  "auth.loginHeroTitle": "Behalte jeden Kunden, jedes Projekt und jede Zahlung im Blick.",
+  "auth.loginHeroIntro": "Ein ruhiger, gemeinsamer Arbeitsbereich für die Arbeit hinter großartigen digitalen Projekten.",
+  "auth.inviteHeroTitle": "Tritt dem Studio-Arbeitsbereich bei und halte die Arbeit in Bewegung.",
+  "auth.inviteHeroIntro": "Lege mit dem Code aus deiner Einladung ein Passwort fest und öffne anschließend direkt das Dashboard.",
   "marketing.stepRequest": "Anfrage oder Umfang",
   "marketing.stepRequestDescription": "Wähle ein Festpreis-Paket oder erzähl uns von einem individuellen Projekt.",
   "marketing.stepApprove": "Freigeben und Anzahlung zahlen",
@@ -389,6 +394,11 @@ Object.assign(german, {
   "payment.viewInvoices": "Rechnungen ansehen", "payment.submittedIntro": "Danke — Stripe hat deine Zahlung entgegengenommen. Die Rechnung wird erst nach der Stripe-Bestätigung als bezahlt markiert.", "payment.devLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Native App-Links folgen nach verfügbaren Builds.", "payment.cancelledIntro": "Es wurde keine Zahlung vorgenommen und die Rechnung bleibt unverändert. Du kannst sie später bezahlen.", "payment.cancelledDevLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Die Rechnung bleibt unverändert.",
 });
 Object.assign(albanian, {
+  "auth.studioOperations": "Operacionet e studios, të qarta",
+  "auth.loginHeroTitle": "Mbaj çdo klient, projekt dhe pagesë në rrjedhë.",
+  "auth.loginHeroIntro": "Një hapësirë e qetë dhe e përbashkët për punën pas projekteve të shkëlqyera dixhitale.",
+  "auth.inviteHeroTitle": "Bëhu pjesë e hapësirës së studios dhe mbaj punën në rrjedhë.",
+  "auth.inviteHeroIntro": "Vendos një fjalëkalim me kodin nga email-i i ftesës dhe më pas shko direkt në panel.",
   "marketing.stepRequest": "Kërko ose përcakto fushën", "marketing.stepRequestDescription": "Zgjidh një paketë me çmim fiks ose na trego për një projekt të veçantë.", "marketing.stepApprove": "Mirato dhe paguaj depozitën", "marketing.stepApproveDescription": "Ne shqyrtojmë kërkesën. Pas miratimit, paguan depozitën përmes aplikacionit celular.", "marketing.stepTrack": "Ndiq dhe bashkëpuno", "marketing.stepTrackDescription": "Ndiq projektin përmes Discovery, Design, Development dhe Review — me shënime në të dyja drejtimet.", "marketing.stepLaunch": "Lançimi", "marketing.stepLaunchDescription": "Paguaj faturën përfundimtare dhe ne e dorëzojmë. Çdo ndryshim statusi regjistrohet.",
   "dashboard.settingsIntro": "Menaxho paketat e shërbimeve, ekipin dhe pamjen e aplikacionit.",
   "settings.team": "Ekipi", "settings.display": "Pamja", "settings.theme": "Tema", "settings.themeIntro": "Kalo mes modalitetit të çelët dhe të errët.", "settings.language": "Gjuha", "settings.languageIntro": "Zgjidh gjuhën për aplikacionin web.", "settings.newPackage": "Paketë e re", "settings.newPackageIntro": "Shto një paketë në çmimet dhe rrjedhën publike të kërkesave.", "settings.name": "Emri", "settings.price": "Çmimi", "settings.currency": "Monedha", "settings.duration": "Kohëzgjatja e parashikuar", "settings.description": "Përshkrimi", "settings.sortOrder": "Renditja", "settings.creating": "Duke krijuar…", "settings.createPackage": "Krijo paketë", "settings.sendInvite": "Dërgo ftesën", "settings.inviteTitle": "Fto një anëtar të ekipit", "settings.inviteIntro": "Do të marrë një email për të vendosur fjalëkalimin dhe për t'iu bashkuar panelit.", "settings.you": "Ti", "settings.invited": "I ftuar", "settings.resend": "Dërgo përsëri", "settings.noTeam": "Nuk ka anëtarë ende.", "settings.packagesFailed": "Paketat nuk u ngarkuan", "settings.teamFailed": "Ekipi nuk u ngarkua", "settings.teamLoading": "Duke ngarkuar ekipin…", "settings.noPackages": "Nuk ka paketa aktive ende.", "settings.packagesIntro": "Burimi i vetëm për çmimet publike dhe projektet e reja.",
