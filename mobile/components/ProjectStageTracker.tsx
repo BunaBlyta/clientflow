@@ -75,16 +75,6 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
                 >
                   {getProjectStatusLabel(stage, t)}
                 </Text>
-                {current && (
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.7}
-                    style={styles.currentMeta}
-                  >
-                    {t('status.inProgress')}
-                  </Text>
-                )}
               </View>
             );
 
@@ -103,6 +93,7 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
             );
           })}
         </View>
+        <Text style={styles.currentMeta}>{t('status.inProgress')}</Text>
       </View>
     </View>
   );
@@ -282,10 +273,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     currentMeta: {
       fontFamily: fontFamily.medium,
-      fontSize: 10,
+      fontSize: fontSize.caption,
       color: color.accentPressed,
       textAlign: 'center',
-      lineHeight: 12,
+      lineHeight: 17,
       marginTop: 2,
     },
     banner: {

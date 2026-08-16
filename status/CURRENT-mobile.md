@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 00:42 by Codex — account information simplification
+Last updated: 2026-08-17 00:44 by Codex — home spacing and tracker readability
 
 ## Current state
 
@@ -43,6 +43,9 @@ Last updated: 2026-08-17 00:42 by Codex — account information simplification
 - Account information now keeps only Email and Company, with plain text rows
   and no decorative icon tiles. The existing Contact row was removed from the
   presentation.
+- Home now uses the same shared top spacing as the other tab screens. The
+  tracker’s “currently in progress” message is a larger, centered line below
+  the timeline instead of a tiny label inside the active stage column.
 
 ## Verification
 

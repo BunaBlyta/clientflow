@@ -51,7 +51,7 @@ export default function HomeScreen() {
       : null;
 
   return (
-    <Screen contentContainerStyle={styles.content}>
+    <Screen>
       <Text style={styles.eyebrow}>CLIENTFLOW</Text>
       <Text style={styles.greeting}>
         {client ? `${t('projects.hi')}, ${client.name.split(' ')[0]}` : t('projects.greeting')}
@@ -120,7 +120,6 @@ export default function HomeScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    content: { paddingTop: spacing.xl },
     eyebrow: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, letterSpacing: 1.6, color: color.accentText },
     greeting: { fontFamily: fontFamily.semibold, fontSize: 28, color: color.textPrimary, marginTop: spacing.sm },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.xs },
