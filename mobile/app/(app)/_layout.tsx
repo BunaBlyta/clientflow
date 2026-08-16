@@ -105,11 +105,11 @@ function TabIcon({
   color: ReturnType<typeof useTheme>['color'];
 }) {
   return (
-    <View style={[styles.iconWrap, focused && { backgroundColor: color.accentSoft }]}>
+    <View style={styles.iconWrap}>
       <Icon
         size={18}
         color={focused ? color.accentText : color.textMuted}
-        strokeWidth={focused ? 2.2 : 1.8}
+        strokeWidth={focused ? 2.5 : 1.7}
       />
     </View>
   );

@@ -1,4 +1,4 @@
-import { Building2, LogOut, Mail, User as UserIcon } from 'lucide-react-native';
+import { Building2, Check, LogOut, Mail, User as UserIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
@@ -152,6 +152,7 @@ function PreferenceOption({
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
 }) {
+  const { color } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -160,6 +161,7 @@ function PreferenceOption({
       <Text style={[styles.preferenceOptionText, selected && styles.preferenceOptionTextSelected]}>
         {label}
       </Text>
+      {selected && <Check size={16} color={color.accentText} strokeWidth={2.5} />}
     </Pressable>
   );
 }
@@ -269,6 +271,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       borderColor: color.border,
     },
     preferenceOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
       minHeight: 42,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: color.border,
@@ -276,15 +280,16 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       paddingHorizontal: spacing.md,
     },
     preferenceOptionSelected: {
-      backgroundColor: color.accentSoft,
+      backgroundColor: 'transparent',
     },
     preferenceOptionText: {
+      flex: 1,
       fontFamily: fontFamily.medium,
       fontSize: fontSize.meta,
       color: color.textMuted,
     },
     preferenceOptionTextSelected: {
-      color: color.textOnAccent,
+      color: color.accentText,
     },
     logoutButton: {
       height: 44,

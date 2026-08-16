@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 00:26 by Codex — premium mobile client redesign
+Last updated: 2026-08-17 00:34 by Codex — navigation and selector refinement
 
 ## Current state
 
@@ -33,6 +33,9 @@ Last updated: 2026-08-17 00:26 by Codex — premium mobile client redesign
   existing cyan backdrop.
 - Account uses flatter information/preferences sections while retaining theme,
   language, logout, and confirmation behavior.
+- Follow-up refinement removed the active tab background; the active icon is
+  now brighter with a stronger stroke. Theme and language choices are now
+  quiet text rows with only a checkmark for the selected option.
 
 ## Verification
 
