@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 00:34 by Codex — navigation and selector refinement
+Last updated: 2026-08-17 00:35 by Codex — home and tracker polish
 
 ## Current state
 
@@ -36,6 +36,10 @@ Last updated: 2026-08-17 00:34 by Codex — navigation and selector refinement
 - Follow-up refinement removed the active tab background; the active icon is
   now brighter with a stronger stroke. Theme and language choices are now
   quiet text rows with only a checkmark for the selected option.
+- Home’s invoice summary now shows the count once, and the tracker’s “currently
+  in progress” text is laid out below the active phase label instead of using
+  an overlapping absolute position. Home’s next-action heading is also now
+  translated instead of reusing “View all”.
 
 ## Verification
 

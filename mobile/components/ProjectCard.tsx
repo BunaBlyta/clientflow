@@ -17,6 +17,7 @@ export function ProjectCard({ project, index, onPress }: ProjectCardProps) {
   const { t } = useI18n();
   const styles = createStyles(color);
   const pkg = getPackageById(project.packageId);
+  const statusMeta = getProjectStatusMeta(project.status, color, t);
 
   return (
     <Pressable
@@ -35,8 +36,8 @@ export function ProjectCard({ project, index, onPress }: ProjectCardProps) {
         <View style={styles.metaRow}>
           {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
           <View style={styles.status}>
-            <Circle size={6} color={getProjectStatusMeta(project.status, color, t).text} fill={getProjectStatusMeta(project.status, color, t).text} />
-            <Text style={[styles.statusText, { color: getProjectStatusMeta(project.status, color, t).text }]}>{getProjectStatusLabel(project.status, t)}</Text>
+            <Circle size={6} color={statusMeta.text} fill={statusMeta.text} />
+            <Text style={[styles.statusText, { color: statusMeta.text }]} numberOfLines={1}>{getProjectStatusLabel(project.status, t)}</Text>
           </View>
         </View>
       </View>

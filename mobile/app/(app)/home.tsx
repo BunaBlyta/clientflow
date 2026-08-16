@@ -79,7 +79,7 @@ export default function HomeScreen() {
 
           {nextAction && (
             <View style={styles.actionSection}>
-              <Text style={styles.sectionLabel}>{t('common.viewAll')}</Text>
+              <Text style={styles.sectionLabel}>{t('home.nextAction')}</Text>
               <Pressable
                 onPress={nextAction.onPress}
                 style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
@@ -104,7 +104,6 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <View style={styles.summaryLine}>
-              <Text style={styles.summaryCount}>{invoices.length}</Text>
               <Text style={styles.summaryText}>{t('projects.invoiceCount', { count: invoices.length })}</Text>
               {invoices[0] && (
                 <Text style={[styles.summaryStatus, { color: getInvoiceStatusMeta(invoices[0].status, color, t).text }]}>
@@ -140,9 +139,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     summarySection: { marginTop: spacing.xxl, paddingTop: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border },
     summaryHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     viewAll: { fontFamily: fontFamily.medium, fontSize: fontSize.caption, color: color.accentText },
-    summaryLine: { flexDirection: 'row', alignItems: 'baseline', paddingVertical: spacing.md },
-    summaryCount: { fontFamily: fontFamily.semibold, fontSize: 24, color: color.textPrimary, marginRight: spacing.sm },
-    summaryText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textSecondary },
+    summaryLine: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
+    summaryText: { flex: 1, fontFamily: fontFamily.medium, fontSize: fontSize.body, color: color.textPrimary },
     summaryStatus: { fontFamily: fontFamily.medium, fontSize: fontSize.meta },
     pressed: { opacity: 0.62 },
   });
