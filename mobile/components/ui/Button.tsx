@@ -1,4 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
@@ -37,6 +38,17 @@ export function Button({
         pressed && !isDisabled && styles.pressed,
       ]}
     >
+      {variant === 'primary' && !isDisabled ? (
+        <Svg pointerEvents="none" width="100%" height="100%" style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="clientflow-button-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor={color.accent} />
+              <Stop offset="100%" stopColor={color.accentPressed} />
+            </LinearGradient>
+          </Defs>
+          <Rect width="100%" height="100%" rx={14} fill="url(#clientflow-button-gradient)" />
+        </Svg>
+      ) : null}
       {loading ? (
         <ActivityIndicator
           color={variant === 'primary' ? color.textOnAccent : color.accent}
@@ -66,9 +78,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
+    overflow: 'hidden',
   },
   primary: {
-    backgroundColor: color.accent,
+    backgroundColor: color.accentPressed,
     shadowColor: color.accent,
     shadowOpacity: 0.14,
     shadowRadius: 8,
@@ -99,7 +112,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textPrimary,
   },
   labelAccent: {
-    color: color.accent,
+    color: color.accentText,
   },
   });
 }

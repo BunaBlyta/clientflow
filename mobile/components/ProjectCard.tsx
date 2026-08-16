@@ -1,6 +1,9 @@
+import { ChevronRight, Circle } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { getPackageById } from '../lib/mock-data';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
+import { getProjectStatusLabel, getProjectStatusMeta } from '../lib/status';
+import { useI18n } from '../lib/i18n';
 import type { Project } from '../lib/types';
 
 interface ProjectCardProps {
@@ -11,6 +14,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, index, onPress }: ProjectCardProps) {
   const { color } = useTheme();
+  const { t } = useI18n();
   const styles = createStyles(color);
   const pkg = getPackageById(project.packageId);
 
@@ -28,8 +32,15 @@ export function ProjectCard({ project, index, onPress }: ProjectCardProps) {
             {project.name}
           </Text>
         </View>
-        {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
+        <View style={styles.metaRow}>
+          {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
+          <View style={styles.status}>
+            <Circle size={6} color={getProjectStatusMeta(project.status, color, t).text} fill={getProjectStatusMeta(project.status, color, t).text} />
+            <Text style={[styles.statusText, { color: getProjectStatusMeta(project.status, color, t).text }]}>{getProjectStatusLabel(project.status, t)}</Text>
+          </View>
+        </View>
       </View>
+      <ChevronRight size={17} color={color.textMuted} />
     </Pressable>
   );
 }
@@ -39,9 +50,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   card: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    backgroundColor: color.surfaceMuted,
+    backgroundColor: color.surface,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.border,
   },
@@ -62,7 +73,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     width: 36,
     height: 36,
     borderRadius: radius.md,
-    backgroundColor: 'rgba(202, 244, 255, 0.52)',
+    backgroundColor: color.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -70,7 +81,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   projectMarkText: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.meta,
-    color: '#07131D',
+    color: color.textOnAccent,
     letterSpacing: 0.6,
   },
   name: {
@@ -84,6 +95,21 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontSize: fontSize.caption,
     color: color.textMuted,
     marginTop: spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  status: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginLeft: 'auto',
+  },
+  statusText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
   },
   });
 }

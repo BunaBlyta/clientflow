@@ -9,7 +9,7 @@ import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatCurrency, formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
@@ -77,6 +77,7 @@ export default function ProjectDetailScreen() {
         </Text>
       )}
 
+      <Text style={styles.eyebrow}>PROJECT</Text>
       <Text style={styles.name}>{project.name}</Text>
       {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
       <View style={styles.titleDivider} />
@@ -189,6 +190,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textPrimary,
     marginTop: spacing.sm,
   },
+  eyebrow: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
+    color: color.accentText,
+    letterSpacing: 1.5,
+  },
   packageName: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.caption,
@@ -276,11 +283,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(160, 222, 255, 0.34)',
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border,
+    marginBottom: spacing.md,
   },
   viewAllRow: {
     flexDirection: 'row',
@@ -290,7 +296,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   viewAllText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    color: color.accent,
+    color: color.accentText,
   },
   invoiceSummary: {
     fontFamily: fontFamily.regular,

@@ -74,7 +74,10 @@ export default function NotificationsScreen() {
       contentContainerStyle={{ paddingTop: insets.top + spacing.lg }}
     >
       <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.eyebrow}>CLIENTFLOW</Text>
         <Text style={styles.heading}>{t('notifications.title')}</Text>
+        </View>
         {unread > 0 && (
           <Pressable
             onPress={() => void handleMarkAll()}
@@ -95,7 +98,7 @@ export default function NotificationsScreen() {
       {notifications.length === 0 ? (
         <EmptyState icon={Bell} title={t('notifications.caughtUp')} />
       ) : (
-        <View style={styles.listGroup}>
+      <View style={styles.listGroup}>
           {notifications.map((notification, index) => (
             <View key={notification.id}>
               <NotificationRow
@@ -128,7 +131,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: spacing.sm,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  eyebrow: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
+    letterSpacing: 1.6,
+    color: color.accentText,
+    marginBottom: spacing.sm,
   },
   heading: {
     fontFamily: fontFamily.semibold,
@@ -138,7 +148,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   markAllText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    color: color.accent,
+    color: color.accentText,
   },
   markAllDisabled: {
     opacity: 0.45,
@@ -155,9 +165,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   listGroup: {
     backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: spacing.lg,
     paddingHorizontal: spacing.md,
     overflow: 'hidden',
   },

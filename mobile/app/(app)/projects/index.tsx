@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ProjectCard } from '../../../components/ProjectCard';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
@@ -27,12 +27,11 @@ export default function ProjectsListScreen() {
 
   return (
     <Screen>
+      <Text style={styles.eyebrow}>CLIENTFLOW</Text>
       <Text style={styles.greeting}>
         {client ? `${t('projects.hi')}, ${client.name.split(' ')[0]}` : t('projects.greeting')}
       </Text>
-      {client?.companyName && (
-        <Text style={styles.company}>{client.companyName}</Text>
-      )}
+      <Text style={styles.company}>{client?.companyName ?? t('projects.greeting')}</Text>
 
       <View style={styles.list}>
         {projects.length === 0 ? (
@@ -64,23 +63,29 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   company: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textMuted,
     marginTop: 2,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  eyebrow: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
+    letterSpacing: 1.6,
+    color: color.accentText,
   },
   list: {
     marginTop: spacing.sm,
   },
   listGroup: {
     backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   });

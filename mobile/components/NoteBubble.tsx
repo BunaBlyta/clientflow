@@ -27,29 +27,19 @@ export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
   const isClient = note.authorRole === 'CLIENT';
 
   return (
-    <View
-      style={[
-        styles.message,
-        preview && styles.previewMessage,
-        isClient ? styles.clientMessage : styles.studioMessage,
-      ]}
-    >
-      <View style={[styles.metaRow, isClient && styles.clientMetaRow]}>
-        <View style={styles.authorGroup}>
+    <View style={[styles.message, preview && styles.previewMessage, isClient && styles.clientMessage]}>
+      <View style={styles.markerColumn}>
+        <View style={[styles.marker, isClient ? styles.clientMarker : styles.studioMarker]} />
+      </View>
+      <View style={styles.messageContent}>
+        <View style={styles.metaRow}>
           <Text style={styles.author}>{note.authorName}</Text>
           <Text style={styles.roleTag}>{isClient ? t('notes.you') : t('notes.studio')}</Text>
+          <Text style={styles.time}>{formatRelativeTime(note.createdAt)}</Text>
         </View>
-      </View>
-      <View style={[styles.bubble, isClient ? styles.clientBubble : styles.studioBubble]}>
-        <Text style={[styles.body, isClient ? styles.clientBody : styles.studioBody]}>{note.body}</Text>
-        <Text
-          style={[
-            styles.bubbleTime,
-            isClient ? styles.clientBubbleTime : styles.studioBubbleTime,
-          ]}
-        >
-          {formatRelativeTime(note.createdAt)}
-        </Text>
+        <View style={[styles.bodyWrap, isClient && styles.clientBodyWrap]}>
+          <Text style={styles.body}>{note.body}</Text>
+        </View>
       </View>
     </View>
   );
@@ -58,17 +48,18 @@ export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   message: {
-    maxWidth: '86%',
-    marginBottom: spacing.lg,
+    flexDirection: 'row',
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border,
   },
   clientMessage: {
-    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(202, 244, 255, 0.16)',
+    marginHorizontal: -spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   previewMessage: {
-    marginBottom: spacing.sm,
-  },
-  studioMessage: {
-    alignSelf: 'flex-start',
+    paddingVertical: spacing.sm,
   },
   metaRow: {
     flexDirection: 'row',
@@ -76,14 +67,24 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     gap: spacing.sm,
     marginBottom: spacing.xs,
   },
-  clientMetaRow: {
-    justifyContent: 'flex-end',
+  markerColumn: {
+    width: 14,
+    alignItems: 'center',
+    paddingTop: 4,
   },
-  authorGroup: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-    flexShrink: 1,
+  marker: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  clientMarker: {
+    backgroundColor: color.accentPressed,
+  },
+  studioMarker: {
+    backgroundColor: color.borderStrong,
+  },
+  messageContent: {
+    flex: 1,
   },
   author: {
     fontFamily: fontFamily.medium,
@@ -95,44 +96,22 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontSize: fontSize.meta,
     color: color.textMuted,
   },
-  bubbleTime: {
+  time: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
-    alignSelf: 'flex-end',
-    marginTop: spacing.xs,
+    marginLeft: 'auto',
   },
-  clientBubbleTime: {
-    color: '#07131D',
+  bodyWrap: {
+    paddingRight: spacing.md,
   },
-  clientBody: {
-    color: '#07131D',
-  },
-  studioBody: {
-    color: '#07131D',
-  },
-  studioBubbleTime: {
-    color: '#07131D',
-  },
-  bubble: {
-    borderRadius: 14,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  clientBubble: {
-    backgroundColor: color.accentSoft,
-    borderBottomRightRadius: spacing.xs,
-  },
-  studioBubble: {
-    backgroundColor: '#CBD5DC',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.surfaceMuted,
-    borderBottomLeftRadius: spacing.xs,
+  clientBodyWrap: {
+    paddingRight: 0,
   },
   body: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
-    color: color.textPrimary,
+    color: color.textSecondary,
     lineHeight: 20,
   },
   systemRow: {

@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Circle } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatCurrency, formatDate, isPastDue } from '../lib/format';
 import { getInvoiceKindLabel, getInvoiceStatusMeta, getOverdueMeta } from '../lib/status';
@@ -40,7 +40,10 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
       </View>
       <View style={styles.right}>
         <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
-        <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
+        <View style={styles.statusRow}>
+          <Circle size={6} color={meta.text} fill={meta.text} />
+          <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
+        </View>
       </View>
       <ChevronRight size={18} color={color.textMuted} style={{ marginLeft: spacing.sm }} />
     </Pressable>
@@ -89,6 +92,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   statusText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.meta,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   });
 }

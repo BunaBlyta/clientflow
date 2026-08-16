@@ -1,4 +1,4 @@
-import { Check, PauseCircle, XCircle } from 'lucide-react-native';
+import { Check, CircleDot, Code2, Eye, PauseCircle, PencilRuler, Rocket, Search, XCircle } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
@@ -6,6 +6,7 @@ import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, PROJECT_STAGES } from '../lib/status';
 import { useI18n } from '../lib/i18n';
 import type { ProjectStatus } from '../lib/types';
+import type { LucideIcon } from 'lucide-react-native';
 
 interface ProjectStageTrackerProps {
   status: ProjectStatus;
@@ -15,8 +16,15 @@ const INDICATOR_SIZE = 32;
 const CIRCLE_SIZE = 24;
 const CHECK_SIZE = 12;
 const FUTURE_DOT_SIZE = 8;
-const CURRENT_DOT_SIZE = 8;
 const LABEL_SLOT_HEIGHT = 40;
+const STAGE_ICONS: Record<string, LucideIcon> = {
+  PENDING: CircleDot,
+  DISCOVERY: Search,
+  DESIGN: PencilRuler,
+  DEVELOPMENT: Code2,
+  REVIEW: Eye,
+  LAUNCHED: Rocket,
+};
 
 export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
   const { color } = useTheme();
@@ -124,6 +132,7 @@ function StageIndicator({
   if (current) {
     const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] });
     const ringOpacity = pulse.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.5, 0.28, 0] });
+    const Icon = STAGE_ICONS[stage] ?? CircleDot;
 
     return (
       <View style={styles.circleWrap}>
@@ -135,7 +144,7 @@ function StageIndicator({
           ]}
         />
         <View style={styles.circleCurrent}>
-          <View style={styles.circleCurrentDot} />
+          <Icon size={13} color={colors.accentText} strokeWidth={2.2} />
         </View>
       </View>
     );
@@ -166,12 +175,7 @@ function StageIndicator({
           fill={`url(#${gradientId})`}
         />
       </Svg>
-      <Check
-        size={CHECK_SIZE}
-        color={colors.textOnAccent}
-        strokeWidth={3}
-        style={styles.circleIcon}
-      />
+      <Check size={CHECK_SIZE} color={colors.textOnAccent} strokeWidth={3} style={styles.circleIcon} />
     </View>
   );
 }
@@ -238,12 +242,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       backgroundColor: color.surface,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    circleCurrentDot: {
-      width: CURRENT_DOT_SIZE,
-      height: CURRENT_DOT_SIZE,
-      borderRadius: CURRENT_DOT_SIZE / 2,
-      backgroundColor: color.accent,
     },
     lineTrack: {
       position: 'absolute',

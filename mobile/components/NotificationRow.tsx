@@ -43,13 +43,9 @@ export function NotificationRow({ notification, onPress }: NotificationRowProps)
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View
-        style={[
-          styles.iconWrap,
-          isAlert ? styles.iconWrapAlert : styles.iconWrapNeutral,
-        ]}
-      >
-        <Icon size={16} color={isAlert ? color.danger : color.accentPressed} />
+      <View style={styles.iconCol}>
+        <Icon size={17} color={isAlert ? color.danger : color.textMuted} strokeWidth={1.7} />
+        {!notification.read && <View style={[styles.unreadDot, { backgroundColor: color.accentPressed }]} />}
       </View>
       <View style={styles.textCol}>
         <Text
@@ -72,26 +68,25 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
     gap: spacing.md,
   },
   pressed: {
     opacity: 0.6,
   },
-  iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  iconCol: {
+    width: 24,
+    minHeight: 22,
     alignItems: 'center',
-    justifyContent: 'center',
+    position: 'relative',
   },
-  iconWrapNeutral: {
-    backgroundColor: color.accentSoft,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.accentSoft,
-  },
-  iconWrapAlert: {
-    backgroundColor: color.dangerBg,
+  unreadDot: {
+    position: 'absolute',
+    top: -2,
+    right: 0,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   textCol: {
     flex: 1,

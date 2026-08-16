@@ -12,6 +12,7 @@ export interface ThemeColors {
   accent: string;
   accentPressed: string;
   accentSoft: string;
+  accentText: string;
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
@@ -34,12 +35,13 @@ export interface ThemeColors {
 }
 
 export const lightColors: ThemeColors = {
-  background: '#FFFFFF',
+  background: '#FBFDFD',
   surface: '#FFFFFF',
-  surfaceMuted: '#F7FAFC',
+  surfaceMuted: '#F2FAFC',
   accent: '#CAF4FF',
   accentPressed: '#A0DEFF',
   accentSoft: '#CAF4FF',
+  accentText: '#2E8AA3',
   textPrimary: '#14212B',
   textSecondary: '#596A79',
   textMuted: '#8998A6',
@@ -63,11 +65,12 @@ export const lightColors: ThemeColors = {
 
 export const darkColors: ThemeColors = {
   background: '#08090A',
-  surface: '#111315',
-  surfaceMuted: '#1B2024',
+  surface: '#101416',
+  surfaceMuted: '#171D20',
   accent: '#CAF4FF',
   accentPressed: '#A0DEFF',
   accentSoft: '#CAF4FF',
+  accentText: '#A0DEFF',
   textPrimary: '#F4F7FA',
   textSecondary: '#C1C9D3',
   textMuted: '#8C98A6',
@@ -90,7 +93,7 @@ export const darkColors: ThemeColors = {
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 10, md: 12, lg: 14, pill: 999 } as const;
+export const radius = { sm: 10, md: 14, lg: 18, pill: 999 } as const;
 export const fontFamily = {
   regular: Platform.select({ ios: 'SFProText-Regular', default: 'Inter_400Regular' }) ?? 'Inter_400Regular',
   medium: Platform.select({ ios: 'SFProText-Medium', default: 'Inter_500Medium' }) ?? 'Inter_500Medium',

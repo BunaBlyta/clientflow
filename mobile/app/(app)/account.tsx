@@ -32,6 +32,7 @@ export default function AccountScreen() {
         paddingBottom: 64 + spacing.md,
       }}
     >
+      <Text style={styles.eyebrow}>CLIENTFLOW</Text>
       <Text style={styles.heading}>{t('account.title')}</Text>
 
       <View style={styles.profileHeader}>
@@ -169,7 +170,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontFamily: fontFamily.semibold,
       fontSize: fontSize.headingLg,
       color: color.textPrimary,
+      marginTop: spacing.sm,
       marginBottom: spacing.xl,
+    },
+    eyebrow: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.meta,
+      letterSpacing: 1.6,
+      color: color.accentText,
     },
     profileHeader: {
       flexDirection: 'row',
@@ -206,9 +214,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     infoSection: {
       backgroundColor: color.surface,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: color.border,
-      borderRadius: radius.lg,
       paddingHorizontal: spacing.md,
       overflow: 'hidden',
       marginBottom: spacing.xl,
@@ -256,28 +264,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       marginBottom: spacing.sm,
     },
     preferenceOptions: {
-      flexDirection: 'row',
-      gap: spacing.xs,
-      padding: spacing.xs,
-      borderRadius: radius.md,
-      backgroundColor: color.surfaceMuted,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: color.border,
     },
     preferenceOption: {
-      flex: 1,
-      minHeight: 36,
-      borderRadius: radius.sm,
-      alignItems: 'center',
+      minHeight: 42,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: color.border,
       justifyContent: 'center',
-      paddingHorizontal: spacing.xs,
+      paddingHorizontal: spacing.md,
     },
     preferenceOptionSelected: {
-      backgroundColor: color.surface,
-      shadowColor: color.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 5,
-      shadowOffset: { width: 0, height: 1 },
+      backgroundColor: color.accentSoft,
     },
     preferenceOptionText: {
       fontFamily: fontFamily.medium,
@@ -285,7 +284,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textMuted,
     },
     preferenceOptionTextSelected: {
-      color: color.textPrimary,
+      color: color.textOnAccent,
     },
     logoutButton: {
       height: 44,
