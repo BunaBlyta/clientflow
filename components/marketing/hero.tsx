@@ -7,7 +7,7 @@ import { useLocale } from "@/lib/i18n";
 export function Hero() {
   const { t } = useLocale();
   return (
-    <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden">
+    <section className="hero-section relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden">
       <div className="hero-gradient pointer-events-none absolute inset-x-0 top-0 z-0 h-[560px]" />
       <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-4 pt-24 pb-20 text-center sm:px-6 sm:pt-32 sm:pb-28">
         <h1 className="text-[32px] leading-[1.15] font-semibold tracking-tight text-balance">

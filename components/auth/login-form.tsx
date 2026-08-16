@@ -66,6 +66,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           placeholder={t("auth.emailPlaceholder")}
+          className="auth-field"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -83,6 +84,7 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           placeholder={t("auth.passwordPlaceholder")}
+          className="auth-field"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required

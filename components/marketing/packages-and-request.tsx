@@ -198,10 +198,10 @@ export function PackagesAndRequest() {
 
       {!isLoadingPackages && !packagesError && standardPackages.length > 0 && (
         <section id="request-form" className="request-strip request-section relative isolate z-10 overflow-visible">
-        <div className="request-bubble pointer-events-none absolute -top-28 right-[4%] z-0 size-80 rounded-full border border-white/80 bg-white/55 dark:hidden" />
-        <div className="request-bubble pointer-events-none absolute -bottom-32 left-[-6rem] z-0 size-[26rem] rounded-full border border-brand-sky/30 bg-brand-sky/40 dark:hidden" />
-        <div className="request-bubble pointer-events-none absolute top-[42%] left-[12%] z-0 size-32 rounded-full border border-white/70 bg-white/45 dark:hidden" />
-        <div className="request-bubble pointer-events-none absolute right-[16%] bottom-[18%] z-0 size-44 rounded-full border border-brand-sky/25 bg-brand-sky-light/40 dark:hidden" />
+        <div className="request-bubble pointer-events-none absolute -top-28 right-[4%] z-0 size-80 rounded-full border border-white/80 bg-white/55" />
+        <div className="request-bubble pointer-events-none absolute -bottom-32 left-[-6rem] z-0 size-[26rem] rounded-full border border-brand-sky/30 bg-brand-sky/40" />
+        <div className="request-bubble pointer-events-none absolute top-[42%] left-[12%] z-0 size-32 rounded-full border border-white/70 bg-white/45" />
+        <div className="request-bubble pointer-events-none absolute right-[16%] bottom-[18%] z-0 size-44 rounded-full border border-brand-sky/25 bg-brand-sky-light/40" />
         <div className="relative z-10 mx-auto max-w-xl px-4 py-20 sm:px-6">
           <h2 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("marketing.requestPackageTitle")}</h2>
           <p className="mt-2 text-[14px] text-muted-foreground">

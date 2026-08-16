@@ -184,8 +184,8 @@ export function Topbar() {
             <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-brand-accent" />
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 p-0">
-          <div className="flex items-center justify-between px-3 py-2.5">
+        <DropdownMenuContent align="end" className="notifications-menu w-[22rem] p-0">
+          <div className="notifications-menu-header flex items-center justify-between px-4 py-3">
             <p className="text-[13px] font-medium text-foreground">{t("nav.notifications")}</p>
             {unreadCount > 0 && (
               <span className="text-[11px] text-muted-foreground">{t("notifications.unread")}</span>
@@ -219,15 +219,14 @@ export function Topbar() {
                     onClick={(event) => handleNotificationClick(event, n)}
                     aria-disabled={markingNotificationId === n.id}
                     className={cn(
-                      "flex items-start gap-2.5 border-b border-border px-3 py-2.5 last:border-0 hover:bg-muted",
-                      !n.read && "bg-brand-accent/5",
+                      "notification-menu-item flex items-start gap-3 border-b border-border px-4 py-3 last:border-0 hover:bg-transparent",
                       markingNotificationId === n.id && "pointer-events-none opacity-60",
                     )}
                   >
-                    <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                    <Icon className={cn("notification-icon", !n.read && "notification-icon-unread")} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-medium">{n.title}</p>
-                      <p className="truncate text-[12px] text-muted-foreground">{n.body}</p>
+                      <p className="text-[13px] leading-5 font-medium">{n.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[12px] leading-4.5 text-muted-foreground">{n.body}</p>
                     </div>
                     <span className="shrink-0 text-[11px] text-muted-foreground">
                       {formatRelativeTime(n.createdAt)}
@@ -240,7 +239,7 @@ export function Topbar() {
           <DropdownMenuSeparator className="m-0" />
           <Link
             href="/dashboard/notifications"
-            className="block px-3 py-2.5 text-center text-[13px] text-brand-accent hover:underline"
+            className="notifications-menu-footer block px-4 py-3 text-center text-[13px] text-brand-accent hover:underline"
           >
             {t("notifications.viewAll")}
           </Link>

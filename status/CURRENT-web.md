@@ -285,7 +285,7 @@ Last updated: 2026-08-14 15:22 by Codex — make light buttons visible cyan
 
 ## Latest task
 
-- Changed the public Request a package form’s light-mode placeholders from muted cyan to a soft neutral grey for clearer, quieter field guidance.
+- Removed scrolling from the Settings modal content so the expanded panel stays fixed and non-scrollable.
 
 ## Hard rule
 

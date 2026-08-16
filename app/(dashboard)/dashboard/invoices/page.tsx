@@ -181,13 +181,13 @@ export default function InvoicesPage() {
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th>
-              <th className="px-4 py-2.5 font-normal">{t("invoices.project")}</th>
-              <th className="px-4 py-2.5 font-normal">{t("clients.company")}</th>
-              <th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th>
-              <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
-              <th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th>
-              <th className="w-10 px-2 py-2.5">
+              <th className="px-5 py-3 font-normal">{t("invoices.invoice")}</th>
+              <th className="px-5 py-3 font-normal">{t("invoices.project")}</th>
+              <th className="px-5 py-3 font-normal">{t("clients.company")}</th>
+              <th className="px-5 py-3 text-right font-normal">{t("common.amount")}</th>
+              <th className="px-5 py-3 font-normal">{t("common.status")}</th>
+              <th className="px-5 py-3 text-right font-normal">{t("invoices.due")}</th>
+              <th className="px-3 py-3">
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
@@ -197,8 +197,10 @@ export default function InvoicesPage() {
               const project = projectNames.get(invoice.projectId);
               return (
                 <tr key={invoice.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                  <td className="px-4 py-3 font-medium">{invoice.label}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-5 py-3.5">
+                    <span className="font-medium">{invoice.label}</span>
+                  </td>
+                  <td className="px-5 py-3.5 text-muted-foreground">
                     {project ? (
                       <Link href={`/dashboard/projects/${project.id}`} className="hover:text-brand-accent">
                         {project.name}
@@ -207,17 +209,17 @@ export default function InvoicesPage() {
                       t("common.unknown")
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-5 py-3.5 text-muted-foreground">
                     {clientNames.get(invoice.clientId) ?? t("common.unknown")}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td>
+                  <td className="px-5 py-3.5">
                     <span className={invoiceDisplayTone(invoice)}>{t(invoiceDisplayLabelKey(invoice))}</span>
                   </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">
+                  <td className="px-5 py-3.5 text-right text-muted-foreground">
                     {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
                   </td>
-                  <td className="px-2 py-3 text-right">
+                  <td className="px-3 py-3.5 text-right">
                     <InvoiceRowActions
                       invoice={invoice}
                       onInvoiceUpdated={handleInvoiceUpdated}

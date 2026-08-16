@@ -32,7 +32,7 @@ export function MobileAppSection() {
           <div className="mt-7 flex flex-wrap gap-3">
             <span
               aria-label="Download on the App Store — coming soon"
-              className="flex h-12 min-w-[148px] items-center gap-2 rounded-[7px] border border-white/15 bg-[#050505] px-3 text-white shadow-sm"
+              className="store-badge app-store-badge flex h-12 min-w-[148px] items-center gap-2 rounded-[7px] border border-white/15 bg-[#050505] px-3 text-white shadow-sm"
             >
               <img
                 src="https://cdn.simpleicons.org/apple/FFFFFF"
@@ -41,13 +41,13 @@ export function MobileAppSection() {
                 className="size-6 shrink-0"
               />
               <span className="flex flex-col leading-none">
-                <span className="text-[9px] tracking-wide text-white/75">Download on the</span>
-                <span className="mt-1 text-[17px] font-medium tracking-[-0.03em]">App Store</span>
+                <span className="store-badge-kicker text-[9px] tracking-wide text-white/75">Download on the</span>
+                <span className="store-badge-title mt-1 text-[17px] font-medium tracking-[-0.03em]">App Store</span>
               </span>
             </span>
             <span
               aria-label="Get it on Google Play — coming soon"
-              className="flex h-12 min-w-[148px] items-center gap-2 rounded-[7px] border border-white/15 bg-[#050505] px-3 text-white shadow-sm"
+              className="store-badge google-play-badge flex h-12 min-w-[148px] items-center gap-2 rounded-[7px] border border-white/15 bg-[#050505] px-3 text-white shadow-sm"
             >
               <img
                 src="https://cdn.simpleicons.org/googleplay/FFFFFF"
@@ -56,8 +56,8 @@ export function MobileAppSection() {
                 className="size-6 shrink-0"
               />
               <span className="flex flex-col leading-none">
-                <span className="text-[9px] tracking-wide text-white/75">GET IT ON</span>
-                <span className="mt-1 text-[17px] font-medium tracking-[-0.03em]">Google Play</span>
+                <span className="store-badge-kicker text-[9px] tracking-wide text-white/75">GET IT ON</span>
+                <span className="store-badge-title mt-1 text-[17px] font-medium tracking-[-0.03em]">Google Play</span>
               </span>
             </span>
           </div>

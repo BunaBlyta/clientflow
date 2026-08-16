@@ -257,14 +257,14 @@ function TeamSection() {
     <div className="flex flex-col gap-6">
       <div className="rounded-lg border border-border">
         {staff.map((staffMember) => (
-          <div key={staffMember.id} className="flex items-center gap-2.5 border-b border-border p-4 last:border-0">
+          <div key={staffMember.id} className="flex items-center gap-4 border-b border-border p-5 last:border-0">
             <Avatar className="size-7"><AvatarFallback className="text-[11px]">{initials(staffMember.name)}</AvatarFallback></Avatar>
             <div className="min-w-0">
               <p className="truncate text-[13px] font-medium">{staffMember.name}</p>
               <p className="truncate text-[12px] text-muted-foreground">{staffMember.email}</p>
               {resendError?.staffId === staffMember.id && <p role="alert" className="mt-1 text-[11px] text-status-danger">{resendError.message}</p>}
             </div>
-            <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-3">
               {currentUserId === staffMember.id && <span className="text-[12px] text-muted-foreground">{t("settings.you")}</span>}
               {!staffMember.isActive && (
                 <>
@@ -286,14 +286,14 @@ function TeamSection() {
           <h2 className="text-[15px] font-medium">{t("settings.inviteTitle")}</h2>
           <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.inviteIntro")}</p>
         </div>
-        <form onSubmit={handleInvite} className="flex max-w-xl flex-col gap-3">
+        <form onSubmit={handleInvite} className="flex max-w-xl flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="invite-name">{t("settings.name")}</Label>
-            <Input id="invite-name" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
+            <Input id="invite-name" className="h-10" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="invite-email">{t("auth.email")}</Label>
-            <Input id="invite-email" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
           </div>
           <div>
             <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>

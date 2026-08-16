@@ -21,12 +21,12 @@ export function SettingsDialog() {
         <Settings className="size-4" />
         {t("dashboard.settings")}
       </DialogTrigger>
-      <DialogContent className="flex h-[min(680px,calc(100vh-2rem))] max-h-[calc(100vh-2rem)] max-w-2xl flex-col overflow-hidden rounded-2xl p-5 sm:p-6">
+      <DialogContent className="flex h-[720px] max-h-none w-[1600px] max-w-none flex-col overflow-hidden rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle>{t("dashboard.settings")}</DialogTitle>
           <DialogDescription>{t("dashboard.settingsIntro")}</DialogDescription>
         </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 overflow-visible pr-1">
           <SettingsContent />
         </div>
       </DialogContent>
