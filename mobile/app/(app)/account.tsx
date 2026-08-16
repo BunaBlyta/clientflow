@@ -1,4 +1,4 @@
-import { Building2, Check, LogOut, Mail, User as UserIcon } from 'lucide-react-native';
+import { Check, LogOut } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
@@ -48,9 +48,8 @@ export default function AccountScreen() {
       </View>
 
       <View style={styles.infoSection}>
-        <InfoRow icon={Mail} label={t('account.email')} value={client?.email ?? ''} />
-        <InfoRow icon={Building2} label={t('account.company')} value={client?.companyName ?? ''} />
-        <InfoRow icon={UserIcon} label={t('account.contact')} value={client?.name ?? ''} last />
+        <InfoRow label={t('account.email')} value={client?.email ?? ''} />
+        <InfoRow label={t('account.company')} value={client?.companyName ?? ''} last />
       </View>
 
       <PreferenceGroup label={t('account.theme')}>
@@ -105,12 +104,10 @@ export default function AccountScreen() {
 }
 
 function InfoRow({
-  icon: Icon,
   label,
   value,
   last = false,
 }: {
-  icon: typeof Mail;
   label: string;
   value: string;
   last?: boolean;
@@ -119,9 +116,6 @@ function InfoRow({
   const styles = createStyles(color);
   return (
     <View style={[styles.infoRow, last && styles.infoRowLast]}>
-      <View style={styles.infoIcon}>
-        <Icon size={15} color={color.accentPressed} />
-      </View>
       <View style={styles.infoTextCol}>
         <Text style={styles.infoLabel}>{label}</Text>
         <Text style={styles.infoValue} numberOfLines={1}>{value}</Text>
@@ -232,15 +226,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     infoRowLast: {
       borderBottomWidth: 0,
-    },
-    infoIcon: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      backgroundColor: color.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: spacing.md,
     },
     infoTextCol: {
       flex: 1,

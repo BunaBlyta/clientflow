@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 00:35 by Codex — home and tracker polish
+Last updated: 2026-08-17 00:42 by Codex — account information simplification
 
 ## Current state
 
@@ -40,6 +40,9 @@ Last updated: 2026-08-17 00:35 by Codex — home and tracker polish
   in progress” text is laid out below the active phase label instead of using
   an overlapping absolute position. Home’s next-action heading is also now
   translated instead of reusing “View all”.
+- Account information now keeps only Email and Company, with plain text rows
+  and no decorative icon tiles. The existing Contact row was removed from the
+  presentation.
 
 ## Verification
 
