@@ -159,7 +159,18 @@ export default function CheckoutScreen() {
             {t('checkout.confirmingSubheading')}
           </Text>
           <View style={{ height: spacing.lg }} />
-          <Button label={checkingStatus ? t('checkout.checking') : t('checkout.returnedCheck')} onPress={() => void refreshAfterReturn()} loading={checkingStatus} />
+          <Button
+            label={checkingStatus ? t('checkout.checking') : t('checkout.returnedCheck')}
+            onPress={() => void refreshAfterReturn()}
+            loading={checkingStatus}
+            variant="secondary"
+          />
+          <View style={{ height: spacing.sm }} />
+          <Button
+            label={t('checkout.returnToPayment')}
+            onPress={() => void handlePay()}
+            disabled={checkingStatus}
+          />
         </View>
       )}
 

@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 13:46 by Codex — reopen abandoned payment sessions
+Last updated: 2026-08-17 13:55 by Codex — add retry on checkout return screen
 
 ## Current state
 
@@ -62,6 +62,9 @@ Last updated: 2026-08-17 13:46 by Codex — reopen abandoned payment sessions
 - Processing invoices now also offer “Return to payment,” which reopens the
   existing Checkout Session for an abandoned checkout. It does not create a
   second session while the original payment is unresolved.
+- The checkout confirmation screen now has the same Return to payment action,
+  so clients who stay on that screen after backing out of Stripe do not need
+  to navigate back to the invoice first.
 
 ## Verification
 
