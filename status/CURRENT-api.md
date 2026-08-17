@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 11:02 by Codex — identify production Stripe account mismatch
+Last updated: 2026-08-17 11:10 by Codex — prepare safe Stripe retry
 
 ## What changed
 
@@ -24,6 +24,11 @@ Last updated: 2026-08-17 11:02 by Codex — identify production Stripe account m
   webhook destination and the account used by both the local Stripe CLI and
   local `STRIPE_SECRET_KEY`. Vercel is therefore creating Checkout Sessions in
   a different Stripe sandbox/account from the configured webhook destination.
+- With Buna's approval, reset only Jordan's `$999` test invoice
+  (`cmswzttmy000004l40zmnrg4i`) from `PAYMENT_PENDING` to `FAILED` and cleared
+  its unusable Checkout Session and Payment Intent references. This makes the
+  mobile app expose Retry payment and guarantees the next attempt creates a new
+  session rather than reusing the mismatched one.
 
 ## Verification
 
@@ -40,15 +45,18 @@ Last updated: 2026-08-17 11:02 by Codex — identify production Stripe account m
   session ID.
 - Read-only Stripe session lookup from both the CLI and local API key — returned
   `resource_missing` for that new ID, proving the account mismatch.
+- Guarded production database update — matched the exact invoice ID, Jordan's
+  email, `$999` amount, and `PAYMENT_PENDING` state before changing one row;
+  verified the resulting state is `FAILED` with both Stripe IDs empty.
 
 ## Handoff
 
-- Do not make another payment yet. In the Stripe sandbox that contains the
-  newest payment, create the production webhook destination, copy its signing
-  secret to Vercel as `STRIPE_WEBHOOK_SECRET`, and redeploy.
-- After redeploying, resend the existing newest `checkout.session.completed`
-  event from that same sandbox. This should confirm the existing payment
-  without creating another Checkout Session.
+- Reopen the `$999` invoice in mobile, tap Retry payment, and stop when the
+  Stripe form opens without entering card details. Then inspect the newly
+  created session through the configured Stripe account before paying.
+- If the new session appears in account `acct_1U2x49HZ4FnNiDXG`, the Vercel
+  key alignment is fixed and the test payment can continue. If it does not,
+  production is still using an inaccessible or stale Stripe key.
 - Separate hardening opportunity: the webhook handler should verify a Checkout
   Session is paid before marking an invoice paid, especially before enabling
   delayed payment methods. This did not cause the reported card-payment issue.
