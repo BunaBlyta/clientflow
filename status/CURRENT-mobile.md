@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 13:38 by Codex — show processing check feedback
+Last updated: 2026-08-17 13:46 by Codex — reopen abandoned payment sessions
 
 ## Current state
 
@@ -59,6 +59,9 @@ Last updated: 2026-08-17 13:38 by Codex — show processing check feedback
 - The status check now gives visible feedback when the payment is still
   processing or when the status could not be retrieved, instead of appearing
   to do nothing.
+- Processing invoices now also offer “Return to payment,” which reopens the
+  existing Checkout Session for an abandoned checkout. It does not create a
+  second session while the original payment is unresolved.
 
 ## Verification
 

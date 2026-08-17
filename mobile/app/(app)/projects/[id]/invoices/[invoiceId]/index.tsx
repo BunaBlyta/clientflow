@@ -122,6 +122,15 @@ export default function InvoiceDetailScreen() {
               variant="secondary"
             />
           </View>
+          <View style={styles.processingAction}>
+            <Button
+              label={t('invoices.returnToPayment')}
+              onPress={() =>
+                router.push(`/projects/${id}/invoices/${invoiceId}/checkout`)
+              }
+              variant="ghost"
+            />
+          </View>
           {paymentCheckMessage && (
             <Text style={styles.paymentCheckMessage}>{paymentCheckMessage}</Text>
           )}
