@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 15:37 by Codex — stale snapshot race hardening
+Last updated: 2026-08-17 16:04 by Codex — realtime startup race fix
 
 ## Current state
 
@@ -27,6 +27,13 @@ Last updated: 2026-08-17 15:37 by Codex — stale snapshot race hardening
 - Hardened snapshot reconciliation: an older in-flight notifications GET can no
   longer erase a newer Ably notification already merged into the store. Server
   records still win when the same ID appears in both collections.
+- Fixed the provider startup ordering: Ably channels attach before the first
+  notification snapshot, then the GET runs as an authoritative catch-up. This
+  closes the window where a notification could be created after the initial
+  GET but before subscription and otherwise require a manual refresh.
+- Added sanitized console diagnostics for token authentication failures,
+  startup/attachment failures, and degraded Ably connection states. Logs never
+  include token payloads or API credentials.
 
 ## Verification
 

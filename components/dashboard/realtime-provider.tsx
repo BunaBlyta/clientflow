@@ -124,9 +124,6 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
           return;
         }
 
-        await loadNotifications(controller.signal);
-        if (disposed) return;
-
         const realtime = new Realtime({
           authCallback: (_params, callback) => {
             fetch("/api/realtime/token", { credentials: "include", cache: "no-store" })
@@ -146,6 +143,9 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
                 callback(null, token);
               })
               .catch((error: unknown) => {
+                console.error("Clientflow realtime authentication failed", {
+                  message: error instanceof Error ? error.message : "Unknown authentication error",
+                });
                 callback(error instanceof Error ? error.message : "Realtime authentication failed.", null);
               });
           },
@@ -160,6 +160,7 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
           }
           if (["failed", "suspended", "disconnected"].includes(change.current)) {
             setConnectionState("degraded");
+            console.error("Clientflow realtime connection degraded", { state: change.current });
           } else if (change.current === "connecting") {
             setConnectionState("connecting");
           }
@@ -186,10 +187,18 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
             channel.subscribe(["notification.created", "entity.changed"], handleMessage),
           ),
         );
+
+        // Attach before the first snapshot. Any event that arrives during the
+        // GET is merged by the store, while events missed during startup are
+        // recovered by this authoritative catch-up request.
+        await loadNotifications(controller.signal);
       } catch (caughtError) {
         if (!disposed && !(caughtError instanceof DOMException && caughtError.name === "AbortError")) {
           setConnectionState("degraded");
           setLoading(false);
+          console.error("Clientflow realtime startup failed", {
+            message: caughtError instanceof Error ? caughtError.message : "Unknown startup error",
+          });
         }
       }
     };
