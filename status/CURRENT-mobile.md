@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 13:22 by Codex — recover declined checkout with retry
+Last updated: 2026-08-17 13:31 by Codex — add safe processing status check
 
 ## Current state
 
@@ -52,6 +52,10 @@ Last updated: 2026-08-17 13:22 by Codex — recover declined checkout with retry
 - If the webhook is delayed or the payment is not confirmed after polling,
   checkout now moves to its declined/retry state instead of leaving the user
   on an endless confirmation screen.
+- Processing invoices now include a safe “Check payment status” action. It
+  refreshes the server state without opening another Checkout Session; the
+  retry-payment action remains available only after the invoice is confirmed
+  failed.
 
 ## Verification
 

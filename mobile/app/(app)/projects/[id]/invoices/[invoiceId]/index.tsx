@@ -27,6 +27,15 @@ export default function InvoiceDetailScreen() {
   const refreshInvoice = useDataStore((s) => s.refreshInvoice);
   const [loading, setLoading] = useState(true);
   const [unreachable, setUnreachable] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+
+  async function handleCheckPayment() {
+    if (!token || !invoiceId) return;
+    setCheckingPayment(true);
+    const ok = await refreshInvoice(invoiceId, token);
+    setUnreachable(!ok);
+    setCheckingPayment(false);
+  }
 
   useEffect(() => {
     if (!token || !invoiceId) {
@@ -91,6 +100,14 @@ export default function InvoiceDetailScreen() {
           <Text style={styles.processingText}>
             {t('invoices.paymentProcessing')}
           </Text>
+          <View style={styles.processingAction}>
+            <Button
+              label={checkingPayment ? t('common.loading') : t('invoices.checkPayment')}
+              onPress={() => void handleCheckPayment()}
+              loading={checkingPayment}
+              variant="secondary"
+            />
+          </View>
         </View>
       )}
 
@@ -184,6 +201,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontSize: fontSize.caption,
     color: color.warning,
     lineHeight: 18,
+  },
+  processingAction: {
+    marginTop: spacing.md,
   },
   paidBanner: {
     flexDirection: 'row',
