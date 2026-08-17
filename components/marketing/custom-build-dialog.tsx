@@ -98,18 +98,18 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <RequiredLabel htmlFor="contact-name">{t("marketing.yourName")}</RequiredLabel>
-                <Input id="contact-name" name="name" required placeholder={t("marketing.namePlaceholder")} className="contact-field" />
+                <RequiredLabel htmlFor="custom-contact-name">{t("marketing.yourName")}</RequiredLabel>
+                <Input id="custom-contact-name" name="name" required placeholder={t("marketing.namePlaceholder")} className="contact-field" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <RequiredLabel htmlFor="contact-email">{t("auth.email")}</RequiredLabel>
-                <Input id="contact-email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} className="contact-field" />
+                <RequiredLabel htmlFor="custom-contact-email">{t("auth.email")}</RequiredLabel>
+                <Input id="custom-contact-email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} className="contact-field" />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <RequiredLabel htmlFor="contact-message">{t("marketing.whatBuild")}</RequiredLabel>
+              <RequiredLabel htmlFor="custom-contact-message">{t("marketing.whatBuild")}</RequiredLabel>
               <Textarea
-                id="contact-message"
+                id="custom-contact-message"
                 name="message"
                 required
                 rows={5}

@@ -1569,19 +1569,11 @@ html:not(.dark) .package-card--custom .package-price {
   border-color: rgb(168 157 255 / 0.32) !important;
 }
 
-#how-it-works .process-step,
-#how-it-works .process-step:hover,
-#how-it-works .process-step .process-glyph,
-#how-it-works .process-step:hover .process-glyph,
-#how-it-works .process-step:hover .process-message-dot,
-#how-it-works .process-step:hover .process-rocket-flame {
-  transform: none !important;
-  animation: none !important;
-  transition: none !important;
-}
-
-#how-it-works .process-connector path:first-child {
-  animation: none !important;
+.package-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 @media (prefers-reduced-motion: reduce) {

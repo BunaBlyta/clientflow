@@ -1,13 +1,14 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 16:52 by Codex — landing page feedback pass
+Last updated: 2026-08-17 16:56 by Codex — landing page follow-up pass
 
 ## Current state
 
 - Applied the PM landing-page pass: buttons keep their position and use a hand cursor, header is solid, anchor navigation scrolls smoothly with a sticky-header offset, and the hero copy is constrained into a centered triangular wrap.
-- Standardized landing section spacing and button radii/gaps. The “How it works” steps and connectors no longer animate or move on hover.
+- Standardized landing section spacing and button radii/gaps. The “How it works” steps and connectors keep their original hover animations without moving buttons or changing section layout.
 - Differentiated package cards with aligned content rows, distinct standard/popular/custom shades, and a clearer popular treatment.
-- Package requests and custom builds now open dialogs. Required fields show asterisks, submission errors appear at the top with an alert icon, dropdowns open below and align to the field, and long textareas stay bounded and resizable.
+- Package requests and custom builds now open dialogs, and the visible custom inquiry form is also restored in the Contact section. Required fields show asterisks, submission errors appear at the top with an alert icon, dropdowns open below and align to the field, and long textareas stay bounded and resizable.
+- Tightened package cards to a 320px minimum height and clamp package descriptions to two rows so card content stays aligned without excessive vertical space.
 
 - Added one dashboard-level `DashboardRealtimeProvider`. It authenticates to
   `GET /api/realtime/token`, subscribes to `clientflow:user:<id>` and

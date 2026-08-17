@@ -123,7 +123,7 @@ export function ProcessSection() {
         </div>
         <div className="relative mx-auto mt-10 grid max-w-none gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, i) => (
-              <div key={step.title} className="process-step relative z-10 text-center">
+              <div key={step.title} className="process-step group relative z-10 text-center">
               {i < steps.length - 1 && (
                 <svg
                   className={`process-connector pointer-events-none absolute top-[13px] left-[calc(50%+20px)] z-0 hidden h-3 w-[calc(100%-0.5rem)] overflow-visible text-gray-400/50 dark:text-brand-accent/20 lg:block ${i === steps.length - 1 ? "process-connector-final" : ""}`}

@@ -158,7 +158,7 @@ export function PackagesAndRequest() {
                     <div
                       key={pkg.id}
                       className={cn(
-                        "package-card relative flex h-full min-h-[360px] flex-col rounded-lg border p-6",
+                        "package-card relative flex h-full min-h-[320px] flex-col rounded-lg border p-6",
                         isPopular && "package-card--popular",
                         isCustom ? "package-card--custom" : "package-card--standard",
                       )}
@@ -172,7 +172,7 @@ export function PackagesAndRequest() {
                       <p className="package-price mt-1 min-h-9 text-[28px] font-semibold tracking-tight">
                         {isCustom ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                       </p>
-                      <p className="mt-2 min-h-14 text-[13px] text-muted-foreground">{pkg.description}</p>
+                      <p className="package-description mt-2 min-h-10 text-[13px] text-muted-foreground">{pkg.description}</p>
                       <ul className="mt-5 flex flex-1 flex-col gap-2.5">
                         <li className="flex items-start gap-2 text-[13px]">
                           <Check className="mt-0.5 size-4 shrink-0 text-brand-sky dark:rounded-full dark:bg-brand-accent/25 dark:p-0.5 dark:text-foreground" />
