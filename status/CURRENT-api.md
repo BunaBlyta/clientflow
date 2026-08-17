@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 11:38 by Codex — simplify mobile payment success handoff
+Last updated: 2026-08-17 11:44 by Codex — migrate deprecated Groq model
 
 ## What changed
 
@@ -28,6 +28,11 @@ Last updated: 2026-08-17 11:38 by Codex — simplify mobile payment success hand
   success icon and “You may return to the Clientflow app,” with no web-app
   button or development explanation. Web-originated payments still show their
   existing invoice-dashboard action. Added equivalent German and Albanian text.
+- Fixed the deployed AI analytics insight 502 by replacing Groq's retired
+  `llama-3.3-70b-versatile` model with its recommended production replacement,
+  `openai/gpt-oss-120b`. The existing API response contract is unchanged.
+- Confirmed the configured Groq key authenticates and the replacement model
+  returns a valid completion. The retired model returned 404 `model_not_found`.
 
 ## Verification
 
@@ -45,6 +50,9 @@ Last updated: 2026-08-17 11:38 by Codex — simplify mobile payment success hand
 - `npm run verify` reached the build but Turbopack hit its known sandbox-only
   process/port-binding panic. `node_modules/.bin/next build --webpack` passed
   and compiled all routes, including `/payment/success`.
+- Groq insight change: focused route suite passed all 6 tests; full typecheck,
+  lint, and all 34 files / 145 tests passed. Turbopack repeated the known
+  sandbox port panic, and `node_modules/.bin/next build --webpack` passed.
 
 ## Handoff
 
@@ -64,3 +72,6 @@ Last updated: 2026-08-17 11:38 by Codex — simplify mobile payment success hand
 - The mobile success-page edit touched `app/payment/success/page.tsx` and
   `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
   state file was changed.
+- The local Groq key was accidentally printed by a diagnostic command and must
+  be treated as exposed. Buna must rotate it in Groq, replace `GROQ_API_KEY` in
+  Vercel Production and local `.env`, then redeploy. Never commit either value.

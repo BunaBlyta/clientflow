@@ -148,7 +148,7 @@ describe('POST /api/analytics/insight', () => {
       messages: Array<{ role: string; content: string }>;
     };
     const prompt = body.messages[0].content;
-    expect(body.model).toBe('llama-3.3-70b-versatile');
+    expect(body.model).toBe('openai/gpt-oss-120b');
     expect(body.messages[0].role).toBe('user');
     expect(prompt).toContain('projectsByStage');
     expect(prompt).toContain('REVIEW');

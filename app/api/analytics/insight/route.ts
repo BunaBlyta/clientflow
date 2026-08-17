@@ -16,6 +16,7 @@ import { serializeInvoice } from '@/app/api/invoices/serialize';
 export const runtime = 'nodejs';
 
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 function serializeProject(project: {
   id: string;
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: GROQ_MODEL,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
