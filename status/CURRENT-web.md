@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 16:04 by Codex — realtime startup race fix
+Last updated: 2026-08-17 16:08 by Codex — overview realtime activity surface
 
 ## Current state
 
@@ -34,6 +34,13 @@ Last updated: 2026-08-17 16:04 by Codex — realtime startup race fix
 - Added sanitized console diagnostics for token authentication failures,
   startup/attachment failures, and degraded Ably connection states. Logs never
   include token payloads or API credentials.
+- Added `request` to the web entity-event guard. The overview now refetches its
+  pending-request data when a new request event arrives instead of leaving the
+  request list stale while the bell updates.
+- Added a restrained recent-notifications activity section to the overview,
+  backed by the shared Zustand store. New invoice, payment, status, note, and
+  request notifications therefore appear on the dashboard as soon as the
+  realtime event is merged.
 
 ## Verification
 

@@ -17,7 +17,7 @@ type CurrentUser = {
 };
 
 type RealtimeEventDetail = {
-  entity: "invoice" | "project" | "note";
+  entity: "invoice" | "project" | "note" | "request";
   projectId?: string;
   invoiceId?: string;
   reason: "payment" | "status" | "note" | "invoice";

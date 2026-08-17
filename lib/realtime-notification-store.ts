@@ -8,7 +8,7 @@ export type RealtimeConnectionState =
   | "degraded"
   | "disabled";
 
-export type RealtimeEntity = "invoice" | "project" | "note";
+export type RealtimeEntity = "invoice" | "project" | "note" | "request";
 
 export interface EntityChangedEvent {
   entity: RealtimeEntity;
@@ -63,7 +63,8 @@ export function isEntityChangedEvent(value: unknown): value is EntityChangedEven
   return (
     (candidate.entity === "invoice" ||
       candidate.entity === "project" ||
-      candidate.entity === "note") &&
+      candidate.entity === "note" ||
+      candidate.entity === "request") &&
     (candidate.reason === "payment" ||
       candidate.reason === "status" ||
       candidate.reason === "note" ||

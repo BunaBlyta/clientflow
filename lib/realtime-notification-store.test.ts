@@ -58,6 +58,7 @@ describe("realtime notification helpers", () => {
     expect(
       isEntityChangedEvent({ entity: "invoice", invoiceId: "inv-1", reason: "payment" }),
     ).toBe(true);
+    expect(isEntityChangedEvent({ entity: "request", reason: "invoice" })).toBe(true);
     expect(isEntityChangedEvent({ entity: "client", reason: "payment" })).toBe(false);
   });
 });

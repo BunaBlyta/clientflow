@@ -21,7 +21,12 @@ import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project, ProjectRequest } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { formatRelativeTime } from "@/lib/relative-time";
+import { NOTIFICATION_ICON } from "@/lib/notification-meta";
+import { getNotificationDestination } from "@/lib/notification-destination";
+import { cn } from "@/lib/utils";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
+import { useNotificationStore } from "@/lib/realtime-notification-store";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
@@ -33,6 +38,8 @@ export default function OverviewPage() {
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const notificationsLoading = useNotificationStore((state) => state.isLoading);
 
   const loadOverview = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -80,7 +87,13 @@ export default function OverviewPage() {
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
-      if (detail?.entity === "invoice" || detail?.entity === "project") void loadOverview();
+      if (
+        detail?.entity === "invoice" ||
+        detail?.entity === "project" ||
+        detail?.entity === "request"
+      ) {
+        void loadOverview();
+      }
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
@@ -227,6 +240,51 @@ export default function OverviewPage() {
                 <span className={PROJECT_STATUS_TONE[p.status]}>{t(`status.project.${p.status}`)}</span>
               </Link>
             ))}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[15px] font-medium">{t("nav.notifications")}</h2>
+          <Link href="/dashboard/notifications" className="text-[12px] text-brand-accent hover:underline">
+            {t("notifications.viewAll")}
+          </Link>
+        </div>
+        <div className="mt-4 flex flex-col divide-y divide-border">
+          {notificationsLoading ? (
+            <p className="py-2 text-[13px] text-muted-foreground">{t("common.loading")}</p>
+          ) : notifications.length === 0 ? (
+            <p className="py-2 text-[13px] text-muted-foreground">{t("notifications.noNotifications")}</p>
+          ) : (
+            notifications.slice(0, 5).map((notification) => {
+              const Icon = NOTIFICATION_ICON[notification.type];
+              return (
+                <Link
+                  key={notification.id}
+                  href={getNotificationDestination(notification)}
+                  className="flex items-start gap-3 py-3 first:pt-0 last:pb-0 hover:text-brand-accent"
+                >
+                  <Icon
+                    className={cn(
+                      "mt-0.5 size-4 shrink-0",
+                      notification.read ? "text-muted-foreground/70" : "text-brand-accent",
+                    )}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className={cn("block text-[13px]", !notification.read && "font-medium")}>
+                      {notification.title}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                      {notification.body}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {formatRelativeTime(notification.createdAt)}
+                  </span>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
