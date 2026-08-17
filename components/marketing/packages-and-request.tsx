@@ -172,7 +172,7 @@ export function PackagesAndRequest() {
                       <p className="package-price mt-1 min-h-9 text-[28px] font-semibold tracking-tight">
                         {isCustom ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                       </p>
-                      <p className="package-description mt-2 min-h-10 text-[13px] text-muted-foreground">{pkg.description}</p>
+                      <p className="package-description mt-2 h-10 text-[13px] leading-5 text-muted-foreground">{pkg.description}</p>
                       <ul className="mt-5 flex flex-1 flex-col gap-2.5">
                         <li className="flex items-start gap-2 text-[13px]">
                           <Check className="mt-0.5 size-4 shrink-0 text-brand-sky dark:rounded-full dark:bg-brand-accent/25 dark:p-0.5 dark:text-foreground" />

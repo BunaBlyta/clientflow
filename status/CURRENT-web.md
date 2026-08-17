@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 17:10 by Codex — landing package and process hover refinement
+Last updated: 2026-08-17 17:18 by Codex — landing package description and card differentiation
 
 ## Current state
 
@@ -11,6 +11,7 @@ Last updated: 2026-08-17 17:10 by Codex — landing package and process hover re
 - Tightened package cards to a 320px minimum height and clamp package descriptions to two rows so card content stays aligned without excessive vertical space.
 - Kept the custom web app heading aligned to the form top and added a little more space before its description.
 - Removed the custom package price color, enlarged the Popular badge, and scoped “How it works” hover animations to the icon itself so the step layout stays still.
+- Fixed every package description to a two-line, 40px slot and added subtle on-theme cyan surface/top-accent differences for each card.
 
 - Added one dashboard-level `DashboardRealtimeProvider`. It authenticates to
   `GET /api/realtime/token`, subscribes to `clientflow:user:<id>` and

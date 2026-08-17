@@ -1516,15 +1516,46 @@ html:not(.dark) .package-card--standard {
   border-color: rgb(160 222 255 / 0.28) !important;
 }
 
+html:not(.dark) .package-card--standard::before,
+html:not(.dark) .package-card--popular::before,
+html:not(.dark) .package-card--custom::before,
+.dark .package-card--standard::before,
+.dark .package-card--popular::before,
+.dark .package-card--custom::before {
+  position: absolute;
+  top: 0;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  content: "";
+  pointer-events: none;
+}
+
+html:not(.dark) .package-card--standard::before,
+.dark .package-card--standard::before {
+  background: #caf4ff;
+}
+
 html:not(.dark) .package-card--popular {
   background: #e8f8fe !important;
   border: 2px solid #5ab2ff !important;
   box-shadow: 0 12px 24px -20px rgb(90 178 255 / 0.8) !important;
 }
 
+html:not(.dark) .package-card--popular::before,
+.dark .package-card--popular::before {
+  background: #5ab2ff;
+}
+
 html:not(.dark) .package-card--custom {
-  background: #f2f0ff !important;
-  border-color: rgb(129 116 216 / 0.35) !important;
+  background: #effbfe !important;
+  border-color: rgb(160 222 255 / 0.52) !important;
+}
+
+html:not(.dark) .package-card--custom::before,
+.dark .package-card--custom::before {
+  background: #78c9e8;
 }
 
 html:not(.dark) .package-card--popular .popular-stamp {
@@ -1549,8 +1580,8 @@ html:not(.dark) .package-card--popular .package-price {
 }
 
 .dark .package-card--custom {
-  background: #211f35 !important;
-  border-color: rgb(168 157 255 / 0.32) !important;
+  background: #102d35 !important;
+  border-color: rgb(120 201 232 / 0.35) !important;
 }
 
 .package-description {
