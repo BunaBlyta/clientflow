@@ -63,7 +63,7 @@ export function ContactForm() {
           <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-[22px]">
             {t("marketing.customBuildTitle")}
           </h2>
-          <p className="mt-2 max-w-md text-[14px] leading-relaxed text-muted-foreground">
+          <p className="mt-4 max-w-md text-[14px] leading-relaxed text-muted-foreground">
             {t("marketing.customBuildIntro")}
           </p>
         </div>

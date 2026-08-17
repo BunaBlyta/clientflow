@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 16:56 by Codex — landing page follow-up pass
+Last updated: 2026-08-17 17:02 by Codex — landing contact spacing
 
 ## Current state
 
@@ -9,6 +9,7 @@ Last updated: 2026-08-17 16:56 by Codex — landing page follow-up pass
 - Differentiated package cards with aligned content rows, distinct standard/popular/custom shades, and a clearer popular treatment.
 - Package requests and custom builds now open dialogs, and the visible custom inquiry form is also restored in the Contact section. Required fields show asterisks, submission errors appear at the top with an alert icon, dropdowns open below and align to the field, and long textareas stay bounded and resizable.
 - Tightened package cards to a 320px minimum height and clamp package descriptions to two rows so card content stays aligned without excessive vertical space.
+- Kept the custom web app heading aligned to the form top and added a little more space before its description.
 
 - Added one dashboard-level `DashboardRealtimeProvider`. It authenticates to
   `GET /api/realtime/token`, subscribes to `clientflow:user:<id>` and
