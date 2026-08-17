@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { CheckCircle2, Lock, XCircle } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -37,9 +37,11 @@ export default function CheckoutScreen() {
   const [step, setStep] = useState<Step>('select');
   const [message, setMessage] = useState<string | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  const statusCheckInFlight = useRef(false);
 
   async function refreshAfterReturn() {
-    if (!token || !invoiceId) return;
+    if (!token || !invoiceId || statusCheckInFlight.current) return;
+    statusCheckInFlight.current = true;
     setCheckingStatus(true);
 
     try {
@@ -76,6 +78,7 @@ export default function CheckoutScreen() {
       setMessage(t('checkout.notConfirmedRetry'));
       setStep('failed');
     } finally {
+      statusCheckInFlight.current = false;
       setCheckingStatus(false);
     }
   }
@@ -107,14 +110,22 @@ export default function CheckoutScreen() {
 
   useEffect(() => {
     let wasBackgrounded = false;
+    const handleReturn = () => {
+      if (step === 'processing') void refreshAfterReturn();
+    };
     const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
       if (nextState !== 'active') wasBackgrounded = true;
       if (nextState === 'active' && wasBackgrounded && step === 'processing') {
         wasBackgrounded = false;
-        void refreshAfterReturn();
+        handleReturn();
       }
     });
-    return () => subscription.remove();
+
+    if (Platform.OS === 'web') window.addEventListener('focus', handleReturn);
+    return () => {
+      subscription.remove();
+      if (Platform.OS === 'web') window.removeEventListener('focus', handleReturn);
+    };
   }, [step, token, invoiceId]);
 
   if (!invoice) {
@@ -158,19 +169,9 @@ export default function CheckoutScreen() {
           <Text style={styles.centerSubtitle}>
             {t('checkout.confirmingSubheading')}
           </Text>
-          <View style={{ height: spacing.lg }} />
-          <Button
-            label={checkingStatus ? t('checkout.checking') : t('checkout.returnedCheck')}
-            onPress={() => void refreshAfterReturn()}
-            loading={checkingStatus}
-            variant="secondary"
-          />
-          <View style={{ height: spacing.sm }} />
-          <Button
-            label={t('checkout.returnToPayment')}
-            onPress={() => void handlePay()}
-            disabled={checkingStatus}
-          />
+          {checkingStatus && (
+            <ActivityIndicator color={color.accent} style={{ marginTop: spacing.lg }} />
+          )}
         </View>
       )}
 

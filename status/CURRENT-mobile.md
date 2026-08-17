@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 14:08 by Codex — reconcile abandoned payment on return
+Last updated: 2026-08-17 14:42 by Codex — simplify pending payment actions
 
 ## Current state
 
@@ -68,6 +68,10 @@ Last updated: 2026-08-17 14:08 by Codex — reconcile abandoned payment on retur
 - Return-time status checks now ask the API to reconcile the Stripe Session.
   An abandoned/no-payment session becomes Failed and exposes retry; a genuine
   Stripe `processing` payment remains pending.
+- Removed manual “I’ve returned — check status” and “Return to payment”
+  actions from the pending checkout state. Native AppState and web tab-focus
+  events trigger the status check automatically; Retry appears only after a
+  confirmed failure.
 
 ## Verification
 
