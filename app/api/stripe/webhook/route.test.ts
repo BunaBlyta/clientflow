@@ -45,6 +45,7 @@ function paymentEvent(type: string) {
         id: 'checkout-session-1',
         metadata: { invoiceId },
         payment_intent: 'payment-intent-1',
+        payment_status: 'paid',
       },
     },
   };
@@ -166,6 +167,18 @@ describe('POST /api/stripe/webhook', () => {
       where: { id: invoiceId, status: 'PAYMENT_PENDING' },
       data: expect.objectContaining({ status: 'PAID' }),
     });
+  });
+
+  it('keeps a delayed Checkout Session pending until funds arrive', async () => {
+    configureInvoice('FINAL');
+    const event = paymentEvent('checkout.session.completed');
+    event.data.object.payment_status = 'unpaid';
+
+    const response = await POST(request(event, 'sig_test'));
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceUpdateMany).not.toHaveBeenCalled();
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
 
   it.each(['FINAL', 'EXTRA', 'CUSTOM'] as const)(

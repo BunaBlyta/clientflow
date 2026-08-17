@@ -10,6 +10,7 @@ type StripeEvent = {
     id?: string;
     metadata?: { invoiceId?: string; projectId?: string };
     payment_intent?: string | null;
+    payment_status?: 'paid' | 'unpaid' | 'no_payment_required' | null;
   } };
 };
 
@@ -36,8 +37,10 @@ export async function POST(request: NextRequest) {
   const invoiceId = stripeObject?.metadata?.invoiceId;
   if (!invoiceId) return NextResponse.json({ received: true });
 
+  const checkoutCompletedWithFunds =
+    event.type === 'checkout.session.completed' && stripeObject?.payment_status === 'paid';
   if (
-    event.type === 'checkout.session.completed' ||
+    checkoutCompletedWithFunds ||
     event.type === 'checkout.session.async_payment_succeeded' ||
     event.type === 'payment_intent.succeeded'
   ) {

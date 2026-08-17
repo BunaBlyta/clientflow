@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 14:28 by Codex — support delayed Checkout events
+Last updated: 2026-08-17 14:34 by Codex — keep delayed Checkout payments pending
 
 ## What changed
 
@@ -89,6 +89,10 @@ Last updated: 2026-08-17 14:28 by Codex — support delayed Checkout events
   and `checkout.session.async_payment_failed` for delayed payment methods.
   Stripe Dashboard must subscribe the endpoint to those event types; code
   support alone does not make Stripe deliver them.
+- Corrected delayed Checkout handling so `checkout.session.completed` only
+  marks an invoice Paid when the session reports `payment_status: paid`.
+  Delayed sessions with `payment_status: unpaid` remain pending until the
+  async success event arrives.
 - The mobile success-page edit touched `app/payment/success/page.tsx` and
   `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
   state file was changed.
