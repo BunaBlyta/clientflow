@@ -28,13 +28,27 @@ export default function InvoiceDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [unreachable, setUnreachable] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [paymentCheckMessage, setPaymentCheckMessage] = useState<string | null>(null);
 
   async function handleCheckPayment() {
     if (!token || !invoiceId) return;
     setCheckingPayment(true);
-    const ok = await refreshInvoice(invoiceId, token);
-    setUnreachable(!ok);
-    setCheckingPayment(false);
+    setPaymentCheckMessage(null);
+    try {
+      const ok = await refreshInvoice(invoiceId, token);
+      setUnreachable(!ok);
+      if (!ok) {
+        setPaymentCheckMessage(t('invoices.paymentCheckUnavailable'));
+        return;
+      }
+
+      const latest = useDataStore.getState().invoiceById(invoiceId);
+      if (latest?.status === 'PAYMENT_PENDING') {
+        setPaymentCheckMessage(t('invoices.paymentStillProcessing'));
+      }
+    } finally {
+      setCheckingPayment(false);
+    }
   }
 
   useEffect(() => {
@@ -108,6 +122,9 @@ export default function InvoiceDetailScreen() {
               variant="secondary"
             />
           </View>
+          {paymentCheckMessage && (
+            <Text style={styles.paymentCheckMessage}>{paymentCheckMessage}</Text>
+          )}
         </View>
       )}
 
@@ -204,6 +221,13 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   processingAction: {
     marginTop: spacing.md,
+  },
+  paymentCheckMessage: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.textMuted,
+    lineHeight: 17,
+    marginTop: spacing.sm,
   },
   paidBanner: {
     flexDirection: 'row',

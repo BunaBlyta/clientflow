@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 13:31 by Codex — add safe processing status check
+Last updated: 2026-08-17 13:38 by Codex — show processing check feedback
 
 ## Current state
 
@@ -56,6 +56,9 @@ Last updated: 2026-08-17 13:31 by Codex — add safe processing status check
   refreshes the server state without opening another Checkout Session; the
   retry-payment action remains available only after the invoice is confirmed
   failed.
+- The status check now gives visible feedback when the payment is still
+  processing or when the status could not be retrieved, instead of appearing
+  to do nothing.
 
 ## Verification
 
