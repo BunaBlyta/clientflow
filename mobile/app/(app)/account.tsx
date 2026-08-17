@@ -19,7 +19,7 @@ export default function AccountScreen() {
 
   function handleLogout() {
     if (confirmingLogout) {
-      logout();
+      void logout();
       return;
     }
     setConfirmingLogout(true);

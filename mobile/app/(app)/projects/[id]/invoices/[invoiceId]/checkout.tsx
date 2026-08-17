@@ -108,6 +108,21 @@ export default function CheckoutScreen() {
     }
   }
 
+  // A push or foreground notification may reconcile this invoice while the
+  // client is still on checkout. The server's webhook-backed status is the
+  // source of truth, so update the UI from the store rather than notification
+  // payload contents.
+  useEffect(() => {
+    if (step !== 'processing') return;
+    if (invoice?.status === 'PAID') {
+      setMessage(null);
+      setStep('success');
+    } else if (invoice?.status === 'FAILED') {
+      setMessage(t('checkout.notConfirmedRetry'));
+      setStep('failed');
+    }
+  }, [invoice?.status, step, t]);
+
   useEffect(() => {
     let wasBackgrounded = false;
     const handleReturn = () => {

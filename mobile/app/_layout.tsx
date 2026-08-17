@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/auth-store';
 import { I18nProvider } from '../lib/i18n';
 import { ThemeProvider, useTheme } from '../lib/theme';
+import { NotificationCoordinator } from '../lib/notification-coordinator';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -43,6 +44,7 @@ export default function RootLayout() {
       <ThemeProvider>
         <I18nProvider>
           <ThemedStatusBar />
+          <NotificationCoordinator />
           <RootNavigator />
         </I18nProvider>
       </ThemeProvider>

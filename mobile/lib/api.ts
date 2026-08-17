@@ -117,6 +117,27 @@ export function notificationsRequest(token: string) {
   return request<Notification[]>('/api/notifications', {}, token);
 }
 
+export type PushDevicePlatform = 'IOS';
+
+export function registerPushDeviceRequest(
+  pushToken: string,
+  platform: PushDevicePlatform,
+  token: string,
+  appVersion?: string,
+) {
+  return request<{ id: string; token: string }>('/api/notifications/devices', {
+    method: 'POST',
+    body: JSON.stringify({ token: pushToken, platform, ...(appVersion ? { appVersion } : {}) }),
+  }, token);
+}
+
+export function unregisterPushDeviceRequest(pushToken: string, token: string) {
+  return request<{ deleted: boolean }>('/api/notifications/devices', {
+    method: 'DELETE',
+    body: JSON.stringify({ token: pushToken }),
+  }, token);
+}
+
 export function markNotificationReadRequest(notificationId: string, token: string) {
   return request<Notification>(
     `/api/notifications/${encodeURIComponent(notificationId)}`,

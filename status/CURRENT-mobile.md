@@ -1,97 +1,51 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 14:42 by Codex — simplify pending payment actions
+Last updated: 2026-08-17 15:09 by Codex — iOS push notification delivery
 
 ## Current state
 
-- The Expo client keeps the existing live login, verification-code onboarding,
-  projects, project status tracking, shared notes, invoices, Stripe checkout,
-  and in-app notifications behavior.
-- The mobile presentation now follows the Clientflow landing language more
-  closely: warm-white light surfaces, near-black dark surfaces, restrained
-  #CAF4FF / #A0DEFF cyan atmosphere, Inter hierarchy, hairline separators,
-  and tactile pressed states.
-- The app tab bar now presents Home, Projects, Invoices, Notifications, and
-  Account. Home and the global Invoices view reuse existing store data and
-  existing navigation/actions; no API or data-fetching behavior changed.
-- Home has a friendly greeting, a current-project status tracker, and a next
-  action row for the first payable invoice or the project notes.
-- Projects use calm editorial rows with numbered cyan identity marks, status
-  dots, and understated chevrons. Project detail keeps the existing paid /
-  outstanding totals, package overview, notes preview, invoice preview, and
-  the horizontal stage tracker.
-- Stage tracker circles now use stage icons for the current stage, a cyan
-  pulse, a connected progress line, and muted completed/future states.
-- Notes are now a thin-line activity feed with small author metadata and a
-  subtle cyan wash for client-authored entries; the composer remains wired to
-  the existing post-note action.
-- Notifications are now a simple activity list with understated icons and a
-  small cyan unread dot; existing mark-read and mark-all behavior is intact.
-- Shared buttons now have a restrained cyan gradient and pressed treatment.
-  Text fields use lightly inset muted surfaces, minimal borders, and softer
-  focus states. Auth screens inherit these shared improvements and retain the
-  existing cyan backdrop.
-- Account uses flatter information/preferences sections while retaining theme,
-  language, logout, and confirmation behavior.
-- Follow-up refinement removed the active tab background; the active icon is
-  now brighter with a stronger stroke. Theme and language choices are now
-  quiet text rows with only a checkmark for the selected option.
-- Home’s invoice summary now shows the count once, and the tracker’s “currently
-  in progress” text is laid out below the active phase label instead of using
-  an overlapping absolute position. Home’s next-action heading is also now
-  translated instead of reusing “View all”.
-- Account information now keeps only Email and Company, with plain text rows
-  and no decorative icon tiles. The existing Contact row was removed from the
-  presentation.
-- Home now uses the same shared top spacing as the other tab screens. The
-  tracker’s “currently in progress” message is a larger, centered line below
-  the timeline instead of a tiny label inside the active stage column.
-- Native Stripe checkout now polls the invoice for about 12 seconds after the
-  user returns from the browser. This gives the webhook time to mark the
-  invoice paid instead of incorrectly showing that no payment was confirmed.
-- If the webhook is delayed or the payment is not confirmed after polling,
-  checkout now moves to its declined/retry state instead of leaving the user
-  on an endless confirmation screen.
-- Processing invoices now include a safe “Check payment status” action. It
-  refreshes the server state without opening another Checkout Session; the
-  retry-payment action remains available only after the invoice is confirmed
-  failed.
-- The status check now gives visible feedback when the payment is still
-  processing or when the status could not be retrieved, instead of appearing
-  to do nothing.
-- Processing invoices now also offer “Return to payment,” which reopens the
-  existing Checkout Session for an abandoned checkout. It does not create a
-  second session while the original payment is unresolved.
-- The checkout confirmation screen now has the same Return to payment action,
-  so clients who stay on that screen after backing out of Stripe do not need
-  to navigate back to the invoice first.
-- Return-time status checks now ask the API to reconcile the Stripe Session.
-  An abandoned/no-payment session becomes Failed and exposes retry; a genuine
-  Stripe `processing` payment remains pending.
-- Removed manual “I’ve returned — check status” and “Return to payment”
-  actions from the pending checkout state. Native AppState and web tab-focus
-  events trigger the status check automatically; Retry appears only after a
-  confirmed failure.
+- The Expo app is configured for iOS push notifications with bundle identifier
+  `com.tetbit.clientflow`, the existing EAS project ID, and the
+  `expo-notifications` config plugin. The user-installed Expo packages and
+  `eas.json` are included in the mobile lane commit.
+- A native-only notification coordinator requests permission after a session is
+  restored, registers Expo tokens at `POST /api/notifications/devices`, handles
+  token rotation and best-effort unregister on logout, reconciles foreground and
+  tapped notifications through authoritative API reads, and catches up on app
+  resume. Web builds do nothing in this layer.
+- Taps accept only validated notification IDs and known event types. Notes open
+  the project notes screen; invoice and project events open their detail route.
+  Notification payloads never provide client state or arbitrary URLs.
+- Checkout reacts to webhook-backed invoice updates while open, so a live PAID
+  or FAILED invoice moves the UI to the matching state.
+- Zustand data is cleared on logout/account switch, production builds no longer
+  start with fixtures, and per-resource request generations prevent stale API
+  responses from overwriting newer data.
 
 ## Verification
 
 - `cd mobile && npx tsc --noEmit`: passed.
-- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-preview`: passed.
-- `git diff --check -- mobile`: passed.
-- No connected simulator, device, or in-app browser was available for a visual
-  screenshot pass.
+- `cd mobile && npx expo config --type public --json`: passed; bundle identifier,
+  notification plugin, and EAS project ID are present.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-push-check`:
+  passed.
+- `git diff --check -- mobile`: pending final staged check.
+- No physical iPhone or iOS development build was available for a real APNs
+  delivery test. Mobile has no test runner installed, so pure helper tests were
+  not added without introducing an install.
 
-## Latest verification
+## API seam for next session
 
-- `cd mobile && npx tsc --noEmit`: passed.
-- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-check`: passed.
-- The native payment flow still needs a fresh simulator click-through after
-  restarting Expo with the updated bundle.
+- Mobile sends `{ token, platform: "IOS", appVersion? }` to
+  `POST /api/notifications/devices` and `{ token }` to the same endpoint with
+  `DELETE`, authenticated with the normal bearer token.
+- Push data is expected to contain only `notificationId`, `type`, and optional
+  `projectId`, `invoiceId`, and `requestId`. The mobile coordinator refetches
+  notifications and affected entities after delivery.
 
 ## Known limits
 
-- Push notifications remain intentionally deferred; in-app notifications are
-  unchanged.
-- The request-status screen remains fixture-backed because its API contract
-  has no public prospect request-status endpoint.
-- The payment confirmation polling change is ready to commit and push.
+- APNs credentials and a physical iPhone/development build are still required
+  for end-to-end push proof. Expo Go is not sufficient for remote push.
+- The app still uses existing fixture-backed request-status UI where the API has
+  no public prospect status endpoint.
