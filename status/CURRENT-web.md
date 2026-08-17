@@ -1,6 +1,6 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 15:14 by Codex — staff web realtime notifications
+Last updated: 2026-08-17 15:37 by Codex — stale snapshot race hardening
 
 ## Current state
 
@@ -24,17 +24,20 @@ Last updated: 2026-08-17 15:14 by Codex — staff web realtime notifications
   seconds only while the connection is degraded.
 - Added Node-friendly pure tests for notification sorting, ID deduplication,
   canonical payload validation, and entity-event validation.
+- Hardened snapshot reconciliation: an older in-flight notifications GET can no
+  longer erase a newer Ably notification already merged into the store. Server
+  records still win when the same ID appears in both collections.
 
 ## Verification
 
-- `npx vitest run lib/realtime-notification-store.test.ts`: passed (3 tests).
+- `npx vitest run lib/realtime-notification-store.test.ts`: passed (4 tests).
+- `npm run typecheck`: passed after the API lane's generated Prisma client was
+  refreshed.
 - `npm run lint`: passed with two pre-existing warnings in
   `components/marketing/mobile-app-section.tsx` for raw `<img>` elements.
 - `git diff --check`: passed for web-owned changes.
-- `npm run typecheck`: currently blocked by concurrent API-lane work outside
-  this lane: generated Prisma client lacks `pushDevice`/`pushDelivery`, and
-  Stripe webhook `result` narrowing is incomplete. No web-owned type errors
-  were reported.
+- `npm run typecheck`: passed. The earlier API-lane Prisma generation and
+  Stripe narrowing blockers have cleared.
 
 ## Handoff notes
 
@@ -49,4 +52,3 @@ Last updated: 2026-08-17 15:14 by Codex — staff web realtime notifications
   and/or invoice IDs. Payload state is deliberately not applied directly.
 - Ably and API changes from other lanes are intentionally not included in the
   web commit. Do not edit `STATUS.md` or another lane's status file.
-

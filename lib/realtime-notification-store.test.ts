@@ -39,6 +39,19 @@ describe("realtime notification helpers", () => {
     ]);
   });
 
+  it("keeps an event received before a stale snapshot", () => {
+    const eventFirst = mergeNotifications(
+      [notification("old", "2026-01-01")],
+      [notification("new", "2026-01-02")],
+    ).notifications;
+    const staleSnapshot = mergeNotifications(
+      eventFirst,
+      [notification("old", "2026-01-01")],
+    ).notifications;
+
+    expect(staleSnapshot.map(({ id }) => id)).toEqual(["new", "old"]);
+  });
+
   it("validates canonical notification and entity payloads", () => {
     expect(isNotificationPayload(notification("one", "2026-01-01"))).toBe(true);
     expect(isNotificationPayload({ id: "one" })).toBe(false);
@@ -48,4 +61,3 @@ describe("realtime notification helpers", () => {
     expect(isEntityChangedEvent({ entity: "client", reason: "payment" })).toBe(false);
   });
 });
-

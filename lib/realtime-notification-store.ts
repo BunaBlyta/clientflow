@@ -112,12 +112,15 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   setConnectionState: (connectionState) => set({ connectionState }),
 
   replaceNotifications: (notifications) =>
-    set({
-      notifications: sortNotifications(notifications),
+    set((state) => ({
+      // A GET can resolve after an Ably event has already arrived. Merge the
+      // snapshot so that a stale response cannot erase a newer event; for IDs
+      // present in both collections, the server response remains authoritative.
+      notifications: mergeNotifications(state.notifications, notifications).notifications,
       isLoading: false,
       error: null,
       lastSyncedAt: new Date().toISOString(),
-    }),
+    })),
 
   mergeRemoteNotification: (notification) => {
     const { notifications, addedIds } = mergeNotifications(get().notifications, [notification]);
@@ -172,4 +175,3 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     return updated;
   },
 }));
-
