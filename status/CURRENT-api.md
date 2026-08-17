@@ -1,43 +1,42 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-14 09:08 by Codex — harden Flow A payment and approval integrity
+Last updated: 2026-08-17 10:47 by Codex — diagnose production Stripe delivery
 
 ## What changed
 
-- Made request approval claim the `PENDING` request atomically before creating
-  the client, project, deposit invoice, and approval notification. A competing
-  approval now returns 409 and cannot create duplicates.
-- Prevented a standard request from attaching a client record to an existing
-  staff account; that email conflict returns 409 and rolls the transaction back.
-- Made Stripe checkout use the shared invoice state rules. Draft invoices must
-  be sent before checkout, reusable sessions still move the invoice to
-  `PAYMENT_PENDING`, and new sessions use the same state transition.
-- Made success and failure webhook updates conditional on
-  `PAYMENT_PENDING`. Duplicate or concurrent deliveries cannot repeat the paid
-  state, project Discovery transition, audit note, or notification, and an
-  invoice in another state is left unchanged.
-- Added regression tests for approval races, staff-email conflicts, draft
-  checkout rejection, webhook idempotency, and invalid payment-state changes.
-- Documented these API invariants in `docs/ARCHITECTURE.md`.
+- No API or database code changed. The reported pending-payment incident was a
+  Stripe destination timing issue rather than an application bug.
+- Confirmed through the Stripe API that production destination
+  `we_1U5LJEHZ4FnNiDXGQZTUqgCP` is enabled, points to
+  `https://clientflow-ijdn.vercel.app/api/stripe/webhook`, and subscribes to
+  `checkout.session.completed`, `payment_intent.succeeded`, and
+  `payment_intent.payment_failed`.
+- Confirmed the successful Checkout event was created at 09:36:12 CEST, while
+  the webhook destination was created later at 09:50:16 CEST. Stripe therefore
+  could not automatically deliver that earlier event to this destination.
+- Confirmed the manual resend finished processing: the event now reports zero
+  pending webhook deliveries and contains the expected invoice metadata.
 
 ## Verification
 
-- `npm run test` — passed: 34 files, 145 tests.
-- `npm run typecheck` — passed.
-- `npm run lint` — passed.
-- `npm run verify` — typecheck, lint, and tests passed; the Turbopack build
-  hit the known sandbox-only port-binding restriction.
-- `npx next build --webpack` — passed; all routes compiled.
-- `git diff --check` — passed.
-- No Prisma schema change, migration, install, or live database mutation was
-  needed for this task.
+- `stripe webhook_endpoints retrieve we_1U5LJEHZ4FnNiDXGQZTUqgCP` — destination
+  enabled with the correct URL and three expected event types.
+- `stripe events retrieve evt_1U5L5dHZ4FnNiDXG2903bDoh` — event is a paid,
+  complete Checkout Session with the expected invoice ID and
+  `pending_webhooks: 0`.
+- No tests or build were run because no source file changed.
+- Direct route probes from this machine timed out due to the previously known
+  network path problem reaching Vercel; Stripe's successful delivery is the
+  stronger end-to-end server check.
 
 ## Handoff
 
-- The API still uses the existing invoice lifecycle: `SENT` →
-  `PAYMENT_PENDING` → `PAID` or `FAILED`, with Stripe's signed webhook as the
-  only confirmation path.
-- The two modified mobile files and other agents' staged files were not
-  touched or staged by this lane.
-- A live Neon payment/approval walkthrough was not repeated in this sandbox;
-  the new behavior is covered by the focused route tests and the full suite.
+- Future Checkout events should be delivered automatically because the
+  destination now exists and is enabled. One new clean payment is still needed
+  to prove automatic delivery after destination creation.
+- If that payment remains pending, inspect its own
+  `checkout.session.completed` delivery before retrying or creating another
+  payment.
+- Separate hardening opportunity: the webhook handler should verify a Checkout
+  Session is paid before marking an invoice paid, especially before enabling
+  delayed payment methods. This did not cause the reported card-payment issue.
