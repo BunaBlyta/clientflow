@@ -164,7 +164,7 @@ export function PackagesAndRequest() {
                       )}
                     >
                       {isPopular && (
-                        <span className="popular-stamp absolute top-5 right-5 flex min-h-8 items-center justify-center rounded-full border px-3 text-center text-[9px] leading-[1.1] font-semibold uppercase tracking-[0.12em]">
+                        <span className="popular-stamp absolute top-4 right-4 flex min-h-10 items-center justify-center rounded-full border px-4 text-center text-[10px] leading-[1.1] font-semibold uppercase tracking-[0.12em]">
                           {t("marketing.mostPopular")}
                         </span>
                       )}

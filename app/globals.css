@@ -793,10 +793,6 @@
     }
   }
 
-  #how-it-works .process-step {
-    transition: transform 180ms ease-out;
-  }
-
   .process-intro-mark {
     display: block;
     width: 3rem;
@@ -824,31 +820,23 @@
     pointer-events: none;
   }
 
-  #how-it-works .process-step:hover {
-    transform: translateY(-2px);
-  }
-
-  #how-it-works .process-step:hover::after {
-    animation: none;
-  }
-
-  #how-it-works .process-step:nth-child(1):hover .process-glyph {
+  #how-it-works .process-step:nth-child(1) .process-icon:hover .process-glyph {
     animation: process-plane-launch 780ms ease-out;
   }
 
-  #how-it-works .process-step:nth-child(2):hover .process-glyph {
+  #how-it-works .process-step:nth-child(2) .process-icon:hover .process-glyph {
     animation: process-money-spin 620ms ease-out;
   }
 
-  #how-it-works .process-step:nth-child(3):hover .process-message-dot {
+  #how-it-works .process-step:nth-child(3) .process-icon:hover .process-message-dot {
     animation: process-dot-hop 600ms ease-out;
   }
 
-  #how-it-works .process-step:nth-child(3):hover .process-message-dot:nth-of-type(2) {
+  #how-it-works .process-step:nth-child(3) .process-icon:hover .process-message-dot:nth-of-type(2) {
     animation-delay: 90ms;
   }
 
-  #how-it-works .process-step:nth-child(3):hover .process-message-dot:nth-of-type(3) {
+  #how-it-works .process-step:nth-child(3) .process-icon:hover .process-message-dot:nth-of-type(3) {
     animation-delay: 180ms;
   }
 
@@ -857,7 +845,7 @@
     transform-origin: 50% 0%;
   }
 
-  #how-it-works .process-step:nth-child(4):hover .process-rocket-flame {
+  #how-it-works .process-step:nth-child(4) .process-icon:hover .process-rocket-flame {
     animation: process-rocket-ignite 760ms ease-out;
   }
 
@@ -1548,10 +1536,6 @@ html:not(.dark) .package-card--popular .popular-stamp {
 
 html:not(.dark) .package-card--popular .package-price {
   color: #167d99;
-}
-
-html:not(.dark) .package-card--custom .package-price {
-  color: #6559b8;
 }
 
 .dark .package-card--standard {
