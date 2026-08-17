@@ -21,6 +21,9 @@ import { ApiError, checkoutRequest } from '../../../../../../lib/api';
 
 type Step = 'select' | 'processing' | 'success' | 'failed';
 
+const PAYMENT_STATUS_ATTEMPTS = 8;
+const PAYMENT_STATUS_DELAY_MS = 1500;
+
 export default function CheckoutScreen() {
   const { id, invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
   const router = useRouter();
@@ -38,20 +41,41 @@ export default function CheckoutScreen() {
   async function refreshAfterReturn() {
     if (!token || !invoiceId) return;
     setCheckingStatus(true);
-    const live = await refreshInvoice(invoiceId, token);
-    setCheckingStatus(false);
-    const latest = useDataStore.getState().invoiceById(invoiceId);
-    if (!live) {
-      setMessage(t('checkout.couldNotCheck'));
-    } else if (latest?.status === 'PAID') {
-      setMessage(null);
-      setStep('success');
-    } else if (latest?.status === 'FAILED') {
+
+    try {
+      for (let attempt = 0; attempt < PAYMENT_STATUS_ATTEMPTS; attempt += 1) {
+        const live = await refreshInvoice(invoiceId, token);
+        const latest = useDataStore.getState().invoiceById(invoiceId);
+
+        if (!live) {
+          setMessage(t('checkout.couldNotCheck'));
+          return;
+        }
+
+        if (latest?.status === 'PAID') {
+          setMessage(null);
+          setStep('success');
+          return;
+        }
+
+        if (latest?.status === 'FAILED') {
+          setMessage(t('checkout.notConfirmedRetry'));
+          setStep('failed');
+          return;
+        }
+
+        if (attempt < PAYMENT_STATUS_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, PAYMENT_STATUS_DELAY_MS));
+        }
+      }
+
+      // Stripe redirects before the webhook necessarily reaches the API. Keep
+      // the screen in its confirming state so a later manual check can still
+      // observe the webhook instead of incorrectly treating the payment as
+      // abandoned.
       setMessage(t('checkout.notConfirmedRetry'));
-      setStep('failed');
-    } else {
-      setMessage(t('checkout.noPayment'));
-      setStep('select');
+    } finally {
+      setCheckingStatus(false);
     }
   }
 

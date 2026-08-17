@@ -46,6 +46,9 @@ Last updated: 2026-08-17 00:44 by Codex — home spacing and tracker readability
 - Home now uses the same shared top spacing as the other tab screens. The
   tracker’s “currently in progress” message is a larger, centered line below
   the timeline instead of a tiny label inside the active stage column.
+- Native Stripe checkout now polls the invoice for about 12 seconds after the
+  user returns from the browser. This gives the webhook time to mark the
+  invoice paid instead of incorrectly showing that no payment was confirmed.
 
 ## Verification
 
@@ -55,10 +58,17 @@ Last updated: 2026-08-17 00:44 by Codex — home spacing and tracker readability
 - No connected simulator, device, or in-app browser was available for a visual
   screenshot pass.
 
+## Latest verification
+
+- `cd mobile && npx tsc --noEmit`: passed.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-check`: passed.
+- The native payment flow still needs a fresh simulator click-through after
+  restarting Expo with the updated bundle.
+
 ## Known limits
 
 - Push notifications remain intentionally deferred; in-app notifications are
   unchanged.
 - The request-status screen remains fixture-backed because its API contract
   has no public prospect request-status endpoint.
-- Changes are committed locally for review and have not been pushed.
+- The payment confirmation polling change is ready to commit and push.
