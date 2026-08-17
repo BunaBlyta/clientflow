@@ -15,13 +15,13 @@ const links = [
 export function Navbar() {
   const { t } = useLocale();
   return (
-    <header className="marketing-header sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="marketing-header sticky top-0 z-40 border-b border-border bg-background">
       <div className="relative flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
           <BrandLogo />
           Clientflow
         </Link>
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex">
           {links.map((link) => (
             <a
               key={link.href}

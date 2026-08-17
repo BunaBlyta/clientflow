@@ -1464,6 +1464,132 @@ html:not(.dark) #request-form [data-slot="select-trigger"] [data-placeholder] {
   opacity: 1;
 }
 
+/* Marketing interaction polish: preserve layout while keeping feedback visible. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+.marketing-header,
+html:not(.dark) .marketing-header,
+.dark .marketing-header {
+  background: var(--background) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.marketing-header nav a,
+.marketing-header .marketing-staff-login,
+.marketing-header .theme-toggle,
+.marketing-header [data-slot="select-trigger"] {
+  border-radius: 0.5rem !important;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease !important;
+  transform: none !important;
+}
+
+.marketing-header nav a:hover,
+.marketing-header .marketing-staff-login:hover,
+.marketing-header .theme-toggle:hover,
+.marketing-header [data-slot="select-trigger"]:hover,
+.marketing-header nav a:active,
+.marketing-header .marketing-staff-login:active,
+.marketing-header .theme-toggle:active,
+.marketing-header [data-slot="select-trigger"]:active {
+  transform: none !important;
+}
+
+.marketing-page [data-slot="button"] {
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.marketing-page [data-slot="button"]:hover,
+.marketing-page [data-slot="button"]:active {
+  transform: none !important;
+}
+
+.hero-title {
+  text-wrap: balance;
+}
+
+.required-mark {
+  color: var(--status-danger);
+  font-weight: 600;
+}
+
+.form-warning {
+  border-radius: 0.5rem;
+}
+
+/* A restrained palette gives every package its own place without adding noise. */
+html:not(.dark) .package-card--standard {
+  background: #ffffff !important;
+  border-color: rgb(160 222 255 / 0.28) !important;
+}
+
+html:not(.dark) .package-card--popular {
+  background: #e8f8fe !important;
+  border: 2px solid #5ab2ff !important;
+  box-shadow: 0 12px 24px -20px rgb(90 178 255 / 0.8) !important;
+}
+
+html:not(.dark) .package-card--custom {
+  background: #f2f0ff !important;
+  border-color: rgb(129 116 216 / 0.35) !important;
+}
+
+html:not(.dark) .package-card--popular .popular-stamp {
+  border-color: #167d99 !important;
+  color: #167d99 !important;
+  outline: 1px solid currentColor;
+  outline-offset: -4px;
+}
+
+html:not(.dark) .package-card--popular .package-price {
+  color: #167d99;
+}
+
+html:not(.dark) .package-card--custom .package-price {
+  color: #6559b8;
+}
+
+.dark .package-card--standard {
+  background: #0f2026 !important;
+  border-color: rgb(160 222 255 / 0.18) !important;
+}
+
+.dark .package-card--popular {
+  background: #123746 !important;
+  border: 2px solid #5ab2ff !important;
+}
+
+.dark .package-card--custom {
+  background: #211f35 !important;
+  border-color: rgb(168 157 255 / 0.32) !important;
+}
+
+#how-it-works .process-step,
+#how-it-works .process-step:hover,
+#how-it-works .process-step .process-glyph,
+#how-it-works .process-step:hover .process-glyph,
+#how-it-works .process-step:hover .process-message-dot,
+#how-it-works .process-step:hover .process-rocket-flame {
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+#how-it-works .process-connector path:first-child {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

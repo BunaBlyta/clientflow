@@ -1,8 +1,13 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-17 16:08 by Codex — overview realtime activity surface
+Last updated: 2026-08-17 16:52 by Codex — landing page feedback pass
 
 ## Current state
+
+- Applied the PM landing-page pass: buttons keep their position and use a hand cursor, header is solid, anchor navigation scrolls smoothly with a sticky-header offset, and the hero copy is constrained into a centered triangular wrap.
+- Standardized landing section spacing and button radii/gaps. The “How it works” steps and connectors no longer animate or move on hover.
+- Differentiated package cards with aligned content rows, distinct standard/popular/custom shades, and a clearer popular treatment.
+- Package requests and custom builds now open dialogs. Required fields show asterisks, submission errors appear at the top with an alert icon, dropdowns open below and align to the field, and long textareas stay bounded and resizable.
 
 - Added one dashboard-level `DashboardRealtimeProvider`. It authenticates to
   `GET /api/realtime/token`, subscribes to `clientflow:user:<id>` and
