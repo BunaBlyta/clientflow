@@ -13,10 +13,15 @@ import {
 } from "@/components/ui/dialog";
 import { useLocale } from "@/lib/i18n";
 
-export function SettingsDialog() {
+type SettingsDialogProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { t } = useLocale();
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger render={<Button variant="ghost" className="w-full justify-start gap-2 px-2" />}>
         <Settings className="size-4" />
         {t("dashboard.settings")}

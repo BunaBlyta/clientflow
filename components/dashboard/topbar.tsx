@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LoaderCircle, LogOut } from "lucide-react";
+import { Bell, LoaderCircle, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +42,7 @@ export function Topbar() {
   const [markingNotificationId, setMarkingNotificationId] = useState<string | null>(null);
   const [notificationActionError, setNotificationActionError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   async function handleLogout() {
     if (isLoggingOut) return;
@@ -271,7 +272,10 @@ export function Topbar() {
             </p>
           )}
           <DropdownMenuSeparator />
-          <SettingsDialog />
+          <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="size-4" />
+            {t("dashboard.settings")}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => void handleLogout()} disabled={isLoggingOut}>
             {isLoggingOut ? (
               <LoaderCircle className="size-4 animate-spin" />
@@ -282,6 +286,7 @@ export function Topbar() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </header>
   );
 }

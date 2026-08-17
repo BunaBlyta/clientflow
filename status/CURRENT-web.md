@@ -1,8 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-14 15:22 by Codex — make light buttons visible cyan
+Last updated: 2026-08-17 08:46 by Codex — fix settings invite dialog focus
 
 ## Current state
+
+- Fixed the Settings dialog so it opens outside the account dropdown's modal layer. The Invite a teammate name and email fields can now receive focus and typing locally and after deployment.
 
 - The dashboard home, analytics, clients, notifications/topbar, projects, invoices, project detail, and settings screens read live API data.
 - The public package cards and request form read `GET /api/packages` and submit to `POST /api/requests`; the custom inquiry form submits to `POST /api/contact-leads`.
