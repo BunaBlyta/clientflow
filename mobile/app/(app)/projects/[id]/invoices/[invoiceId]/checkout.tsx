@@ -70,10 +70,11 @@ export default function CheckoutScreen() {
       }
 
       // Stripe redirects before the webhook necessarily reaches the API. Keep
-      // the screen in its confirming state so a later manual check can still
-      // observe the webhook instead of incorrectly treating the payment as
-      // abandoned.
+      // the screen recoverable if the webhook is delayed. The user can retry
+      // from here; the invoice remains protected by the server-side webhook
+      // state transition.
       setMessage(t('checkout.notConfirmedRetry'));
+      setStep('failed');
     } finally {
       setCheckingStatus(false);
     }

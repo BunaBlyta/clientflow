@@ -133,6 +133,17 @@ describe('POST /api/stripe/checkout', () => {
     });
   });
 
+  it('copies invoice metadata onto the PaymentIntent for failed-payment webhooks', async () => {
+    mocks.fetch.mockResolvedValue(createSessionResponse());
+
+    await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
+
+    expect(requestBody().get('metadata[invoiceId]')).toBe('inv-1');
+    expect(requestBody().get('metadata[projectId]')).toBe('proj-1');
+    expect(requestBody().get('payment_intent_data[metadata][invoiceId]')).toBe('inv-1');
+    expect(requestBody().get('payment_intent_data[metadata][projectId]')).toBe('proj-1');
+  });
+
   it.each(['web', 'https://evil.example/return', null, 42] as const)(
     'rejects invalid returnTo value %s',
     async (returnTo) => {

@@ -195,6 +195,8 @@ export async function POST(request: NextRequest) {
     'line_items[0][quantity]': '1',
     'metadata[invoiceId]': invoice.id,
     'metadata[projectId]': invoice.projectId,
+    'payment_intent_data[metadata][invoiceId]': invoice.id,
+    'payment_intent_data[metadata][projectId]': invoice.projectId,
   });
 
   const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {

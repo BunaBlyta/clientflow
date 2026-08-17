@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 11:44 by Codex — migrate deprecated Groq model
+Last updated: 2026-08-17 13:22 by Codex — fix declined Stripe payment state
 
 ## What changed
 
@@ -33,6 +33,11 @@ Last updated: 2026-08-17 11:44 by Codex — migrate deprecated Groq model
   `openai/gpt-oss-120b`. The existing API response contract is unchanged.
 - Confirmed the configured Groq key authenticates and the replacement model
   returns a valid completion. The retired model returned 404 `model_not_found`.
+- Fixed declined-card handling: new Checkout Sessions now copy invoice and
+  project metadata onto the PaymentIntent as well as the Checkout Session, so
+  `payment_intent.payment_failed` webhooks can identify and mark the invoice
+  `FAILED`.
+- Added a checkout-route regression test for the PaymentIntent metadata.
 
 ## Verification
 
@@ -69,6 +74,9 @@ Last updated: 2026-08-17 11:44 by Codex — migrate deprecated Groq model
 - Separate hardening opportunity remains: require a paid Checkout Session in
   the webhook handler before marking an invoice paid, especially before delayed
   payment methods are enabled.
+- Existing Checkout Sessions created before this fix do not gain the new
+  PaymentIntent metadata. A fresh checkout attempt is required to exercise the
+  corrected failure path.
 - The mobile success-page edit touched `app/payment/success/page.tsx` and
   `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
   state file was changed.

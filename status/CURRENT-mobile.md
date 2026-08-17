@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 00:44 by Codex — home spacing and tracker readability
+Last updated: 2026-08-17 13:22 by Codex — recover declined checkout with retry
 
 ## Current state
 
@@ -49,6 +49,9 @@ Last updated: 2026-08-17 00:44 by Codex — home spacing and tracker readability
 - Native Stripe checkout now polls the invoice for about 12 seconds after the
   user returns from the browser. This gives the webhook time to mark the
   invoice paid instead of incorrectly showing that no payment was confirmed.
+- If the webhook is delayed or the payment is not confirmed after polling,
+  checkout now moves to its declined/retry state instead of leaving the user
+  on an endless confirmation screen.
 
 ## Verification
 
