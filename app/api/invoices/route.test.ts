@@ -70,7 +70,7 @@ describe('invoice API response mapping', () => {
   });
 });
 
-describe('POST /api/invoices notification types', () => {
+describe('POST /api/invoices draft behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
@@ -89,7 +89,7 @@ describe('POST /api/invoices notification types', () => {
   });
 
   it.each(['DEPOSIT', 'FINAL', 'CUSTOM', 'EXTRA'] as const)(
-    'uses the matching notification type for a %s invoice',
+    'does not notify when a %s invoice is still a draft',
     async (type) => {
       mocks.invoiceCreate.mockResolvedValue({
         id: 'inv-new',
@@ -112,13 +112,7 @@ describe('POST /api/invoices notification types', () => {
       }));
 
       expect(response.status).toBe(201);
-      expect(mocks.notificationCreate).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          type: type === 'EXTRA' ? 'EXTRA_CHARGE_CREATED' : 'INVOICE_ISSUED',
-          invoiceId: 'inv-new',
-          projectId: 'proj-1',
-        }),
-      });
+      expect(mocks.notificationCreate).not.toHaveBeenCalled();
     },
   );
 });

@@ -5,6 +5,7 @@ import { sendRejectionEmail } from '@/app/api/_lib/resend';
 import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
 import { serializePackageSummary } from '@/app/api/packages/serialize';
 import { transitionInvoiceStatus } from '@/prisma/invoice-state';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -244,7 +245,7 @@ export async function PATCH(
   }
 
   if (status === 'REJECTED') {
-    const rejectedRequest = await prisma.$transaction(async (transaction) => {
+    const rejectedResult = await prisma.$transaction(async (transaction) => {
       const updatedRequest = await transaction.projectRequest.update({
         where: { id },
         data: { status: 'REJECTED', reviewedAt: new Date() },
@@ -258,20 +259,22 @@ export async function PATCH(
         });
 
         if (client) {
-          await transaction.notification.create({
-            data: {
-              userId: client.userId,
-              type: 'REQUEST_REJECTED',
-              requestId: id,
-              title: 'Project request update',
-              message: 'Your project request was not approved at this time.',
-            },
+          const notificationId = await createNotification(transaction, {
+            userId: client.userId,
+            type: 'REQUEST_REJECTED',
+            requestId: id,
+            title: 'Project request update',
+            message: 'Your project request was not approved at this time.',
           });
+          return { request: updatedRequest, notificationIds: notificationId ? [notificationId] : [] };
         }
       }
 
-      return updatedRequest;
+      return { request: updatedRequest, notificationIds: [] };
     });
+
+    scheduleNotificationEffects(rejectedResult.notificationIds);
+    scheduleEntityChanged({ entity: 'request', id });
 
     let emailSent = true;
     try {
@@ -289,7 +292,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      ...serializeProjectRequest(rejectedRequest),
+      ...serializeProjectRequest(rejectedResult.request),
       emailSent,
     });
   }
@@ -378,15 +381,13 @@ export async function PATCH(
         },
       });
 
-      await transaction.notification.create({
-        data: {
-          userId: userRecord.id,
-          type: 'REQUEST_APPROVED',
-          requestId: projectRequest.id,
-          projectId: project.id,
-          title: 'Project request approved',
-          message: 'Your project is ready. Your deposit invoice is available to pay.',
-        },
+      const notificationId = await createNotification(transaction, {
+        userId: userRecord.id,
+        type: 'REQUEST_APPROVED',
+        requestId: projectRequest.id,
+        projectId: project.id,
+        title: 'Project request approved',
+        message: 'Your project is ready. Your deposit invoice is available to pay.',
       });
 
       const approvedRequest = await transaction.projectRequest.update({
@@ -398,6 +399,8 @@ export async function PATCH(
       return {
         projectRequest: approvedRequest,
         user: { id: userRecord.id, email: userRecord.email, name: userRecord.name },
+        projectId: project.id,
+        notificationIds: notificationId ? [notificationId] : [],
       };
     });
   } catch (error) {
@@ -409,6 +412,8 @@ export async function PATCH(
   }
 
   let emailSent = true;
+  scheduleNotificationEffects(approval.notificationIds);
+  scheduleEntityChanged({ entity: 'request', id, projectId: approval.projectId });
   try {
     await issueVerificationEmail(approval.user);
   } catch (error) {

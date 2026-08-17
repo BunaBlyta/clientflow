@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { serializeInvoice } from '@/app/api/invoices/serialize';
 import { INVOICE_STATUSES, transitionInvoiceStatus, type InvoiceStatus } from '@/prisma/invoice-state';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -112,6 +113,31 @@ async function reconcilePendingPayment(invoice: ReconciliationInvoice) {
   });
   if (updated.count !== 1) return invoice;
 
+  const clientLookup = (prisma as unknown as {
+    client?: { findUnique(args: unknown): Promise<{ userId: string } | null> };
+    notification?: { create(args: unknown): Promise<{ id?: string }> };
+  });
+  const client = await clientLookup.client?.findUnique({
+    where: { id: invoice.clientId },
+    select: { userId: true },
+  });
+  const notificationIds: string[] = [];
+  if (client && clientLookup.notification) {
+    const notification = await clientLookup.notification.create({
+      data: {
+        userId: client.userId,
+        type: 'PAYMENT_FAILED',
+        invoiceId: invoice.id,
+        projectId: invoice.projectId,
+        title: 'Payment failed',
+        message: 'Your invoice payment could not be completed.',
+      },
+    });
+    if (notification?.id) notificationIds.push(notification.id);
+  }
+  scheduleNotificationEffects(notificationIds);
+  scheduleEntityChanged({ entity: 'invoice', id: invoice.id, projectId: invoice.projectId, invoiceId: invoice.id });
+
   return (await prisma.invoice.findUnique({
     where: { id: invoice.id },
     select: invoiceSelect,
@@ -166,13 +192,14 @@ export async function PATCH(
     );
   }
 
-  const updatedInvoice = await prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const updated = await transaction.invoice.update({
       where: { id },
       data: { status: nextStatus },
       select: invoiceSelect,
     });
 
+    const notificationIds: string[] = [];
     if (nextStatus === 'SENT' && invoice.status !== 'SENT') {
       const client = await transaction.client.findUnique({
         where: { id: invoice.clientId },
@@ -180,23 +207,25 @@ export async function PATCH(
       });
 
       if (client) {
-        await transaction.notification.create({
-          data: {
-            userId: client.userId,
-            type: 'INVOICE_ISSUED',
-            invoiceId: updated.id,
-            projectId: updated.projectId,
-            title: 'Invoice sent',
-            message: invoice.description
-              ? `${invoice.description} is ready to review and pay.`
-              : 'A new invoice is ready to review and pay.',
-          },
+        const id = await createNotification(transaction, {
+          userId: client.userId,
+          type: invoice.type === 'EXTRA' ? 'EXTRA_CHARGE_CREATED' : 'INVOICE_ISSUED',
+          invoiceId: updated.id,
+          projectId: updated.projectId,
+          title: invoice.type === 'EXTRA' ? 'Additional invoice sent' : 'Invoice sent',
+          message: invoice.description
+            ? `${invoice.description} is ready to review and pay.`
+            : 'A new invoice is ready to review and pay.',
         });
+        if (id) notificationIds.push(id);
       }
     }
 
-    return updated;
+    return { updated, notificationIds };
   });
 
-  return NextResponse.json(serializeInvoice(updatedInvoice));
+  scheduleNotificationEffects(result.notificationIds);
+  scheduleEntityChanged({ entity: 'invoice', id: result.updated.id, projectId: result.updated.projectId, invoiceId: result.updated.id });
+
+  return NextResponse.json(serializeInvoice(result.updated));
 }

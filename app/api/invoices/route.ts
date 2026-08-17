@@ -4,6 +4,7 @@ import { prisma } from '@/app/api/_lib/prisma';
 import { serializeInvoice } from './serialize';
 import { transitionInvoiceStatus } from '@/prisma/invoice-state';
 import { InvoiceType } from '@/lib/generated/prisma/enums';
+import { scheduleEntityChanged } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -151,25 +152,14 @@ export async function POST(request: NextRequest) {
       select: invoiceSelect,
     });
 
-    await transaction.notification.create({
-      data: {
-        userId: client.userId,
-        type: type === 'EXTRA' ? 'EXTRA_CHARGE_CREATED' : 'INVOICE_ISSUED',
-        invoiceId: invoice.id,
-        projectId: invoice.projectId,
-        title: 'New invoice',
-        message: description
-          ? `${description} was added to ${project.name}.`
-          : `A new invoice was added to ${project.name}.`,
-      },
-    });
-
     return invoice;
   });
 
   if (!createdInvoice) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
+
+  scheduleEntityChanged({ entity: 'invoice', id: createdInvoice.id, projectId: createdInvoice.projectId, invoiceId: createdInvoice.id });
 
   return NextResponse.json(serializeInvoice(createdInvoice), { status: 201 });
 }

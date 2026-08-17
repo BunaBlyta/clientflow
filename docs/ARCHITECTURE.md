@@ -24,6 +24,7 @@ this low-volume, read-only summary.
 |----------|-----|------|
 | Single-tenant, not a multi-tenant SaaS other agencies sign up for | Multi-tenancy's real risk is a data-isolation bug leaking one org's data into another's — exactly the kind of bug that would undercut "functionality," one of the two things this build can't be weak on. Given only one studio actually uses this app, that entire risk class is unnecessary. The Stripe purchasing flow still has a real home either way: the client, not the studio, is the one paying. | 2026-08-10 |
 | Payment-confirmed state changes are webhook-driven, never triggered by the client clicking "Pay" | A click doesn't mean payment succeeded — it could fail, get abandoned, or the browser could close mid-flow. A project or invoice only advances on a confirmed Stripe webhook event, which is the only source of truth Stripe actually guarantees. | 2026-08-10 |
+| Notifications use durable database rows plus provider-specific delivery | `Notification` is the canonical inbox and recovery source. `PushDevice` and `PushDelivery` add an Expo outbox for iOS, while Ably carries short-lived web invalidation hints. Provider calls always happen after the database transaction, so a push or realtime outage cannot roll back payment or project state. | 2026-08-17 |
 | File upload/storage cut entirely from v1 | Not in the mentor's actual requirement list — it was added unprompted while building an early visual mockup, then caught and questioned. Adds a real storage dependency (Vercel Blob, upload handling, size/type limits) for a feature nobody asked for. The shared note feed carries written updates instead. | 2026-08-10 |
 | Mobile app (Expo) is scoped to the client experience only, not a mirror of the full staff dashboard | Dense data tables and analytics charts aren't comfortable on a phone, and building full feature parity across two platforms wasn't achievable in a 4-day window. The client side is the part that genuinely benefits from being native (push notifications, checking status on the go); staff keep the web dashboard. | 2026-08-10 |
 | Clients are never self-registered — accounts only activate via an approved request or manual staff creation | Keeps a human checkpoint before an account (and eventually money) exists, and matches how the custom-package flow already works. | 2026-08-10 |
@@ -147,9 +148,9 @@ the invoice state helper. Requests for `PAID` or `PAYMENT_PENDING` are rejected;
 Stripe's verified webhook remains the only payment confirmation path.
 
 The successful response is 201 with the exact same serialized invoice shape as
-`GET /api/invoices`. Creating an invoice also creates an
-`EXTRA_CHARGE_CREATED` notification for the project client in the same database
-transaction, so the client is told when a new charge appears.
+`GET /api/invoices`. New invoices start as `DRAFT` and do not notify the client;
+the staff `PATCH` that moves an invoice to `SENT` creates exactly one
+`INVOICE_ISSUED` notification (or `EXTRA_CHARGE_CREATED` for an `EXTRA` invoice).
 
 `POST /api/notes` accepts `{ "projectId": string, "body": string }` for both
 staff and client sessions and returns 201 with the same shape as a note from
@@ -463,6 +464,21 @@ and concurrent client creation races return 409.
 
 ## Notification side effects
 
+`Notification` rows are the source of truth. Notification creation also writes
+one `PushDelivery` outbox row per active `PushDevice` in the same Prisma
+transaction. After the response, Next.js `after()` runs the non-transactional
+provider work: Expo receives generic, private copy with only entity IDs and
+Ably publishes a `notification.created` event to `clientflow:user:<userId>`.
+Expo ticket receipts are checked and unregistered devices are deactivated.
+
+`POST /api/notifications/devices` registers an authenticated user's iOS Expo
+token and `DELETE` deactivates only that user's token. `GET /api/realtime/token`
+returns a five-minute, subscribe-only Ably `TokenRequest`, scoped to that
+user's channel and, for staff, `clientflow:staff`. No Ably API key is returned
+to either frontend. Staff entity mutations additionally publish an
+`entity.changed` invalidation hint on `clientflow:staff`; consumers refetch
+authoritative API data and recover missed events through notification sync.
+
 The following user-facing events create in-app notifications in the same
 transaction as their database change:
 
@@ -472,8 +488,8 @@ transaction as their database change:
 | A request is approved | The newly onboarded client | `REQUEST_APPROVED` | `requestId`, `projectId` |
 | A request is rejected | An already-linked client, if one exists | `REQUEST_REJECTED` | `requestId` |
 | An invoice moves to `SENT` | The invoice's client | `INVOICE_ISSUED` | `invoiceId`, `projectId` |
-| A payment succeeds or fails | The invoice's client | `PAYMENT_SUCCEEDED` / `PAYMENT_FAILED` | `invoiceId`, `projectId` |
-| An extra invoice is created | The project's client | `EXTRA_CHARGE_CREATED` | `invoiceId`, `projectId` |
+| A payment succeeds or fails | The invoice's client and active staff | `PAYMENT_SUCCEEDED` / `PAYMENT_FAILED` | `invoiceId`, `projectId` |
+| An extra invoice moves to `SENT` | The project's client | `EXTRA_CHARGE_CREATED` | `invoiceId`, `projectId` |
 | A project status changes | The project's client | `PROJECT_STAGE_CHANGED` | `projectId` |
 | A note is posted | The other side of the project conversation | `NEW_NOTE` | `projectId` |
 

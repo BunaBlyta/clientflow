@@ -87,7 +87,7 @@ describe('POST /api/invoices', () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it('creates a draft invoice from the project owner and notifies that client', async () => {
+  it('creates a draft invoice without notifying the client until it is sent', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.projectFindUnique.mockResolvedValue({
       id: 'proj-1',
@@ -134,16 +134,7 @@ describe('POST /api/invoices', () => {
       },
       select: expect.any(Object),
     });
-    expect(mocks.notificationCreate).toHaveBeenCalledWith({
-      data: {
-        userId: 'user-client-1',
-        type: 'EXTRA_CHARGE_CREATED',
-        invoiceId: 'inv-new',
-        projectId: 'proj-1',
-        title: 'New invoice',
-        message: 'Extra landing sections was added to Riverside Cafe — Full Website.',
-      },
-    });
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
 
   it('returns 404 without creating an invoice for an unknown project', async () => {

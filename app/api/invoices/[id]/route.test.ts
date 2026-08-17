@@ -149,6 +149,31 @@ describe('PATCH /api/invoices/:id', () => {
       },
     });
   });
+
+  it('uses the extra-charge notification exactly once when an extra invoice is sent', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue({ ...invoice, type: 'EXTRA', status: 'DRAFT' });
+    mocks.transactionUpdate.mockResolvedValue({ ...invoice, type: 'EXTRA', status: 'SENT' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { update: mocks.transactionUpdate },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('SENT'), params());
+
+    expect(response.status).toBe(200);
+    expect(mocks.notificationCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.notificationCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        type: 'EXTRA_CHARGE_CREATED',
+        invoiceId: 'inv-1',
+        projectId: 'proj-1',
+      }),
+    });
+  });
 });
 
 describe('GET /api/invoices/:id', () => {

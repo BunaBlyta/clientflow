@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { serializePackageSummary } from '@/app/api/packages/serialize';
 import { ProjectStatus } from '@/lib/generated/prisma/enums';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -145,7 +146,7 @@ export async function PATCH(
     }
   }
 
-  const updatedProject = await prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const updated = await transaction.project.update({
       where: { id },
       data: { status: nextStatus },
@@ -165,22 +166,25 @@ export async function PATCH(
       select: { userId: true },
     });
 
+    const notificationIds: string[] = [];
     if (client) {
-      await transaction.notification.create({
-        data: {
-          userId: client.userId,
-          type: 'PROJECT_STAGE_CHANGED',
-          projectId: id,
-          title: `${project.name} moved to ${formatProjectStatus(nextStatus)}`,
-          message: `Your project moved from ${formatProjectStatus(project.status)} to ${formatProjectStatus(nextStatus)}.`,
-        },
+      const notificationId = await createNotification(transaction, {
+        userId: client.userId,
+        type: 'PROJECT_STAGE_CHANGED',
+        projectId: id,
+        title: `${project.name} moved to ${formatProjectStatus(nextStatus)}`,
+        message: `Your project moved from ${formatProjectStatus(project.status)} to ${formatProjectStatus(nextStatus)}.`,
       });
+      if (notificationId) notificationIds.push(notificationId);
     }
 
-    return updated;
+    return { updated, notificationIds };
   });
 
-  return NextResponse.json(serializeProject(updatedProject));
+  scheduleNotificationEffects(result.notificationIds);
+  scheduleEntityChanged({ entity: 'project', id, projectId: id });
+
+  return NextResponse.json(serializeProject(result.updated));
 }
 
 function formatProjectStatus(status: string) {

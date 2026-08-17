@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -132,20 +133,22 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
+    const notificationIds: string[] = [];
     for (const staffUser of staffUsers) {
-      await transaction.notification.create({
-        data: {
-          userId: staffUser.id,
-          type: 'REQUEST_SUBMITTED',
-          requestId: createdRequest.id,
-          title: 'New project request',
-          message: `${name}${companyName ? ` from ${companyName}` : ''} requested a ${packageRecord.name}.`,
-        },
+      const notificationId = await createNotification(transaction, {
+        userId: staffUser.id,
+        type: 'REQUEST_SUBMITTED',
+        requestId: createdRequest.id,
+        title: 'New project request',
+        message: `${name}${companyName ? ` from ${companyName}` : ''} requested a ${packageRecord.name}.`,
       });
+      if (notificationId) notificationIds.push(notificationId);
     }
 
-    return createdRequest;
+    return { request: createdRequest, notificationIds };
   });
 
-  return NextResponse.json(serializeProjectRequest(projectRequest), { status: 201 });
+  scheduleNotificationEffects(projectRequest.notificationIds);
+  scheduleEntityChanged({ entity: 'request', id: projectRequest.request.id });
+  return NextResponse.json(serializeProjectRequest(projectRequest.request), { status: 201 });
 }

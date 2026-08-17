@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -83,29 +84,31 @@ export async function POST(request: NextRequest) {
     return invalidRequest('Message is required and must be 2,000 characters or fewer');
   }
 
-  const lead = await prisma.$transaction(async (transaction) => {
+  const result = await prisma.$transaction(async (transaction) => {
     const createdLead = await transaction.contactLead.create({
       data: { name, email, message },
       select: contactLeadSelect,
     });
 
     const staffUsers = await transaction.user.findMany({
-      where: { role: 'STAFF' },
+      where: { role: 'STAFF', isActive: true },
       select: { id: true },
     });
+    const notificationIds: string[] = [];
     for (const staffUser of staffUsers) {
-      await transaction.notification.create({
-        data: {
-          userId: staffUser.id,
-          type: 'REQUEST_SUBMITTED',
-          title: 'New custom inquiry',
-          message: `${name} sent a custom package inquiry.`,
-        },
+      const notificationId = await createNotification(transaction, {
+        userId: staffUser.id,
+        type: 'REQUEST_SUBMITTED',
+        title: 'New custom inquiry',
+        message: `${name} sent a custom package inquiry.`,
       });
+      if (notificationId) notificationIds.push(notificationId);
     }
 
-    return createdLead;
+    return { lead: createdLead, notificationIds };
   });
 
-  return NextResponse.json(serializeContactLead(lead), { status: 201 });
+  scheduleNotificationEffects(result.notificationIds);
+  scheduleEntityChanged({ entity: 'request', id: result.lead.id });
+  return NextResponse.json(serializeContactLead(result.lead), { status: 201 });
 }

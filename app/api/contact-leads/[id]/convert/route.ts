@@ -4,6 +4,7 @@ import { prisma } from '@/app/api/_lib/prisma';
 import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
 import { serializeInvoice } from '@/app/api/invoices/serialize';
 import { transitionInvoiceStatus } from '@/prisma/invoice-state';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -217,20 +218,20 @@ export async function POST(
         },
       });
 
+      const notificationIds: string[] = [];
       if (sendInvoice) {
-        await transaction.notification.create({
-          data: {
-            userId: (existingUser?.id ?? client.userId),
-            type: 'INVOICE_ISSUED',
-            invoiceId: invoice.id,
-            projectId: invoice.projectId,
-            title: 'Invoice issued',
-            message: `${invoice.description ?? 'A custom invoice'} is ready to review and pay.`,
-          },
+        const notificationId = await createNotification(transaction, {
+          userId: (existingUser?.id ?? client.userId),
+          type: 'INVOICE_ISSUED',
+          invoiceId: invoice.id,
+          projectId: invoice.projectId,
+          title: 'Invoice issued',
+          message: `${invoice.description ?? 'A custom invoice'} is ready to review and pay.`,
         });
+        if (notificationId) notificationIds.push(notificationId);
       }
 
-      return { lead, client, project, invoice, shouldInvite };
+      return { lead, client, project, invoice, shouldInvite, notificationIds };
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
@@ -241,6 +242,9 @@ export async function POST(
 
   if (!conversion) return NextResponse.json({ error: 'Custom inquiry not found' }, { status: 404 });
   if ('conflict' in conversion) return NextResponse.json({ error: conversion.conflict }, { status: 409 });
+
+  scheduleNotificationEffects(conversion.notificationIds);
+  scheduleEntityChanged({ entity: 'project', id: conversion.project.id, projectId: conversion.project.id, invoiceId: conversion.invoice.id });
 
   let emailSent = true;
   if (conversion.shouldInvite) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
+import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
 
 export const runtime = 'nodejs';
 
@@ -103,49 +104,51 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const notificationIds: string[] = [];
     if (user.role === 'CLIENT') {
       const staffUsers = await transaction.user.findMany({
-        where: { role: 'STAFF' },
+        where: { role: 'STAFF', isActive: true },
         select: { id: true },
       });
 
       for (const staffUser of staffUsers) {
-        await transaction.notification.create({
-          data: {
-            userId: staffUser.id,
-            type: 'NEW_NOTE',
-            projectId: project.id,
-            title: 'New note from a client',
-            message: noteBody,
-          },
-        });
-      }
-    } else if (project.client) {
-      await transaction.notification.create({
-        data: {
-          userId: project.client.userId,
+        const id = await createNotification(transaction, {
+          userId: staffUser.id,
           type: 'NEW_NOTE',
           projectId: project.id,
-          title: 'New note from the studio',
+          title: 'New note from a client',
           message: noteBody,
-        },
+        });
+        if (id) notificationIds.push(id);
+      }
+    } else if (project.client) {
+      const id = await createNotification(transaction, {
+        userId: project.client.userId,
+        type: 'NEW_NOTE',
+        projectId: project.id,
+        title: 'New note from the studio',
+        message: noteBody,
       });
+      if (id) notificationIds.push(id);
     }
 
-    return note;
+    return { note, notificationIds };
   });
 
   if (!createdNote) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
+  scheduleNotificationEffects(createdNote.notificationIds);
+  scheduleEntityChanged({ entity: 'note', id: createdNote.note.id, projectId: createdNote.note.projectId });
+
   return NextResponse.json({
-    id: createdNote.id,
-    projectId: createdNote.projectId,
-    authorId: createdNote.authorId,
-    authorName: createdNote.author?.name ?? 'System',
-    authorRole: createdNote.author?.role ?? 'SYSTEM',
-    body: createdNote.content,
-    createdAt: createdNote.createdAt.toISOString(),
+    id: createdNote.note.id,
+    projectId: createdNote.note.projectId,
+    authorId: createdNote.note.authorId,
+    authorName: createdNote.note.author?.name ?? 'System',
+    authorRole: createdNote.note.author?.role ?? 'SYSTEM',
+    body: createdNote.note.content,
+    createdAt: createdNote.note.createdAt.toISOString(),
   }, { status: 201 });
 }
