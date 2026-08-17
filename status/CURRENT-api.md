@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 13:22 by Codex — fix declined Stripe payment state
+Last updated: 2026-08-17 14:08 by Codex — reconcile abandoned Stripe sessions
 
 ## What changed
 
@@ -77,6 +77,11 @@ Last updated: 2026-08-17 13:22 by Codex — fix declined Stripe payment state
 - Existing Checkout Sessions created before this fix do not gain the new
   PaymentIntent metadata. A fresh checkout attempt is required to exercise the
   corrected failure path.
+- Added opt-in invoice reconciliation via `GET /api/invoices/[id]?reconcilePayment=true`.
+  It checks the existing Checkout Session and marks a pending invoice failed
+  only when Stripe reports an expired session or a PaymentIntent back at
+  `requires_payment_method`/`canceled`; genuine `processing` remains pending.
+- Added API coverage for abandoned, processing, and ordinary invoice reads.
 - The mobile success-page edit touched `app/payment/success/page.tsx` and
   `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
   state file was changed.

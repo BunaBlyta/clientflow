@@ -44,7 +44,7 @@ export default function CheckoutScreen() {
 
     try {
       for (let attempt = 0; attempt < PAYMENT_STATUS_ATTEMPTS; attempt += 1) {
-        const live = await refreshInvoice(invoiceId, token);
+        const live = await refreshInvoice(invoiceId, token, true);
         const latest = useDataStore.getState().invoiceById(invoiceId);
 
         if (!live) {

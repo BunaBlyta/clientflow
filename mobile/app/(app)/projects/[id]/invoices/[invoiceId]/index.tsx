@@ -35,7 +35,7 @@ export default function InvoiceDetailScreen() {
     setCheckingPayment(true);
     setPaymentCheckMessage(null);
     try {
-      const ok = await refreshInvoice(invoiceId, token);
+      const ok = await refreshInvoice(invoiceId, token, true);
       setUnreachable(!ok);
       if (!ok) {
         setPaymentCheckMessage(t('invoices.paymentCheckUnavailable'));

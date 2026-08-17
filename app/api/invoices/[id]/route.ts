@@ -17,7 +17,25 @@ const invoiceSelect = {
   dueDate: true,
   paidAt: true,
   createdAt: true,
+  stripeCheckoutSessionId: true,
+  stripePaymentIntentId: true,
 } as const;
+
+type StripePaymentIntent = {
+  id?: string;
+  status?: string;
+};
+
+type StripeCheckoutSession = {
+  status?: 'open' | 'complete' | 'expired' | null;
+  payment_status?: 'paid' | 'unpaid' | 'no_payment_required' | null;
+  payment_intent?: string | StripePaymentIntent | null;
+};
+
+type ReconciliationInvoice = Parameters<typeof serializeInvoice>[0] & {
+  stripeCheckoutSessionId: string | null;
+  stripePaymentIntentId: string | null;
+};
 
 export async function GET(
   request: NextRequest,
@@ -34,25 +52,70 @@ export async function GET(
       id,
       ...(user.role === 'CLIENT' ? { client: { userId: user.id } } : {}),
     },
-    select: {
-      id: true,
-      projectId: true,
-      clientId: true,
-      type: true,
-      description: true,
-      amount: true,
-      status: true,
-      dueDate: true,
-      paidAt: true,
-      createdAt: true,
-    },
+    select: invoiceSelect,
   });
 
   if (!invoice) {
     return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
   }
 
-  return NextResponse.json(serializeInvoice(invoice));
+  const shouldReconcilePayment =
+    request.nextUrl.searchParams.get('reconcilePayment') === 'true';
+  const reconciledInvoice = shouldReconcilePayment
+    ? await reconcilePendingPayment(invoice)
+    : invoice;
+
+  return NextResponse.json(serializeInvoice(reconciledInvoice));
+}
+
+async function reconcilePendingPayment(invoice: ReconciliationInvoice) {
+  if (invoice.status !== 'PAYMENT_PENDING' || !invoice.stripeCheckoutSessionId) {
+    return invoice;
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) return invoice;
+
+  const sessionUrl = new URL(
+    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(invoice.stripeCheckoutSessionId)}`,
+  );
+  sessionUrl.searchParams.set('expand[]', 'payment_intent');
+
+  let session: StripeCheckoutSession;
+  try {
+    const response = await fetch(sessionUrl, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+    if (!response.ok) return invoice;
+    session = (await response.json()) as StripeCheckoutSession;
+  } catch {
+    return invoice;
+  }
+
+  const paymentIntent =
+    session.payment_intent && typeof session.payment_intent === 'object'
+      ? session.payment_intent
+      : null;
+  const paymentIntentFailed =
+    paymentIntent?.status === 'requires_payment_method' ||
+    paymentIntent?.status === 'canceled';
+  const checkoutExpired = session.status === 'expired';
+
+  if (!checkoutExpired && !paymentIntentFailed) return invoice;
+
+  const updated = await prisma.invoice.updateMany({
+    where: { id: invoice.id, status: 'PAYMENT_PENDING' },
+    data: {
+      status: 'FAILED',
+      ...(paymentIntent?.id ? { stripePaymentIntentId: paymentIntent.id } : {}),
+    },
+  });
+  if (updated.count !== 1) return invoice;
+
+  return (await prisma.invoice.findUnique({
+    where: { id: invoice.id },
+    select: invoiceSelect,
+  })) ?? invoice;
 }
 
 export async function PATCH(

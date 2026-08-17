@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
+  findFirst: vi.fn(),
   findUnique: vi.fn(),
   update: vi.fn(),
+  updateMany: vi.fn(),
   transaction: vi.fn(),
   transactionUpdate: vi.fn(),
   clientFindUnique: vi.fn(),
   notificationCreate: vi.fn(),
+  fetch: vi.fn(),
 }));
 
 vi.mock('@/app/api/_lib/auth', () => ({
@@ -18,13 +21,15 @@ vi.mock('@/app/api/_lib/auth', () => ({
 vi.mock('@/app/api/_lib/prisma', () => ({
   prisma: {
     invoice: {
+      findFirst: mocks.findFirst,
       findUnique: mocks.findUnique,
+      updateMany: mocks.updateMany,
     },
     $transaction: mocks.transaction,
   },
 }));
 
-import { PATCH } from './route';
+import { GET, PATCH } from './route';
 
 const invoice = {
   id: 'inv-1',
@@ -45,6 +50,12 @@ function request(status: string) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ status }),
   }) as unknown as NextRequest;
+}
+
+function invoiceRequest(query = '') {
+  return new NextRequest(`http://localhost/api/invoices/inv-1${query}`, {
+    headers: { accept: 'application/json' },
+  });
 }
 
 function params() {
@@ -137,5 +148,83 @@ describe('PATCH /api/invoices/:id', () => {
         message: 'Deposit is ready to review and pay.',
       },
     });
+  });
+});
+
+describe('GET /api/invoices/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.STRIPE_SECRET_KEY = 'sk_test';
+    vi.stubGlobal('fetch', mocks.fetch);
+    mocks.authenticate.mockResolvedValue({ role: 'CLIENT' });
+  });
+
+  it('marks an abandoned Checkout Session failed when Stripe has no payment method', async () => {
+    const pendingInvoice = {
+      ...invoice,
+      status: 'PAYMENT_PENDING' as const,
+      stripeCheckoutSessionId: 'cs-abandoned',
+      stripePaymentIntentId: null,
+    };
+    mocks.findFirst.mockResolvedValue(pendingInvoice);
+    mocks.fetch.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        status: 'open',
+        payment_status: 'unpaid',
+        payment_intent: { id: 'pi-abandoned', status: 'requires_payment_method' },
+      }),
+    });
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.findUnique.mockResolvedValue({ ...pendingInvoice, status: 'FAILED' });
+
+    const response = await GET(invoiceRequest('?reconcilePayment=true'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ id: 'inv-1', status: 'FAILED' });
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { id: 'inv-1', status: 'PAYMENT_PENDING' },
+      data: { status: 'FAILED', stripePaymentIntentId: 'pi-abandoned' },
+    });
+  });
+
+  it('keeps a genuinely processing PaymentIntent pending', async () => {
+    const pendingInvoice = {
+      ...invoice,
+      status: 'PAYMENT_PENDING' as const,
+      stripeCheckoutSessionId: 'cs-processing',
+      stripePaymentIntentId: null,
+    };
+    mocks.findFirst.mockResolvedValue(pendingInvoice);
+    mocks.fetch.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        status: 'open',
+        payment_status: 'unpaid',
+        payment_intent: { id: 'pi-processing', status: 'processing' },
+      }),
+    });
+
+    const response = await GET(invoiceRequest('?reconcilePayment=true'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ id: 'inv-1', status: 'PAYMENT_PENDING' });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('does not inspect Stripe during an ordinary invoice read', async () => {
+    const pendingInvoice = {
+      ...invoice,
+      status: 'PAYMENT_PENDING' as const,
+      stripeCheckoutSessionId: 'cs-pending',
+      stripePaymentIntentId: null,
+    };
+    mocks.findFirst.mockResolvedValue(pendingInvoice);
+
+    const response = await GET(invoiceRequest(), params());
+
+    expect(response.status).toBe(200);
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.updateMany).not.toHaveBeenCalled();
   });
 });

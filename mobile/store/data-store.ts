@@ -31,7 +31,7 @@ interface DataState {
   refreshProjects: (token: string) => Promise<void>;
   refreshProject: (projectId: string, token: string) => Promise<void>;
   refreshInvoices: (token: string, projectId?: string) => Promise<boolean>;
-  refreshInvoice: (invoiceId: string, token: string) => Promise<boolean>;
+  refreshInvoice: (invoiceId: string, token: string, reconcilePayment?: boolean) => Promise<boolean>;
   refreshNotes: (token: string, projectId?: string) => Promise<boolean>;
   refreshNotifications: (token: string) => Promise<boolean>;
   postNote: (projectId: string, body: string, token: string) => Promise<boolean>;
@@ -92,9 +92,9 @@ export const useDataStore = create<DataState>((set, get) => ({
       return false;
     }
   },
-  refreshInvoice: async (invoiceId, token) => {
+  refreshInvoice: async (invoiceId, token, reconcilePayment = false) => {
     try {
-      const invoice = await invoiceRequest(invoiceId, token);
+      const invoice = await invoiceRequest(invoiceId, token, { reconcilePayment });
       set((state) => ({
         invoices: state.invoices.some((item) => item.id === invoice.id)
           ? state.invoices.map((item) => (item.id === invoice.id ? invoice : item))

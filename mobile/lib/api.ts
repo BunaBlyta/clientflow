@@ -88,8 +88,17 @@ export function invoicesRequest(token: string, projectId?: string) {
   return request<Invoice[]>(`/api/invoices${query}`, {}, token);
 }
 
-export function invoiceRequest(invoiceId: string, token: string) {
-  return request<Invoice>(`/api/invoices/${encodeURIComponent(invoiceId)}`, {}, token);
+export function invoiceRequest(
+  invoiceId: string,
+  token: string,
+  options?: { reconcilePayment?: boolean },
+) {
+  const query = options?.reconcilePayment ? '?reconcilePayment=true' : '';
+  return request<Invoice>(
+    `/api/invoices/${encodeURIComponent(invoiceId)}${query}`,
+    {},
+    token,
+  );
 }
 
 export function notesRequest(token: string, projectId?: string) {

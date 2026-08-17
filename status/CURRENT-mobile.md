@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 13:55 by Codex — add retry on checkout return screen
+Last updated: 2026-08-17 14:08 by Codex — reconcile abandoned payment on return
 
 ## Current state
 
@@ -65,6 +65,9 @@ Last updated: 2026-08-17 13:55 by Codex — add retry on checkout return screen
 - The checkout confirmation screen now has the same Return to payment action,
   so clients who stay on that screen after backing out of Stripe do not need
   to navigate back to the invoice first.
+- Return-time status checks now ask the API to reconcile the Stripe Session.
+  An abandoned/no-payment session becomes Failed and exposes retry; a genuine
+  Stripe `processing` payment remains pending.
 
 ## Verification
 
