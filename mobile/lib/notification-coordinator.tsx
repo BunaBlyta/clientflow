@@ -150,8 +150,11 @@ export function NotificationCoordinator() {
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       void handleResponse(response);
     });
-    const tokenSubscription = Notifications.addPushTokenListener(({ data }) => {
-      void registerPushDevice(authToken, data).catch(() => {});
+    // This listener emits the native APNs device token. It is not an
+    // ExpoPushToken and must never be sent to our API. Reacquire the Expo
+    // token through Expo's project-aware exchange before registering it.
+    const tokenSubscription = Notifications.addPushTokenListener(() => {
+      void registerPushDevice(authToken).catch(() => {});
     });
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {

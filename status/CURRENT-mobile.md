@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 15:09 by Codex — iOS push notification delivery
+Last updated: 2026-08-17 15:35 by Codex — harden Expo token rotation
 
 ## Current state
 
@@ -13,6 +13,11 @@ Last updated: 2026-08-17 15:09 by Codex — iOS push notification delivery
   token rotation and best-effort unregister on logout, reconciles foreground and
   tapped notifications through authoritative API reads, and catches up on app
   resume. Web builds do nothing in this layer.
+- Native APNs token-rotation events now trigger a fresh project-aware
+  `getExpoPushTokenAsync` exchange; the native APNs token is never sent to the
+  backend as if it were an Expo push token.
+- Generated Expo web output is excluded from TypeScript input so a later export
+  cannot make `npx tsc` recurse into the bundled JavaScript and overflow.
 - Taps accept only validated notification IDs and known event types. Notes open
   the project notes screen; invoice and project events open their detail route.
   Notification payloads never provide client state or arbitrary URLs.
@@ -24,12 +29,12 @@ Last updated: 2026-08-17 15:09 by Codex — iOS push notification delivery
 
 ## Verification
 
-- `cd mobile && npx tsc --noEmit`: passed.
+- `cd mobile && npx tsc --noEmit`: passed (including after web export).
 - `cd mobile && npx expo config --type public --json`: passed; bundle identifier,
   notification plugin, and EAS project ID are present.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-push-check`:
   passed.
-- `git diff --check -- mobile`: pending final staged check.
+- `git diff --check -- mobile`: passed for the follow-up change.
 - No physical iPhone or iOS development build was available for a real APNs
   delivery test. Mobile has no test runner installed, so pure helper tests were
   not added without introducing an install.
