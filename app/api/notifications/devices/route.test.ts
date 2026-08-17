@@ -4,12 +4,16 @@ import type { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
   upsert: vi.fn(),
-  updateMany: vi.fn(),
+  deviceFindUnique: vi.fn(),
+  deviceFindFirst: vi.fn(),
+  deviceUpdate: vi.fn(),
+  deliveryUpdateMany: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock('@/app/api/_lib/auth', () => ({ getAuthenticatedUser: mocks.authenticate }));
 vi.mock('@/app/api/_lib/prisma', () => ({
-  prisma: { pushDevice: { upsert: mocks.upsert, updateMany: mocks.updateMany } },
+  prisma: { $transaction: mocks.transaction },
 }));
 
 import { DELETE, POST } from './route';
@@ -36,6 +40,11 @@ describe('/api/notifications/devices', () => {
 
   it('registers an iOS Expo token for the authenticated user', async () => {
     mocks.authenticate.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+    mocks.deviceFindUnique.mockResolvedValue(null);
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      pushDevice: { findUnique: mocks.deviceFindUnique, upsert: mocks.upsert },
+      pushDelivery: { updateMany: mocks.deliveryUpdateMany },
+    }));
     mocks.upsert.mockResolvedValue({
       id: 'device-1', token: 'ExponentPushToken[abc123456]', platform: 'ios',
       isActive: true, lastSeenAt: new Date('2026-08-17T10:00:00.000Z'),
@@ -52,11 +61,41 @@ describe('/api/notifications/devices', () => {
 
   it('deactivates only the authenticated user’s token on logout', async () => {
     mocks.authenticate.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+    mocks.deviceFindFirst.mockResolvedValue({ id: 'device-1' });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      pushDevice: { findFirst: mocks.deviceFindFirst, update: mocks.deviceUpdate },
+      pushDelivery: { updateMany: mocks.deliveryUpdateMany },
+    }));
     const response = await DELETE(request('DELETE', undefined, 'ExponentPushToken[abc123456]'));
     expect(response.status).toBe(204);
-    expect(mocks.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-1', token: 'ExponentPushToken[abc123456]' },
+    expect(mocks.deviceUpdate).toHaveBeenCalledWith({
+      where: { id: 'device-1' },
       data: { isActive: false },
+    });
+    expect(mocks.deliveryUpdateMany).toHaveBeenCalledWith({
+      where: { deviceId: 'device-1', status: 'PENDING' },
+      data: expect.objectContaining({ status: 'FAILED' }),
+    });
+  });
+
+  it('fails queued deliveries before transferring a token to another account', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'user-2', role: 'CLIENT' });
+    mocks.deviceFindUnique.mockResolvedValue({ id: 'device-1', userId: 'user-1' });
+    mocks.upsert.mockResolvedValue({
+      id: 'device-1', token: 'ExponentPushToken[abc123456]', platform: 'ios',
+      isActive: true, lastSeenAt: new Date('2026-08-17T10:00:00.000Z'),
+    });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      pushDevice: { findUnique: mocks.deviceFindUnique, upsert: mocks.upsert },
+      pushDelivery: { updateMany: mocks.deliveryUpdateMany },
+    }));
+
+    const response = await POST(request('POST', { token: 'ExponentPushToken[abc123456]', platform: 'IOS' }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.deliveryUpdateMany).toHaveBeenCalledWith({
+      where: { deviceId: 'device-1', status: 'PENDING' },
+      data: expect.objectContaining({ status: 'FAILED' }),
     });
   });
 });

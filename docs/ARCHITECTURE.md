@@ -472,12 +472,21 @@ Ably publishes a `notification.created` event to `clientflow:user:<userId>`.
 Expo ticket receipts are checked and unregistered devices are deactivated.
 
 `POST /api/notifications/devices` registers an authenticated user's iOS Expo
-token and `DELETE` deactivates only that user's token. `GET /api/realtime/token`
+token. Re-registering a token under another account fails the old account's
+pending deliveries before transfer; `DELETE` deactivates the device and fails
+its pending deliveries atomically. The dispatcher filters inactive devices, so
+logout and account transfer cannot leak queued pushes. `GET /api/realtime/token`
 returns a five-minute, subscribe-only Ably `TokenRequest`, scoped to that
 user's channel and, for staff, `clientflow:staff`. No Ably API key is returned
 to either frontend. Staff entity mutations additionally publish an
 `entity.changed` invalidation hint on `clientflow:staff`; consumers refetch
 authoritative API data and recover missed events through notification sync.
+
+Expo ticket acceptance is kept separate from receipt delivery confirmation:
+ticket IDs remain attached while receipts are pending, and outstanding receipts
+are retried opportunistically on later dispatches. Not-ready receipts remain
+pending. Provider exceptions and non-2xx responses release a claimed delivery
+back to `PENDING` with bounded backoff, then mark it failed after five attempts.
 
 The following user-facing events create in-app notifications in the same
 transaction as their database change:

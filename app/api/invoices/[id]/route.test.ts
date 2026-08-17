@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   updateMany: vi.fn(),
   transaction: vi.fn(),
   transactionUpdate: vi.fn(),
+  transactionUpdateMany: vi.fn(),
+  transactionFindUnique: vi.fn(),
   clientFindUnique: vi.fn(),
   notificationCreate: vi.fn(),
   fetch: vi.fn(),
@@ -103,9 +105,10 @@ describe('PATCH /api/invoices/:id', () => {
   it('updates a legal staff transition and returns the serialized invoice', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(invoice);
-    mocks.transactionUpdate.mockResolvedValue({ ...invoice, status: 'PAYMENT_PENDING' });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...invoice, status: 'PAYMENT_PENDING' });
     mocks.transaction.mockImplementation(async (callback) => callback({
-      invoice: { update: mocks.transactionUpdate },
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
       client: { findUnique: mocks.clientFindUnique },
       notification: { create: mocks.notificationCreate },
     }));
@@ -118,8 +121,8 @@ describe('PATCH /api/invoices/:id', () => {
       amountCents: 10000,
       status: 'PAYMENT_PENDING',
     });
-    expect(mocks.transactionUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'inv-1' },
+    expect(mocks.transactionUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'inv-1', status: 'SENT' },
       data: { status: 'PAYMENT_PENDING' },
     }));
   });
@@ -127,10 +130,11 @@ describe('PATCH /api/invoices/:id', () => {
   it('notifies the client when an invoice is sent', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue({ ...invoice, status: 'DRAFT' });
-    mocks.transactionUpdate.mockResolvedValue({ ...invoice, status: 'SENT' });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...invoice, status: 'SENT' });
     mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
     mocks.transaction.mockImplementation(async (callback) => callback({
-      invoice: { update: mocks.transactionUpdate },
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
       client: { findUnique: mocks.clientFindUnique },
       notification: { create: mocks.notificationCreate },
     }));
@@ -153,10 +157,11 @@ describe('PATCH /api/invoices/:id', () => {
   it('uses the extra-charge notification exactly once when an extra invoice is sent', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue({ ...invoice, type: 'EXTRA', status: 'DRAFT' });
-    mocks.transactionUpdate.mockResolvedValue({ ...invoice, type: 'EXTRA', status: 'SENT' });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...invoice, type: 'EXTRA', status: 'SENT' });
     mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
     mocks.transaction.mockImplementation(async (callback) => callback({
-      invoice: { update: mocks.transactionUpdate },
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
       client: { findUnique: mocks.clientFindUnique },
       notification: { create: mocks.notificationCreate },
     }));
@@ -173,6 +178,22 @@ describe('PATCH /api/invoices/:id', () => {
         projectId: 'proj-1',
       }),
     });
+  });
+
+  it('returns a conflict when a concurrent invoice update wins the conditional claim', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue({ ...invoice, status: 'DRAFT' });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('SENT'), params());
+
+    expect(response.status).toBe(409);
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
 });
 
@@ -200,17 +221,25 @@ describe('GET /api/invoices/:id', () => {
         payment_intent: { id: 'pi-abandoned', status: 'requires_payment_method' },
       }),
     });
-    mocks.updateMany.mockResolvedValue({ count: 1 });
-    mocks.findUnique.mockResolvedValue({ ...pendingInvoice, status: 'FAILED' });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...pendingInvoice, status: 'FAILED' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-client-1' });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
+      client: { findUnique: mocks.clientFindUnique },
+      user: { findMany: vi.fn().mockResolvedValue([{ id: 'staff-1' }]) },
+      notification: { create: mocks.notificationCreate },
+    }));
 
     const response = await GET(invoiceRequest('?reconcilePayment=true'), params());
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ id: 'inv-1', status: 'FAILED' });
-    expect(mocks.updateMany).toHaveBeenCalledWith({
+    expect(mocks.transactionUpdateMany).toHaveBeenCalledWith({
       where: { id: 'inv-1', status: 'PAYMENT_PENDING' },
       data: { status: 'FAILED', stripePaymentIntentId: 'pi-abandoned' },
     });
+    expect(mocks.notificationCreate).toHaveBeenCalledTimes(2);
   });
 
   it('keeps a genuinely processing PaymentIntent pending', async () => {

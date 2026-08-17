@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
   invoiceFindFirst: vi.fn(),
   update: vi.fn(),
+  updateMany: vi.fn(),
+  transactionFindUnique: vi.fn(),
   createNote: vi.fn(),
   clientFindUnique: vi.fn(),
   notificationCreate: vi.fn(),
@@ -149,10 +151,11 @@ describe('PATCH /api/projects/:id', () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(customPendingProject);
     mocks.invoiceFindFirst.mockResolvedValue(null);
-    mocks.update.mockResolvedValue({ ...customPendingProject, status: 'DESIGN' });
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...customPendingProject, status: 'DESIGN' });
     mocks.clientFindUnique.mockResolvedValue(null);
     mocks.transaction.mockImplementation(async (callback) => callback({
-      project: { update: mocks.update },
+      project: { updateMany: mocks.updateMany, findUnique: mocks.transactionFindUnique },
       note: { create: mocks.createNote },
       client: { findUnique: mocks.clientFindUnique },
       notification: { create: mocks.notificationCreate },
@@ -167,10 +170,11 @@ describe('PATCH /api/projects/:id', () => {
   it('allows valid manual changes once a project is already in Discovery or later', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(discoveryProject);
-    mocks.update.mockResolvedValue({ ...discoveryProject, status: 'DESIGN' });
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...discoveryProject, status: 'DESIGN' });
     mocks.clientFindUnique.mockResolvedValue(null);
     mocks.transaction.mockImplementation(async (callback) => callback({
-      project: { update: mocks.update },
+      project: { updateMany: mocks.updateMany, findUnique: mocks.transactionFindUnique },
       note: { create: mocks.createNote },
       client: { findUnique: mocks.clientFindUnique },
       notification: { create: mocks.notificationCreate },
@@ -186,10 +190,11 @@ describe('PATCH /api/projects/:id', () => {
   it('updates the project and records a system status note atomically', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(project);
-    mocks.update.mockResolvedValue({ ...project, status: 'DEVELOPMENT' });
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...project, status: 'DEVELOPMENT' });
     mocks.clientFindUnique.mockResolvedValue({ userId: 'user-1' });
     mocks.transaction.mockImplementation(async (callback) => callback({
-      project: { update: mocks.update },
+      project: { updateMany: mocks.updateMany, findUnique: mocks.transactionFindUnique },
       note: { create: mocks.createNote },
       client: { findUnique: mocks.clientFindUnique },
       notification: { create: mocks.notificationCreate },
@@ -219,6 +224,24 @@ describe('PATCH /api/projects/:id', () => {
         message: 'Your project moved from Design to Development.',
       },
     });
+  });
+
+  it('returns a conflict when a concurrent project update wins the conditional claim', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(project);
+    mocks.updateMany.mockResolvedValue({ count: 0 });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      project: { updateMany: mocks.updateMany, findUnique: mocks.transactionFindUnique },
+      note: { create: mocks.createNote },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('DEVELOPMENT'), params());
+
+    expect(response.status).toBe(409);
+    expect(mocks.createNote).not.toHaveBeenCalled();
+    expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
 
   it('rejects an unknown project status', async () => {

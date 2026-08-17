@@ -91,7 +91,7 @@ export function scheduleNotificationEffects(notificationIds: string[]) {
   scheduleAfter(async () => {
     try {
       await publishNotificationCreated(notificationIds);
-      await dispatchPendingPushes(notificationIds);
+      await dispatchPendingPushes();
     } catch (error) {
       console.error('Notification delivery failed after response', error);
     }
@@ -224,12 +224,29 @@ type PendingDelivery = {
   };
 };
 
-export async function dispatchPendingPushes(notificationIds?: string[]) {
+export async function dispatchPendingPushes() {
+  const outstanding = await prisma.pushDelivery.findMany({
+    where: { status: 'SENT', expoTicketId: { not: null }, expoReceiptStatus: null },
+    select: { expoTicketId: true },
+    take: 100,
+  });
+  const outstandingTicketIds = outstanding
+    .map((delivery) => delivery.expoTicketId)
+    .filter((ticketId): ticketId is string => Boolean(ticketId));
+  if (outstandingTicketIds.length > 0) {
+    await processExpoReceipts(outstandingTicketIds);
+  }
+  while (await dispatchPendingPushBatch()) {
+    // Drain every due batch, including deliveries created by earlier writes.
+  }
+}
+
+async function dispatchPendingPushBatch() {
   const apiKey = process.env.EXPO_ACCESS_TOKEN;
   const candidates = await prisma.pushDelivery.findMany({
     where: {
       status: 'PENDING',
-      ...(notificationIds ? { notificationId: { in: notificationIds } } : {}),
+      device: { isActive: true },
       OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: new Date() } }],
     },
     include: {
@@ -247,7 +264,7 @@ export async function dispatchPendingPushes(notificationIds?: string[]) {
     },
     take: 100,
   }) as PendingDelivery[];
-  if (candidates.length === 0) return;
+  if (candidates.length === 0) return false;
 
   // Claim each row briefly before making the provider call. This prevents two
   // concurrent web requests (or a retry worker) from sending the same alert.
@@ -264,79 +281,129 @@ export async function dispatchPendingPushes(notificationIds?: string[]) {
     });
     if (claim.count === 1) deliveries.push({ ...candidate, attempts: candidate.attempts + 1 });
   }
-  if (deliveries.length === 0) return;
+  if (deliveries.length === 0) return false;
 
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-    },
-    body: JSON.stringify(deliveries.map((delivery) => {
-      const copy = pushCopy[delivery.notification.type];
-      return {
-        to: delivery.device.token,
-        title: copy.title,
-        body: copy.body,
-        sound: 'default',
-        data: {
-          notificationId: delivery.notification.id,
-          type: delivery.notification.type,
-          projectId: delivery.notification.projectId,
-          invoiceId: delivery.notification.invoiceId,
-          requestId: delivery.notification.requestId,
-        },
-      };
-    })),
-  });
-
-  if (!response.ok) {
-    await Promise.all(deliveries.map((delivery) => prisma.pushDelivery.update({
-      where: { id: delivery.id },
-      data: {
-        lastError: `Expo returned ${response.status}`,
-        nextAttemptAt: new Date(Date.now() + 60_000),
+  let response: Response;
+  try {
+    response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       },
-    })));
-    return;
+      body: JSON.stringify(deliveries.map((delivery) => {
+        const copy = pushCopy[delivery.notification.type];
+        return {
+          to: delivery.device.token,
+          title: copy.title,
+          body: copy.body,
+          sound: 'default',
+          data: {
+            notificationId: delivery.notification.id,
+            type: delivery.notification.type,
+            projectId: delivery.notification.projectId,
+            invoiceId: delivery.notification.invoiceId,
+            requestId: delivery.notification.requestId,
+          },
+        };
+      })),
+    });
+  } catch {
+    await rescheduleClaimedDeliveries(deliveries, 'Expo request failed');
+    return true;
   }
 
-  const result = await response.json() as { data?: Array<{ status?: string; id?: string; message?: string }> };
+  if (!response.ok) {
+    await rescheduleClaimedDeliveries(deliveries, `Expo returned ${response.status}`);
+    return true;
+  }
+
+  let result: { data?: Array<{ status?: string; id?: string; message?: string; details?: { error?: string } }> };
+  try {
+    result = await response.json() as typeof result;
+  } catch {
+    await rescheduleClaimedDeliveries(deliveries, 'Expo returned invalid JSON');
+    return true;
+  }
   const tickets = result.data ?? [];
   const ticketIds: string[] = [];
   await Promise.all(deliveries.map((delivery, index) => {
     const ticket = tickets[index];
+    if (!ticket) {
+      return prisma.pushDelivery.update({
+        where: { id: delivery.id },
+        data: {
+          status: delivery.attempts >= 5 ? 'FAILED' : 'PENDING',
+          lastError: 'Expo returned no ticket for delivery',
+          nextAttemptAt: delivery.attempts >= 5 ? null : new Date(Date.now() + 60_000),
+        },
+      });
+    }
     if (ticket?.id) ticketIds.push(ticket.id);
+    const isUnregistered = ticket?.details?.error === 'DeviceNotRegistered';
     return prisma.pushDelivery.update({
       where: { id: delivery.id },
       data: {
         status: ticket?.status === 'error' ? 'FAILED' : 'SENT',
         expoTicketId: ticket?.id,
-        expoReceiptStatus: ticket?.status,
+        expoReceiptStatus: null,
         lastError: ticket?.message,
         sentAt: ticket?.status === 'ok' ? new Date() : undefined,
       },
+    }).then(async () => {
+      if (isUnregistered) {
+        await prisma.pushDevice.update({
+          where: { id: delivery.device.id },
+          data: { isActive: false },
+        });
+      }
     });
   }));
   if (ticketIds.length > 0) await processExpoReceipts(ticketIds);
+  return true;
+}
+
+async function rescheduleClaimedDeliveries(deliveries: PendingDelivery[], error: string) {
+  await Promise.all(deliveries.map((delivery) => {
+    const exhausted = delivery.attempts >= 5;
+    return prisma.pushDelivery.update({
+      where: { id: delivery.id },
+      data: {
+        status: exhausted ? 'FAILED' : 'PENDING',
+        lastError: error,
+        nextAttemptAt: exhausted ? null : new Date(Date.now() + Math.min(15 * 60_000, 2 ** delivery.attempts * 15_000)),
+      },
+    });
+  }));
 }
 
 export async function processExpoReceipts(ticketIds: string[]) {
   const apiKey = process.env.EXPO_ACCESS_TOKEN;
   if (ticketIds.length === 0) return;
-  const response = await fetch('https://exp.host/--/api/v2/push/getReceipts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-    },
-    body: JSON.stringify({ ids: ticketIds }),
-  });
+  let response: Response;
+  try {
+    response = await fetch('https://exp.host/--/api/v2/push/getReceipts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+      },
+      body: JSON.stringify({ ids: ticketIds }),
+    });
+  } catch {
+    return;
+  }
   if (!response.ok) return;
-  const payload = await response.json() as {
+  let payload: {
     data?: Record<string, { status?: string; message?: string; details?: { error?: string } }>;
   };
+  try {
+    payload = await response.json() as typeof payload;
+  } catch {
+    return;
+  }
   for (const [ticketId, receipt] of Object.entries(payload.data ?? {})) {
+    if (receipt.status !== 'ok' && receipt.status !== 'error') continue;
     const isUnregistered = receipt.details?.error === 'DeviceNotRegistered';
     const delivery = await prisma.pushDelivery.findFirst({ where: { expoTicketId: ticketId } });
     if (!delivery) continue;

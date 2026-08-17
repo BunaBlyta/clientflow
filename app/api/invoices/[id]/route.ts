@@ -38,6 +38,12 @@ type ReconciliationInvoice = Parameters<typeof serializeInvoice>[0] & {
   stripePaymentIntentId: string | null;
 };
 
+class ConcurrentInvoiceUpdate extends Error {
+  constructor() {
+    super('Invoice was updated by another request');
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -104,44 +110,59 @@ async function reconcilePendingPayment(invoice: ReconciliationInvoice) {
 
   if (!checkoutExpired && !paymentIntentFailed) return invoice;
 
-  const updated = await prisma.invoice.updateMany({
-    where: { id: invoice.id, status: 'PAYMENT_PENDING' },
-    data: {
-      status: 'FAILED',
-      ...(paymentIntent?.id ? { stripePaymentIntentId: paymentIntent.id } : {}),
-    },
-  });
-  if (updated.count !== 1) return invoice;
-
-  const clientLookup = (prisma as unknown as {
-    client?: { findUnique(args: unknown): Promise<{ userId: string } | null> };
-    notification?: { create(args: unknown): Promise<{ id?: string }> };
-  });
-  const client = await clientLookup.client?.findUnique({
-    where: { id: invoice.clientId },
-    select: { userId: true },
-  });
-  const notificationIds: string[] = [];
-  if (client && clientLookup.notification) {
-    const notification = await clientLookup.notification.create({
+  const result = await prisma.$transaction(async (transaction) => {
+    const updated = await transaction.invoice.updateMany({
+      where: { id: invoice.id, status: 'PAYMENT_PENDING' },
       data: {
-        userId: client.userId,
-        type: 'PAYMENT_FAILED',
-        invoiceId: invoice.id,
-        projectId: invoice.projectId,
-        title: 'Payment failed',
-        message: 'Your invoice payment could not be completed.',
+        status: 'FAILED',
+        ...(paymentIntent?.id ? { stripePaymentIntentId: paymentIntent.id } : {}),
       },
     });
-    if (notification?.id) notificationIds.push(notification.id);
-  }
-  scheduleNotificationEffects(notificationIds);
-  scheduleEntityChanged({ entity: 'invoice', id: invoice.id, projectId: invoice.projectId, invoiceId: invoice.id });
+    if (updated.count !== 1) return null;
 
-  return (await prisma.invoice.findUnique({
-    where: { id: invoice.id },
-    select: invoiceSelect,
-  })) ?? invoice;
+    const failedInvoice = await transaction.invoice.findUnique({
+      where: { id: invoice.id },
+      select: invoiceSelect,
+    });
+    if (!failedInvoice) return null;
+
+    const notificationIds: string[] = [];
+    const client = await transaction.client.findUnique({
+      where: { id: failedInvoice.clientId },
+      select: { userId: true },
+    });
+    if (client) {
+      const notificationId = await createNotification(transaction, {
+        userId: client.userId,
+        type: 'PAYMENT_FAILED',
+        invoiceId: failedInvoice.id,
+        projectId: failedInvoice.projectId,
+        title: 'Payment failed',
+        message: 'Your invoice payment could not be completed.',
+      });
+      if (notificationId) notificationIds.push(notificationId);
+    }
+    const staffUsers = await transaction.user.findMany({
+      where: { role: 'STAFF', isActive: true },
+      select: { id: true },
+    });
+    for (const staffUser of staffUsers) {
+      const notificationId = await createNotification(transaction, {
+        userId: staffUser.id,
+        type: 'PAYMENT_FAILED',
+        invoiceId: failedInvoice.id,
+        projectId: failedInvoice.projectId,
+        title: 'Payment failed',
+        message: 'A client invoice payment could not be completed.',
+      });
+      if (notificationId) notificationIds.push(notificationId);
+    }
+    return { invoice: failedInvoice, notificationIds };
+  });
+  if (!result) return invoice;
+  scheduleNotificationEffects(result.notificationIds);
+  scheduleEntityChanged({ entity: 'invoice', id: invoice.id, projectId: invoice.projectId, invoiceId: invoice.id, reason: 'payment' });
+  return result.invoice;
 }
 
 export async function PATCH(
@@ -192,12 +213,34 @@ export async function PATCH(
     );
   }
 
-  const result = await prisma.$transaction(async (transaction) => {
-    const updated = await transaction.invoice.update({
-      where: { id },
+  let result: Awaited<ReturnType<typeof updateInvoice>>;
+  try {
+    result = await updateInvoice(id, invoice, nextStatus);
+  } catch (error) {
+    if (error instanceof ConcurrentInvoiceUpdate) {
+      return NextResponse.json({ error: `Invoice cannot transition from ${invoice.status} to ${nextStatus}` }, { status: 409 });
+    }
+    throw error;
+  }
+
+  scheduleNotificationEffects(result.notificationIds);
+  scheduleEntityChanged({ entity: 'invoice', id: result.updated.id, projectId: result.updated.projectId, invoiceId: result.updated.id });
+
+  return NextResponse.json(serializeInvoice(result.updated));
+}
+
+async function updateInvoice(id: string, invoice: ReconciliationInvoice, nextStatus: InvoiceStatus) {
+  return prisma.$transaction(async (transaction) => {
+    const claim = await transaction.invoice.updateMany({
+      where: { id, status: invoice.status },
       data: { status: nextStatus },
+    });
+    if (claim.count !== 1) throw new ConcurrentInvoiceUpdate();
+    const updated = await transaction.invoice.findUnique({
+      where: { id },
       select: invoiceSelect,
     });
+    if (!updated) throw new ConcurrentInvoiceUpdate();
 
     const notificationIds: string[] = [];
     if (nextStatus === 'SENT' && invoice.status !== 'SENT') {
@@ -223,9 +266,4 @@ export async function PATCH(
 
     return { updated, notificationIds };
   });
-
-  scheduleNotificationEffects(result.notificationIds);
-  scheduleEntityChanged({ entity: 'invoice', id: result.updated.id, projectId: result.updated.projectId, invoiceId: result.updated.id });
-
-  return NextResponse.json(serializeInvoice(result.updated));
 }

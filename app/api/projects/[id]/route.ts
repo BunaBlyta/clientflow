@@ -10,6 +10,12 @@ export const runtime = 'nodejs';
 const PAYMENT_GATE_ERROR =
   'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.';
 
+class ConcurrentProjectUpdate extends Error {
+  constructor() {
+    super('Project was updated by another request');
+  }
+}
+
 const projectSelect = {
   id: true,
   clientId: true,
@@ -146,12 +152,38 @@ export async function PATCH(
     }
   }
 
-  const result = await prisma.$transaction(async (transaction) => {
-    const updated = await transaction.project.update({
-      where: { id },
+  let result: Awaited<ReturnType<typeof updateProject>>;
+  try {
+    result = await updateProject(id, project, nextStatus);
+  } catch (error) {
+    if (error instanceof ConcurrentProjectUpdate) {
+      return NextResponse.json({ error: `Project cannot transition from ${project.status} to ${nextStatus}` }, { status: 409 });
+    }
+    throw error;
+  }
+
+  scheduleNotificationEffects(result.notificationIds);
+  scheduleEntityChanged({ entity: 'project', id, projectId: id });
+
+  return NextResponse.json(serializeProject(result.updated));
+}
+
+async function updateProject(id: string, project: {
+  status: ProjectStatus;
+  clientId: string;
+  name: string;
+}, nextStatus: ProjectStatus) {
+  return prisma.$transaction(async (transaction) => {
+    const claim = await transaction.project.updateMany({
+      where: { id, status: project.status },
       data: { status: nextStatus },
+    });
+    if (claim.count !== 1) throw new ConcurrentProjectUpdate();
+    const updated = await transaction.project.findUnique({
+      where: { id },
       select: projectSelect,
     });
+    if (!updated) throw new ConcurrentProjectUpdate();
 
     await transaction.note.create({
       data: {
@@ -180,11 +212,6 @@ export async function PATCH(
 
     return { updated, notificationIds };
   });
-
-  scheduleNotificationEffects(result.notificationIds);
-  scheduleEntityChanged({ entity: 'project', id, projectId: id });
-
-  return NextResponse.json(serializeProject(result.updated));
 }
 
 function formatProjectStatus(status: string) {
