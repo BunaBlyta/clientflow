@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 14:15 by Codex — expire Checkout Sessions after 30 minutes
+Last updated: 2026-08-17 14:28 by Codex — support delayed Checkout events
 
 ## What changed
 
@@ -85,6 +85,10 @@ Last updated: 2026-08-17 14:15 by Codex — expire Checkout Sessions after 30 mi
 - New Checkout Sessions now request a 30-minute `expires_at`.
 - `checkout.session.expired` is handled as a failed invoice transition, with
   the same idempotent notification behavior as a failed PaymentIntent.
+- The webhook handler also supports `checkout.session.async_payment_succeeded`
+  and `checkout.session.async_payment_failed` for delayed payment methods.
+  Stripe Dashboard must subscribe the endpoint to those event types; code
+  support alone does not make Stripe deliver them.
 - The mobile success-page edit touched `app/payment/success/page.tsx` and
   `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
   state file was changed.

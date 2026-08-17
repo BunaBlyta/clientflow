@@ -36,10 +36,15 @@ export async function POST(request: NextRequest) {
   const invoiceId = stripeObject?.metadata?.invoiceId;
   if (!invoiceId) return NextResponse.json({ received: true });
 
-  if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
+  if (
+    event.type === 'checkout.session.completed' ||
+    event.type === 'checkout.session.async_payment_succeeded' ||
+    event.type === 'payment_intent.succeeded'
+  ) {
     await markInvoicePaid(invoiceId, stripeObject);
   } else if (
     event.type === 'payment_intent.payment_failed' ||
+    event.type === 'checkout.session.async_payment_failed' ||
     event.type === 'checkout.session.expired'
   ) {
     await markInvoiceFailed(invoiceId, stripeObject);

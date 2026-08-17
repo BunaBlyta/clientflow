@@ -154,6 +154,20 @@ describe('POST /api/stripe/webhook', () => {
     expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
 
+  it('marks a delayed Checkout payment paid when it eventually succeeds', async () => {
+    configureInvoice('FINAL');
+
+    const response = await POST(
+      request(paymentEvent('checkout.session.async_payment_succeeded'), 'sig_test'),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
+      data: expect.objectContaining({ status: 'PAID' }),
+    });
+  });
+
   it.each(['FINAL', 'EXTRA', 'CUSTOM'] as const)(
     'does not advance a pending project for a %s invoice',
     async (type) => {
@@ -224,6 +238,20 @@ describe('POST /api/stripe/webhook', () => {
         type: 'PAYMENT_FAILED',
         invoiceId,
       }),
+    });
+  });
+
+  it('marks a delayed Checkout payment failed when it eventually fails', async () => {
+    configureInvoice('FINAL');
+
+    const response = await POST(
+      request(paymentEvent('checkout.session.async_payment_failed'), 'sig_test'),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
+      data: { status: 'FAILED', stripePaymentIntentId: 'payment-intent-1' },
     });
   });
 
