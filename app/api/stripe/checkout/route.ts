@@ -187,6 +187,7 @@ export async function POST(request: NextRequest) {
 
   const params = new URLSearchParams({
     mode: 'payment',
+    expires_at: String(Math.floor(Date.now() / 1000) + 30 * 60),
     success_url: successUrl,
     cancel_url: cancelUrl,
     'line_items[0][price_data][currency]': invoice.currency,

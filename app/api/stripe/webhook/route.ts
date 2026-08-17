@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
 
   if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
     await markInvoicePaid(invoiceId, stripeObject);
-  } else if (event.type === 'payment_intent.payment_failed') {
+  } else if (
+    event.type === 'payment_intent.payment_failed' ||
+    event.type === 'checkout.session.expired'
+  ) {
     await markInvoiceFailed(invoiceId, stripeObject);
   }
 

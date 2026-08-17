@@ -133,6 +133,17 @@ describe('POST /api/stripe/checkout', () => {
     });
   });
 
+  it('expires newly created Checkout Sessions after 30 minutes', async () => {
+    mocks.fetch.mockResolvedValue(createSessionResponse());
+
+    await POST(request({ invoiceId: 'inv-1' }));
+
+    const expiresAt = Number(requestBody().get('expires_at'));
+    const expected = Math.floor(Date.now() / 1000) + 30 * 60;
+    expect(expiresAt).toBeGreaterThanOrEqual(expected - 1);
+    expect(expiresAt).toBeLessThanOrEqual(expected + 1);
+  });
+
   it('copies invoice metadata onto the PaymentIntent for failed-payment webhooks', async () => {
     mocks.fetch.mockResolvedValue(createSessionResponse());
 

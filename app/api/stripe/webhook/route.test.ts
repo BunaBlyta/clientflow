@@ -209,6 +209,24 @@ describe('POST /api/stripe/webhook', () => {
     });
   });
 
+  it('marks an expired Checkout Session failed', async () => {
+    configureInvoice('FINAL');
+
+    const response = await POST(request(paymentEvent('checkout.session.expired'), 'sig_test'));
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
+      data: { status: 'FAILED', stripePaymentIntentId: 'payment-intent-1' },
+    });
+    expect(mocks.notificationCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'PAYMENT_FAILED',
+        invoiceId,
+      }),
+    });
+  });
+
   it('does nothing when a failure arrives for an already-paid invoice', async () => {
     mocks.invoiceUpdateMany.mockResolvedValue({ count: 0 });
 

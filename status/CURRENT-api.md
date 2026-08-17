@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 14:08 by Codex — reconcile abandoned Stripe sessions
+Last updated: 2026-08-17 14:15 by Codex — expire Checkout Sessions after 30 minutes
 
 ## What changed
 
@@ -82,6 +82,9 @@ Last updated: 2026-08-17 14:08 by Codex — reconcile abandoned Stripe sessions
   only when Stripe reports an expired session or a PaymentIntent back at
   `requires_payment_method`/`canceled`; genuine `processing` remains pending.
 - Added API coverage for abandoned, processing, and ordinary invoice reads.
+- New Checkout Sessions now request a 30-minute `expires_at`.
+- `checkout.session.expired` is handled as a failed invoice transition, with
+  the same idempotent notification behavior as a failed PaymentIntent.
 - The mobile success-page edit touched `app/payment/success/page.tsx` and
   `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
   state file was changed.
