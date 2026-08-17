@@ -22,6 +22,7 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { useLocale } from "@/lib/i18n";
 import type { Notification } from "@/lib/types";
+import { useNotificationStore } from "@/lib/realtime-notification-store";
 
 type CurrentUser = {
   id: string;
@@ -36,9 +37,10 @@ export function Topbar() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const isLoading = useNotificationStore((state) => state.isLoading);
+  const error = useNotificationStore((state) => state.error);
+  const markNotificationRead = useNotificationStore((state) => state.markNotificationRead);
   const [markingNotificationId, setMarkingNotificationId] = useState<string | null>(null);
   const [notificationActionError, setNotificationActionError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -64,49 +66,14 @@ export function Topbar() {
     }
   }
 
-  const loadNotifications = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const notificationData = await fetchJson<Notification[]>(
-        "/api/notifications",
-        "We couldn't load notifications.",
-        signal,
-      );
-      if (!Array.isArray(notificationData)) throw new Error("We couldn't load notifications.");
-      if (!signal?.aborted) setNotifications(notificationData);
-    } catch (caughtError) {
-      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load notifications.");
-      }
-    } finally {
-      if (!signal?.aborted) setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void Promise.resolve().then(() => loadNotifications(controller.signal));
-    return () => controller.abort();
-  }, [loadNotifications]);
-
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markNotificationRead = useCallback(async (notificationId: string) => {
+  const handleMarkNotificationRead = useCallback(async (notificationId: string) => {
     setMarkingNotificationId(notificationId);
     setNotificationActionError(null);
 
     try {
-      const updatedNotification = await fetchJson<Notification>(
-        `/api/notifications/${encodeURIComponent(notificationId)}`,
-        "We couldn't mark this notification as read.",
-        undefined,
-        { method: "PATCH" },
-      );
-      setNotifications((currentNotifications) =>
-        currentNotifications.map((notification) =>
-          notification.id === updatedNotification.id ? updatedNotification : notification,
-        ),
-      );
+      await markNotificationRead(notificationId);
       return true;
     } catch (caughtError) {
       setNotificationActionError(
@@ -118,7 +85,7 @@ export function Topbar() {
     } finally {
       setMarkingNotificationId(null);
     }
-  }, []);
+  }, [markNotificationRead]);
 
   function handleNotificationClick(
     event: React.MouseEvent<HTMLElement>,
@@ -127,7 +94,7 @@ export function Topbar() {
     event.preventDefault();
     if (markingNotificationId === notification.id) return;
     router.push(getNotificationDestination(notification));
-    if (!notification.read) void markNotificationRead(notification.id);
+    if (!notification.read) void handleMarkNotificationRead(notification.id);
   }
 
   const loadCurrentUser = useCallback(async (signal?: AbortSignal) => {

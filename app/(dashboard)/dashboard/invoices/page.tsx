@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import type { Client, Invoice, InvoiceStatus, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 type ApiInvoice = Invoice & { clientId: string };
 
@@ -93,6 +94,15 @@ export default function InvoicesPage() {
     const controller = new AbortController();
     void Promise.resolve().then(() => loadInvoices(controller.signal));
     return () => controller.abort();
+  }, [loadInvoices]);
+
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity === "invoice" || detail?.entity === "project") void loadInvoices();
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [loadInvoices]);
 
   const projectNames = useMemo(

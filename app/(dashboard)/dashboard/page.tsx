@@ -21,6 +21,7 @@ import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project, ProjectRequest } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
@@ -74,6 +75,15 @@ export default function OverviewPage() {
     const controller = new AbortController();
     void Promise.resolve().then(() => loadOverview(controller.signal));
     return () => controller.abort();
+  }, [loadOverview]);
+
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity === "invoice" || detail?.entity === "project") void loadOverview();
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [loadOverview]);
 
   if (isLoading) {

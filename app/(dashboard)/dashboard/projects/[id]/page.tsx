@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Client, Invoice, Note, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
@@ -97,6 +98,18 @@ export default function ProjectDetailPage() {
     void Promise.resolve().then(() => loadProject(controller.signal));
     return () => controller.abort();
   }, [loadProject]);
+
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      const isRelevant =
+        detail?.projectId === projectId ||
+        (detail?.entity === "project" && detail.projectId === projectId);
+      if (isRelevant) void loadProject();
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
+  }, [loadProject, projectId]);
 
   const handleProjectUpdated = useCallback(
     (updatedProject: Project) => {

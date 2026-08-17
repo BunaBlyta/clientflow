@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, RefreshCw } from "lucide-react";
-import { fetchJson } from "@/lib/fetch-json";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { getNotificationDestination } from "@/lib/notification-destination";
@@ -13,46 +12,19 @@ import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n";
+import { useNotificationStore } from "@/lib/realtime-notification-store";
 
 export default function NotificationsPage() {
   const { t } = useLocale();
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const isLoading = useNotificationStore((state) => state.isLoading);
+  const error = useNotificationStore((state) => state.error);
+  const markNotificationReadRequest = useNotificationStore((state) => state.markNotificationRead);
+  const markAllNotificationsReadRequest = useNotificationStore((state) => state.markAllNotificationsRead);
   const [actionError, setActionError] = useState<string | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
-
-  const loadNotifications = useCallback(async (signal?: AbortSignal) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const notificationData = await fetchJson<Notification[]>(
-        "/api/notifications",
-        "We couldn't load the notifications.",
-        signal,
-      );
-      if (!Array.isArray(notificationData)) {
-        throw new Error("The server returned an unexpected notifications response.");
-      }
-      if (!signal?.aborted) setNotifications(notificationData);
-    } catch (caughtError) {
-      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the notifications.");
-      }
-    } finally {
-      if (!signal?.aborted) setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void Promise.resolve().then(() => loadNotifications(controller.signal));
-    return () => controller.abort();
-  }, [loadNotifications]);
 
   const sorted = useMemo(
     () =>
@@ -63,22 +35,12 @@ export default function NotificationsPage() {
   );
   const unread = sorted.filter((n) => !n.read);
 
-  const markNotificationRead = useCallback(async (notificationId: string) => {
+  const handleMarkNotificationRead = useCallback(async (notificationId: string) => {
     setMarkingId(notificationId);
     setActionError(null);
 
     try {
-      const updatedNotification = await fetchJson<Notification>(
-        `/api/notifications/${encodeURIComponent(notificationId)}`,
-        "We couldn't mark this notification as read.",
-        undefined,
-        { method: "PATCH" },
-      );
-      setNotifications((currentNotifications) =>
-        currentNotifications.map((notification) =>
-          notification.id === updatedNotification.id ? updatedNotification : notification,
-        ),
-      );
+      await markNotificationReadRequest(notificationId);
       return true;
     } catch (caughtError) {
       setActionError(
@@ -90,36 +52,23 @@ export default function NotificationsPage() {
     } finally {
       setMarkingId(null);
     }
-  }, []);
+  }, [markNotificationReadRequest]);
 
-  async function markAllNotificationsRead() {
+  async function handleMarkAllNotificationsRead() {
     const unreadIds = unread.map((notification) => notification.id);
     if (unreadIds.length === 0) return;
 
     setIsMarkingAll(true);
     setActionError(null);
     try {
-      const updatedNotifications = await Promise.all(
-        unreadIds.map((notificationId) =>
-          fetchJson<Notification>(
-            `/api/notifications/${encodeURIComponent(notificationId)}`,
-            "We couldn't mark all notifications as read.",
-            undefined,
-            { method: "PATCH" },
-          ),
-        ),
-      );
-      const updatedById = new Map(updatedNotifications.map((notification) => [notification.id, notification]));
-      setNotifications((currentNotifications) =>
-        currentNotifications.map((notification) => updatedById.get(notification.id) ?? notification),
-      );
+      await markAllNotificationsReadRequest(unreadIds);
     } catch (caughtError) {
       setActionError(
         caughtError instanceof Error
           ? caughtError.message
           : "We couldn't mark all notifications as read.",
       );
-      void loadNotifications();
+      window.dispatchEvent(new Event("clientflow:notifications-refresh"));
     } finally {
       setIsMarkingAll(false);
     }
@@ -141,7 +90,12 @@ export default function NotificationsPage() {
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
           <p className="text-[13px] font-medium text-status-danger">{t("dashboard.notificationsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
-        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadNotifications()}>
+        <Button
+          className="mt-4"
+          variant="outline"
+          size="sm"
+          onClick={() => window.dispatchEvent(new Event("clientflow:notifications-refresh"))}
+        >
           <RefreshCw />
           {t("common.tryAgain")}
         </Button>
@@ -163,7 +117,7 @@ export default function NotificationsPage() {
             <button
               type="button"
               disabled={isMarkingAll || markingId !== null}
-              onClick={() => void markAllNotificationsRead()}
+              onClick={() => void handleMarkAllNotificationsRead()}
               className="text-[13px] text-brand-accent hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground"
             >
               {isMarkingAll ? t("notifications.marking") : t("notifications.markAllRead")}
@@ -190,7 +144,7 @@ export default function NotificationsPage() {
             markingId={markingId}
             onRead={(notification) => {
               router.push(getNotificationDestination(notification));
-              if (!notification.read) void markNotificationRead(notification.id);
+              if (!notification.read) void handleMarkNotificationRead(notification.id);
             }}
           />
         </TabsContent>
@@ -201,7 +155,7 @@ export default function NotificationsPage() {
             markingId={markingId}
             onRead={(notification) => {
               router.push(getNotificationDestination(notification));
-              void markNotificationRead(notification.id);
+              void handleMarkNotificationRead(notification.id);
             }}
           />
         </TabsContent>

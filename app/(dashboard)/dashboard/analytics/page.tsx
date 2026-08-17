@@ -23,6 +23,7 @@ import { TurnaroundChart } from "@/components/dashboard/charts/turnaround-chart"
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
 
@@ -71,6 +72,15 @@ export default function AnalyticsPage() {
     const controller = new AbortController();
     void Promise.resolve().then(() => loadAnalytics(controller.signal));
     return () => controller.abort();
+  }, [loadAnalytics]);
+
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity === "invoice" || detail?.entity === "project") void loadAnalytics();
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [loadAnalytics]);
 
   async function generateInsight() {

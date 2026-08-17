@@ -23,6 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All statuses" },
@@ -175,6 +176,15 @@ function ProjectsTable({
     const controller = new AbortController();
     void Promise.resolve().then(() => loadProjects(controller.signal));
     return () => controller.abort();
+  }, [loadProjects]);
+
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity === "project") void loadProjects();
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [loadProjects]);
 
   const clientNames = useMemo(
