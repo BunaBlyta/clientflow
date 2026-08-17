@@ -2,8 +2,6 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LocaleText } from "@/components/locale-text";
 
-const EXPO_WEB_BASE_URL = "http://localhost:8081";
-
 export const metadata = {
   title: "Payment submitted · Clientflow",
 };
@@ -22,13 +20,7 @@ export const metadata = {
  */
 type PaymentSuccessSearchParams = Promise<{
   return_to?: string | string[];
-  project_id?: string | string[];
-  invoice_id?: string | string[];
 }>;
-
-function isValidIdentifier(value: string | string[] | undefined): value is string {
-  return typeof value === "string" && /^[A-Za-z0-9_-]+$/.test(value);
-}
 
 export default async function PaymentSuccessPage({
   searchParams,
@@ -36,13 +28,7 @@ export default async function PaymentSuccessPage({
   searchParams: PaymentSuccessSearchParams;
 }) {
   const params = await searchParams;
-  const projectId = isValidIdentifier(params.project_id) ? params.project_id : null;
-  const invoiceId = isValidIdentifier(params.invoice_id) ? params.invoice_id : null;
-  const isMobileReturn = params.return_to === "mobile" && projectId !== null && invoiceId !== null;
-  const actionHref = isMobileReturn
-    ? `${EXPO_WEB_BASE_URL}/projects/${encodeURIComponent(projectId)}`
-    : "/dashboard/invoices";
-  const actionLabel = isMobileReturn ? "payment.continueApp" : "payment.viewInvoices";
+  const isMobileReturn = params.return_to === "mobile";
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-6 py-16">
@@ -51,20 +37,24 @@ export default async function PaymentSuccessPage({
           <Check className="size-5 text-brand-accent" />
         </div>
 
-        <h1 className="mt-5 text-lg font-semibold tracking-tight"><LocaleText id="payment.submitted" /></h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          <LocaleText id="payment.submittedIntro" />
-        </p>
-
-        <div className="mt-6 flex justify-center">
-          <Button nativeButton={false} render={<a href={actionHref} />}>
-            <LocaleText id={actionLabel} />
-          </Button>
-        </div>
-        {isMobileReturn && (
-          <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            <LocaleText id="payment.devLink" />
-          </p>
+        {isMobileReturn ? (
+          <h1 className="mt-5 text-lg font-semibold tracking-tight">
+            <LocaleText id="payment.returnToApp" />
+          </h1>
+        ) : (
+          <>
+            <h1 className="mt-5 text-lg font-semibold tracking-tight">
+              <LocaleText id="payment.submitted" />
+            </h1>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+              <LocaleText id="payment.submittedIntro" />
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Button nativeButton={false} render={<a href="/dashboard/invoices" />}>
+                <LocaleText id="payment.viewInvoices" />
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </main>

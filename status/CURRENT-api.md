@@ -1,6 +1,6 @@
 # CURRENT — API & database lane (Agent A)
 
-Last updated: 2026-08-17 11:27 by Codex — resolve production Stripe configuration
+Last updated: 2026-08-17 11:38 by Codex — simplify mobile payment success handoff
 
 ## What changed
 
@@ -23,6 +23,11 @@ Last updated: 2026-08-17 11:27 by Codex — resolve production Stripe configurat
   `FAILED` and cleared its unusable session reference before each safe retry.
   Every production update was guarded by exact invoice ID, client email,
   amount, and current status checks.
+- In a one-time cross-lane exception explicitly authorized by Buna, simplified
+  the web success page shown after a mobile Checkout. It now displays only the
+  success icon and “You may return to the Clientflow app,” with no web-app
+  button or development explanation. Web-originated payments still show their
+  existing invoice-dashboard action. Added equivalent German and Albanian text.
 
 ## Verification
 
@@ -35,7 +40,11 @@ Last updated: 2026-08-17 11:27 by Codex — resolve production Stripe configurat
   event reports `pending_webhooks: 0`.
 - Production invoice `cmswzttmy000004l40zmnrg4i` is `PAID`, has `paidAt` set,
   and stores both the matching Checkout Session and Payment Intent IDs.
-- No tests or build were run because no source file changed.
+- Mobile success-page change: typecheck passed, lint passed with two pre-existing
+  `<img>` warnings, and all 34 files / 145 tests passed.
+- `npm run verify` reached the build but Turbopack hit its known sandbox-only
+  process/port-binding panic. `node_modules/.bin/next build --webpack` passed
+  and compiled all routes, including `/payment/success`.
 
 ## Handoff
 
@@ -52,3 +61,6 @@ Last updated: 2026-08-17 11:27 by Codex — resolve production Stripe configurat
 - Separate hardening opportunity remains: require a paid Checkout Session in
   the webhook handler before marking an invoice paid, especially before delayed
   payment methods are enabled.
+- The mobile success-page edit touched `app/payment/success/page.tsx` and
+  `lib/i18n.tsx` only under Buna's explicit one-time authorization. No Web lane
+  state file was changed.
