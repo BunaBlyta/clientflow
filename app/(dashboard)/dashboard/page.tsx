@@ -8,52 +8,57 @@ import {
   averageTurnaroundByPackage,
 } from "@/lib/analytics";
 import { fetchJson } from "@/lib/fetch-json";
-import { formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
-import type { ManagedPackage, Project, ProjectRequest } from "@/lib/types";
+import type { CustomLead, Invoice, ManagedPackage, Project, ProjectRequest } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
-import { formatRelativeTime } from "@/lib/relative-time";
-import { NOTIFICATION_ICON } from "@/lib/notification-meta";
-import { getNotificationDestination } from "@/lib/notification-destination";
 import { cn } from "@/lib/utils";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { useNotificationStore } from "@/lib/realtime-notification-store";
 
 export default function OverviewPage() {
   const { t } = useLocale();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
+  const [customLeads, setCustomLeads] = useState<CustomLead[]>([]);
+  const [overviewRowLimit, setOverviewRowLimit] = useState(2);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const notifications = useNotificationStore((state) => state.notifications);
-  const notificationsLoading = useNotificationStore((state) => state.isLoading);
 
   const loadOverview = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const [projectData, requestData, packageData] = await Promise.all([
+      const [invoiceData, projectData, requestData, packageData, customLeadData] = await Promise.all([
+        fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
         fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
         fetchJson<ProjectRequest[]>("/api/requests", "We couldn't load project requests.", signal),
         fetchJson<ManagedPackage[]>("/api/packages", "We couldn't load the packages.", signal),
+        fetchJson<CustomLead[]>("/api/contact-leads", "We couldn't load custom inquiries.", signal),
       ]);
 
       if (
+        !Array.isArray(invoiceData) ||
         !Array.isArray(projectData) ||
         !Array.isArray(requestData) ||
-        !Array.isArray(packageData)
+        !Array.isArray(packageData) ||
+        !Array.isArray(customLeadData)
       ) {
         throw new Error("The server returned an unexpected overview response.");
       }
 
       if (!signal?.aborted) {
+        setInvoices(invoiceData);
         setProjects(projectData);
         setProjectRequests(requestData);
         setPackages(packageData);
+        setCustomLeads(customLeadData);
       }
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
@@ -70,6 +75,17 @@ export default function OverviewPage() {
     void Promise.resolve().then(() => loadOverview(controller.signal));
     return () => controller.abort();
   }, [loadOverview]);
+
+  useEffect(() => {
+    const updateOverviewRowLimit = () => {
+      const availableHeight = window.innerHeight - 568;
+      setOverviewRowLimit(Math.max(2, Math.floor(availableHeight / 64)));
+    };
+
+    updateOverviewRowLimit();
+    window.addEventListener("resize", updateOverviewRowLimit);
+    return () => window.removeEventListener("resize", updateOverviewRowLimit);
+  }, []);
 
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
@@ -113,6 +129,21 @@ export default function OverviewPage() {
   const turnaround = averageTurnaroundByPackage(projects, packages);
   const pendingRequests = projectRequests.filter((r) => r.status === "PENDING");
   const unreadNotifications = notifications.filter((notification) => !notification.read);
+  const customInquiries = customLeads.filter((lead) => !lead.clientId);
+  const overdueInvoices = invoices.filter(
+    (invoice) =>
+      ["SENT", "PAYMENT_PENDING", "FAILED"].includes(invoice.status) &&
+      invoice.dueDate &&
+      new Date(invoice.dueDate).getTime() < Date.now(),
+  );
+  const upcomingLaunches = projects
+    .filter((project) => !["LAUNCHED", "CANCELLED"].includes(project.status))
+    .sort((a, b) => {
+      if (!a.targetLaunchDate && !b.targetLaunchDate) return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      if (!a.targetLaunchDate) return 1;
+      if (!b.targetLaunchDate) return -1;
+      return new Date(a.targetLaunchDate).getTime() - new Date(b.targetLaunchDate).getTime();
+    });
 
   return (
     <div className="flex flex-col gap-8">
@@ -123,13 +154,12 @@ export default function OverviewPage() {
         <StatTile label={t("nav.notifications")} value={String(unreadNotifications.length)} hint={t("dashboard.kpiNotificationsHint")} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border p-5">
+      <div className="rounded-lg border border-border p-5">
           <div className="border-b border-border pb-3">
             <h2 className="text-[15px] font-medium">{t("dashboard.avgTurnaround")}</h2>
             <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
           </div>
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {turnaround.map((turnaroundRow) => (
               <div key={turnaroundRow.packageId} className="flex min-h-14 min-w-0 items-center justify-between gap-4 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40">
                 <span className="min-w-0 truncate">{turnaroundRow.name}</span>
@@ -139,34 +169,6 @@ export default function OverviewPage() {
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="rounded-lg border border-border p-5">
-          <div className="border-b border-border pb-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-medium">{t("dashboard.pendingRequests")}</h2>
-              <Link href="/dashboard/projects?tab=requests" className="text-[12px] text-brand-accent hover:underline">
-                {t("notifications.viewAll")}
-              </Link>
-            </div>
-            <p className="text-[12px] text-muted-foreground">{t("dashboard.awaitingApproval")}</p>
-          </div>
-          <div className="mt-4 flex flex-col gap-2">
-            {pendingRequests.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">{t("dashboard.nothingPending")}</p>
-            ) : (
-              pendingRequests.map((r) => (
-                <div key={r.id} className="flex min-h-14 min-w-0 items-center justify-between gap-4 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40">
-                  <div className="min-w-0">
-                    <p className="font-medium">{r.prospectName}</p>
-                    <p className="truncate text-[12px] text-muted-foreground">{r.companyName ?? r.prospectEmail}</p>
-                  </div>
-                  <span className="shrink-0 text-right text-[12px] text-muted-foreground">{formatDate(r.createdAt)}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -174,10 +176,10 @@ export default function OverviewPage() {
           <div className="border-b border-border pb-3">
             <h2 className="text-[15px] font-medium">{t("dashboard.recentProjects")}</h2>
           </div>
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-4 grid auto-rows-[56px] gap-2">
             {[...projects]
               .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-              .slice(0, 5)
+              .slice(0, overviewRowLimit)
               .map((p) => (
                 <Link
                   key={p.id}
@@ -193,46 +195,103 @@ export default function OverviewPage() {
 
         <div className="rounded-lg border border-border p-5">
           <div className="flex items-center justify-between border-b border-border pb-3">
-            <h2 className="text-[15px] font-medium">{t("nav.notifications")}</h2>
-            <Link href="/dashboard/notifications" className="text-[12px] text-brand-accent hover:underline">
+            <h2 className="text-[15px] font-medium">{t("dashboard.projectSchedule")}</h2>
+            <Link href="/dashboard/projects" className="text-[12px] text-brand-accent hover:underline">
               {t("notifications.viewAll")}
             </Link>
           </div>
-          <div className="mt-4 flex flex-col gap-2">
-            {notificationsLoading ? (
-              <p className="py-2 text-[13px] text-muted-foreground">{t("common.loading")}</p>
-            ) : notifications.length === 0 ? (
-              <p className="py-2 text-[13px] text-muted-foreground">{t("notifications.noNotifications")}</p>
+          <div className="mt-4 grid auto-rows-[56px] gap-2">
+            {upcomingLaunches.length === 0 ? (
+              <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.noActiveProjects")}</p>
             ) : (
-              notifications.slice(0, 5).map((notification) => {
-                const Icon = NOTIFICATION_ICON[notification.type];
+              upcomingLaunches.slice(0, overviewRowLimit).map((project) => {
                 return (
                   <Link
-                    key={notification.id}
-                    href={getNotificationDestination(notification)}
-                    className="flex min-h-14 items-start gap-3 py-2.5 hover:text-brand-accent"
+                    key={project.id}
+                    href={`/dashboard/projects/${project.id}`}
+                    className="grid min-h-14 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40 hover:text-brand-accent"
                   >
-                    <Icon
-                      className={cn(
-                        "mt-0.5 size-4 shrink-0",
-                        notification.read ? "text-muted-foreground/70" : "text-brand-accent",
-                      )}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className={cn("block text-[13px]", !notification.read && "font-medium")}>
-                        {notification.title}
-                      </span>
-                      <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
-                        {notification.body}
-                      </span>
+                    <span className="min-w-0 truncate">{project.name}</span>
+                    <span className={cn("whitespace-nowrap text-[12px]", PROJECT_STATUS_TONE[project.status])}>
+                      {t(`status.project.${project.status}`)}
                     </span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">
-                      {formatRelativeTime(notification.createdAt)}
+                    <span className="whitespace-nowrap text-right text-[12px] text-muted-foreground">
+                      {project.targetLaunchDate ? formatDate(project.targetLaunchDate) : t("dashboard.notScheduled")}
                     </span>
                   </Link>
                 );
               })
             )}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border p-5">
+        <div className="flex items-start justify-between gap-4 border-b border-border pb-3">
+          <div>
+            <h2 className="text-[15px] font-medium">{t("dashboard.workQueue")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.workQueueIntro")}</p>
+          </div>
+          <Link href="/dashboard/projects" className="text-[12px] text-brand-accent hover:underline">
+            {t("notifications.viewAll")}
+          </Link>
+        </div>
+        <div className="mt-4 grid gap-6 lg:grid-cols-3">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-[13px] font-medium">{t("dashboard.pendingRequests")}</h3>
+              <span className="text-[12px] text-muted-foreground">{pendingRequests.length}</span>
+            </div>
+            <div className="mt-2 flex flex-col gap-1">
+              {pendingRequests.length === 0 ? (
+                <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.nothingPending")}</p>
+              ) : (
+                pendingRequests.slice(0, 4).map((request) => (
+                  <Link key={request.id} href={`/dashboard/requests/${request.id}`} className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
+                    <span className="min-w-0 truncate">{request.companyName ?? request.prospectName}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(request.createdAt)}</span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-[13px] font-medium">{t("projects.tabCustom")}</h3>
+              <span className="text-[12px] text-muted-foreground">{customInquiries.length}</span>
+            </div>
+            <div className="mt-2 flex flex-col gap-1">
+              {customInquiries.length === 0 ? (
+                <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.workQueueEmpty")}</p>
+              ) : (
+                customInquiries.slice(0, 4).map((inquiry) => (
+                  <Link key={inquiry.id} href={`/dashboard/inquiries/${inquiry.id}`} className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
+                    <span className="min-w-0 truncate">{inquiry.name}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(inquiry.createdAt)}</span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-[13px] font-medium">{t("dashboard.overdueInvoices")}</h3>
+              <span className="text-[12px] text-muted-foreground">{overdueInvoices.length}</span>
+            </div>
+            <div className="mt-2 flex flex-col gap-1">
+              {overdueInvoices.length === 0 ? (
+                <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.workQueueEmpty")}</p>
+              ) : (
+                overdueInvoices.slice(0, 4).map((invoice) => (
+                  <Link key={invoice.id} href="/dashboard/invoices" className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
+                    <span className="min-w-0 truncate">{invoice.label}</span>
+                    <span className="shrink-0 text-[11px] text-status-danger">{formatCurrency(invoice.amountCents)}</span>
+                  </Link>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

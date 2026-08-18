@@ -27,7 +27,7 @@ export function RevenueByPackageChart({
   return (
     <ChartContainer config={chartConfig} className="h-56 w-full">
       <BarChart data={data} margin={{ left: 0, right: 8, top: 16, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="var(--border)" />
+        <CartesianGrid vertical={false} stroke="var(--analytics-border, var(--border))" />
         <XAxis
           dataKey="name"
           tickLine={false}

@@ -20,6 +20,11 @@
 @custom-variant data-disabled (&[data-disabled]);
 @custom-variant data-placeholder (&[data-placeholder]);
 @custom-variant data-inset (&[data-inset]);
+
+.analytics-page {
+  --analytics-border: color-mix(in oklab, var(--border) 58%, transparent);
+}
+
 /*
  * Base UI's orientation-aware primitives (Tabs, Separator, ScrollArea) only ever
  * emit data-orientation="horizontal"/"vertical" — never a bare data-horizontal/

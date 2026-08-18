@@ -34,7 +34,7 @@ export function RevenueOverTimeChart({
             <stop offset="100%" stopColor="var(--brand-accent)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="var(--border)" />
+        <CartesianGrid vertical={false} stroke="var(--analytics-border, var(--border))" />
         <YAxis
           tickLine={false}
           axisLine={false}

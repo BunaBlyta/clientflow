@@ -140,7 +140,7 @@ export default function AnalyticsPage() {
   const maxStageCount = Math.max(1, ...stageRows.map((s) => s.count));
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="analytics-page flex flex-col gap-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.kpiRevenueHint")} />
         <StatTile
@@ -161,7 +161,7 @@ export default function AnalyticsPage() {
         />
       </div>
 
-      <div className="rounded-lg border border-border p-5">
+      <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-accent" />
@@ -187,7 +187,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border p-5">
+      <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
         <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
         <p className="text-[12px] text-muted-foreground">{t("dashboard.lastMonthsPaid", { months: 12 })}</p>
         <div className="mt-4">
@@ -196,7 +196,7 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border p-5">
+        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.revenueByPackage")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.allTimePaid")}</p>
           <div className="mt-4">
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border p-5">
+        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.turnaroundByPackage")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
           <div className="mt-4">
@@ -220,7 +220,7 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="flex h-full flex-col rounded-lg border border-border p-5">
+        <div className="flex h-full flex-col rounded-lg border border-[color:var(--analytics-border)] p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
           <div className="mt-4 flex flex-1 flex-col justify-between gap-3">
@@ -241,12 +241,12 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border p-5">
+        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
           <table className="analytics-status-table mt-4 w-full text-[13px]">
             <thead>
-              <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
+              <tr className="border-b border-[color:var(--analytics-border)] text-left text-[12px] text-muted-foreground">
                 <th className="py-2 font-normal">{t("common.status")}</th>
                 <th className="py-2 text-right font-normal">{t("common.count")}</th>
                 <th className="py-2 text-right font-normal">{t("common.amount")}</th>
@@ -254,7 +254,7 @@ export default function AnalyticsPage() {
             </thead>
             <tbody>
               {invoiceStatusRows.map((row) => (
-                <tr key={row.status} className="border-b border-border last:border-0">
+                <tr key={row.status} className="border-b border-[color:var(--analytics-border)] last:border-0">
                   <td className="py-2">
                     <span className={INVOICE_STATUS_TONE[row.status]}>{t(`status.invoice.${row.status}`)}</span>
                   </td>

@@ -1,8 +1,18 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 15:03 by Codex — lock settings tab placement
+Last updated: 2026-08-18 16:40 by Codex — fill project schedule card
 
 ## Current state
+
+- Replaced the Overview Notifications/invoice activity card with a localized Project schedule, showing every active project with dated launches first and “Not scheduled” for projects without a target date; the existing two-column layout and responsive whole-row limit remain.
+
+- Kept Recent Projects and Notifications on a shared fixed 56px row rhythm so corresponding rows line up without stretching their cards beyond the actual content; notification content is vertically centered to match. Both panels now calculate a shared whole-row limit from the viewport height, so the last visible row is never clipped.
+
+- Softened Analytics card, table, and chart separators with a page-scoped lower-contrast border token, keeping the structure visible without bright lines dominating on lighter or higher-contrast displays.
+
+- Made the Overview viewport-height-aware on larger screens so the Recent Projects and Notifications cards stretch together through the remaining available space. Their visible row counts now respond to viewport height rather than width, with fewer rows on shorter screens and no panel scrollbar.
+
+- Added a full-width localized Overview Work queue for pending requests, unconverted custom inquiries, and overdue invoices, and removed the now-duplicated standalone Pending Requests card. Average Turnaround is now full width instead of sitting in an empty two-column wrapper.
 
 - Matched the Team section’s parent spacing to Packages so the tab header and 360px list begin at the same vertical position and remain stable when switching tabs.
 
