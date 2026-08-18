@@ -14,13 +14,24 @@ import { fetchJson } from "@/lib/fetch-json";
 import { formatMajorCurrency } from "@/lib/format";
 import { useLocale } from "@/lib/i18n";
 import type { ManagedPackage } from "@/lib/types";
-import { CustomBuildDialog } from "@/components/marketing/custom-build-dialog";
 
 const mostPopularSlug = "full-website";
 const customPackageSlug = "web-app-build";
+type RequestField = "name" | "email";
+
+const packageDescriptionExtensions: Record<ManagedPackage["slug"], string> = {
+  "landing-page": "Focused, fast, and built around one clear action.",
+  "full-website": "Structured for growth, content, and credibility.",
+  "web-app-build": "Designed around your product and your users.",
+};
 
 function isCustomPackage(pkg: ManagedPackage) {
   return pkg.slug === customPackageSlug;
+}
+
+function getPackageDescription(pkg: ManagedPackage) {
+  const extension = packageDescriptionExtensions[pkg.slug];
+  return extension ? `${pkg.description} ${extension}` : pkg.description;
 }
 
 function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
@@ -29,6 +40,16 @@ function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: React
       {children}
       <span className="required-mark" aria-hidden="true">*</span>
     </Label>
+  );
+}
+
+function FieldHint({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <div id={id} role="alert" className="request-field-hint mb-0.5 flex items-center gap-1.5 text-[12px] leading-4">
+      <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
+      <span>{message}</span>
+    </div>
   );
 }
 
@@ -43,6 +64,7 @@ export function PackagesAndRequest() {
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<RequestField, string>>>({});
 
   useEffect(() => {
     const controller = new AbortController();
@@ -79,6 +101,7 @@ export function PackagesAndRequest() {
   function handleChoose(packageId: string) {
     setSelectedPackageId(packageId);
     setSubmitError(null);
+    setFieldErrors({});
     setSubmitted(false);
     setRequestOpen(true);
   }
@@ -87,6 +110,7 @@ export function PackagesAndRequest() {
     setRequestOpen(nextOpen);
     if (!nextOpen) {
       setSubmitError(null);
+      setFieldErrors({});
       setSubmitted(false);
     }
   }
@@ -95,6 +119,22 @@ export function PackagesAndRequest() {
     e.preventDefault();
     const formElement = e.currentTarget;
     const form = new FormData(formElement);
+    const name = String(form.get("name") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim();
+    const nextFieldErrors: Partial<Record<RequestField, string>> = {};
+
+    if (!name) nextFieldErrors.name = t("common.required");
+    if (!email) {
+      nextFieldErrors.email = t("common.required");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextFieldErrors.email = t("common.invalidEmail");
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
     setSubmitError(null);
     setPending(true);
 
@@ -104,8 +144,8 @@ export function PackagesAndRequest() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           packageId: selectedPackageId,
-          name: String(form.get("name") ?? ""),
-          email: String(form.get("email") ?? ""),
+          name,
+          email,
           companyName: String(form.get("companyName") ?? "").trim() || undefined,
           message: String(form.get("message") ?? "").trim() || undefined,
         }),
@@ -119,6 +159,7 @@ export function PackagesAndRequest() {
       }
 
       formElement.reset();
+      setFieldErrors({});
       setSubmitted(true);
       toast.success("Request submitted", {
         description: "We'll review it and follow up by email shortly.",
@@ -164,7 +205,7 @@ export function PackagesAndRequest() {
                       )}
                     >
                       {isPopular && (
-                        <span className="popular-stamp absolute top-4 right-4 flex min-h-10 items-center justify-center rounded-full border px-4 text-center text-[10px] leading-[1.1] font-semibold uppercase tracking-[0.12em]">
+                        <span className="popular-stamp absolute top-4 right-4 flex size-16 items-center justify-center rounded-full border px-1 text-center text-[8px] leading-[1.05] font-semibold uppercase tracking-[0.1em]">
                           {t("marketing.mostPopular")}
                         </span>
                       )}
@@ -172,7 +213,7 @@ export function PackagesAndRequest() {
                       <p className="package-price mt-1 min-h-9 text-[28px] font-semibold tracking-tight">
                         {isCustom ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                       </p>
-                      <p className="package-description mt-2 h-10 text-[13px] leading-5 text-muted-foreground">{pkg.description}</p>
+                      <p className="package-description mt-2 min-h-10 line-clamp-2 text-[13px] leading-5 text-muted-foreground">{getPackageDescription(pkg)}</p>
                       <ul className="mt-5 flex flex-1 flex-col gap-2.5">
                         <li className="flex items-start gap-2 text-[13px]">
                           <Check className="mt-0.5 size-4 shrink-0 text-brand-sky dark:rounded-full dark:bg-brand-accent/25 dark:p-0.5 dark:text-foreground" />
@@ -184,15 +225,14 @@ export function PackagesAndRequest() {
                         </li>
                       </ul>
                       {isCustom ? (
-                        <CustomBuildDialog
-                          trigger={
-                            <Button className="mt-6 w-full">
-                              {t("marketing.talkToUs")}
-                            </Button>
-                          }
-                        />
+                        <Button className="mt-6 w-full" render={<a href="#contact" />}>
+                          {t("marketing.talkToUs")}
+                        </Button>
                       ) : (
-                        <Button className="mt-6 w-full" onClick={() => handleChoose(pkg.id)}>
+                        <Button
+                          className={cn("mt-6 w-full", isPopular && "package-cta--popular")}
+                          onClick={() => handleChoose(pkg.id)}
+                        >
                           {t("marketing.requestPackage")}
                         </Button>
                       )}
@@ -207,8 +247,8 @@ export function PackagesAndRequest() {
 
       {!isLoadingPackages && !packagesError && standardPackages.length > 0 && (
         <Dialog open={requestOpen} onOpenChange={handleRequestOpenChange}>
-          <DialogContent id="request-form" className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
-            <DialogHeader>
+          <DialogContent id="request-form" className="marketing-modal request-modal max-h-[calc(100vh-2rem)] overflow-y-auto !rounded-2xl !border-0 !ring-0 p-6 sm:max-w-lg sm:p-7">
+            <DialogHeader className="gap-2">
               <DialogTitle>{t("marketing.requestPackageTitle")}</DialogTitle>
               <DialogDescription>{t("marketing.requestPackageIntro")}</DialogDescription>
             </DialogHeader>
@@ -224,7 +264,7 @@ export function PackagesAndRequest() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {submitError && (
                   <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
                     <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
@@ -234,10 +274,16 @@ export function PackagesAndRequest() {
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="package">{t("nav.packages")}</Label>
                   <Select value={selectedPackageId} onValueChange={(value) => value && setSelectedPackageId(value)}>
-                    <SelectTrigger id="package" className="request-field w-full">
+                    <SelectTrigger id="package" className="request-field request-modal-field w-full">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent side="bottom" align="start" sideOffset={8}>
+                    <SelectContent
+                      side="bottom"
+                      align="start"
+                      alignItemWithTrigger={false}
+                      sideOffset={8}
+                      className="request-package-content"
+                    >
                       {standardPackages.map((pkg) => (
                         <SelectItem key={pkg.id} value={pkg.id}>
                           {pkg.name} — {formatMajorCurrency(pkg.price, pkg.currency)}
@@ -249,20 +295,41 @@ export function PackagesAndRequest() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
                     <RequiredLabel htmlFor="name">{t("marketing.yourName")}</RequiredLabel>
-                    <Input id="name" name="name" required placeholder={t("marketing.namePlaceholder")} className="request-field" />
+                    <FieldHint id="request-name-error" message={fieldErrors.name} />
+                    <Input
+                      id="name"
+                      name="name"
+                      required
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      aria-describedby={fieldErrors.name ? "request-name-error" : undefined}
+                      placeholder={t("marketing.namePlaceholder")}
+                      className="request-field request-modal-field"
+                      onInput={() => setFieldErrors((current) => ({ ...current, name: undefined }))}
+                    />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="companyName">{t("marketing.company")}</Label>
-                    <Input id="companyName" name="companyName" placeholder={t("marketing.companyPlaceholder")} className="request-field" />
+                    <Input id="companyName" name="companyName" placeholder={t("marketing.companyPlaceholder")} className="request-field request-modal-field" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <RequiredLabel htmlFor="email">{t("auth.email")}</RequiredLabel>
-                  <Input id="email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} className="request-field" />
+                  <FieldHint id="request-email-error" message={fieldErrors.email} />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={fieldErrors.email ? "request-email-error" : undefined}
+                    placeholder={t("marketing.emailPlaceholder")}
+                    className="request-field request-modal-field"
+                    onInput={() => setFieldErrors((current) => ({ ...current, email: undefined }))}
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="message">{t("marketing.messageOptional")}</Label>
-                  <Textarea id="message" name="message" rows={4} placeholder={t("marketing.messagePlaceholder")} className="request-field max-h-56 resize-y overflow-y-auto" />
+                  <Textarea id="message" name="message" rows={4} placeholder={t("marketing.messagePlaceholder")} className="request-field request-modal-field max-h-56 resize-none overflow-y-auto" />
                 </div>
                 <Button type="submit" disabled={pending} className="mt-2 w-full">
                   {pending ? t("marketing.submitting") : t("marketing.submitRequest")}

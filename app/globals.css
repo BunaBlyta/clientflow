@@ -1523,8 +1523,21 @@ html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selec
 }
 
 .required-mark {
-  color: var(--brand-accent);
+  color: #167d99;
   font-weight: 600;
+}
+
+.request-field-hint {
+  color: #167d99;
+  font-weight: 500;
+}
+
+.dark .request-field-hint {
+  color: #8bdff6;
+}
+
+.dark .required-mark {
+  color: #8bdff6;
 }
 
 .form-warning {
