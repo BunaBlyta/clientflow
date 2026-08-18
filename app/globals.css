@@ -1602,7 +1602,7 @@ html:not(.dark) .crm-shell table > tbody > tr:not(:has(td[colspan])):hover > td 
 }
 
 html:not(.dark) .crm-shell table > thead > tr > th {
-  background-color: rgb(15 23 42 / 0.06);
+  background-color: rgb(100 116 139 / 0.18);
 }
 
 .crm-shell table.analytics-status-table > thead > tr > th,
@@ -1628,6 +1628,62 @@ html:not(.dark) .crm-shell table > thead > tr > th {
 .crm-shell [data-slot="textarea"],
 .crm-shell [data-slot="button"] {
   border-radius: 999px !important;
+}
+
+.crm-shell [data-slot="input"],
+.crm-shell [data-slot="select-trigger"] {
+  transition: border-color 150ms ease, background-color 150ms ease !important;
+}
+
+html:not(.dark) .crm-shell [data-slot="input"],
+html:not(.dark) .crm-shell [data-slot="select-trigger"] {
+  background-color: rgb(232 237 242);
+  border-color: rgb(185 194 204);
+}
+
+.dark .crm-shell [data-slot="input"],
+.dark .crm-shell [data-slot="select-trigger"] {
+  background-color: color-mix(in oklch, var(--muted) 72%, var(--background));
+}
+
+.crm-shell [data-slot="input"]:hover,
+.crm-shell [data-slot="select-trigger"]:hover {
+  background-color: var(--muted);
+}
+
+html:not(.dark) .crm-shell [data-slot="input"]:hover,
+html:not(.dark) .crm-shell [data-slot="select-trigger"]:hover {
+  background-color: rgb(226 232 240);
+  border-color: rgb(100 116 139);
+}
+
+.crm-shell [data-slot="input"]:hover,
+.crm-shell [data-slot="select-trigger"]:hover,
+.crm-shell [data-slot="input"]:focus-visible,
+.crm-shell [data-slot="select-trigger"]:focus-visible {
+  border-color: var(--border);
+}
+
+.crm-shell [data-slot="input"],
+.crm-shell [data-slot="select-trigger"] {
+  border-color: transparent !important;
+}
+
+.crm-shell [data-slot="tabs-list"] {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html:not(.dark) .crm-shell [data-slot="tabs-list"] {
+  background-color: rgb(232 237 242);
+}
+
+.dark .crm-shell [data-slot="tabs-list"] {
+  background-color: color-mix(in oklch, var(--muted) 72%, var(--background));
+}
+
+.crm-shell [data-slot="tabs-trigger"][data-active] {
+  box-shadow: none !important;
 }
 
 .crm-shell header button {

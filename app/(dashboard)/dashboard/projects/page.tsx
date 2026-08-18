@@ -45,6 +45,8 @@ function ProjectsPageInner() {
   const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
   const [projectSearch, setProjectSearch] = useState("");
   const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
+  const [requestSearch, setRequestSearch] = useState("");
+  const [customSearch, setCustomSearch] = useState("");
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,7 +56,7 @@ function ProjectsPageInner() {
           router.replace(value === "projects" ? "/dashboard/projects" : `/dashboard/projects?tab=${value}`);
         }}
       >
-        <div className="flex items-center gap-3 overflow-x-auto pb-1">
+        <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-1">
           <TabsList>
             <TabsTrigger value="projects">{t("projects.tabProjects")}</TabsTrigger>
             <TabsTrigger value="requests">{t("projects.tabRequests")}</TabsTrigger>
@@ -84,6 +86,12 @@ function ProjectsPageInner() {
               </Select>
             </TableToolbar>
           )}
+          {tab === "requests" && (
+            <TableToolbar search={requestSearch} onSearchChange={setRequestSearch} placeholder={t("projects.searchRequests")} />
+          )}
+          {tab === "custom" && (
+            <TableToolbar search={customSearch} onSearchChange={setCustomSearch} placeholder={t("projects.searchInquiries")} />
+          )}
         </div>
         <TabsContent value="projects" className="mt-4">
           <ProjectsTable
@@ -92,10 +100,10 @@ function ProjectsPageInner() {
           />
         </TabsContent>
         <TabsContent value="requests" className="mt-4">
-          <RequestsTable />
+          <RequestsTable search={requestSearch} />
         </TabsContent>
         <TabsContent value="custom" className="mt-4">
-          <CustomLeadsTable />
+          <CustomLeadsTable search={customSearch} />
         </TabsContent>
       </Tabs>
     </div>
@@ -302,7 +310,7 @@ function ProjectsTable({
   );
 }
 
-function RequestsTable() {
+function RequestsTable({ search }: { search: string }) {
   const router = useRouter();
   const { t } = useLocale();
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
@@ -310,7 +318,6 @@ function RequestsTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   const loadRequests = useCallback(async (signal?: AbortSignal) => {
@@ -419,8 +426,6 @@ function RequestsTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("projects.searchRequests")} />
-
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-[13px]">
           <thead>

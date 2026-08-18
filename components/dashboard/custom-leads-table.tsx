@@ -8,15 +8,13 @@ import { formatDate } from "@/lib/format";
 import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { ConvertCustomLeadDialog } from "@/components/dashboard/convert-custom-lead-dialog";
 import { Button } from "@/components/ui/button";
-import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import type { CustomLead } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 
-export function CustomLeadsTable() {
+export function CustomLeadsTable({ search }: { search: string }) {
   const router = useRouter();
   const { t } = useLocale();
   const [leads, setLeads] = useState<CustomLead[]>([]);
-  const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +54,6 @@ export function CustomLeadsTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("projects.searchInquiries")} />
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-[13px]">
           <thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">{t("projects.prospect")}</th><th className="px-4 py-2.5 font-normal">{t("inquiries.brief")}</th><th className="px-4 py-2.5 font-normal">{t("inquiries.received")}</th><th className="px-4 py-2.5 text-right font-normal">{t("common.actions")}</th></tr></thead>
