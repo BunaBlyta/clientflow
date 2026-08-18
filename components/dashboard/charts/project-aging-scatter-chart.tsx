@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { ArrowUpRight, X } from "lucide-react";
+import { formatDate } from "@/lib/format";
 
 type ProjectAgingPoint = {
   id: string;
   name: string;
   stage: string;
   ageDays: number;
+  updatedAt: string;
 };
 
 const DEFAULT_WIDTH = 640;
@@ -27,6 +31,7 @@ export function ProjectAgingScatterChart({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const chartWidth = containerWidth || DEFAULT_WIDTH;
   const plotWidth = chartWidth - LEFT - RIGHT;
   const plotBottom = CHART_HEIGHT - BOTTOM;
@@ -36,6 +41,7 @@ export function ProjectAgingScatterChart({
   const tickStep = xMax <= 42 ? 7 : 14;
   const xTicks = Array.from({ length: Math.floor(xMax / tickStep) + 1 }, (_, index) => index * tickStep);
   if (xTicks[xTicks.length - 1] !== xMax) xTicks.push(xMax);
+  const selectedPoint = data.find((point) => point.id === selectedPointId) ?? null;
   const stageIndex = new Map(stages.map((stage, index) => [stage, index]));
   const yForStage = (index: number) =>
     stages.length <= 1 ? TOP + plotHeight / 2 : TOP + (plotHeight / (stages.length - 1)) * index;
@@ -96,13 +102,59 @@ export function ProjectAgingScatterChart({
           const x = LEFT + (point.ageDays / xMax) * plotWidth;
           const color = point.ageDays >= 30 ? "var(--status-danger)" : point.ageDays >= 14 ? "var(--status-warning)" : "var(--brand-accent)";
           return (
-            <circle key={point.id} cx={x} cy={y + jitter} r="8" fill={color} stroke="var(--background)" strokeWidth="2">
-              <title>{`${point.name} · ${point.stage} · ${point.ageDays} days since update`}</title>
-            </circle>
+            <g
+              key={point.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`${point.name}, ${point.stage}, ${point.ageDays} days since update`}
+              onClick={() => setSelectedPointId((current) => current === point.id ? null : point.id)}
+              onDoubleClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setSelectedPointId(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setSelectedPointId((current) => current === point.id ? null : point.id);
+                }
+              }}
+              className="cursor-pointer outline-none"
+            >
+              <circle cx={x} cy={y + jitter} r="14" fill="transparent" />
+              <circle
+                cx={x}
+                cy={y + jitter}
+                r="8"
+                fill={color}
+                stroke={selectedPointId === point.id ? "var(--foreground)" : "var(--background)"}
+                strokeWidth={selectedPointId === point.id ? 3 : 2}
+              >
+                <title>{`${point.name} · ${point.stage} · ${point.ageDays} days since update`}</title>
+              </circle>
+            </g>
           );
         })}
         <text x={chartWidth - RIGHT} y={CHART_HEIGHT - 4} textAnchor="end" fill="var(--muted-foreground)" fontSize="11">{xAxisLabel}</text>
       </svg>
+      {selectedPoint && (
+        <div className="mt-2 flex items-center justify-between gap-4 border-t border-[color:var(--analytics-border)] pt-3 text-[12px]">
+          <div className="min-w-0">
+            <p className="truncate font-medium">{selectedPoint.name}</p>
+            <p className="mt-0.5 text-muted-foreground">
+              {selectedPoint.stage} · {selectedPoint.ageDays} days since update · Updated {formatDate(selectedPoint.updatedAt)}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link href={`/dashboard/projects/${selectedPoint.id}`} className="flex items-center gap-1 text-brand-accent hover:underline">
+              View project <ArrowUpRight className="size-3.5" />
+            </Link>
+            <button type="button" onClick={() => setSelectedPointId(null)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground" aria-label="Clear selection">
+              Clear <X className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

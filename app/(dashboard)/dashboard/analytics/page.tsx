@@ -148,25 +148,41 @@ export default function AnalyticsPage() {
     name: project.name,
     stage: t(`status.project.${project.status}`),
     ageDays: Math.max(0, Math.floor((todayStart - new Date(project.updatedAt).getTime()) / 86_400_000)),
+    updatedAt: project.updatedAt,
   }));
   const agingStages = ["PENDING", "DISCOVERY", "DESIGN", "DEVELOPMENT", "REVIEW", "ON_HOLD"]
     .filter((status) => activeProjects.some((project) => project.status === status))
     .map((status) => t(`status.project.${status}`));
   const receivableInvoices = invoices.filter((invoice) => ["SENT", "PAYMENT_PENDING", "FAILED"].includes(invoice.status) && invoice.dueDate);
-  const dueByDay = new Map<string, number>();
+  const projectNames = new Map(projects.map((project) => [project.id, project.name]));
+  const dueByDay = new Map<string, Invoice[]>();
   for (const invoice of receivableInvoices) {
     const key = (invoice.dueDate as string).slice(0, 10);
-    dueByDay.set(key, (dueByDay.get(key) ?? 0) + invoice.amountCents);
+    dueByDay.set(key, [...(dueByDay.get(key) ?? []), invoice]);
   }
   const localDateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const weekStart = new Date(todayStart);
   const dayOfWeek = weekStart.getDay();
   weekStart.setDate(weekStart.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
-  const receivableDays = Array.from({ length: 35 }, (_, index) => {
+  const receivableDays = Array.from({ length: 140 }, (_, index) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + index);
     const dateKey = localDateKey(date);
-    return { date: dateKey, amountCents: dueByDay.get(dateKey) ?? 0, overdue: date.getTime() < todayStart, isToday: date.getTime() === todayStart };
+    const invoicesForDay = dueByDay.get(dateKey) ?? [];
+    return {
+      date: dateKey,
+      amountCents: invoicesForDay.reduce((total, invoice) => total + invoice.amountCents, 0),
+      overdue: date.getTime() < todayStart,
+      isToday: date.getTime() === todayStart,
+      invoices: invoicesForDay.map((invoice) => ({
+        id: invoice.id,
+        projectId: invoice.projectId,
+        projectName: projectNames.get(invoice.projectId) ?? "Project",
+        label: invoice.label,
+        amountCents: invoice.amountCents,
+        statusLabel: t(`status.invoice.${invoice.status}`),
+      })),
+    };
   });
 
   return (
@@ -195,13 +211,11 @@ export default function AnalyticsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-accent" />
-            <div>
+            <div className="min-w-0 flex-1">
               <h2 className="text-[15px] font-medium">{t("dashboard.aiInsight")}</h2>
               <p className="mt-1 text-[12px] text-muted-foreground">
                 {t("dashboard.aiInsightIntro")}
               </p>
-              {insight && <p className="mt-3 max-w-2xl text-[13px] leading-5 text-foreground">{insight}</p>}
-              {insightError && <p className="mt-3 text-[13px] text-status-danger">{insightError}</p>}
             </div>
           </div>
           <Button
@@ -215,6 +229,8 @@ export default function AnalyticsPage() {
             {isGeneratingInsight ? t("dashboard.generating") : t("dashboard.generateInsight")}
           </Button>
         </div>
+        {insight && <p className="mt-4 w-full text-[13px] leading-5 text-foreground">{insight}</p>}
+        {insightError && <p className="mt-4 w-full text-[13px] text-status-danger">{insightError}</p>}
       </div>
 
       <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">

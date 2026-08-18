@@ -1,10 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 18:08 by Codex — make aging axes card-responsive
+Last updated: 2026-08-18 19:27 by Codex — loosen Overview Work Queue rows
 
 ## Current state
 
-- Added Analytics Project aging scatter and Upcoming receivables calendar heatmap charts, using active project update age and unpaid invoice due dates to surface operational risk and cash timing. Added visible age/color legends, heatmap day numbers, today highlighting, timezone-safe local date keys, matched chart-area proportions, corrected the aging chart’s axis frame, moved both legends to the top-right, removed the scatter plot’s max-width constraint, and kept its day domain responsive to the rendered card width.
+- Added Analytics Project aging scatter and Upcoming receivables calendar heatmap charts, using active project update age and unpaid invoice due dates to surface operational risk and cash timing. Added visible age/color legends, month labels, heatmap day numbers, today highlighting, timezone-safe local date keys, matched chart-area proportions, corrected the aging chart’s axis frame, moved both legends to the top-right, removed the scatter plot’s max-width constraint, kept its day domain responsive to the rendered card width, made the existing receivables heatmap weeks stretch across wider cards, added click-through details for projects and receivable invoices, kept the chart area at full height while selection details expand the card downward, made double-clicking a receivables day clear its selection, added larger aging point hit areas with reliable toggle clearing, let the generated AI insight span the entire card below the header row, split Overview average-turnaround rows into even name/value columns, kept all packages with no launches visible as “No launches,” restored the three-package turnaround row at large widths, and matched Work Queue row height and spacing to the neighboring Overview cards.
 
 - Replaced the Overview Notifications/invoice activity card with a localized Project schedule, showing every active project with dated launches first and “Not scheduled” for projects without a target date; the existing two-column layout and responsive whole-row limit remain.
 

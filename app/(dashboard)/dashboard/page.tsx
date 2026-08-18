@@ -161,9 +161,9 @@ export default function OverviewPage() {
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {turnaround.map((turnaroundRow) => (
-              <div key={turnaroundRow.packageId} className="flex min-h-14 min-w-0 items-center justify-between gap-4 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40">
+              <div key={turnaroundRow.packageId} className="grid min-h-14 min-w-0 grid-cols-2 items-center gap-4 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40">
                 <span className="min-w-0 truncate">{turnaroundRow.name}</span>
-                <span className="shrink-0 text-right text-[12px] text-muted-foreground">
+                <span className="min-w-0 text-right text-[12px] text-muted-foreground">
                   {turnaroundRow.avgDays === null ? t("dashboard.noLaunches") : `${turnaroundRow.avgDays} days · ${turnaroundRow.count} launched`}
                 </span>
               </div>
@@ -242,12 +242,12 @@ export default function OverviewPage() {
               <h3 className="text-[13px] font-medium">{t("dashboard.pendingRequests")}</h3>
               <span className="text-[12px] text-muted-foreground">{pendingRequests.length}</span>
             </div>
-            <div className="mt-2 flex flex-col gap-1">
+            <div className="mt-2 flex flex-col gap-2">
               {pendingRequests.length === 0 ? (
                 <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.nothingPending")}</p>
               ) : (
                 pendingRequests.slice(0, 4).map((request) => (
-                  <Link key={request.id} href={`/dashboard/requests/${request.id}`} className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
+                  <Link key={request.id} href={`/dashboard/requests/${request.id}`} className="flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
                     <span className="min-w-0 truncate">{request.companyName ?? request.prospectName}</span>
                     <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(request.createdAt)}</span>
                   </Link>
@@ -261,12 +261,12 @@ export default function OverviewPage() {
               <h3 className="text-[13px] font-medium">{t("projects.tabCustom")}</h3>
               <span className="text-[12px] text-muted-foreground">{customInquiries.length}</span>
             </div>
-            <div className="mt-2 flex flex-col gap-1">
+            <div className="mt-2 flex flex-col gap-2">
               {customInquiries.length === 0 ? (
                 <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.workQueueEmpty")}</p>
               ) : (
                 customInquiries.slice(0, 4).map((inquiry) => (
-                  <Link key={inquiry.id} href={`/dashboard/inquiries/${inquiry.id}`} className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
+                  <Link key={inquiry.id} href={`/dashboard/inquiries/${inquiry.id}`} className="flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
                     <span className="min-w-0 truncate">{inquiry.name}</span>
                     <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(inquiry.createdAt)}</span>
                   </Link>
@@ -280,12 +280,12 @@ export default function OverviewPage() {
               <h3 className="text-[13px] font-medium">{t("dashboard.overdueInvoices")}</h3>
               <span className="text-[12px] text-muted-foreground">{overdueInvoices.length}</span>
             </div>
-            <div className="mt-2 flex flex-col gap-1">
+            <div className="mt-2 flex flex-col gap-2">
               {overdueInvoices.length === 0 ? (
                 <p className="py-2 text-[13px] text-muted-foreground">{t("dashboard.workQueueEmpty")}</p>
               ) : (
                 overdueInvoices.slice(0, 4).map((invoice) => (
-                  <Link key={invoice.id} href="/dashboard/invoices" className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
+                  <Link key={invoice.id} href="/dashboard/invoices" className="flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
                     <span className="min-w-0 truncate">{invoice.label}</span>
                     <span className="shrink-0 text-[11px] text-status-danger">{formatCurrency(invoice.amountCents)}</span>
                   </Link>

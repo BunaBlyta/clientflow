@@ -57,13 +57,7 @@ export function overdueInvoicesTotal(invoices: Invoice[]) {
 }
 
 export function averageTurnaroundByPackage(projects: Project[], packages: ManagedPackage[]) {
-  return packages
-    .filter(
-      (pkg) =>
-        pkg.slug !== "web-app-build" ||
-        projects.some((p) => p.packageId === pkg.id && p.status === "LAUNCHED"),
-    )
-    .map((pkg) => {
+  return packages.map((pkg) => {
       const launched = projects.filter((p) => p.packageId === pkg.id && p.status === "LAUNCHED");
       const avgDays =
         launched.length === 0
