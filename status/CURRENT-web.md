@@ -1,8 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 16:40 by Codex — fill project schedule card
+Last updated: 2026-08-18 18:08 by Codex — make aging axes card-responsive
 
 ## Current state
+
+- Added Analytics Project aging scatter and Upcoming receivables calendar heatmap charts, using active project update age and unpaid invoice due dates to surface operational risk and cash timing. Added visible age/color legends, heatmap day numbers, today highlighting, timezone-safe local date keys, matched chart-area proportions, corrected the aging chart’s axis frame, moved both legends to the top-right, removed the scatter plot’s max-width constraint, and kept its day domain responsive to the rendered card width.
 
 - Replaced the Overview Notifications/invoice activity card with a localized Project schedule, showing every active project with dated launches first and “Not scheduled” for projects without a target date; the existing two-column layout and responsive whole-row limit remain.
 

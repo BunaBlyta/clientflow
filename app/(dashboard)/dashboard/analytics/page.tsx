@@ -20,6 +20,8 @@ import { StatTile } from "@/components/dashboard/stat-tile";
 import { RevenueOverTimeChart } from "@/components/dashboard/charts/revenue-over-time-chart";
 import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-package-chart";
 import { TurnaroundChart } from "@/components/dashboard/charts/turnaround-chart";
+import { ProjectAgingScatterChart } from "@/components/dashboard/charts/project-aging-scatter-chart";
+import { ReceivablesHeatmap } from "@/components/dashboard/charts/receivables-heatmap";
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
@@ -138,6 +140,34 @@ export default function AnalyticsPage() {
   const invoiceStatusRows = invoicesByStatus(invoices);
   const stageRows = projectsByStage(projects);
   const maxStageCount = Math.max(1, ...stageRows.map((s) => s.count));
+  const activeProjects = projects.filter((project) => !["LAUNCHED", "CANCELLED"].includes(project.status));
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const agingPoints = activeProjects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    stage: t(`status.project.${project.status}`),
+    ageDays: Math.max(0, Math.floor((todayStart - new Date(project.updatedAt).getTime()) / 86_400_000)),
+  }));
+  const agingStages = ["PENDING", "DISCOVERY", "DESIGN", "DEVELOPMENT", "REVIEW", "ON_HOLD"]
+    .filter((status) => activeProjects.some((project) => project.status === status))
+    .map((status) => t(`status.project.${status}`));
+  const receivableInvoices = invoices.filter((invoice) => ["SENT", "PAYMENT_PENDING", "FAILED"].includes(invoice.status) && invoice.dueDate);
+  const dueByDay = new Map<string, number>();
+  for (const invoice of receivableInvoices) {
+    const key = (invoice.dueDate as string).slice(0, 10);
+    dueByDay.set(key, (dueByDay.get(key) ?? 0) + invoice.amountCents);
+  }
+  const localDateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const weekStart = new Date(todayStart);
+  const dayOfWeek = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
+  const receivableDays = Array.from({ length: 35 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
+    const dateKey = localDateKey(date);
+    return { date: dateKey, amountCents: dueByDay.get(dateKey) ?? 0, overdue: date.getTime() < todayStart, isToday: date.getTime() === todayStart };
+  });
 
   return (
     <div className="analytics-page flex flex-col gap-8">
@@ -215,6 +245,24 @@ export default function AnalyticsPage() {
             ) : (
               <TurnaroundChart data={turnaroundByPkg} />
             )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
+          <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
+          <div className="mt-5">
+            <ProjectAgingScatterChart data={agingPoints} stages={agingStages} xAxisLabel={t("dashboard.daysSinceUpdate")} />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
+          <h2 className="text-[15px] font-medium">{t("dashboard.upcomingReceivables")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
+          <div className="mt-5">
+            <ReceivablesHeatmap data={receivableDays} />
           </div>
         </div>
       </div>
