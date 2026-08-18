@@ -1,10 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 10:14 by Codex — force light-mode request modal styling
+Last updated: 2026-08-18 10:23 by Codex — use blue required-field markers
 
 ## Current state
 
-- Explicitly removed the accidental dark gradient strip from the light-mode request-modal title and modal surface. Light-mode modal fields now have a slightly darker blue-gray fill with no visible outer or focus border; dark mode is unchanged.
+- Explicitly removed the accidental dark gradient strip from the light-mode request-modal title and modal surface. Light-mode modal fields now use a clearly visible light blue-gray fill with no outer border or focus shadow; required-field asterisks use the brand blue; dark mode is unchanged.
 - Applied the PM landing-page pass: buttons keep their position and use a hand cursor, header is solid, anchor navigation scrolls smoothly with a sticky-header offset, and the hero copy is constrained into a centered triangular wrap.
 - Added intentional three-line breaks to the English landing hero headline so its centered lines widen toward the base; preserved the same spacing behavior through the locale system.
 - Made the landing header’s language, theme, login, and navigation controls use one pill radius, equal control gaps, and consistent language-menu padding.

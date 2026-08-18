@@ -473,10 +473,10 @@
 
   html:not(.dark) #request-form .request-field {
     min-height: 2.5rem;
-    background: #f6fdff !important;
+    background: #eaf3f6 !important;
     border-color: transparent !important;
-    outline: 1px solid rgb(90 178 255 / 0.54);
-    outline-offset: 2px;
+    outline: none !important;
+    outline-offset: 0;
     box-shadow:
       inset 0 4px 11px rgb(90 178 255 / 0.22),
       inset 0 1px 2px rgb(75 75 75 / 0.08),
@@ -485,8 +485,9 @@
 
   html:not(.dark) #request-form .request-field:focus,
   html:not(.dark) #request-form .request-field:focus-visible {
-    outline: 1px solid rgb(90 178 255 / 0.68) !important;
-    outline-offset: 2px;
+    background: #dcebef !important;
+    outline: none !important;
+    outline-offset: 0;
     border-color: transparent !important;
     box-shadow:
       inset 0 5px 12px rgb(90 178 255 / 0.26),
@@ -1522,7 +1523,7 @@ html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selec
 }
 
 .required-mark {
-  color: var(--status-danger);
+  color: var(--brand-accent);
   font-weight: 600;
 }
 
@@ -1691,15 +1692,16 @@ html:not(.dark) #request-form [data-slot="dialog-title"] {
 }
 
 html:not(.dark) #request-form .request-modal-field {
-  background: #edf7fa !important;
-  background-color: #edf7fa !important;
+  background: #eaf3f6 !important;
+  background-color: #eaf3f6 !important;
   color: #16404b !important;
-  border: 0 !important;
+  border: none !important;
   outline: none !important;
   outline-offset: 0;
   box-shadow:
-    inset 0 1px 2px rgb(90 178 255 / 0.08),
-    inset 0 -1px 0 rgb(255 255 255 / 0.62) !important;
+    inset 0 4px 11px rgb(90 178 255 / 0.22),
+    inset 0 1px 2px rgb(75 75 75 / 0.08),
+    inset 0 -2px 0 rgb(255 255 255 / 0.58) !important;
 }
 
 html:not(.dark) #request-form input.request-modal-field::placeholder,
@@ -1715,12 +1717,15 @@ html:not(.dark) .custom-build-gradient .contact-field::placeholder {
 
 html:not(.dark) #request-form .request-modal-field:focus,
 html:not(.dark) #request-form .request-modal-field:focus-visible {
-  border: 0 !important;
+  background: #dcebef !important;
+  background-color: #dcebef !important;
+  border: none !important;
   outline: none !important;
   outline-offset: 0;
   box-shadow:
-    inset 0 1px 2px rgb(90 178 255 / 0.1),
-    inset 0 -1px 0 rgb(255 255 255 / 0.68) !important;
+    inset 0 5px 12px rgb(90 178 255 / 0.26),
+    inset 0 1px 2px rgb(75 75 75 / 0.09),
+    inset 0 -2px 0 rgb(255 255 255 / 0.52) !important;
 }
 
 .dark #request-form input.request-modal-field::placeholder,
