@@ -16,8 +16,12 @@ export function LanguageSelect({ compact = false, showIcon = true }: { compact?:
         >
           <Globe className="size-4 text-muted-foreground" aria-hidden="true" />
         </SelectTrigger>
-        <SelectContent>
-          {LOCALES.map((item) => <SelectItem key={item} value={item}>{LOCALE_LABELS[item]}</SelectItem>)}
+        <SelectContent
+          align="end"
+          alignItemWithTrigger={false}
+          className="marketing-language-content !w-auto !min-w-0"
+        >
+          {LOCALES.map((item) => <SelectItem className="!p-2 [&>span:last-child]:hidden" key={item} value={item}>{LOCALE_LABELS[item]}</SelectItem>)}
         </SelectContent>
       </Select>
     );

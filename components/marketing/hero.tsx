@@ -26,6 +26,7 @@ export function Hero() {
             trigger={
               <Button size="lg" variant="outline" className="h-9">
                 {t("marketing.customBuild")}
+                <ArrowRight />
               </Button>
             }
           />
