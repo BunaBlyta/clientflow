@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FolderKanban, Receipt, TrendingUp, Users } from "lucide-react";
+import { BarChart3, FolderKanban, PanelLeftClose, PanelLeftOpen, Receipt, TrendingUp, Users } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n";
 
@@ -15,19 +16,44 @@ const navItems = [
   { href: "/dashboard/analytics", key: "nav.analytics", icon: TrendingUp },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   const pathname = usePathname();
   const { t } = useLocale();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
-      <div className="flex h-16 items-center px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-40 hidden h-dvh shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 ease-out md:flex",
+        collapsed ? "w-16" : "w-56",
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-16 items-center",
+          collapsed ? "justify-center px-4" : "px-6",
+        )}
+      >
+        <Link
+          href="/dashboard"
+          className={cn(
+            "flex min-w-0 items-center gap-2 text-[15px] font-semibold tracking-tight",
+            collapsed && "shrink-0",
+          )}
+          aria-label="Clientflow overview"
+        >
           <BrandLogo />
-          Clientflow
+          <span className={cn("truncate transition-opacity duration-150", collapsed && "sr-only")}>
+            Clientflow
+          </span>
         </Link>
       </div>
-      <nav className="flex flex-col gap-3 px-4">
+      <nav className={cn("flex flex-col gap-5 pt-6", collapsed ? "px-2" : "px-4")}>
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -36,17 +62,32 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              title={collapsed ? t(item.key) : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3.5 py-3 text-[15px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                "flex items-center rounded-full py-3.5 text-[16px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                collapsed ? "justify-center px-0" : "gap-4 px-3.5",
                 isActive && "bg-sidebar-accent font-medium text-foreground"
               )}
             >
-              <item.icon className={cn("size-4", isActive && "text-brand-accent")} />
-              {t(item.key)}
+              <item.icon className={cn("size-[18px]", isActive && "text-brand-accent")} />
+              <span className={cn(collapsed && "sr-only")}>{t(item.key)}</span>
             </Link>
           );
         })}
       </nav>
+      <div className="mt-auto flex justify-center border-t border-border p-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-lg"
+          className="[&_svg]:size-5"
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+        </Button>
+      </div>
     </aside>
   );
 }

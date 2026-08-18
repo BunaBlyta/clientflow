@@ -142,7 +142,6 @@ export default function InvoicesPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
-        <PageIntro />
         <div className="flex min-h-56 items-center justify-center border border-border">
           <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <LoaderCircle className="size-4 animate-spin text-brand-accent" />
@@ -156,7 +155,6 @@ export default function InvoicesPage() {
   if (error) {
     return (
       <div className="flex flex-col gap-6">
-        <PageIntro />
         <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
           <p className="text-[13px] font-medium text-status-danger">{t("dashboard.invoicesLoadFailed")}</p>
           <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
@@ -171,7 +169,6 @@ export default function InvoicesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageIntro />
       <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("invoices.search")}>
         <Select value={statusFilter} onValueChange={(value) => value && setStatusFilter(value as typeof statusFilter)}>
           <SelectTrigger className="w-44">
@@ -258,18 +255,6 @@ export default function InvoicesPage() {
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-function PageIntro() {
-  const { t } = useLocale();
-  return (
-    <div>
-      <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.invoices")}</h1>
-      <p className="mt-1 text-[13px] text-muted-foreground">
-        {t("invoices.intro")}
-      </p>
     </div>
   );
 }

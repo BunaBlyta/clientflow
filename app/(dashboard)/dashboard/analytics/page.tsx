@@ -25,8 +25,6 @@ import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
-const PACKAGE_LEGEND_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"];
-
 export default function AnalyticsPage() {
   const { t } = useLocale();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -143,30 +141,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.analytics")}</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          {t("dashboard.analyticsIntro")}
-        </p>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.allTimePaid")} />
+        <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.kpiRevenueHint")} />
         <StatTile
           label={t("dashboard.outstanding")}
           value={formatCurrency(outstandingInvoicesTotal(invoices))}
-          hint={t("dashboard.sentPendingFailed")}
+          hint={t("dashboard.kpiOutstandingHint")}
         />
         <StatTile
           label={t("dashboard.overdue")}
           value={formatCurrency(overdueInvoicesTotal(invoices))}
           tone="danger"
-          hint={t("dashboard.pastDueUnpaid")}
+          hint={t("dashboard.kpiOverdueHint")}
         />
         <StatTile
           label={t("dashboard.avgTurnaround")}
           value={overallTurnaround === null ? "—" : `${overallTurnaround}d`}
-          hint={t("dashboard.daysFromCreation")}
+          hint={t("dashboard.kpiTurnaroundHint")}
         />
       </div>
 
@@ -211,17 +202,6 @@ export default function AnalyticsPage() {
           <div className="mt-4">
             <RevenueByPackageChart data={revenueByPkg} />
           </div>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
-            {revenueByPkg.map((pkg, i) => (
-              <span key={pkg.packageId} className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: PACKAGE_LEGEND_COLORS[i % PACKAGE_LEGEND_COLORS.length] }}
-                />
-                {pkg.name}
-              </span>
-            ))}
-          </div>
         </div>
 
         <div className="rounded-lg border border-border p-5">
@@ -240,10 +220,10 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border p-5">
+        <div className="flex h-full flex-col rounded-lg border border-border p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-4 flex flex-1 flex-col justify-between gap-3">
             {stageRows.map((s) => (
               <div key={s.status} className="flex items-center gap-3 text-[13px]">
                 <span className={`w-24 shrink-0 ${PROJECT_STATUS_TONE[s.status]}`}>
@@ -264,7 +244,7 @@ export default function AnalyticsPage() {
         <div className="rounded-lg border border-border p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
-          <table className="mt-4 w-full text-[13px]">
+          <table className="analytics-status-table mt-4 w-full text-[13px]">
             <thead>
               <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
                 <th className="py-2 font-normal">{t("common.status")}</th>

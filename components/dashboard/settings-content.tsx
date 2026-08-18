@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LoaderCircle, Mail, RefreshCw } from "lucide-react";
-import { formatMajorCurrency, initials } from "@/lib/format";
+import { LoaderCircle, Mail, Plus, RefreshCw } from "lucide-react";
+import { formatDate, formatMajorCurrency, initials } from "@/lib/format";
 import { EditPackageDialog } from "@/components/dashboard/edit-package-dialog";
 import { CreatePackageDialog } from "@/components/dashboard/create-package-dialog";
 import { fetchJson } from "@/lib/fetch-json";
@@ -15,17 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
-import { LanguageSelect } from "@/components/language-select";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SettingsContent() {
   const { t } = useLocale();
   return (
     <Tabs defaultValue="packages">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="packages">{t("nav.packages")}</TabsTrigger>
         <TabsTrigger value="team">{t("settings.team")}</TabsTrigger>
-        <TabsTrigger value="display">{t("settings.display")}</TabsTrigger>
       </TabsList>
       <TabsContent value="packages" keepMounted className="mt-4">
         <PackagesSection />
@@ -33,33 +30,7 @@ export function SettingsContent() {
       <TabsContent value="team" keepMounted className="mt-4">
         <TeamSection />
       </TabsContent>
-      <TabsContent value="display" keepMounted className="mt-4">
-        <DisplaySection />
-      </TabsContent>
     </Tabs>
-  );
-}
-
-function DisplaySection() {
-  const { t } = useLocale();
-
-  return (
-    <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
-      <div className="flex items-center justify-between gap-4 p-4">
-        <div>
-          <p className="text-[14px] font-medium">{t("settings.theme")}</p>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.themeIntro")}</p>
-        </div>
-        <ThemeToggle />
-      </div>
-      <div className="flex items-center justify-between gap-4 p-4">
-        <div>
-          <p className="text-[14px] font-medium">{t("settings.language")}</p>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.languageIntro")}</p>
-        </div>
-        <LanguageSelect showIcon={false} />
-      </div>
-    </div>
   );
 }
 
@@ -112,7 +83,8 @@ function PackagesSection() {
           onCreated={(pkg) => setPackages((current) => [...current, pkg].sort((a, b) => a.sortOrder - b.sortOrder))}
         />
       </div>
-      <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
+      <div className="h-[360px] overflow-y-auto rounded-lg border border-border">
+        <div className="flex flex-col divide-y divide-border">
         {packages.map((pkg) => {
           const isEditing = editingPackageId === pkg.id;
           return (
@@ -167,6 +139,7 @@ function PackagesSection() {
         {packages.length === 0 && (
           <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{t("settings.noPackages")}</p>
         )}
+        </div>
       </div>
     </div>
   );
@@ -180,6 +153,7 @@ function TeamSection() {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [resendingStaffId, setResendingStaffId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ staffId: string; message: string } | null>(null);
@@ -239,6 +213,7 @@ function TeamSection() {
 
       setName("");
       setEmail("");
+      setIsInviteFormOpen(false);
       await loadTeam();
       if (result.emailSent === false) {
         toast.error("Invitation created, but the email could not be sent", {
@@ -282,14 +257,23 @@ function TeamSection() {
   if (error) return <ErrorState title={t("settings.teamFailed")} error={error} onRetry={() => void loadTeam()} />;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="rounded-lg border border-border">
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[13px] text-muted-foreground">{t("settings.teamIntro")}</p>
+        <Button type="button" size="sm" onClick={() => setIsInviteFormOpen((open) => !open)}>
+          <Plus />
+          {t("settings.inviteTitle")}
+        </Button>
+      </div>
+      <div className="h-[360px] overflow-y-auto rounded-lg border border-border">
+        <div className="flex flex-col divide-y divide-border">
         {staff.map((staffMember) => (
-          <div key={staffMember.id} className="flex items-center gap-4 border-b border-border p-5 last:border-0">
+          <div key={staffMember.id} className="flex items-center gap-4 p-5">
             <Avatar className="size-7"><AvatarFallback className="text-[11px]">{initials(staffMember.name)}</AvatarFallback></Avatar>
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium">{staffMember.name}</p>
-              <p className="truncate text-[12px] text-muted-foreground">{staffMember.email}</p>
+              <p className="truncate text-[14px] font-medium">{staffMember.name}</p>
+              <p className="mt-1 truncate text-[13px] text-muted-foreground">{staffMember.email}</p>
+              <p className="mt-2 text-[13px] text-muted-foreground">{t("settings.joined")}: {formatDate(staffMember.createdAt)}</p>
               {resendError?.staffId === staffMember.id && <p role="alert" className="mt-1 text-[11px] text-status-danger">{resendError.message}</p>}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-3">
@@ -307,27 +291,35 @@ function TeamSection() {
           </div>
         ))}
         {staff.length === 0 && <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{t("settings.noTeam")}</p>}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-[15px] font-medium">{t("settings.inviteTitle")}</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.inviteIntro")}</p>
+      {isInviteFormOpen && (
+        <div className="rounded-lg border border-border p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-[15px] font-medium">{t("settings.inviteTitle")}</h3>
+              <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.inviteIntro")}</p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsInviteFormOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+          </div>
+          <form onSubmit={handleInvite} className="mt-5 flex w-full flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="invite-name">{t("settings.name")}</Label>
+              <Input id="invite-name" className="h-10" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="invite-email">{t("auth.email")}</Label>
+              <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            </div>
+            <div className="border-t border-border pt-5">
+              <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
+            </div>
+          </form>
         </div>
-        <form onSubmit={handleInvite} className="flex w-full flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="invite-name">{t("settings.name")}</Label>
-            <Input id="invite-name" className="h-10" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="invite-email">{t("auth.email")}</Label>
-            <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          </div>
-          <div className="mt-1 border-t border-border pt-5">
-            <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
-          </div>
-        </form>
-      </div>
+      )}
     </div>
   );
 }

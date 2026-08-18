@@ -1144,7 +1144,7 @@
   .notifications-menu {
     overflow: hidden;
     border-color: var(--border);
-    border-radius: 1rem;
+    border-radius: 1.5rem;
     box-shadow: 0 14px 30px -22px color-mix(in oklch, var(--foreground) 28%, transparent);
   }
 
@@ -1153,7 +1153,7 @@
   }
 
   .notification-menu-item {
-    min-height: 3.75rem;
+    min-height: 4.5rem;
     transition: background-color 150ms ease;
   }
 
@@ -1542,6 +1542,112 @@ html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selec
 .required-mark {
   color: #167d99;
   font-weight: 600;
+}
+
+/* CRM controls keep their keyboard focus ring without adding a border on interaction. */
+.crm-shell [data-slot="button"]:focus-visible,
+.crm-shell [data-slot="button"]:active,
+.crm-shell [data-slot="button"][aria-expanded="true"],
+.crm-shell [data-slot="button"][aria-pressed="true"],
+.crm-shell [data-slot="button"][data-active],
+.crm-shell [data-slot="button"][data-state="active"],
+.crm-shell [data-slot="button"][data-state="selected"],
+.crm-shell [data-slot="select-trigger"]:focus-visible,
+.crm-shell [data-slot="select-trigger"]:active,
+.crm-shell [data-slot="select-trigger"][data-popup-open],
+.crm-shell [data-slot="select-trigger"][data-state="open"] {
+  border-color: transparent !important;
+}
+
+.crm-shell table > tbody > tr:not(:has(td[colspan])) {
+  height: 4rem !important;
+}
+
+.crm-shell table > tbody > tr:not(:has(td[colspan])) > td {
+  padding-block: 0 !important;
+  vertical-align: middle !important;
+}
+
+.crm-shell table > tbody > tr:nth-child(even):not(:has(td[colspan])) {
+  background-color: color-mix(in oklch, var(--muted) 42%, transparent);
+}
+
+.crm-shell table > tbody > tr:not(:has(td[colspan])):hover {
+  background-color: color-mix(in oklch, var(--muted) 68%, transparent) !important;
+}
+
+html:not(.dark) .crm-shell table > tbody > tr:nth-child(even):not(:has(td[colspan])) {
+  background-color: rgb(15 23 42 / 0.05);
+}
+
+html:not(.dark) .crm-shell table > tbody > tr:nth-child(even):not(:has(td[colspan])) > td {
+  background-color: rgb(15 23 42 / 0.05) !important;
+}
+
+html:not(.dark) .crm-shell table > tbody > tr:not(:has(td[colspan])):hover {
+  background-color: rgb(15 23 42 / 0.09) !important;
+}
+
+html:not(.dark) .crm-shell table > tbody > tr:not(:has(td[colspan])):hover > td {
+  background-color: rgb(15 23 42 / 0.09) !important;
+}
+
+.crm-shell table > thead > tr > th {
+  background-color: color-mix(in oklch, var(--muted) 68%, transparent);
+}
+
+html:not(.dark) .crm-shell table > thead > tr > th {
+  background-color: rgb(15 23 42 / 0.06);
+}
+
+.crm-shell table.analytics-status-table > thead > tr > th,
+.crm-shell table.analytics-status-table > tbody > tr > td {
+  background-color: transparent !important;
+}
+
+.crm-shell table.analytics-status-table > tbody > tr:not(:has(td[colspan])) {
+  height: auto !important;
+  background-color: transparent !important;
+}
+
+.crm-shell table.analytics-status-table > tbody > tr:not(:has(td[colspan])):hover {
+  background-color: transparent !important;
+}
+
+.crm-shell table.analytics-status-table > tbody > tr:not(:has(td[colspan])) > td {
+  padding-block: 0.5rem !important;
+}
+
+.crm-shell [data-slot="input"],
+.crm-shell [data-slot="select-trigger"],
+.crm-shell [data-slot="textarea"],
+.crm-shell [data-slot="button"] {
+  border-radius: 999px !important;
+}
+
+.crm-shell header button {
+  border-radius: 999px !important;
+}
+
+.crm-shell header button,
+.crm-shell header [data-slot="select-trigger"] {
+  transition: background-color 150ms ease, color 150ms ease !important;
+}
+
+.crm-shell header button:hover,
+.crm-shell header [data-slot="select-trigger"]:hover {
+  background-color: var(--muted) !important;
+  color: var(--foreground) !important;
+}
+
+.crm-shell .rounded-lg.border,
+.crm-shell .rounded-lg[class*="border-"] {
+  border-radius: 1rem !important;
+}
+
+.crm-header-language-content {
+  width: 7rem !important;
+  min-width: 7rem !important;
 }
 
 .request-field-hint {

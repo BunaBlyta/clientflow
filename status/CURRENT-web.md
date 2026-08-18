@@ -1,8 +1,206 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 10:33 by Codex — align hero action buttons
+Last updated: 2026-08-18 15:03 by Codex — lock settings tab placement
 
 ## Current state
+
+- Matched the Team section’s parent spacing to Packages so the tab header and 360px list begin at the same vertical position and remain stable when switching tabs.
+
+- Set the Packages and Team list containers to the exact same fixed 360px height, so the bordered table area does not move or differ when switching tabs; additional rows scroll inside that shared viewport.
+
+- Raised the list scroll threshold from 288px to 400px so the existing Packages and Team content keeps its current visual height; only future additions beyond that point will scroll, while the modal remains fixed.
+
+- Made the Packages and Team member lists independent 288px scroll regions with matching behavior, while keeping the Settings modal fixed at 600px so future entries do not resize it.
+
+- Matched Team rows to the Packages text hierarchy and spacing: 14px primary text, 13px secondary/metadata text, 4px secondary spacing, and 8px before the third line.
+
+- Matched Team member typography to Packages: 14px names, 13px secondary text, and 12px metadata.
+
+- Added a localized Joined date beneath each team member’s email in Team settings, using the staff account creation date.
+
+- Matched the Team and Packages tab header alignment so descriptions and action buttons start at the same top edge.
+
+- Rebalanced the Packages and Team tab descriptions to similarly concise action-oriented copy in English, German, and Albanian.
+
+- Matched the Team tab’s top area to Packages: a muted description on the left and a small filled plus-button on the right, using a new localized Team description.
+
+- Kept the Settings modal at one compact fixed 600px height across Packages and Team tabs, with the inner content scrolling when the invite form or longer lists need more room.
+
+- Matched Team and Packages lists with the same overflow, border, separator, and 20px row padding treatment. Removed the fixed Settings modal height so it now fits its content and scrolls only when needed, eliminating the empty space below.
+
+- Changed Team settings so the invite form is hidden by default and opens inside the modal from an Invite a teammate button, with Cancel to close it and automatic close after a successful invitation.
+
+- Reduced the effective Settings modal width from 720px to 680px for the further narrowing requested.
+
+- Reduced the effective Settings modal width from 760px to 720px for the tighter layout requested.
+
+- Reduced the effective Settings modal width from 800px to 760px for the tighter layout requested.
+
+- Reduced the effective Settings modal width from 840px to 800px for a more compact workspace.
+
+- Tightened the effective Settings modal width from 880px to 840px after the wider version still felt a little broad.
+
+- Set the now-working Settings modal width to 880px after the corrected 960px version felt too wide.
+
+- Fixed the shared DialogContent `sm:max-w-sm` constraint overriding the Settings modal width; the 960px width now has an explicit responsive max-width override.
+
+- Widened the Settings modal to 960px after 880px still felt constrained, while keeping it slightly more focused than the original 1000px width.
+
+- Adjusted the Settings modal to 880px after 760px felt too narrow, keeping the more focused shape without returning to the original 1000px width.
+
+- Narrowed the Settings modal from 1000px to 760px with a responsive viewport-safe max width so it feels more focused and less oversized.
+
+- Removed the artificial two-line KPI hint reservation so the balanced descriptions no longer leave an awkward empty area at the bottom of the tiles.
+
+- Rewrote KPI supporting copy into similarly sized three-word phrases across Overview and Analytics, with German and Albanian translations added as well.
+
+- Standardized KPI hint descriptions with a two-line, 32px reserved area and consistent line height so tiles remain visually aligned despite different copy lengths.
+
+- Replaced the Overview average-turnaround KPI with total projects so Average turnaround appears only in Analytics while the detailed Overview turnaround card remains available.
+
+- Replaced Overview’s repeated revenue, outstanding, and overdue KPI tiles with operational metrics: Active projects, Pending requests, Average turnaround, and Unread notifications. Analytics keeps the financial KPI set.
+
+- Removed the duplicated revenue charts from Overview so it functions as a quick operational snapshot; Analytics now owns the full revenue and performance reporting set.
+
+- Matched Average Turnaround and Pending Requests to the same 56px row height, spacing, inset, truncation, and right-side alignment used by the paired activity cards.
+
+- Matched the minimum row height and vertical gap in Recent Projects and Notifications so their entries line up across the side-by-side Overview cards.
+
+- Opened up Recent Projects rows with more vertical spacing, a small inset, truncation for long names, and quieter right-aligned status text.
+
+- Removed repeated row separators from the Overview Recent projects and Notifications cards, replacing them with consistent vertical spacing while keeping the card headers structured.
+
+- Placed Overview Recent projects and Notifications cards in a responsive two-column grid on large screens, stacking them on smaller screens to reduce the long vertical gap.
+
+- Undid the table-control relocation: search and filter rows are back above their tables for Projects, Requests, Custom inquiries, Clients, and Invoices.
+
+- Moved search and filter controls into bordered table headers for Projects, Requests, Custom inquiries, Clients, and Invoices, so each table owns its controls instead of leaving them detached above it.
+
+- Balanced the inline header separator at 12px with moderate muted contrast after the larger 14px bullet felt too prominent.
+
+- Enlarged the inline header separator to a visible 14px bullet with a stronger muted color.
+
+- Increased the inline CRM header descriptions again to 13px after they still read too small at 12px.
+
+- Increased the inline CRM header descriptions to 12px and confirmed the main page descriptions are no longer duplicated in the page bodies.
+
+- Vertically centered the middle-dot separator with the inline CRM title and description and tightened its line box.
+
+- Added a muted middle dot between each CRM page title and its inline description in the sticky header.
+
+- Aligned each CRM page description inline beside its header title on the same baseline instead of placing it underneath.
+
+- Moved each main CRM page description beside its title in the sticky header and removed the duplicate body descriptions, so content begins immediately below the header.
+
+- Removed the reserved page-intro height so CRM content and page actions pull up cleanly after the section title moved into the sticky header.
+
+- Grouped the CRM header language, theme, notification, and account controls into one right-aligned cluster so adding the page title does not spread the buttons across the header.
+
+- Preserved the original 48px page-intro height after moving section titles into the sticky header, so page actions and the first content section stay in their previous positions.
+
+- Moved the translated CRM section title into the sticky header for Overview, Analytics, Projects, Clients, Invoices, and Notifications. Removed the duplicate large heading from each page while keeping the supporting intro copy; detail pages still keep their specific project/client/request names in the content.
+
+- Softened bordered CRM cards, table containers, and panels to a consistent 16px radius so the dashboard no longer feels square.
+
+- Made the Notifications dropdown’s View all link fully pill-shaped to match the CRM controls.
+
+- Unified hover styling for CRM header Language, Theme, Notifications, and account controls with the same muted surface, foreground color, and 150ms transition.
+
+- Moved the compact Theme and EN/SQ/DE Language controls from the account dropdown into the CRM header beside Notifications and the account avatar.
+
+- Removed Theme and Language labels from the account dropdown and combined their icon/code controls into one compact row.
+
+- Enlarged Settings and Log out icons to 20px and shifted their rows 4px right within the account dropdown.
+
+- Reordered the account dropdown into Profile → Theme/Language preferences → divider → Settings/Log out, keeping related controls together.
+
+- Added a tight separator between Settings and the Theme/Language preference rows, replacing the previous negative offset.
+
+- Fine-tuned the Theme/Language preference group to sit 12px closer to Settings in the account dropdown.
+
+- Set the account-menu language trigger to 48px and its open EN/SQ/DE panel to an explicit 7rem width to remove excess right-side space.
+
+- Increased Settings and Log out labels to 13px medium weight with 16px icon spacing, and narrowed the account menu language selector to 80px.
+
+- Removed the Settings Display tab and moved Theme and Language controls into compact rows in the CRM account dropdown; Settings now contains only Packages and Team tabs.
+
+- Removed the redundant legend from Analytics Revenue by package so it matches the simplified Overview card.
+
+- Excluded Analytics Invoices by status from the CRM table treatment so it stays a compact report table without zebra rows, grey headers, or fixed-height rows.
+
+- Reduced the CRM account dropdown from 16rem to 14rem after it still felt too wide.
+
+- Increased vertical padding on the CRM account menu’s Settings and Log out actions to 16px, giving each a 48px touch target.
+
+- Widened the CRM account dropdown from 16rem to 18rem so Settings and Log out have more room.
+
+- Changed sidebar navigation links from medium rounded corners to full pill shapes in expanded and collapsed states.
+
+- Added 24px of top spacing between the sidebar logo/title header and the first navigation link.
+
+- Increased sidebar navigation labels to 16px, icons to 18px, row padding to 14px, and item spacing to 20px for a fuller but natural rhythm without forced full-height distribution.
+
+- Reverted the full-height distributed sidebar navigation after it created artificial gaps; the links remain top-aligned with 16px spacing.
+
+- Increased left sidebar navigation spacing to 16px between links and 16px between icons and labels when expanded.
+
+- Increased spacing between the CRM top-header notification bell and account avatar from 8px to 12px.
+
+- Added a subtle neutral grey background to CRM table header cells in both themes, matching the table row treatment.
+
+- Replaced the light-mode blue zebra tint with a neutral grey 5% stripe and 9% hover state.
+
+- Added restrained zebra striping to CRM data tables with a stronger hover tint; empty-state rows remain untouched.
+
+- Removed the redundant package legend below the Overview revenue-by-package chart; the chart and Analytics legend remain unchanged.
+
+- Enlarged the CRM header notification button to 36px with a 20px bell and the closed account avatar to 32px.
+
+- Applied the same separated header treatment to Average turnaround and Pending requests, including their subtitles, so all four lower Overview cards are consistent.
+
+- Gave the Overview Recent projects and Notifications cards distinct header areas with a bottom separator and dedicated spacing before their lists.
+
+- Included the CRM top-header controls in the pill treatment so the notification bell and account button match the rest of the dashboard.
+
+- Extended the CRM pill shape to all buttons; equal-sized icon-only controls render as circles while marketing buttons remain unchanged.
+
+- Scoped pill-shaped styling to CRM inputs, search fields, select triggers, and textareas; their borders, sizes, and focus states remain unchanged.
+
+- Opening the notifications dropdown now dismisses only the local bell indicator for the notifications currently seen; server read status is unchanged, and newly arriving notifications show the dot again.
+
+- Added a compact right-arrow icon to the notifications dropdown’s View all link.
+
+- Tightened the notification list area from 28rem to 27rem so the sixth row is the final fully visible row and the seventh does not peek through.
+
+- Increased the notification list area to 28rem so six 72px notification rows are fully visible when the dropdown opens.
+
+- Increased notification rows to a 72px minimum height with 16px vertical padding so the larger dropdown feels proportionate.
+
+- Enlarged the notification dropdown from 22rem to 24rem wide and increased its scrollable content height from 20rem to 24rem.
+
+- Flattened notification dropdown rows so they have no inset/rounded shape or focus highlight; separators now provide the visual grouping.
+
+- Standardized normal CRM table data rows to a fixed 64px height with vertically centered content; empty and no-results rows remain flexible.
+
+- Made the analytics Pipeline by stage card fill its grid height and distribute stage rows through the available space instead of leaving a large bottom gap.
+
+- Made the sidebar toggle a larger 36px control centered in the bottom utility area for a more intentional layout in both expanded and collapsed states.
+
+- Aligned the expanded sidebar toggle to the bottom-left navigation column; it remains centered when the sidebar is collapsed.
+
+- Moved the sidebar collapse/expand icon into a bottom utility area so it no longer competes with the logo.
+
+- The CRM sidebar can collapse from 224px to 64px, showing icons only; the content offset transitions with it so the expanded sidebar pushes content instead of overlaying it.
+
+- The CRM top navbar stays visible and minimizes from 64px to 48px after the content scrolls, expanding again at the top.
+
+- Increased vertical padding on CRM table body rows to a consistent 16px; larger colspan empty states are unchanged.
+
+- The CRM header account control is initials-only when closed; its open menu now shows the larger initials avatar, full staff name, and email.
+
+- Scoped CRM dashboard controls so focused, Space/active, expanded, and selected button/select states keep the keyboard focus ring but do not show a border.
+
+- Made the marketing navbar’s solid cyan background explicit in the header component so it does not fall back to the transparent background utility.
 
 - Explicitly removed the accidental dark gradient strip from the light-mode request-modal title and modal surface. Light-mode modal fields now use a clearly visible light blue-gray fill with no outer border or focus shadow; required-field asterisks and inline empty-field labels use a deeper teal-blue with an alert icon in a fixed-height label row above the field, so validation does not move or misalign the textboxes. The custom app dialog and contact form use the same validation treatment, and all of their buttons show a hand cursor. Hero actions now share a fixed height and vertical alignment.
 - Applied the PM landing-page pass: buttons keep their position and use a hand cursor, header is solid, anchor navigation scrolls smoothly with a sticky-header offset, and the hero copy is constrained into a centered triangular wrap.

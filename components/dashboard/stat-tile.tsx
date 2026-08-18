@@ -22,7 +22,7 @@ export function StatTile({
       >
         {value}
       </span>
-      {hint && <span className="text-[12px] text-muted-foreground">{hint}</span>}
+      {hint && <span className="text-[12px] leading-4 text-muted-foreground">{hint}</span>}
     </div>
   );
 }

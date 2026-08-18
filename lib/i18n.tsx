@@ -71,6 +71,14 @@ const english: Messages = {
   "dashboard.overdue": "Overdue",
   "dashboard.activeProjects": "Active projects",
   "dashboard.avgTurnaround": "Avg. turnaround",
+  "dashboard.kpiActiveHint": "Currently in progress",
+  "dashboard.kpiPendingHint": "Awaiting your approval",
+  "dashboard.kpiProjectsHint": "Across every project",
+  "dashboard.kpiNotificationsHint": "Need your attention",
+  "dashboard.kpiRevenueHint": "Paid across all-time",
+  "dashboard.kpiOutstandingHint": "Currently awaiting payment",
+  "dashboard.kpiOverdueHint": "Past-due and unpaid",
+  "dashboard.kpiTurnaroundHint": "Creation through launch",
   "dashboard.allTimePaid": "All-time, paid invoices",
   "dashboard.sentPendingFailed": "Sent, pending, or failed",
   "dashboard.pastDueUnpaid": "Past due date, unpaid",
@@ -110,7 +118,7 @@ const english: Messages = {
   "settings.language": "Language",
   "settings.languageIntro": "Choose the language for the web app.",
   "settings.packagesFailed": "Packages couldn't load",
-  "settings.packagesIntro": "The single source of truth for the public pricing page and internal project creation.",
+  "settings.packagesIntro": "Manage service packages, pricing, and new project requests.",
   "settings.noPackages": "No active packages yet.",
   "settings.teamLoading": "Loading team…",
   "settings.teamFailed": "Team couldn't load",
@@ -119,6 +127,8 @@ const english: Messages = {
   "settings.resend": "Resend",
   "settings.noTeam": "No team members yet.",
   "settings.inviteTitle": "Invite a teammate",
+  "settings.joined": "Joined",
+  "settings.teamIntro": "Manage studio members, invitations, and access.",
   "settings.inviteIntro": "They'll get an email to set a password and join the dashboard.",
   "settings.name": "Name",
   "settings.teammatePlaceholder": "Teammate name",
@@ -378,6 +388,9 @@ const albanian: Messages = {
 };
 
 Object.assign(german, {
+  "settings.joined": "Dabei seit",
+  "settings.packagesIntro": "Dienstleistungspakete, Preise und neue Anfragen verwalten.",
+  "settings.teamIntro": "Teammitglieder, Einladungen und Zugriffe verwalten.",
   "auth.studioOperations": "Studioabläufe, klar organisiert",
   "auth.loginHeroTitle": "Behalte jeden Kunden, jedes Projekt und jede Zahlung im Blick.",
   "auth.loginHeroIntro": "Ein ruhiger, gemeinsamer Arbeitsbereich für die Arbeit hinter großartigen digitalen Projekten.",
@@ -397,6 +410,9 @@ Object.assign(german, {
   "payment.viewInvoices": "Rechnungen ansehen", "payment.submittedIntro": "Danke — Stripe hat deine Zahlung entgegengenommen. Die Rechnung wird erst nach der Stripe-Bestätigung als bezahlt markiert.", "payment.returnToApp": "Du kannst zur Clientflow-App zurückkehren.", "payment.devLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Native App-Links folgen nach verfügbaren Builds.", "payment.cancelledIntro": "Es wurde keine Zahlung vorgenommen und die Rechnung bleibt unverändert. Du kannst sie später bezahlen.", "payment.cancelledDevLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Die Rechnung bleibt unverändert.",
 });
 Object.assign(albanian, {
+  "settings.joined": "U bashkua",
+  "settings.packagesIntro": "Menaxho paketat, çmimet dhe kërkesat e reja.",
+  "settings.teamIntro": "Menaxho ekipin, ftesat dhe qasjet.",
   "auth.studioOperations": "Operacionet e studios, të qarta",
   "auth.loginHeroTitle": "Mbaj çdo klient, projekt dhe pagesë në rrjedhë.",
   "auth.loginHeroIntro": "Një hapësirë e qetë dhe e përbashkët për punën pas projekteve të shkëlqyera dixhitale.",
@@ -407,6 +423,28 @@ Object.assign(albanian, {
   "settings.team": "Ekipi", "settings.display": "Pamja", "settings.theme": "Tema", "settings.themeIntro": "Kalo mes modalitetit të çelët dhe të errët.", "settings.language": "Gjuha", "settings.languageIntro": "Zgjidh gjuhën për aplikacionin web.", "settings.newPackage": "Paketë e re", "settings.newPackageIntro": "Shto një paketë në çmimet dhe rrjedhën publike të kërkesave.", "settings.name": "Emri", "settings.price": "Çmimi", "settings.currency": "Monedha", "settings.duration": "Kohëzgjatja e parashikuar", "settings.description": "Përshkrimi", "settings.sortOrder": "Renditja", "settings.creating": "Duke krijuar…", "settings.createPackage": "Krijo paketë", "settings.sendInvite": "Dërgo ftesën", "settings.inviteTitle": "Fto një anëtar të ekipit", "settings.inviteIntro": "Do të marrë një email për të vendosur fjalëkalimin dhe për t'iu bashkuar panelit.", "settings.you": "Ti", "settings.invited": "I ftuar", "settings.resend": "Dërgo përsëri", "settings.noTeam": "Nuk ka anëtarë ende.", "settings.packagesFailed": "Paketat nuk u ngarkuan", "settings.teamFailed": "Ekipi nuk u ngarkua", "settings.teamLoading": "Duke ngarkuar ekipin…", "settings.noPackages": "Nuk ka paketa aktive ende.", "settings.packagesIntro": "Burimi i vetëm për çmimet publike dhe projektet e reja.",
   "status.project.PENDING": "Në pritje", "status.project.DISCOVERY": "Zbulim", "status.project.DESIGN": "Dizajn", "status.project.DEVELOPMENT": "Zhvillim", "status.project.REVIEW": "Rishikim", "status.project.LAUNCHED": "Lançuar", "status.project.ON_HOLD": "Në pauzë", "status.project.CANCELLED": "Anuluar", "status.depositGate": "Ndryshimet e fazës bëhen të disponueshme pasi të paguhet depozita.", "status.projectMovedTo": "Projekti u kalua në", "status.sendInvoice": "Dërgo faturën", "status.voidInvoice": "Anulo faturën", "status.invoiceSent": "Fatura u dërgua.", "status.invoiceVoided": "Fatura u anulua.",
   "payment.viewInvoices": "Shiko faturat", "payment.submittedIntro": "Faleminderit — Stripe e mori pagesën. Fatura shënohet si e paguar vetëm pasi Stripe ta konfirmojë.", "payment.returnToApp": "Mund të kthehesh te aplikacioni Clientflow.", "payment.devLink": "Kjo lidhje zhvillimi hap aplikacionin Expo web në portin 8081. Lidhjet native do të shtohen kur të jenë gati build-et.", "payment.cancelledIntro": "Nuk u mor pagesë dhe fatura mbetet e pandryshuar. Mund ta paguash kur të jesh gati.", "payment.cancelledDevLink": "Kjo lidhje zhvillimi hap aplikacionin Expo web në portin 8081. Fatura mbetet e pandryshuar.",
+});
+
+Object.assign(german, {
+  "dashboard.kpiActiveHint": "Aktuell in Arbeit",
+  "dashboard.kpiPendingHint": "Warten auf Freigabe",
+  "dashboard.kpiProjectsHint": "Über alle Projekte",
+  "dashboard.kpiNotificationsHint": "Brauchen deine Aufmerksamkeit",
+  "dashboard.kpiRevenueHint": "Bisher bezahlt insgesamt",
+  "dashboard.kpiOutstandingHint": "Warten aktuell auf Zahlung",
+  "dashboard.kpiOverdueHint": "Überfällig und unbezahlt",
+  "dashboard.kpiTurnaroundHint": "Von Erstellung bis Launch",
+});
+
+Object.assign(albanian, {
+  "dashboard.kpiActiveHint": "Aktualisht në punë",
+  "dashboard.kpiPendingHint": "Presin miratimin tënd",
+  "dashboard.kpiProjectsHint": "Në të gjitha projektet",
+  "dashboard.kpiNotificationsHint": "Kërkojnë vëmendjen tënde",
+  "dashboard.kpiRevenueHint": "Paguar deri më tani",
+  "dashboard.kpiOutstandingHint": "Presin pagesën aktualisht",
+  "dashboard.kpiOverdueHint": "Me afat kaluar, papaguar",
+  "dashboard.kpiTurnaroundHint": "Nga krijimi deri në lançim",
 });
 
 const messages: Record<Locale, Messages> = { en: english, de: german, sq: albanian };

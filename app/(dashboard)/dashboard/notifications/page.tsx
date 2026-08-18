@@ -105,15 +105,8 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.notifications")}</h1>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            {t("notifications.intro")}
-          </p>
-        </div>
-        {unread.length > 0 && (
-          <div className="text-right">
+      {unread.length > 0 && (
+        <div className="flex justify-end">
             <button
               type="button"
               disabled={isMarkingAll || markingId !== null}
@@ -122,9 +115,8 @@ export default function NotificationsPage() {
             >
               {isMarkingAll ? t("notifications.marking") : t("notifications.markAllRead")}
             </button>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {actionError && (
         <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">

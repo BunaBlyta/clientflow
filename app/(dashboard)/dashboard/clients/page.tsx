@@ -137,13 +137,6 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{t("dashboard.clients")}</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          {t("clients.intro")}
-        </p>
-      </div>
-
       <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("clients.search")} />
 
       <div className="overflow-x-auto rounded-lg border border-border">
