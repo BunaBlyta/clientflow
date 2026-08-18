@@ -64,9 +64,9 @@ export function Sidebar({
               href={item.href}
               title={collapsed ? t(item.key) : undefined}
               className={cn(
-                "flex items-center rounded-full py-3.5 text-[16px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                "crm-sidebar-link flex items-center rounded-full py-3.5 text-[16px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
                 collapsed ? "justify-center px-0" : "gap-4 px-3.5",
-                isActive && "bg-sidebar-accent font-medium text-foreground"
+                isActive && "crm-sidebar-link-active bg-sidebar-accent font-medium text-foreground"
               )}
             >
               <item.icon className={cn("size-[18px]", isActive && "text-brand-accent")} />
@@ -75,12 +75,12 @@ export function Sidebar({
           );
         })}
       </nav>
-      <div className="mt-auto flex justify-center border-t border-border p-3">
+      <div className="mt-auto border-t border-border">
         <Button
           type="button"
           variant="ghost"
           size="icon-lg"
-          className="[&_svg]:size-5"
+          className="h-12 w-full [&_svg]:size-5"
           onClick={onToggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

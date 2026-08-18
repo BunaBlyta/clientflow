@@ -12,11 +12,31 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
-import type { CustomLead, Invoice, ManagedPackage, Project, ProjectRequest } from "@/lib/types";
+import type { CustomLead, Invoice, ManagedPackage, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { useNotificationStore } from "@/lib/realtime-notification-store";
+
+const PIPELINE_STAGES: ProjectStatus[] = [
+  "PENDING",
+  "DISCOVERY",
+  "DESIGN",
+  "DEVELOPMENT",
+  "REVIEW",
+  "ON_HOLD",
+];
+
+const PIPELINE_TONES: Record<ProjectStatus, string> = {
+  PENDING: "bg-status-warning",
+  DISCOVERY: "bg-brand-accent/55",
+  DESIGN: "bg-brand-accent/70",
+  DEVELOPMENT: "bg-brand-accent",
+  REVIEW: "bg-status-warning/80",
+  ON_HOLD: "bg-muted-foreground/60",
+  LAUNCHED: "bg-status-success",
+  CANCELLED: "bg-status-danger",
+};
 
 export default function OverviewPage() {
   const { t } = useLocale();
@@ -26,6 +46,7 @@ export default function OverviewPage() {
   const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
   const [customLeads, setCustomLeads] = useState<CustomLead[]>([]);
   const [overviewRowLimit, setOverviewRowLimit] = useState(2);
+  const [now] = useState(() => Date.now());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const notifications = useNotificationStore((state) => state.notifications);
@@ -134,7 +155,7 @@ export default function OverviewPage() {
     (invoice) =>
       ["SENT", "PAYMENT_PENDING", "FAILED"].includes(invoice.status) &&
       invoice.dueDate &&
-      new Date(invoice.dueDate).getTime() < Date.now(),
+      new Date(invoice.dueDate).getTime() < now,
   );
   const upcomingLaunches = projects
     .filter((project) => !["LAUNCHED", "CANCELLED"].includes(project.status))
@@ -144,6 +165,10 @@ export default function OverviewPage() {
       if (!b.targetLaunchDate) return -1;
       return new Date(a.targetLaunchDate).getTime() - new Date(b.targetLaunchDate).getTime();
     });
+  const pipelineCounts = new Map(
+    PIPELINE_STAGES.map((status) => [status, projects.filter((project) => project.status === status).length]),
+  );
+  const activePipelineTotal = PIPELINE_STAGES.reduce((total, status) => total + (pipelineCounts.get(status) ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-8">
@@ -152,6 +177,46 @@ export default function OverviewPage() {
         <StatTile label={t("dashboard.pendingRequests")} value={String(pendingRequests.length)} hint={t("dashboard.kpiPendingHint")} />
         <StatTile label={t("nav.projects")} value={String(projects.length)} hint={t("dashboard.kpiProjectsHint")} />
         <StatTile label={t("nav.notifications")} value={String(unreadNotifications.length)} hint={t("dashboard.kpiNotificationsHint")} />
+      </div>
+
+      <div className="overview-pipeline rounded-lg border border-border p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
+            <p className="mt-1 text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
+          </div>
+          <span className="shrink-0 text-[12px] text-muted-foreground">
+            {activePipelineTotal} {t("dashboard.activeProjects")}
+          </span>
+        </div>
+
+        <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+          {activePipelineTotal === 0 ? (
+            <span className="h-full w-full bg-muted-foreground/25" />
+          ) : (
+            PIPELINE_STAGES.map((status) => {
+              const count = pipelineCounts.get(status) ?? 0;
+              if (count === 0) return null;
+              return (
+                <span
+                  key={status}
+                  className={cn("h-full min-w-1 transition-[width] duration-200", PIPELINE_TONES[status])}
+                  style={{ width: `${(count / activePipelineTotal) * 100}%` }}
+                />
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
+          {PIPELINE_STAGES.map((status) => (
+            <div key={status} className="flex min-w-0 items-center gap-2 text-[12px]">
+              <span className={cn("size-2 shrink-0 rounded-full", PIPELINE_TONES[status])} />
+              <span className="min-w-0 truncate text-muted-foreground">{t(`status.project.${status}`)}</span>
+              <span className="ml-auto tabular-nums text-foreground">{pipelineCounts.get(status) ?? 0}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="rounded-lg border border-border p-5">

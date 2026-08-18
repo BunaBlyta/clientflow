@@ -1557,11 +1557,106 @@ html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selec
 .crm-shell [data-slot="button"][data-active],
 .crm-shell [data-slot="button"][data-state="active"],
 .crm-shell [data-slot="button"][data-state="selected"],
+.crm-shell [data-slot="input"]:focus-visible,
+.crm-shell [data-slot="input"]:active,
+.crm-shell [data-slot="textarea"]:focus-visible,
+.crm-shell [data-slot="textarea"]:active,
 .crm-shell [data-slot="select-trigger"]:focus-visible,
 .crm-shell [data-slot="select-trigger"]:active,
 .crm-shell [data-slot="select-trigger"][data-popup-open],
-.crm-shell [data-slot="select-trigger"][data-state="open"] {
+.crm-shell [data-slot="select-trigger"][data-state="open"],
+.crm-shell [data-slot="tabs-trigger"]:focus-visible,
+.crm-shell [data-slot="tabs-trigger"]:active,
+.crm-shell [data-slot="tabs-trigger"][data-active] {
   border-color: transparent !important;
+}
+
+.crm-shell [data-slot="button"]:focus-visible,
+.crm-shell [data-slot="input"]:focus-visible,
+.crm-shell [data-slot="textarea"]:focus-visible,
+.crm-shell [data-slot="select-trigger"]:focus-visible,
+.crm-shell [data-slot="tabs-trigger"]:focus-visible {
+  border-color: transparent !important;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 18%, transparent) !important;
+}
+
+html:not(.dark) .crm-shell {
+  background-color: #ffffff;
+}
+
+html:not(.dark) .crm-shell main {
+  background-color: #ffffff;
+  background-image: none;
+}
+
+.dark .crm-shell main {
+  background-image:
+    radial-gradient(
+      44rem 24rem at 100% 0%,
+      color-mix(in oklch, var(--brand-accent) 5%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      34rem 20rem at 0% 100%,
+      color-mix(in oklch, var(--brand-accent) 3%, transparent),
+      transparent 76%
+    );
+}
+
+html:not(.dark) .crm-shell > div > header {
+  box-shadow: none;
+}
+
+html:not(.dark) .crm-shell aside {
+  background-color: #eeeeec;
+  border-right-color: rgb(214 214 210) !important;
+}
+
+html:not(.dark) .crm-shell .crm-sidebar-link {
+  position: relative;
+}
+
+html:not(.dark) .crm-shell .crm-sidebar-link:hover {
+  background-color: rgb(255 255 255 / 0.62) !important;
+}
+
+html:not(.dark) .crm-shell .crm-sidebar-link-active {
+  background-color: rgb(0 0 0 / 0.065) !important;
+}
+
+html:not(.dark) .crm-shell .crm-sidebar-link-active svg {
+  color: var(--foreground) !important;
+}
+
+html:not(.dark) .crm-shell .border-border {
+  border-color: rgb(218 218 218) !important;
+}
+
+html:not(.dark) .crm-shell .rounded-lg.border,
+html:not(.dark) .crm-shell .rounded-lg[class*="border-"] {
+  background-color: #ffffff;
+  border-color: rgb(210 210 210) !important;
+  box-shadow: none;
+}
+
+html:not(.dark) .crm-shell .overview-pipeline {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--brand-accent) 8%, #ffffff),
+      #ffffff 68%
+    );
+  border-color: color-mix(in oklch, var(--brand-accent) 22%, rgb(210 210 210)) !important;
+}
+
+.dark .crm-shell .overview-pipeline {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--brand-accent) 7%, var(--card)),
+      var(--card) 68%
+    );
+  border-color: color-mix(in oklch, var(--brand-accent) 18%, var(--border)) !important;
 }
 
 .crm-shell table > tbody > tr:not(:has(td[colspan])) {
@@ -1582,19 +1677,19 @@ html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selec
 }
 
 html:not(.dark) .crm-shell table > tbody > tr:nth-child(even):not(:has(td[colspan])) {
-  background-color: rgb(15 23 42 / 0.05);
+  background-color: rgb(0 0 0 / 0.045);
 }
 
 html:not(.dark) .crm-shell table > tbody > tr:nth-child(even):not(:has(td[colspan])) > td {
-  background-color: rgb(15 23 42 / 0.05) !important;
+  background-color: rgb(0 0 0 / 0.045) !important;
 }
 
 html:not(.dark) .crm-shell table > tbody > tr:not(:has(td[colspan])):hover {
-  background-color: rgb(15 23 42 / 0.09) !important;
+  background-color: rgb(0 0 0 / 0.08) !important;
 }
 
 html:not(.dark) .crm-shell table > tbody > tr:not(:has(td[colspan])):hover > td {
-  background-color: rgb(15 23 42 / 0.09) !important;
+  background-color: rgb(0 0 0 / 0.08) !important;
 }
 
 .crm-shell table > thead > tr > th {
@@ -1602,7 +1697,7 @@ html:not(.dark) .crm-shell table > tbody > tr:not(:has(td[colspan])):hover > td 
 }
 
 html:not(.dark) .crm-shell table > thead > tr > th {
-  background-color: rgb(100 116 139 / 0.18);
+  background-color: rgb(110 110 110 / 0.16);
 }
 
 .crm-shell table.analytics-status-table > thead > tr > th,
@@ -1637,8 +1732,8 @@ html:not(.dark) .crm-shell table > thead > tr > th {
 
 html:not(.dark) .crm-shell [data-slot="input"],
 html:not(.dark) .crm-shell [data-slot="select-trigger"] {
-  background-color: rgb(232 237 242);
-  border-color: rgb(185 194 204);
+  background-color: rgb(235 235 235);
+  border-color: rgb(200 200 200);
 }
 
 .dark .crm-shell [data-slot="input"],
@@ -1653,8 +1748,8 @@ html:not(.dark) .crm-shell [data-slot="select-trigger"] {
 
 html:not(.dark) .crm-shell [data-slot="input"]:hover,
 html:not(.dark) .crm-shell [data-slot="select-trigger"]:hover {
-  background-color: rgb(226 232 240);
-  border-color: rgb(100 116 139);
+  background-color: rgb(224 224 224);
+  border-color: rgb(160 160 160);
 }
 
 .crm-shell [data-slot="input"]:hover,
@@ -1675,7 +1770,7 @@ html:not(.dark) .crm-shell [data-slot="select-trigger"]:hover {
 }
 
 html:not(.dark) .crm-shell [data-slot="tabs-list"] {
-  background-color: rgb(232 237 242);
+  background-color: rgb(235 235 235);
 }
 
 .dark .crm-shell [data-slot="tabs-list"] {
