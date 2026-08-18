@@ -15,7 +15,7 @@ const links = [
 export function Navbar() {
   const { t } = useLocale();
   return (
-    <header className="marketing-header sticky top-0 z-40 border-b border-border bg-background">
+    <header className="marketing-header sticky top-0 z-40 border-b border-border">
       <div className="relative flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
           <BrandLogo />
@@ -33,10 +33,8 @@ export function Navbar() {
           ))}
         </nav>
         <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1">
-            <LanguageSelect compact />
-            <ThemeToggle />
-          </div>
+          <LanguageSelect compact />
+          <ThemeToggle />
           <Link
             href="/login"
             className="marketing-staff-login hidden text-[15px] font-normal text-muted-foreground hover:text-foreground sm:inline"
