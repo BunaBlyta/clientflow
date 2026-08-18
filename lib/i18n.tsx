@@ -255,7 +255,7 @@ const english: Messages = {
   "marketing.companyPlaceholder": "Marlowe & Finch",
   "marketing.emailPlaceholder": "you@company.com",
   "marketing.messagePlaceholder": "A landing page for a product launch in September...",
-  "marketing.heroTitle": "A clear path from request to launch — and everything after.",
+  "marketing.heroTitle": "A clear path from\nrequest to launch —\nand everything after.",
   "marketing.heroIntro": "Pick a package, tell us about your project, and track it from a first conversation to a live site — all in one place, with a mobile app that keeps you posted along the way.",
   "marketing.seePackages": "See packages",
   "marketing.customBuild": "Talk to us about a custom build",

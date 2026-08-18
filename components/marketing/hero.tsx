@@ -11,7 +11,7 @@ export function Hero() {
     <section className="hero-section relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden">
       <div className="hero-gradient pointer-events-none absolute inset-x-0 top-0 z-0 h-[560px]" />
       <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-4 py-24 text-center sm:px-6 sm:py-32">
-        <h1 className="hero-title max-w-[24ch] text-[32px] leading-[1.1] font-semibold tracking-tight text-balance">
+        <h1 className="hero-title max-w-[24ch] whitespace-pre-line text-[32px] leading-[1.1] font-semibold tracking-tight text-balance">
           {t("marketing.heroTitle")}
         </h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground text-balance">
