@@ -46,7 +46,7 @@ function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: React
 function FieldHint({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
-    <div id={id} role="alert" className="request-field-hint flex items-center gap-1.5 text-[12px] leading-4">
+    <div id={id} role="alert" className="request-field-hint flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] leading-4">
       <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
       <span>{message}</span>
     </div>
@@ -294,7 +294,7 @@ export function PackagesAndRequest() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
-                    <div className="flex min-h-5 items-center justify-between gap-2">
+                    <div className="flex h-5 items-center justify-between gap-2">
                       <RequiredLabel htmlFor="name">{t("marketing.yourName")}</RequiredLabel>
                       <FieldHint id="request-name-error" message={fieldErrors.name} />
                     </div>
@@ -310,12 +310,14 @@ export function PackagesAndRequest() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="companyName">{t("marketing.company")}</Label>
+                    <div className="flex h-5 items-center">
+                      <Label htmlFor="companyName">{t("marketing.company")}</Label>
+                    </div>
                     <Input id="companyName" name="companyName" placeholder={t("marketing.companyPlaceholder")} className="request-field request-modal-field" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex min-h-5 items-center justify-between gap-2">
+                  <div className="flex h-5 items-center justify-between gap-2">
                     <RequiredLabel htmlFor="email">{t("auth.email")}</RequiredLabel>
                     <FieldHint id="request-email-error" message={fieldErrors.email} />
                   </div>
