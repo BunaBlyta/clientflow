@@ -1513,6 +1513,12 @@ html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selec
   cursor: pointer;
 }
 
+.marketing-modal [data-slot="button"],
+.custom-build-thanks-modal [data-slot="button"],
+.contact-form-card [data-slot="button"] {
+  cursor: pointer;
+}
+
 .marketing-page [data-slot="button"]:hover,
 .marketing-page [data-slot="button"]:active {
   transform: none !important;

@@ -14,6 +14,7 @@ import { useLocale } from "@/lib/i18n";
 type CustomBuildDialogProps = {
   trigger: ReactElement;
 };
+type CustomLeadField = "name" | "email" | "message";
 
 function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -24,17 +25,47 @@ function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: React
   );
 }
 
+function FieldHint({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <div id={id} role="alert" className="request-field-hint flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] leading-4">
+      <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
 export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<CustomLeadField, string>>>({});
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const values = new FormData(form);
+    const name = String(values.get("name") ?? "").trim();
+    const email = String(values.get("email") ?? "").trim();
+    const message = String(values.get("message") ?? "").trim();
+    const nextFieldErrors: Partial<Record<CustomLeadField, string>> = {};
+
+    if (!name) nextFieldErrors.name = t("common.required");
+    if (!email) {
+      nextFieldErrors.email = t("common.required");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextFieldErrors.email = t("common.invalidEmail");
+    }
+    if (!message) nextFieldErrors.message = t("common.required");
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
     setPending(true);
     setError(null);
 
@@ -43,9 +74,9 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: values.get("name"),
-          email: values.get("email"),
-          message: values.get("message"),
+          name,
+          email,
+          message,
         }),
       });
       const result = (await response.json().catch(() => null)) as { error?: unknown } | null;
@@ -54,6 +85,7 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
       }
 
       form.reset();
+      setFieldErrors({});
       setSubmitted(true);
       toast.success(t("marketing.inquirySent"), { description: t("marketing.inquirySentIntro") });
     } catch (caughtError) {
@@ -67,6 +99,7 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
     setOpen(nextOpen);
     if (!nextOpen) {
       setError(null);
+      setFieldErrors({});
       setSubmitted(false);
     }
   }
@@ -74,8 +107,8 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={trigger} />
-      <DialogContent id="custom-build-form" className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent id="custom-build-form" className="marketing-modal max-h-[calc(100vh-2rem)] overflow-y-auto !rounded-2xl !border-0 !ring-0 p-6 sm:max-w-lg sm:p-7">
+        <DialogHeader className="gap-2">
           <DialogTitle>{t("marketing.customBuildTitle")}</DialogTitle>
           <DialogDescription>{t("marketing.customBuildIntro")}</DialogDescription>
         </DialogHeader>
@@ -89,7 +122,7 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
             {error && (
               <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
                 <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
@@ -98,23 +131,35 @@ export function CustomBuildDialog({ trigger }: CustomBuildDialogProps) {
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <RequiredLabel htmlFor="custom-contact-name">{t("marketing.yourName")}</RequiredLabel>
-                <Input id="custom-contact-name" name="name" required placeholder={t("marketing.namePlaceholder")} className="contact-field" />
+                <div className="flex h-5 items-center justify-between gap-2">
+                  <RequiredLabel htmlFor="custom-contact-name">{t("marketing.yourName")}</RequiredLabel>
+                  <FieldHint id="custom-name-error" message={fieldErrors.name} />
+                </div>
+                <Input id="custom-contact-name" name="name" required aria-invalid={Boolean(fieldErrors.name)} aria-describedby={fieldErrors.name ? "custom-name-error" : undefined} placeholder={t("marketing.namePlaceholder")} className="contact-field" onInput={() => setFieldErrors((current) => ({ ...current, name: undefined }))} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <RequiredLabel htmlFor="custom-contact-email">{t("auth.email")}</RequiredLabel>
-                <Input id="custom-contact-email" name="email" type="email" required placeholder={t("marketing.emailPlaceholder")} className="contact-field" />
+                <div className="flex h-5 items-center justify-between gap-2">
+                  <RequiredLabel htmlFor="custom-contact-email">{t("auth.email")}</RequiredLabel>
+                  <FieldHint id="custom-email-error" message={fieldErrors.email} />
+                </div>
+                <Input id="custom-contact-email" name="email" type="email" required aria-invalid={Boolean(fieldErrors.email)} aria-describedby={fieldErrors.email ? "custom-email-error" : undefined} placeholder={t("marketing.emailPlaceholder")} className="contact-field" onInput={() => setFieldErrors((current) => ({ ...current, email: undefined }))} />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <RequiredLabel htmlFor="custom-contact-message">{t("marketing.whatBuild")}</RequiredLabel>
+              <div className="flex h-5 items-center justify-between gap-2">
+                <RequiredLabel htmlFor="custom-contact-message">{t("marketing.whatBuild")}</RequiredLabel>
+                <FieldHint id="custom-message-error" message={fieldErrors.message} />
+              </div>
               <Textarea
                 id="custom-contact-message"
                 name="message"
                 required
+                aria-invalid={Boolean(fieldErrors.message)}
+                aria-describedby={fieldErrors.message ? "custom-message-error" : undefined}
                 rows={5}
                 placeholder={t("marketing.buildPlaceholder")}
                 className="contact-field max-h-56 resize-y overflow-y-auto"
+                onInput={() => setFieldErrors((current) => ({ ...current, message: undefined }))}
               />
             </div>
             <Button type="submit" disabled={pending} className="mt-2 w-full">
