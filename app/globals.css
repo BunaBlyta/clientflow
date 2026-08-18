@@ -1569,6 +1569,9 @@ html:not(.dark) .package-card--standard {
 
 html:not(.dark) .package-card--popular {
   background: #e8f8fe !important;
+  background-image:
+    radial-gradient(120% 110% at 100% 0%, rgb(90 178 255 / 0.16), transparent 72%),
+    radial-gradient(120% 110% at 0% 100%, rgb(90 178 255 / 0.1), transparent 75%) !important;
   border: 2px solid #5ab2ff !important;
   box-shadow: 0 12px 24px -20px rgb(90 178 255 / 0.8) !important;
 }
