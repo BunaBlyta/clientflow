@@ -1,10 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 10:34 by Codex — add hand cursors to form buttons
+Last updated: 2026-08-18 10:33 by Codex — align hero action buttons
 
 ## Current state
 
-- Explicitly removed the accidental dark gradient strip from the light-mode request-modal title and modal surface. Light-mode modal fields now use a clearly visible light blue-gray fill with no outer border or focus shadow; required-field asterisks and inline empty-field labels use a deeper teal-blue with an alert icon in a fixed-height label row above the field, so validation does not move or misalign the textboxes. The custom app dialog and contact form use the same validation treatment, and all of their buttons show a hand cursor.
+- Explicitly removed the accidental dark gradient strip from the light-mode request-modal title and modal surface. Light-mode modal fields now use a clearly visible light blue-gray fill with no outer border or focus shadow; required-field asterisks and inline empty-field labels use a deeper teal-blue with an alert icon in a fixed-height label row above the field, so validation does not move or misalign the textboxes. The custom app dialog and contact form use the same validation treatment, and all of their buttons show a hand cursor. Hero actions now share a fixed height and vertical alignment.
 - Applied the PM landing-page pass: buttons keep their position and use a hand cursor, header is solid, anchor navigation scrolls smoothly with a sticky-header offset, and the hero copy is constrained into a centered triangular wrap.
 - Added intentional three-line breaks to the English landing hero headline so its centered lines widen toward the base; preserved the same spacing behavior through the locale system.
 - Made the landing header’s language, theme, login, and navigation controls use one pill radius, equal control gaps, and consistent language-menu padding.

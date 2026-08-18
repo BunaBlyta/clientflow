@@ -17,14 +17,14 @@ export function Hero() {
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground text-balance">
           {t("marketing.heroIntro")}
         </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" render={<a href="#packages" />}>
+        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+          <Button size="lg" className="h-9" render={<a href="#packages" />}>
             {t("marketing.seePackages")}
             <ArrowRight />
           </Button>
           <CustomBuildDialog
             trigger={
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" className="h-9">
                 {t("marketing.customBuild")}
               </Button>
             }
