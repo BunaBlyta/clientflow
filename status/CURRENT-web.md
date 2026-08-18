@@ -1,11 +1,23 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-18 08:31 by Codex — triangle-shaped landing hero headline
+Last updated: 2026-08-18 10:14 by Codex — force light-mode request modal styling
 
 ## Current state
 
+- Explicitly removed the accidental dark gradient strip from the light-mode request-modal title and modal surface. Light-mode modal fields now have a slightly darker blue-gray fill with no visible outer or focus border; dark mode is unchanged.
 - Applied the PM landing-page pass: buttons keep their position and use a hand cursor, header is solid, anchor navigation scrolls smoothly with a sticky-header offset, and the hero copy is constrained into a centered triangular wrap.
 - Added intentional three-line breaks to the English landing hero headline so its centered lines widen toward the base; preserved the same spacing behavior through the locale system.
+- Made the landing header’s language, theme, login, and navigation controls use one pill radius, equal control gaps, and consistent language-menu padding.
+- Removed the language menu item’s extra right-side reservation so its padding is even on all sides.
+- Removed the compact language menu’s shared minimum width so it now fits its longest language label plus the intended padding.
+- Added a subtle lighter background and text treatment for the currently selected language in light and dark mode.
+- Removed the compact menu’s selected checkmark and aligned the menu’s right edge to the trigger so it opens leftward.
+- Removed the package-card top bars, gave the Most Popular CTA a distinct blue treatment, and kept every package description in a two-line slot.
+- Added a concise second sentence to each landing package description so the reserved two-line treatment contains real copy.
+- Removed the dark Most Popular card border, made its badge a circular angled mark in both themes, and added a soft top-right light wash in dark mode.
+- Reduced the dark card’s cyan highlight and shadow intensity so the surface stays substantially darker.
+- Darkened the Most Popular card to an almost-black blue cast, just slightly distinct from the other black cards.
+- Increased the dark Most Popular corner gradients so they are visible on black and matched the custom card border opacity to the standard card.
 - Standardized landing section spacing and button radii/gaps. The “How it works” steps and connectors keep their original hover animations without moving buttons or changing section layout.
 - Differentiated package cards with aligned content rows, distinct standard/popular/custom shades, and a clearer popular treatment.
 - Package requests and custom builds now open dialogs, and the visible custom inquiry form is also restored in the Contact section. Required fields show asterisks, submission errors appear at the top with an alert icon, dropdowns open below and align to the field, and long textareas stay bounded and resizable.
@@ -54,6 +66,9 @@ Last updated: 2026-08-18 08:31 by Codex — triangle-shaped landing hero headlin
 
 ## Verification
 
+- `npm run typecheck && npm run lint`: passed; lint retains two pre-existing image warnings in `components/marketing/mobile-app-section.tsx`.
+- `npm run verify`: typecheck, lint, and 172 tests passed; the default Turbopack build hit the known sandbox process/port-binding panic.
+- `node_modules/.bin/next build --webpack`: passed.
 - `npx vitest run lib/realtime-notification-store.test.ts`: passed (4 tests).
 - `npm run typecheck`: passed after the API lane's generated Prisma client was
   refreshed.
