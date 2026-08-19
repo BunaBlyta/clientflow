@@ -25,7 +25,10 @@ export function LanguageSelect({
       <Select value={locale} onValueChange={(value) => value && setLocale(value as typeof locale)}>
         <SelectTrigger
           aria-label={t("language.label")}
-          className="marketing-lang-trigger size-8 border-0 bg-transparent p-0 shadow-none [&>svg:last-child]:hidden"
+          className={cn(
+            "marketing-lang-trigger size-8 border-0 bg-transparent p-0 shadow-none [&>svg:last-child]:hidden",
+            triggerClassName,
+          )}
         >
           <Globe className="size-4 text-muted-foreground" aria-hidden="true" />
         </SelectTrigger>
@@ -51,7 +54,7 @@ export function LanguageSelect({
             triggerClassName,
           )}
         >
-          {shortLabel ? <span>{locale.toUpperCase()}</span> : <SelectValue />}
+          {shortLabel ? <span className="text-[11px]">{locale.toUpperCase()}</span> : <SelectValue />}
         </SelectTrigger>
         <SelectContent className={contentClassName}>
           {LOCALES.map((item) => <SelectItem key={item} value={item}>{LOCALE_LABELS[item]}</SelectItem>)}

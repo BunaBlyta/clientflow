@@ -54,7 +54,7 @@ export function ProjectAgingScatterChart({
   }, []);
 
   return (
-    <div ref={containerRef} className="flex w-full flex-col overflow-hidden">
+    <div ref={containerRef} className="analytics-chart-canvas flex w-full flex-col overflow-hidden">
       <div className="flex min-h-6 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-accent" />Under 14 days</span>
         <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-warning" />14–29 days</span>
@@ -72,7 +72,7 @@ export function ProjectAgingScatterChart({
           const y = yForStage(index);
           return (
             <g key={stage}>
-              <line x1={LEFT} x2={chartWidth - RIGHT} y1={y} y2={y} stroke="var(--analytics-border, var(--border))" />
+              <line className="analytics-gridline" x1={0} x2={chartWidth} y1={y} y2={y} stroke="var(--analytics-border, var(--border))" />
               <line x1={LEFT - 4} x2={LEFT} y1={y} y2={y} stroke="var(--muted-foreground)" />
               <text x={LEFT - 10} y={y + 4} textAnchor="end" fill="var(--muted-foreground)" fontSize="11">
                 {stage}
@@ -86,7 +86,7 @@ export function ProjectAgingScatterChart({
           const x = LEFT + (tick / xMax) * plotWidth;
           return (
             <g key={tick}>
-              <line x1={x} x2={x} y1={TOP} y2={plotBottom} stroke="var(--analytics-border, var(--border))" strokeDasharray="2 4" />
+              <line className="analytics-gridline-v" x1={x} x2={x} y1={0} y2={CHART_HEIGHT} stroke="var(--analytics-border, var(--border))" strokeDasharray="2 4" />
               <line x1={x} x2={x} y1={plotBottom} y2={plotBottom + 5} stroke="var(--muted-foreground)" />
               <text x={x} y={plotBottom + 18} textAnchor="middle" fill="var(--muted-foreground)" fontSize="11">
                 {tick}d

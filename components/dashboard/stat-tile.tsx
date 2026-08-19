@@ -12,7 +12,7 @@ export function StatTile({
   tone?: "default" | "danger";
 }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg border border-border p-4">
+    <div className="crm-kpi-tile flex flex-col items-center gap-1.5 border-r border-neutral-300 bg-muted/25 p-4 text-center last:border-r-0 dark:border-border">
       <span className="text-[13px] text-muted-foreground">{label}</span>
       <span
         className={cn(

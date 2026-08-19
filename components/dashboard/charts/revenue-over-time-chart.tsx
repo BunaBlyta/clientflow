@@ -16,6 +16,31 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+type GridLineProps = {
+  y1: number;
+  y2: number;
+  stroke?: string;
+  strokeDasharray?: string | number;
+  strokeWidth?: string | number;
+  opacity?: number | string;
+};
+
+function extendHorizontalGridLine({ y1, y2, stroke, strokeDasharray, strokeWidth, opacity }: GridLineProps) {
+  return (
+    <line
+      className="analytics-gridline"
+      x1={0}
+      x2={10000}
+      y1={y1}
+      y2={y2}
+      stroke={stroke}
+      strokeDasharray={strokeDasharray}
+      strokeWidth={strokeWidth}
+      opacity={opacity}
+    />
+  );
+}
+
 export function RevenueOverTimeChart({
   data,
 }: {
@@ -26,15 +51,19 @@ export function RevenueOverTimeChart({
     : 0;
 
   return (
-    <ChartContainer config={chartConfig} className="h-56 w-full">
-      <AreaChart data={data} margin={{ left: 0, right: 8, top: 12, bottom: 0 }}>
+    <ChartContainer config={chartConfig} className="analytics-chart-canvas h-56 w-full">
+      <AreaChart data={data} margin={{ left: 20, right: 8, top: 12, bottom: 0 }}>
         <defs>
           <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--brand-accent)" stopOpacity={0.25} />
             <stop offset="100%" stopColor="var(--brand-accent)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="var(--analytics-border, var(--border))" />
+        <CartesianGrid
+          horizontal={extendHorizontalGridLine}
+          vertical={false}
+          stroke="var(--analytics-border, var(--border))"
+        />
         <YAxis
           tickLine={false}
           axisLine={false}

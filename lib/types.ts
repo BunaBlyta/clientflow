@@ -143,6 +143,7 @@ export interface Invoice {
   status: InvoiceStatus;
   dueDate?: string;
   paidAt?: string;
+  issuedAt?: string;
   createdAt: string;
 }
 

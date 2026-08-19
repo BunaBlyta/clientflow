@@ -51,6 +51,7 @@ export function Topbar() {
   );
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
@@ -133,6 +134,7 @@ export function Topbar() {
   }
 
   const handleNotificationsOpenChange = useCallback((open: boolean) => {
+    setIsNotificationsOpen(open);
     if (!open) return;
 
     setOpenedNotificationIds((openedIds) => {
@@ -194,17 +196,18 @@ export function Topbar() {
         <span aria-hidden className="shrink-0 leading-none text-[12px] text-muted-foreground/70">•</span>
         <p className="min-w-0 truncate text-[13px] leading-4 text-muted-foreground">{pageMeta.description}</p>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="crm-header-language flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        <div className="crm-header-language flex items-center gap-1">
           <LanguageSelect
-            showIcon={false}
-            shortLabel
-            contentClassName="crm-header-language-content"
-            triggerClassName="!w-14 !justify-center !px-2"
+            compact
+            triggerClassName="!size-9 !bg-transparent"
           />
           <ThemeToggle />
         </div>
-        <DropdownMenu onOpenChange={(open) => void handleNotificationsOpenChange(open)}>
+        <DropdownMenu
+          open={isNotificationsOpen}
+          onOpenChange={(open) => void handleNotificationsOpenChange(open)}
+        >
         <DropdownMenuTrigger
           render={
             <button
@@ -224,6 +227,7 @@ export function Topbar() {
             <p className="text-[13px] font-medium text-foreground">{t("nav.notifications")}</p>
             <Link
               href="/dashboard/notifications"
+              onClick={() => setIsNotificationsOpen(false)}
               className="flex items-center gap-1 rounded-full px-3 py-2 text-[11px] font-medium text-brand-accent transition-colors hover:bg-muted hover:text-foreground"
             >
               {t("notifications.viewAll")}

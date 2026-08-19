@@ -19,15 +19,44 @@ const chartConfig = {
   revenueCents: { label: "Revenue" },
 } satisfies ChartConfig;
 
+type GridLineProps = {
+  y1: number;
+  y2: number;
+  stroke?: string;
+  strokeDasharray?: string | number;
+  strokeWidth?: string | number;
+  opacity?: number | string;
+};
+
+function extendHorizontalGridLine({ y1, y2, stroke, strokeDasharray, strokeWidth, opacity }: GridLineProps) {
+  return (
+    <line
+      className="analytics-gridline"
+      x1={0}
+      x2={10000}
+      y1={y1}
+      y2={y2}
+      stroke={stroke}
+      strokeDasharray={strokeDasharray}
+      strokeWidth={strokeWidth}
+      opacity={opacity}
+    />
+  );
+}
+
 export function RevenueByPackageChart({
   data,
 }: {
   data: { name: string; revenueCents: number }[];
 }) {
   return (
-    <ChartContainer config={chartConfig} className="h-56 w-full">
+    <ChartContainer config={chartConfig} className="analytics-chart-canvas h-56 w-full">
       <BarChart data={data} margin={{ left: 0, right: 8, top: 16, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="var(--analytics-border, var(--border))" />
+        <CartesianGrid
+          horizontal={extendHorizontalGridLine}
+          vertical={false}
+          stroke="var(--analytics-border, var(--border))"
+        />
         <XAxis
           dataKey="name"
           tickLine={false}

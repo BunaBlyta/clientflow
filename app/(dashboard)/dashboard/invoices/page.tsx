@@ -188,11 +188,12 @@ export default function InvoicesPage() {
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-5 py-3 font-normal">{t("invoices.invoice")}</th>
-              <th className="px-5 py-3 font-normal">{t("invoices.project")}</th>
+              <th className="py-3 pr-2 pl-5 font-normal">{t("invoices.invoice")}</th>
+              <th className="py-3 pr-5 pl-2 font-normal">{t("invoices.project")}</th>
               <th className="px-5 py-3 font-normal">{t("clients.company")}</th>
-              <th className="px-5 py-3 text-right font-normal">{t("common.amount")}</th>
-              <th className="px-5 py-3 font-normal">{t("common.status")}</th>
+              <th className="py-3 pr-0 pl-5 text-right font-normal">{t("common.amount")}</th>
+              <th className="py-3 pr-5 pl-24 font-normal">{t("common.status")}</th>
+              <th className="px-5 py-3 font-normal">{t("invoices.sent")}</th>
               <th className="px-5 py-3 text-right font-normal">{t("invoices.due")}</th>
               <th className="px-3 py-3">
                 <span className="sr-only">Actions</span>
@@ -204,10 +205,10 @@ export default function InvoicesPage() {
               const project = projectNames.get(invoice.projectId);
               return (
                 <tr key={invoice.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                  <td className="px-5 py-3.5">
+                  <td className="py-3.5 pr-2 pl-5">
                     <span className="font-medium">{invoice.label}</span>
                   </td>
-                  <td className="px-5 py-3.5 text-muted-foreground">
+                  <td className="py-3.5 pr-5 pl-2 text-muted-foreground">
                     {project ? (
                       <Link href={`/dashboard/projects/${project.id}`} className="hover:text-brand-accent">
                         {project.name}
@@ -219,9 +220,12 @@ export default function InvoicesPage() {
                   <td className="px-5 py-3.5 text-muted-foreground">
                     {clientNames.get(invoice.clientId) ?? t("common.unknown")}
                   </td>
-                  <td className="px-5 py-3.5 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td>
-                  <td className="px-5 py-3.5">
+                  <td className="py-3.5 pr-0 pl-5 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td>
+                  <td className="py-3.5 pr-5 pl-24">
                     <span className={invoiceDisplayTone(invoice)}>{t(invoiceDisplayLabelKey(invoice))}</span>
+                  </td>
+                  <td className="px-5 py-3.5 text-muted-foreground">
+                    {invoice.issuedAt ? formatDate(invoice.issuedAt) : "—"}
                   </td>
                   <td className="px-5 py-3.5 text-right text-muted-foreground">
                     {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
@@ -237,7 +241,7 @@ export default function InvoicesPage() {
             })}
             {invoices.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center">
+                <td colSpan={8} className="px-4 py-10 text-center">
                   <p className="text-[13px] font-medium">{t("invoices.noInvoices")}</p>
                   <p className="mt-1 text-[12px] text-muted-foreground">
                     {t("invoices.createdIntro")}
@@ -247,7 +251,7 @@ export default function InvoicesPage() {
             )}
             {invoices.length > 0 && filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                   {t("invoices.noMatch")}
                 </td>
               </tr>

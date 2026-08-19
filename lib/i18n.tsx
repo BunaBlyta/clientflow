@@ -203,6 +203,7 @@ const english: Messages = {
   "invoices.search": "Search invoices...",
   "invoices.invoice": "Invoice",
   "invoices.project": "Project",
+  "invoices.sent": "Sent",
   "invoices.due": "Due",
   "invoices.noInvoices": "No invoices yet",
   "invoices.noMatch": "No invoices match your filters.",
@@ -386,6 +387,7 @@ const english: Messages = {
 };
 
 const german: Messages = {
+  "invoices.sent": "Gesendet",
   "nav.overview": "Übersicht", "nav.projects": "Projekte", "nav.clients": "Kunden", "nav.invoices": "Rechnungen", "nav.analytics": "Analysen", "nav.settings": "Einstellungen", "nav.notifications": "Benachrichtigungen", "nav.staffLogin": "Mitarbeiter-Login", "nav.startProject": "Projekt starten", "nav.packages": "Pakete", "nav.howItWorks": "So funktioniert es", "nav.contact": "Kontakt", "nav.back": "Zurück zu Clientflow",
   "theme.light": "Hell", "theme.dark": "Dunkel", "theme.system": "System", "theme.toggle": "Theme wechseln", "language.label": "Sprache",
   "common.loading": "Wird geladen…", "common.tryAgain": "Erneut versuchen", "common.cancel": "Abbrechen", "common.save": "Änderungen speichern", "common.actions": "Aktionen", "common.status": "Status", "common.amount": "Betrag", "common.count": "Anzahl", "common.search": "Suchen…", "common.noResults": "Keine passenden Ergebnisse.", "common.required": "Pflichtfeld", "common.invalidEmail": "Gib eine gültige E-Mail-Adresse ein.", "common.unknown": "Unbekannt", "common.notAvailable": "—", "common.close": "Schließen", "common.back": "Zurück", "common.submit": "Senden", "common.sending": "Wird gesendet…", "common.updating": "Wird aktualisiert…", "common.working": "Wird bearbeitet…",
@@ -397,6 +399,7 @@ const german: Messages = {
 };
 
 const albanian: Messages = {
+  "invoices.sent": "Dërguar",
   "nav.overview": "Përmbledhje", "nav.projects": "Projektet", "nav.clients": "Klientët", "nav.invoices": "Faturat", "nav.analytics": "Analitika", "nav.settings": "Cilësimet", "nav.notifications": "Njoftimet", "nav.staffLogin": "Hyrja e stafit", "nav.startProject": "Fillo një projekt", "nav.packages": "Paketat", "nav.howItWorks": "Si funksionon", "nav.contact": "Kontakt", "nav.back": "Kthehu te Clientflow",
   "theme.light": "E çelët", "theme.dark": "E errët", "theme.system": "Sistemi", "theme.toggle": "Ndrysho temën", "language.label": "Gjuha",
   "common.loading": "Duke u ngarkuar…", "common.tryAgain": "Provo përsëri", "common.cancel": "Anulo", "common.save": "Ruaj ndryshimet", "common.actions": "Veprime", "common.status": "Statusi", "common.amount": "Shuma", "common.count": "Numri", "common.search": "Kërko…", "common.noResults": "Nuk ka rezultate që përputhen.", "common.required": "Fushë e detyrueshme", "common.invalidEmail": "Shkruaj një email të vlefshëm.", "common.unknown": "E panjohur", "common.notAvailable": "—", "common.close": "Mbyll", "common.back": "Prapa", "common.submit": "Dërgo", "common.sending": "Duke dërguar…", "common.updating": "Duke përditësuar…", "common.working": "Duke punuar…",

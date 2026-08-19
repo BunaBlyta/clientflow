@@ -172,14 +172,14 @@ export default function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid overflow-hidden rounded-lg sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label={t("dashboard.activeProjects")} value={String(activeProjectCount(projects))} hint={t("dashboard.kpiActiveHint")} />
         <StatTile label={t("dashboard.pendingRequests")} value={String(pendingRequests.length)} hint={t("dashboard.kpiPendingHint")} />
         <StatTile label={t("nav.projects")} value={String(projects.length)} hint={t("dashboard.kpiProjectsHint")} />
         <StatTile label={t("nav.notifications")} value={String(unreadNotifications.length)} hint={t("dashboard.kpiNotificationsHint")} />
       </div>
 
-      <div className="overview-pipeline rounded-lg border border-border p-5">
+      <div className="overview-pipeline rounded-lg border-0 p-5 shadow-none">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
@@ -219,7 +219,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border p-5">
+      <div className="overview-card rounded-lg p-5">
           <div className="border-b border-border pb-3">
             <h2 className="text-[15px] font-medium">{t("dashboard.avgTurnaround")}</h2>
             <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
@@ -237,7 +237,7 @@ export default function OverviewPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border p-5">
+        <div className="overview-card rounded-lg p-5">
           <div className="border-b border-border pb-3">
             <h2 className="text-[15px] font-medium">{t("dashboard.recentProjects")}</h2>
           </div>
@@ -258,7 +258,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border p-5">
+        <div className="overview-card rounded-lg p-5">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <h2 className="text-[15px] font-medium">{t("dashboard.projectSchedule")}</h2>
             <Link href="/dashboard/projects" className="text-[12px] text-brand-accent hover:underline">
@@ -291,7 +291,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border p-5">
+      <div className="overview-card rounded-lg p-5">
         <div className="flex items-start justify-between gap-4 border-b border-border pb-3">
           <div>
             <h2 className="text-[15px] font-medium">{t("dashboard.workQueue")}</h2>

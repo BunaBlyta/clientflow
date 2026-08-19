@@ -22,6 +22,7 @@ import { RevenueByPackageChart } from "@/components/dashboard/charts/revenue-by-
 import { TurnaroundChart } from "@/components/dashboard/charts/turnaround-chart";
 import { ProjectAgingScatterChart } from "@/components/dashboard/charts/project-aging-scatter-chart";
 import { ReceivablesHeatmap } from "@/components/dashboard/charts/receivables-heatmap";
+import { AnalyticsGridOverlay } from "@/components/dashboard/charts/analytics-grid-overlay";
 import { Button } from "@/components/ui/button";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
@@ -187,7 +188,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="analytics-page flex flex-col gap-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid overflow-hidden rounded-lg border border-neutral-300 sm:grid-cols-2 lg:grid-cols-4 dark:border-border">
         <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.kpiRevenueHint")} />
         <StatTile
           label={t("dashboard.outstanding")}
@@ -207,7 +208,7 @@ export default function AnalyticsPage() {
         />
       </div>
 
-      <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
+      <div className="analytics-card rounded-lg border border-[color:var(--analytics-border)] p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-accent" />
@@ -233,48 +234,60 @@ export default function AnalyticsPage() {
         {insightError && <p className="mt-4 w-full text-[13px] text-status-danger">{insightError}</p>}
       </div>
 
-      <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
-        <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
-        <p className="text-[12px] text-muted-foreground">{t("dashboard.lastMonthsPaid", { months: 12 })}</p>
-        <div className="mt-4">
-          <RevenueOverTimeChart data={revenueTrend} />
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
-          <h2 className="text-[15px] font-medium">{t("dashboard.revenueByPackage")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.allTimePaid")}</p>
+      <div className="analytics-card analytics-chart-card relative overflow-hidden rounded-lg border-0 p-5">
+        <AnalyticsGridOverlay dependency={revenueTrend} />
+        <div className="relative z-10">
+          <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
+          <p className="text-[12px] text-muted-foreground">{t("dashboard.lastMonthsPaid", { months: 12 })}</p>
           <div className="mt-4">
-            <RevenueByPackageChart data={revenueByPkg} />
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
-          <h2 className="text-[15px] font-medium">{t("dashboard.turnaroundByPackage")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
-          <div className="mt-4">
-            {turnaroundByPkg.length === 0 ? (
-              <p className="py-16 text-center text-[13px] text-muted-foreground">
-                {t("dashboard.noLaunches")}
-              </p>
-            ) : (
-              <TurnaroundChart data={turnaroundByPkg} />
-            )}
+            <RevenueOverTimeChart data={revenueTrend} />
           </div>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
-          <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
-          <div className="mt-5">
-            <ProjectAgingScatterChart data={agingPoints} stages={agingStages} xAxisLabel={t("dashboard.daysSinceUpdate")} />
+        <div className="analytics-card analytics-chart-card relative overflow-hidden rounded-lg border-0 p-5">
+          <AnalyticsGridOverlay dependency={revenueByPkg} />
+          <div className="relative z-10">
+            <h2 className="text-[15px] font-medium">{t("dashboard.revenueByPackage")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.allTimePaid")}</p>
+            <div className="mt-4">
+              <RevenueByPackageChart data={revenueByPkg} />
+            </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
+        <div className="analytics-card analytics-chart-card relative overflow-hidden rounded-lg border-0 p-5">
+          <AnalyticsGridOverlay dependency={turnaroundByPkg} />
+          <div className="relative z-10">
+            <h2 className="text-[15px] font-medium">{t("dashboard.turnaroundByPackage")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.daysFromCreation")}</p>
+            <div className="mt-4">
+              {turnaroundByPkg.length === 0 ? (
+                <p className="py-16 text-center text-[13px] text-muted-foreground">
+                  {t("dashboard.noLaunches")}
+                </p>
+              ) : (
+                <TurnaroundChart data={turnaroundByPkg} />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="analytics-card analytics-chart-card relative overflow-hidden rounded-lg border-0 p-5">
+          <AnalyticsGridOverlay dependency={agingPoints} />
+          <div className="relative z-10">
+            <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
+            <div className="mt-5">
+              <ProjectAgingScatterChart data={agingPoints} stages={agingStages} xAxisLabel={t("dashboard.daysSinceUpdate")} />
+            </div>
+          </div>
+        </div>
+
+        <div className="analytics-card analytics-chart-card rounded-lg border-0 p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.upcomingReceivables")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
           <div className="mt-5">
@@ -284,7 +297,7 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="flex h-full flex-col rounded-lg border border-[color:var(--analytics-border)] p-5">
+        <div className="analytics-card flex h-full flex-col rounded-lg border border-[color:var(--analytics-border)] p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
           <div className="mt-4 flex flex-1 flex-col justify-between gap-3">
@@ -305,7 +318,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-[color:var(--analytics-border)] p-5">
+        <div className="analytics-card rounded-lg border border-[color:var(--analytics-border)] p-5">
           <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
           <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
           <table className="analytics-status-table mt-4 w-full text-[13px]">
