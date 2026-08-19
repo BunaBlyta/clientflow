@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 type ReceivableInvoice = {
@@ -61,7 +61,7 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
 
   return (
     <div className="flex flex-col">
-      <div ref={containerRef} className="flex h-72 flex-col">
+      <div ref={containerRef} className="flex h-[300px] flex-col">
       <div className="mb-2 flex min-h-6 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-status-danger" />Overdue</span>
         <span className="flex items-center gap-1.5">
@@ -108,40 +108,35 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
       </div>
       </div>
       {selectedDay && (
-        <div className="mt-2 border-t border-[color:var(--analytics-border)] pt-3 text-[12px]">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-medium">{formatDate(selectedDay.date)}</p>
-              <p className="mt-0.5 text-muted-foreground">{formatCurrency(selectedDay.amountCents)} due</p>
+        <div className="mt-2 border-t border-[color:var(--analytics-border)] pt-4 text-[12px]">
+          <div className="flex items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">
+                {formatDate(selectedDay.date)}
+                <span className="ml-2 font-normal text-muted-foreground">{formatCurrency(selectedDay.amountCents)} due</span>
+              </p>
+              {selectedDay.overdue && <span className="ml-2 font-normal text-status-danger">Overdue</span>}
+              {selectedDay.invoices.length > 0 && (
+                <div className="mt-2 flex flex-col gap-1">
+                  {selectedDay.invoices.map((invoice) => (
+                    <Link
+                      key={invoice.id}
+                      href={`/dashboard/projects/${invoice.projectId}`}
+                      className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-muted/60"
+                    >
+                      <span className="min-w-0 truncate">
+                        <span className="font-medium">{invoice.projectName}</span>
+                        <span className="ml-2 text-muted-foreground">{invoice.label} · {invoice.statusLabel}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-3">
-              <span className={selectedDay.overdue ? "text-status-danger" : "text-muted-foreground"}>
-                {selectedDay.overdue ? "Overdue" : "Upcoming"}
-              </span>
-              <button type="button" onClick={() => setSelectedDate(null)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground" aria-label="Clear selection">
-                Clear <X className="size-3.5" />
-              </button>
-            </div>
+            <button type="button" onClick={() => setSelectedDate(null)} className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground" aria-label="Clear selection">
+              Clear <ArrowRight className="size-3.5" />
+            </button>
           </div>
-          {selectedDay.invoices.length > 0 && (
-            <div className="mt-2 flex flex-col gap-1.5">
-              {selectedDay.invoices.map((invoice) => (
-                <Link
-                  key={invoice.id}
-                  href={`/dashboard/projects/${invoice.projectId}`}
-                  className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/60"
-                >
-                  <span className="min-w-0 truncate">
-                    <span className="font-medium">{invoice.projectName}</span>
-                    <span className="ml-2 text-muted-foreground">{invoice.label} · {invoice.statusLabel}</span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-1 tabular-nums">
-                    {formatCurrency(invoice.amountCents)} <ArrowUpRight className="size-3.5 text-brand-accent" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

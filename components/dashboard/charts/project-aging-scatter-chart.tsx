@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { formatDate } from "@/lib/format";
 
 type ProjectAgingPoint = {
@@ -138,19 +138,20 @@ export function ProjectAgingScatterChart({
         <text x={chartWidth - RIGHT} y={CHART_HEIGHT - 4} textAnchor="end" fill="var(--muted-foreground)" fontSize="11">{xAxisLabel}</text>
       </svg>
       {selectedPoint && (
-        <div className="mt-2 flex items-center justify-between gap-4 border-t border-[color:var(--analytics-border)] pt-3 text-[12px]">
-          <div className="min-w-0">
+        <div className="mt-2 flex items-center justify-between gap-4 px-5 pt-3 text-[12px]">
+          <Link
+            href={`/dashboard/projects/${selectedPoint.id}`}
+            className="min-w-0 flex-1 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+          >
             <p className="truncate font-medium">{selectedPoint.name}</p>
             <p className="mt-0.5 text-muted-foreground">
-              {selectedPoint.stage} · {selectedPoint.ageDays} days since update · Updated {formatDate(selectedPoint.updatedAt)}
+              {selectedPoint.stage} · {selectedPoint.ageDays} days since update
             </p>
-          </div>
+            <p className="mt-1 text-muted-foreground">Updated {formatDate(selectedPoint.updatedAt)}</p>
+          </Link>
           <div className="flex shrink-0 items-center gap-3">
-            <Link href={`/dashboard/projects/${selectedPoint.id}`} className="flex items-center gap-1 text-brand-accent hover:underline">
-              View project <ArrowUpRight className="size-3.5" />
-            </Link>
-            <button type="button" onClick={() => setSelectedPointId(null)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground" aria-label="Clear selection">
-              Clear <X className="size-3.5" />
+            <button type="button" onClick={() => setSelectedPointId(null)} className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground" aria-label="Clear selection">
+              Clear <ArrowRight className="size-3.5" />
             </button>
           </div>
         </div>

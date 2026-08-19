@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoaderCircle, RefreshCw, Sparkles } from "lucide-react";
 import {
   averageTurnaroundByPackage,
@@ -38,6 +38,8 @@ export default function AnalyticsPage() {
   const [insight, setInsight] = useState<string | null>(null);
   const [insightError, setInsightError] = useState<string | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+  const pipelineCardRef = useRef<HTMLDivElement>(null);
+  const invoiceStatusCardRef = useRef<HTMLDivElement>(null);
 
   const loadAnalytics = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -83,6 +85,29 @@ export default function AnalyticsPage() {
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [loadAnalytics]);
+
+  useEffect(() => {
+    const pipelineCard = pipelineCardRef.current;
+    const invoiceStatusCard = invoiceStatusCardRef.current;
+    if (!pipelineCard || !invoiceStatusCard) return;
+
+    const syncPipelineHeight = () => {
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        pipelineCard.style.minHeight = `${Math.ceil(invoiceStatusCard.getBoundingClientRect().height)}px`;
+      } else {
+        pipelineCard.style.minHeight = "";
+      }
+    };
+
+    syncPipelineHeight();
+    const resizeObserver = new ResizeObserver(syncPipelineHeight);
+    resizeObserver.observe(invoiceStatusCard);
+    window.addEventListener("resize", syncPipelineHeight);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncPipelineHeight);
+    };
+  }, [isLoading]);
 
   async function generateInsight() {
     setIsGeneratingInsight(true);
@@ -275,72 +300,74 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="analytics-card analytics-chart-card relative overflow-hidden rounded-lg border-0 p-5">
-          <AnalyticsGridOverlay dependency={agingPoints} />
-          <div className="relative z-10">
-            <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
-            <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
-            <div className="mt-5">
-              <ProjectAgingScatterChart data={agingPoints} stages={agingStages} xAxisLabel={t("dashboard.daysSinceUpdate")} />
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          <div className="order-1 analytics-card analytics-chart-card relative min-h-[400px] overflow-hidden rounded-lg border-0 p-5 lg:order-none">
+            <AnalyticsGridOverlay dependency={agingPoints} />
+            <div className="relative z-10">
+              <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
+              <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
+              <div className="mt-5">
+                <ProjectAgingScatterChart data={agingPoints} stages={agingStages} xAxisLabel={t("dashboard.daysSinceUpdate")} />
+              </div>
+            </div>
+          </div>
+
+          <div ref={pipelineCardRef} className="order-3 analytics-card flex flex-col rounded-lg border border-[color:var(--analytics-border)] p-5 lg:order-none">
+            <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
+            <div className="mt-4 flex flex-1 flex-col justify-between gap-3">
+              {stageRows.map((s) => (
+                <div key={s.status} className="flex items-center gap-3 text-[13px]">
+                  <span className={`w-24 shrink-0 ${PROJECT_STATUS_TONE[s.status]}`}>
+                    {t(`status.project.${s.status}`)}
+                  </span>
+                  <div className="h-2 flex-1 rounded-full bg-muted">
+                    <div
+                      className="h-2 rounded-full bg-brand-accent"
+                      style={{ width: `${(s.count / maxStageCount) * 100}%` }}
+                    />
+                  </div>
+                  <span className="w-5 shrink-0 text-right tabular-nums text-muted-foreground">{s.count}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="analytics-card analytics-chart-card rounded-lg border-0 p-5">
-          <h2 className="text-[15px] font-medium">{t("dashboard.upcomingReceivables")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
-          <div className="mt-5">
-            <ReceivablesHeatmap data={receivableDays} />
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          <div className="order-2 analytics-card analytics-chart-card rounded-lg border-0 p-5 lg:order-none">
+            <h2 className="text-[15px] font-medium">{t("dashboard.upcomingReceivables")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
+            <div className="mt-5">
+              <ReceivablesHeatmap data={receivableDays} />
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="analytics-card flex h-full flex-col rounded-lg border border-[color:var(--analytics-border)] p-5">
-          <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
-          <div className="mt-4 flex flex-1 flex-col justify-between gap-3">
-            {stageRows.map((s) => (
-              <div key={s.status} className="flex items-center gap-3 text-[13px]">
-                <span className={`w-24 shrink-0 ${PROJECT_STATUS_TONE[s.status]}`}>
-                  {t(`status.project.${s.status}`)}
-                </span>
-                <div className="h-2 flex-1 rounded-full bg-muted">
-                  <div
-                    className="h-2 rounded-full bg-brand-accent"
-                    style={{ width: `${(s.count / maxStageCount) * 100}%` }}
-                  />
-                </div>
-                <span className="w-5 shrink-0 text-right tabular-nums text-muted-foreground">{s.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="analytics-card rounded-lg border border-[color:var(--analytics-border)] p-5">
-          <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
-          <table className="analytics-status-table mt-4 w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-[color:var(--analytics-border)] text-left text-[12px] text-muted-foreground">
-                <th className="py-2 font-normal">{t("common.status")}</th>
-                <th className="py-2 text-right font-normal">{t("common.count")}</th>
-                <th className="py-2 text-right font-normal">{t("common.amount")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoiceStatusRows.map((row) => (
-                <tr key={row.status} className="border-b border-[color:var(--analytics-border)] last:border-0">
-                  <td className="py-2">
-                    <span className={INVOICE_STATUS_TONE[row.status]}>{t(`status.invoice.${row.status}`)}</span>
-                  </td>
-                  <td className="py-2 text-right tabular-nums text-muted-foreground">{row.count}</td>
-                  <td className="py-2 text-right tabular-nums">{formatCurrency(row.amountCents)}</td>
+          <div ref={invoiceStatusCardRef} className="order-4 analytics-card rounded-lg border border-[color:var(--analytics-border)] p-5 lg:order-none">
+            <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
+            <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
+            <table className="analytics-status-table mt-4 w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-[color:var(--analytics-border)] text-left text-[12px] text-muted-foreground">
+                  <th className="py-2 font-normal">{t("common.status")}</th>
+                  <th className="py-2 text-right font-normal">{t("common.count")}</th>
+                  <th className="py-2 text-right font-normal">{t("common.amount")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {invoiceStatusRows.map((row) => (
+                  <tr key={row.status} className="border-b border-[color:var(--analytics-border)] last:border-0">
+                    <td className="py-2">
+                      <span className={INVOICE_STATUS_TONE[row.status]}>{t(`status.invoice.${row.status}`)}</span>
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-muted-foreground">{row.count}</td>
+                    <td className="py-2 text-right tabular-nums">{formatCurrency(row.amountCents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
