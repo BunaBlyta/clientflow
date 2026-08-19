@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { LoaderCircle, WandSparkles } from "lucide-react";
+import { AlertCircle, LoaderCircle, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
 import type { CustomLead } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldHint } from "@/components/dashboard/field-hint";
 import { useLocale } from "@/lib/i18n";
+
+type ConversionField = "projectName" | "description" | "amount";
 
 export function ConvertCustomLeadDialog({
   lead,
@@ -28,12 +30,24 @@ export function ConvertCustomLeadDialog({
   const [description, setDescription] = useState(lead.message);
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [sendInvoice, setSendInvoice] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ConversionField, string>>>({});
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextFieldErrors: Partial<Record<ConversionField, string>> = {};
+    if (!projectName.trim()) nextFieldErrors.projectName = t("common.required");
+    if (!description.trim()) nextFieldErrors.description = t("common.required");
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) nextFieldErrors.amount = "Invalid amount.";
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setError(null);
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
     setPending(true);
     setError(null);
 
@@ -52,23 +66,20 @@ export function ConvertCustomLeadDialog({
             amount,
             currency: "usd",
             dueDate: dueDate || undefined,
-            sendInvoice,
+            sendInvoice: true,
           }),
         },
       );
       setOpen(false);
+      setFieldErrors({});
       onConverted();
       toast.success("Custom project created", {
         description:
           result.emailSent === false
             ? "The project was created, but the invitation email failed. Resend it from Clients."
             : result.emailSent === true
-              ? sendInvoice
-                ? "The client was invited and the custom invoice was sent."
-                : "The client was invited and the invoice is saved as a draft."
-              : sendInvoice
-                ? "The custom project and invoice were created for the existing client."
-                : "The custom project and draft invoice were created for the existing client.",
+              ? "The client was invited and the custom invoice was sent."
+              : "The custom project and invoice were created for the existing client.",
       });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "We couldn't create the custom project.");
@@ -90,7 +101,7 @@ export function ConvertCustomLeadDialog({
             This creates or uses a client account, a custom project, and a one-off invoice for {lead.email}.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
+        <form noValidate onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`company-${lead.id}`}>{t("clients.company")}</Label>
@@ -102,33 +113,42 @@ export function ConvertCustomLeadDialog({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`project-${lead.id}`}>{t("projects.projectName")}</Label>
-            <Input id={`project-${lead.id}`} value={projectName} onChange={(event) => setProjectName(event.target.value)} required />
+            <div className="flex h-5 items-center justify-between gap-2">
+              <Label htmlFor={`project-${lead.id}`}>{t("projects.projectName")}</Label>
+              <FieldHint id={`project-error-${lead.id}`} message={fieldErrors.projectName} />
+            </div>
+            <Input id={`project-${lead.id}`} value={projectName} onChange={(event) => { setProjectName(event.target.value); setFieldErrors((current) => ({ ...current, projectName: undefined })); }} required aria-invalid={Boolean(fieldErrors.projectName)} aria-describedby={fieldErrors.projectName ? `project-error-${lead.id}` : undefined} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`description-${lead.id}`}>{t("inquiries.brief")}</Label>
-            <Textarea id={`description-${lead.id}`} value={description} onChange={(event) => setDescription(event.target.value)} rows={4} required />
+            <div className="flex h-5 items-center justify-between gap-2">
+              <Label htmlFor={`description-${lead.id}`}>{t("inquiries.brief")}</Label>
+              <FieldHint id={`description-error-${lead.id}`} message={fieldErrors.description} />
+            </div>
+            <Textarea id={`description-${lead.id}`} value={description} onChange={(event) => { setDescription(event.target.value); setFieldErrors((current) => ({ ...current, description: undefined })); }} rows={4} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? `description-error-${lead.id}` : undefined} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`amount-${lead.id}`}>{t("invoices.amountUsd")}</Label>
-              <Input id={`amount-${lead.id}`} value={amount} onChange={(event) => setAmount(event.target.value)} type="number" min="0.01" step="0.01" required placeholder="15000" />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor={`amount-${lead.id}`}>{t("invoices.amountUsd")}</Label>
+                <FieldHint id={`amount-error-${lead.id}`} message={fieldErrors.amount} />
+              </div>
+              <Input id={`amount-${lead.id}`} value={amount} onChange={(event) => { setAmount(event.target.value); setFieldErrors((current) => ({ ...current, amount: undefined })); }} type="number" min="0.01" step="0.01" required aria-invalid={Boolean(fieldErrors.amount)} aria-describedby={fieldErrors.amount ? `amount-error-${lead.id}` : undefined} placeholder="15000" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`due-${lead.id}`}>{t("invoices.due")}</Label>
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor={`due-${lead.id}`}>{t("invoices.due")}</Label>
+              </div>
               <Input id={`due-${lead.id}`} value={dueDate} onChange={(event) => setDueDate(event.target.value)} type="date" />
             </div>
           </div>
-          <label className="flex items-start gap-2 text-[13px]">
-            <Checkbox checked={sendInvoice} onCheckedChange={(checked) => setSendInvoice(checked === true)} />
-            <span>
-              <span className="block font-medium">{t("inquiries.sendInvoiceNow")}</span>
-              <span className="block text-[12px] text-muted-foreground">{t("inquiries.sendInvoiceIntro")}</span>
-            </span>
-          </label>
-          <p className="text-[11px] text-muted-foreground">Inquiry received {formatDate(lead.createdAt)}.</p>
-          {error && <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">{error}</p>}
-          <DialogFooter>
+          {error && (
+            <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>{error}</span>
+            </div>
+          )}
+          <DialogFooter className="mt-1 w-full flex-row items-center justify-end gap-3">
+            <p className="-ml-1 text-left text-[11px] text-muted-foreground">Inquiry received {formatDate(lead.createdAt)}.</p>
             <Button type="submit" disabled={pending}>
               {pending && <LoaderCircle className="animate-spin" />}
               {pending ? t("settings.creating") : t("inquiries.createProject")}

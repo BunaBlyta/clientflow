@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,19 +15,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldHint } from "@/components/dashboard/field-hint";
 import type { ManagedPackage } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+
+type PackageField = "name" | "slug" | "price" | "currency" | "description" | "sortOrder";
 
 export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPackage) => void }) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<PackageField, string>>>({});
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const name = String(form.get("name") ?? "").trim();
+    const slug = String(form.get("slug") ?? "").trim();
+    const description = String(form.get("description") ?? "").trim();
+    const price = Number(form.get("price"));
+    const currency = String(form.get("currency") ?? "").trim();
+    const sortOrder = Number(form.get("sortOrder"));
+    const nextFieldErrors: Partial<Record<PackageField, string>> = {};
+
+    if (!name) nextFieldErrors.name = t("common.required");
+    if (!slug) nextFieldErrors.slug = t("common.required");
+    else if (!/^[a-z0-9-]+$/.test(slug)) nextFieldErrors.slug = "Invalid slug.";
+    if (!Number.isFinite(price) || price <= 0) nextFieldErrors.price = "Positive value required.";
+    if (!currency) nextFieldErrors.currency = t("common.required");
+    if (!description) nextFieldErrors.description = t("common.required");
+    if (!Number.isInteger(sortOrder) || sortOrder < 0) nextFieldErrors.sortOrder = "Whole number required.";
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
     setPending(true);
     setError(null);
 
@@ -37,13 +63,13 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: String(form.get("name") ?? "").trim(),
-          slug: String(form.get("slug") ?? "").trim(),
-          description: String(form.get("description") ?? "").trim(),
-          price: Number(form.get("price")),
-          currency: String(form.get("currency") ?? "usd").trim().toLowerCase(),
+          name,
+          slug,
+          description,
+          price,
+          currency: currency.toLowerCase(),
           estimatedDuration: String(form.get("estimatedDuration") ?? "").trim() || undefined,
-          sortOrder: Number(form.get("sortOrder") ?? 0),
+          sortOrder,
         }),
       });
       const result = (await response.json().catch(() => null)) as ManagedPackage | { error?: string } | null;
@@ -57,6 +83,7 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
       if (!result || !("id" in result)) throw new Error("The server returned an unexpected package response.");
       onCreated(result);
       formElement.reset();
+      setFieldErrors({});
       setOpen(false);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "We couldn't create this package.");
@@ -76,23 +103,35 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
           <DialogTitle>{t("settings.newPackage")}</DialogTitle>
           <DialogDescription>{t("settings.newPackageIntro")}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-name">{t("settings.name")}</Label>
-            <Input id="package-name" name="name" required placeholder="Full Website" />
+            <div className="flex h-5 items-center justify-between gap-2">
+              <Label htmlFor="package-name">{t("settings.name")}</Label>
+              <FieldHint id="package-name-error" message={fieldErrors.name} />
+            </div>
+            <Input id="package-name" name="name" required aria-invalid={Boolean(fieldErrors.name)} aria-describedby={fieldErrors.name ? "package-name-error" : undefined} placeholder="Full Website" onInput={() => setFieldErrors((current) => ({ ...current, name: undefined }))} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-slug">{t("settings.slug")}</Label>
-            <Input id="package-slug" name="slug" required pattern="[a-z0-9-]+" placeholder="full-website" />
+            <div className="flex h-5 items-center justify-between gap-2">
+              <Label htmlFor="package-slug">{t("settings.slug")}</Label>
+              <FieldHint id="package-slug-error" message={fieldErrors.slug} />
+            </div>
+            <Input id="package-slug" name="slug" required pattern="[a-z0-9-]+" aria-invalid={Boolean(fieldErrors.slug)} aria-describedby={fieldErrors.slug ? "package-slug-error" : undefined} placeholder="full-website" onInput={() => setFieldErrors((current) => ({ ...current, slug: undefined }))} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="package-price">{t("settings.price")}</Label>
-              <Input id="package-price" name="price" type="number" min="0.01" step="0.01" required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="package-price">{t("settings.price")}</Label>
+                <FieldHint id="package-price-error" message={fieldErrors.price} />
+              </div>
+              <Input id="package-price" name="price" type="number" min="0.01" step="0.01" required aria-invalid={Boolean(fieldErrors.price)} aria-describedby={fieldErrors.price ? "package-price-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, price: undefined }))} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="package-currency">{t("settings.currency")}</Label>
-              <Input id="package-currency" name="currency" defaultValue="usd" maxLength={3} required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="package-currency">{t("settings.currency")}</Label>
+                <FieldHint id="package-currency-error" message={fieldErrors.currency} />
+              </div>
+              <Input id="package-currency" name="currency" defaultValue="usd" maxLength={3} required aria-invalid={Boolean(fieldErrors.currency)} aria-describedby={fieldErrors.currency ? "package-currency-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, currency: undefined }))} />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -100,17 +139,24 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
             <Input id="package-duration" name="estimatedDuration" placeholder="6–8 weeks" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-description">{t("settings.description")}</Label>
-            <Textarea id="package-description" name="description" rows={2} required />
+            <div className="flex h-5 items-center justify-between gap-2">
+              <Label htmlFor="package-description">{t("settings.description")}</Label>
+              <FieldHint id="package-description-error" message={fieldErrors.description} />
+            </div>
+            <Textarea id="package-description" name="description" rows={2} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? "package-description-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, description: undefined }))} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-sort-order">{t("settings.sortOrder")}</Label>
-            <Input id="package-sort-order" name="sortOrder" type="number" min="0" step="1" defaultValue="0" required />
+            <div className="flex h-5 items-center justify-between gap-2">
+              <Label htmlFor="package-sort-order">{t("settings.sortOrder")}</Label>
+              <FieldHint id="package-sort-order-error" message={fieldErrors.sortOrder} />
+            </div>
+            <Input id="package-sort-order" name="sortOrder" type="number" min="0" step="1" defaultValue="0" required aria-invalid={Boolean(fieldErrors.sortOrder)} aria-describedby={fieldErrors.sortOrder ? "package-sort-order-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, sortOrder: undefined }))} />
           </div>
           {error && (
-            <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
-              {error}
-            </p>
+            <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>{error}</span>
+            </div>
           )}
           <DialogFooter>
             <Button type="submit" disabled={pending}>

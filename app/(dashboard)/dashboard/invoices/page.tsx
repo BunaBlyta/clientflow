@@ -13,7 +13,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import type { Client, Invoice, InvoiceStatus, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
@@ -172,7 +171,11 @@ export default function InvoicesPage() {
       <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("invoices.search")}>
         <Select value={statusFilter} onValueChange={(value) => value && setStatusFilter(value as typeof statusFilter)}>
           <SelectTrigger className="w-44">
-            <SelectValue />
+            {statusFilter === "ALL"
+              ? t("status.filter.ALL")
+              : statusFilter === "OVERDUE"
+                ? t("status.filter.OVERDUE")
+                : t(`status.invoice.${statusFilter}`)}
           </SelectTrigger>
           <SelectContent>
             {STATUS_FILTERS.map((filter) => (

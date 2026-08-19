@@ -10,8 +10,9 @@ import {
   overdueInvoicesTotal,
   projectsByStage,
   revenueByPackage,
-  revenueOverTime,
+  revenueOverTimeRange,
   totalPaidRevenue,
+  type RevenueDateRange,
 } from "@/lib/analytics";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency } from "@/lib/format";
@@ -24,9 +25,20 @@ import { ProjectAgingScatterChart } from "@/components/dashboard/charts/project-
 import { ReceivablesHeatmap } from "@/components/dashboard/charts/receivables-heatmap";
 import { AnalyticsGridOverlay } from "@/components/dashboard/charts/analytics-grid-overlay";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
+
+function toDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function defaultRevenueRange(): RevenueDateRange {
+  const end = new Date();
+  const start = new Date(end.getFullYear(), end.getMonth() - 11, 1);
+  return { start: toDateInputValue(start), end: toDateInputValue(end) };
+}
 
 export default function AnalyticsPage() {
   const { t } = useLocale();
@@ -38,6 +50,9 @@ export default function AnalyticsPage() {
   const [insight, setInsight] = useState<string | null>(null);
   const [insightError, setInsightError] = useState<string | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+  const [revenueView, setRevenueView] = useState<"single" | "compare">("single");
+  const [revenueRange, setRevenueRange] = useState<RevenueDateRange>(defaultRevenueRange);
+  const [comparisonRange, setComparisonRange] = useState<RevenueDateRange>(defaultRevenueRange);
   const pipelineCardRef = useRef<HTMLDivElement>(null);
   const invoiceStatusCardRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +172,27 @@ export default function AnalyticsPage() {
     );
   }
 
-  const revenueTrend = revenueOverTime(invoices, 12);
+  const revenueTrend = revenueOverTimeRange(invoices, revenueRange);
+  const comparisonTrend = revenueView === "compare" ? revenueOverTimeRange(invoices, comparisonRange) : [];
+  const comparisonPointCount = Math.max(revenueTrend.length, comparisonTrend.length);
+  const revenueChartData = revenueView === "compare"
+    ? Array.from({ length: comparisonPointCount }, (_, index) => {
+        const currentIndex = revenueTrend.length <= 1
+          ? 0
+          : Math.round((index * (revenueTrend.length - 1)) / (comparisonPointCount - 1));
+        const comparisonIndex = comparisonTrend.length <= 1
+          ? 0
+          : Math.round((index * (comparisonTrend.length - 1)) / (comparisonPointCount - 1));
+        return {
+          label: revenueTrend[currentIndex]?.label ?? "",
+          revenueCents: revenueTrend[currentIndex]?.revenueCents ?? null,
+          comparisonRevenueCents: comparisonTrend[comparisonIndex]?.revenueCents ?? null,
+          comparisonLabel: comparisonTrend[comparisonIndex]?.label ?? "",
+        };
+      })
+    : revenueTrend.map((entry) => ({ ...entry, revenueCents: entry.revenueCents }));
+  const invalidRevenueRange = revenueRange.start > revenueRange.end;
+  const invalidComparisonRange = comparisonRange.start > comparisonRange.end;
   const revenueByPkg = revenueByPackage(invoices, projects, packages);
   const turnaroundByPkg = averageTurnaroundByPackage(projects, packages).filter(
     (t): t is typeof t & { avgDays: number } => t.avgDays !== null
@@ -213,7 +248,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="analytics-page flex flex-col gap-8">
-      <div className="grid overflow-hidden rounded-lg border border-neutral-300 sm:grid-cols-2 lg:grid-cols-4 dark:border-border">
+      <div className="crm-kpi-strip grid overflow-hidden rounded-lg border border-neutral-300 sm:grid-cols-2 lg:grid-cols-4 dark:border-border">
         <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.kpiRevenueHint")} />
         <StatTile
           label={t("dashboard.outstanding")}
@@ -233,8 +268,8 @@ export default function AnalyticsPage() {
         />
       </div>
 
-      <div className="analytics-card rounded-lg border border-[color:var(--analytics-border)] p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="analytics-card rounded-lg p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-accent" />
             <div className="min-w-0 flex-1">
@@ -260,12 +295,95 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="analytics-card analytics-chart-card relative overflow-hidden rounded-lg border-0 p-5">
-        <AnalyticsGridOverlay dependency={revenueTrend} />
+        <AnalyticsGridOverlay dependency={revenueChartData} />
         <div className="relative z-10">
-          <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
-          <p className="text-[12px] text-muted-foreground">{t("dashboard.lastMonthsPaid", { months: 12 })}</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
+              <p className="text-[12px] text-muted-foreground">{t("dashboard.revenuePeriodIntro")}</p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
+              <div className="flex items-center gap-2">
+                {revenueView === "compare" && (
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-accent/15 text-[11px] font-medium text-brand-accent">A</span>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    className="w-32"
+                    aria-label={`${t("dashboard.periodOne")} ${t("dashboard.from")}`}
+                    type="date"
+                    value={revenueRange.start}
+                    max={revenueRange.end}
+                    onChange={(event) => setRevenueRange((range) => ({ ...range, start: event.target.value }))}
+                  />
+                  <Input
+                    className="w-32"
+                    aria-label={`${t("dashboard.periodOne")} ${t("dashboard.to")}`}
+                    type="date"
+                    value={revenueRange.end}
+                    min={revenueRange.start}
+                    onChange={(event) => setRevenueRange((range) => ({ ...range, end: event.target.value }))}
+                  />
+                </div>
+              </div>
+              {revenueView === "compare" && (
+                <div className="flex items-center gap-2">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">B</span>
+                  <div className="flex gap-2">
+                    <Input
+                      className="w-32"
+                      aria-label={`${t("dashboard.periodTwo")} ${t("dashboard.from")}`}
+                      type="date"
+                      value={comparisonRange.start}
+                      max={comparisonRange.end}
+                      onChange={(event) => setComparisonRange((range) => ({ ...range, start: event.target.value }))}
+                    />
+                    <Input
+                      className="w-32"
+                      aria-label={`${t("dashboard.periodTwo")} ${t("dashboard.to")}`}
+                      type="date"
+                      value={comparisonRange.end}
+                      min={comparisonRange.start}
+                      onChange={(event) => setComparisonRange((range) => ({ ...range, end: event.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-1 rounded-full bg-muted/50 p-1">
+                <Button
+                  type="button"
+                  size="xs"
+                  variant={revenueView === "single" ? "secondary" : "ghost"}
+                  className="rounded-full"
+                  aria-pressed={revenueView === "single"}
+                  onClick={() => setRevenueView("single")}
+                >
+                  {t("dashboard.singlePeriod")}
+                </Button>
+                <Button
+                  type="button"
+                  size="xs"
+                  variant={revenueView === "compare" ? "secondary" : "ghost"}
+                  className="rounded-full"
+                  aria-pressed={revenueView === "compare"}
+                  onClick={() => setRevenueView("compare")}
+                >
+                  {t("dashboard.comparePeriods")}
+                </Button>
+              </div>
+            </div>
+          </div>
+          {(invalidRevenueRange || (revenueView === "compare" && invalidComparisonRange)) ? (
+            <p className="mt-2 text-[12px] text-status-danger">{t("dashboard.invalidRevenueRange")}</p>
+          ) : null}
           <div className="mt-4">
-            <RevenueOverTimeChart data={revenueTrend} />
+            <RevenueOverTimeChart
+              key={`${revenueView}-${revenueRange.start}-${revenueRange.end}-${comparisonRange.start}-${comparisonRange.end}`}
+              data={revenueChartData}
+              currentLabel={t("dashboard.periodOne")}
+              comparisonLabel={t("dashboard.periodTwo")}
+              averageLabel={t("dashboard.average")}
+            />
           </div>
         </div>
       </div>
@@ -322,7 +440,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div ref={pipelineCardRef} className="order-3 analytics-card flex flex-col rounded-lg border border-[color:var(--analytics-border)] p-5 lg:order-none">
+          <div ref={pipelineCardRef} className="order-3 analytics-card flex flex-col rounded-lg p-5 lg:order-none">
             <h2 className="text-[15px] font-medium">{t("dashboard.pipelineByStage")}</h2>
             <p className="text-[12px] text-muted-foreground">{t("dashboard.everyProjectCurrentStage")}</p>
             <div className="mt-4 flex flex-1 flex-col justify-between gap-3">
@@ -367,7 +485,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div ref={invoiceStatusCardRef} className="order-4 analytics-card rounded-lg border border-[color:var(--analytics-border)] p-5 lg:order-none">
+          <div ref={invoiceStatusCardRef} className="order-4 analytics-card rounded-lg p-5 lg:order-none">
             <h2 className="text-[15px] font-medium">{t("dashboard.invoicesByStatus")}</h2>
             <p className="text-[12px] text-muted-foreground">{t("dashboard.countAndTotal")}</p>
             <table className="analytics-status-table mt-4 w-full text-[13px]">

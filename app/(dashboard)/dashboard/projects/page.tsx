@@ -18,7 +18,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
@@ -74,7 +73,9 @@ function ProjectsPageInner() {
                 onValueChange={(value) => value && setProjectStatusFilter(value as ProjectStatus | "ALL")}
               >
                 <SelectTrigger className="w-44">
-                  <SelectValue />
+                  {projectStatusFilter === "ALL"
+                    ? t("status.filter.ALL")
+                    : t(`status.project.${projectStatusFilter}`)}
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_FILTERS.map((filter) => (

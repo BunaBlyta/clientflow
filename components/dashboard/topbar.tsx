@@ -197,10 +197,10 @@ export function Topbar() {
         <p className="min-w-0 truncate text-[13px] leading-4 text-muted-foreground">{pageMeta.description}</p>
       </div>
       <div className="flex items-center gap-2">
-        <div className="crm-header-language flex items-center gap-1">
+        <div className="crm-header-language flex items-center gap-2">
           <LanguageSelect
             compact
-            triggerClassName="!size-9 !bg-transparent"
+            triggerClassName="!size-9 !justify-center !rounded-md !bg-transparent transition-colors hover:!bg-muted hover:!text-foreground"
           />
           <ThemeToggle />
         </div>
@@ -288,7 +288,7 @@ export function Topbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 px-1.5"
+              className="h-9 px-1.5 hover:!bg-transparent aria-expanded:!bg-transparent"
               aria-label={currentUser?.name ?? "Account"}
             />
           }

@@ -2,6 +2,43 @@ import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 
 const OUTSTANDING_STATUSES: Invoice["status"][] = ["SENT", "PAYMENT_PENDING", "FAILED"];
 
+export type RevenueDateRange = {
+  start: string;
+  end: string;
+};
+
+function parseDateInput(value: string, endOfDay = false) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
+}
+
+export function revenueOverTimeRange(invoices: Invoice[], range: RevenueDateRange) {
+  const start = parseDateInput(range.start);
+  const end = parseDateInput(range.end, true);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return [];
+
+  const monthCount = (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth() + 1;
+  const buckets = Array.from({ length: monthCount }, (_, index) => {
+    const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
+    return {
+      key: `${date.getFullYear()}-${date.getMonth()}`,
+      label: date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      revenueCents: 0,
+    };
+  });
+  const byKey = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const invoice of invoices) {
+    if (invoice.status !== "PAID" || !invoice.paidAt) continue;
+    const paidAt = new Date(invoice.paidAt);
+    if (paidAt < start || paidAt > end) continue;
+    const bucket = byKey.get(`${paidAt.getFullYear()}-${paidAt.getMonth()}`);
+    if (bucket) bucket.revenueCents += invoice.amountCents;
+  }
+
+  return buckets;
+}
+
 export function revenueOverTime(invoices: Invoice[], months = 6) {
   const now = new Date();
   const buckets: { key: string; label: string; revenueCents: number }[] = [];

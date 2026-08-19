@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldHint } from "@/components/dashboard/field-hint";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import type { ManagedPackage } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+
+type PackageField = "name" | "price" | "currency" | "description";
 
 export function EditPackageDialog({
   pkg,
@@ -30,10 +33,28 @@ export function EditPackageDialog({
   const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<PackageField, string>>>({});
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const description = String(form.get("description") ?? "").trim();
+    const price = Number(form.get("price"));
+    const currency = String(form.get("currency") ?? "").trim();
+    const nextFieldErrors: Partial<Record<PackageField, string>> = {};
+
+    if (!name) nextFieldErrors.name = t("common.required");
+    if (!Number.isFinite(price) || price <= 0) nextFieldErrors.price = "Positive value required.";
+    if (!currency) nextFieldErrors.currency = t("common.required");
+    if (!description) nextFieldErrors.description = t("common.required");
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
     setPending(true);
     setError(null);
 
@@ -43,10 +64,10 @@ export function EditPackageDialog({
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: String(form.get("name") || pkg.name).trim(),
-          description: String(form.get("description") || pkg.description).trim(),
-          price: Number(form.get("price")),
-          currency: String(form.get("currency") || pkg.currency).trim().toLowerCase(),
+          name,
+          description,
+          price,
+          currency: currency.toLowerCase(),
           estimatedDuration: String(form.get("estimatedDuration") || "").trim() || null,
         }),
       });
@@ -60,6 +81,7 @@ export function EditPackageDialog({
       }
       if (!result || !("id" in result)) throw new Error("The server returned an unexpected package response.");
       onUpdated(result);
+      setFieldErrors({});
       onCancel();
       toast.success(`${pkg.name} updated`, {
         description: "Changes apply to the public pricing page immediately.",
@@ -120,14 +142,20 @@ export function EditPackageDialog({
               {t("common.cancel")}
             </Button>
           </div>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
-              <Input id={`edit-package-name-${pkg.id}`} name="name" defaultValue={pkg.name} required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
+                <FieldHint id={`edit-package-name-error-${pkg.id}`} message={fieldErrors.name} />
+              </div>
+              <Input id={`edit-package-name-${pkg.id}`} name="name" defaultValue={pkg.name} required aria-invalid={Boolean(fieldErrors.name)} aria-describedby={fieldErrors.name ? `edit-package-name-error-${pkg.id}` : undefined} onInput={() => setFieldErrors((current) => ({ ...current, name: undefined }))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={`edit-package-price-${pkg.id}`}>{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
+                <div className="flex h-5 items-center justify-between gap-2">
+                  <Label htmlFor={`edit-package-price-${pkg.id}`}>{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
+                  <FieldHint id={`edit-package-price-error-${pkg.id}`} message={fieldErrors.price} />
+                </div>
                 <Input
                   id={`edit-package-price-${pkg.id}`}
                   name="price"
@@ -136,16 +164,25 @@ export function EditPackageDialog({
                   step="0.01"
                   defaultValue={pkg.price}
                   required
+                  aria-invalid={Boolean(fieldErrors.price)}
+                  aria-describedby={fieldErrors.price ? `edit-package-price-error-${pkg.id}` : undefined}
+                  onInput={() => setFieldErrors((current) => ({ ...current, price: undefined }))}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={`edit-package-currency-${pkg.id}`}>{t("settings.currency")}</Label>
+                <div className="flex h-5 items-center justify-between gap-2">
+                  <Label htmlFor={`edit-package-currency-${pkg.id}`}>{t("settings.currency")}</Label>
+                  <FieldHint id={`edit-package-currency-error-${pkg.id}`} message={fieldErrors.currency} />
+                </div>
                 <Input
                   id={`edit-package-currency-${pkg.id}`}
                   name="currency"
                   defaultValue={pkg.currency}
                   maxLength={3}
                   required
+                  aria-invalid={Boolean(fieldErrors.currency)}
+                  aria-describedby={fieldErrors.currency ? `edit-package-currency-error-${pkg.id}` : undefined}
+                  onInput={() => setFieldErrors((current) => ({ ...current, currency: undefined }))}
                 />
               </div>
             </div>
@@ -159,13 +196,17 @@ export function EditPackageDialog({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`edit-package-description-${pkg.id}`}>{t("settings.description")}</Label>
-              <Textarea id={`edit-package-description-${pkg.id}`} name="description" defaultValue={pkg.description} rows={2} required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor={`edit-package-description-${pkg.id}`}>{t("settings.description")}</Label>
+                <FieldHint id={`edit-package-description-error-${pkg.id}`} message={fieldErrors.description} />
+              </div>
+              <Textarea id={`edit-package-description-${pkg.id}`} name="description" defaultValue={pkg.description} rows={2} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? `edit-package-description-error-${pkg.id}` : undefined} onInput={() => setFieldErrors((current) => ({ ...current, description: undefined }))} />
             </div>
             {error && (
-              <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
-                {error}
-              </p>
+              <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
+                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <span>{error}</span>
+              </div>
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Button

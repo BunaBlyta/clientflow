@@ -64,8 +64,8 @@ export function Sidebar({
               href={item.href}
               title={collapsed ? t(item.key) : undefined}
               className={cn(
-                "crm-sidebar-link flex items-center rounded-full py-3.5 text-[16px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
-                collapsed ? "justify-center px-0" : "gap-4 px-3.5",
+                "crm-sidebar-link flex h-12 w-full items-center rounded-full bg-transparent text-[16px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                collapsed ? "justify-center px-0" : "justify-start gap-4 px-3.5",
                 isActive && "crm-sidebar-link-active bg-sidebar-accent font-medium text-foreground"
               )}
             >
@@ -80,7 +80,7 @@ export function Sidebar({
           type="button"
           variant="ghost"
           size="icon-lg"
-          className="h-12 w-full [&_svg]:size-5"
+          className="crm-sidebar-toggle h-12 w-full rounded-none hover:bg-sidebar-accent [&_svg]:size-5"
           onClick={onToggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

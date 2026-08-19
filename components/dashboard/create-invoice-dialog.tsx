@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Plus } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldHint } from "@/components/dashboard/field-hint";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,8 @@ const KIND_LABEL: Record<InvoiceKind, string> = {
   CUSTOM: "Custom",
 };
 
+type InvoiceField = "project" | "amount";
+
 export function CreateInvoiceDialog({
   projectId,
   currency = "usd",
@@ -50,6 +53,7 @@ export function CreateInvoiceDialog({
   const [pending, setPending] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<InvoiceField, string>>>({});
 
   const loadProjects = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -74,15 +78,21 @@ export function CreateInvoiceDialog({
     const form = new FormData(formElement);
     const amount = Number(form.get("amount"));
     const targetProjectId = projectId ?? selectedProjectId;
+    const nextFieldErrors: Partial<Record<InvoiceField, string>> = {};
+
     if (!targetProjectId) {
-      setError("Select a project before creating the invoice.");
-      return;
+      nextFieldErrors.project = t("common.required");
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      setError("Enter a positive invoice amount.");
+      nextFieldErrors.amount = "Invalid amount.";
+    }
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setError(null);
+      setFieldErrors(nextFieldErrors);
       return;
     }
 
+    setFieldErrors({});
     setPending(true);
     setError(null);
     try {
@@ -100,6 +110,7 @@ export function CreateInvoiceDialog({
       });
       onCreated?.(invoice);
       formElement.reset();
+      setFieldErrors({});
       setOpen(false);
       toast.success("Invoice created", { description: "The invoice is ready for the client." });
     } catch (caughtError) {
@@ -120,12 +131,15 @@ export function CreateInvoiceDialog({
           <DialogTitle>{t("invoices.newInvoice")}</DialogTitle>
           <DialogDescription>{t("invoices.newInvoiceIntro")}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
           {!projectId && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="project">{t("projects.project")}</Label>
-              <Select value={selectedProjectId} onValueChange={(v) => v && setSelectedProjectId(v)}>
-                <SelectTrigger id="project" className="w-full">
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="project">{t("projects.project")}</Label>
+                <FieldHint id="project-error" message={fieldErrors.project} />
+              </div>
+              <Select value={selectedProjectId} onValueChange={(v) => { if (v) { setSelectedProjectId(v); setFieldErrors((current) => ({ ...current, project: undefined })); } }}>
+                <SelectTrigger id="project" className="w-full" aria-invalid={Boolean(fieldErrors.project)} aria-describedby={fieldErrors.project ? "project-error" : undefined}>
                   <SelectValue placeholder={t("invoices.selectProject")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,18 +175,24 @@ export function CreateInvoiceDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="amount">{t("invoices.amountUsd")}</Label>
-              <Input id="amount" name="amount" type="number" min="0" step="1" required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="amount">{t("invoices.amountUsd")}</Label>
+                <FieldHint id="amount-error" message={fieldErrors.amount} />
+              </div>
+              <Input id="amount" name="amount" type="number" min="0" step="1" required aria-invalid={Boolean(fieldErrors.amount)} aria-describedby={fieldErrors.amount ? "amount-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, amount: undefined }))} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dueDate">{t("invoices.due")}</Label>
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="dueDate">{t("invoices.due")}</Label>
+              </div>
               <Input id="dueDate" name="dueDate" type="date" />
             </div>
           </div>
           {error && (
-            <p role="alert" className="border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] text-status-danger">
-              {error}
-            </p>
+            <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>{error}</span>
+            </div>
           )}
           <DialogFooter>
             <Button type="submit" disabled={pending || isLoadingProjects}>

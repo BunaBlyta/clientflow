@@ -6,6 +6,7 @@ import { LoaderCircle, Mail, Plus, RefreshCw } from "lucide-react";
 import { formatDate, formatMajorCurrency, initials } from "@/lib/format";
 import { EditPackageDialog } from "@/components/dashboard/edit-package-dialog";
 import { CreatePackageDialog } from "@/components/dashboard/create-package-dialog";
+import { FieldHint } from "@/components/dashboard/field-hint";
 import { fetchJson } from "@/lib/fetch-json";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -157,6 +158,7 @@ function TeamSection() {
   const [isInviting, setIsInviting] = useState(false);
   const [resendingStaffId, setResendingStaffId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ staffId: string; message: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "email", string>>>({});
 
   const loadTeam = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -196,7 +198,16 @@ function TeamSection() {
     event.preventDefault();
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
-    if (!trimmedName || !trimmedEmail) return;
+    const nextFieldErrors: Partial<Record<"name" | "email", string>> = {};
+    if (!trimmedName) nextFieldErrors.name = t("common.required");
+    if (!trimmedEmail) nextFieldErrors.email = t("common.required");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) nextFieldErrors.email = t("common.invalidEmail");
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
 
     setIsInviting(true);
     try {
@@ -213,6 +224,7 @@ function TeamSection() {
 
       setName("");
       setEmail("");
+      setFieldErrors({});
       setIsInviteFormOpen(false);
       await loadTeam();
       if (result.emailSent === false) {
@@ -305,14 +317,20 @@ function TeamSection() {
               {t("common.cancel")}
             </Button>
           </div>
-          <form onSubmit={handleInvite} className="mt-5 flex w-full flex-col gap-5">
+          <form noValidate onSubmit={handleInvite} className="mt-5 flex w-full flex-col gap-5">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="invite-name">{t("settings.name")}</Label>
-              <Input id="invite-name" className="h-10" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => setName(event.target.value)} required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="invite-name">{t("settings.name")}</Label>
+                <FieldHint id="invite-name-error" message={fieldErrors.name} />
+              </div>
+              <Input id="invite-name" className="h-10" type="text" placeholder={t("settings.teammatePlaceholder")} value={name} onChange={(event) => { setName(event.target.value); setFieldErrors((current) => ({ ...current, name: undefined })); }} required aria-invalid={Boolean(fieldErrors.name)} aria-describedby={fieldErrors.name ? "invite-name-error" : undefined} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="invite-email">{t("auth.email")}</Label>
-              <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => setEmail(event.target.value)} required />
+              <div className="flex h-5 items-center justify-between gap-2">
+                <Label htmlFor="invite-email">{t("auth.email")}</Label>
+                <FieldHint id="invite-email-error" message={fieldErrors.email} />
+              </div>
+              <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => { setEmail(event.target.value); setFieldErrors((current) => ({ ...current, email: undefined })); }} required aria-invalid={Boolean(fieldErrors.email)} aria-describedby={fieldErrors.email ? "invite-email-error" : undefined} />
             </div>
             <div className="border-t border-border pt-5">
               <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
