@@ -1731,6 +1731,13 @@ html:not(.dark) .crm-shell .analytics-page .crm-kpi-tile {
   margin-left: -1.25rem;
 }
 
+@media (min-width: 1024px) {
+  .analytics-fixed-card:has([aria-pressed="true"]) {
+    height: auto;
+    min-height: 400px;
+  }
+}
+
 
 
 

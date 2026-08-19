@@ -32,7 +32,7 @@ export function ProjectAgingScatterChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
-  const chartWidth = containerWidth || DEFAULT_WIDTH;
+  const chartWidth = Math.max((containerWidth || DEFAULT_WIDTH) - 8, LEFT + RIGHT + 1);
   const plotWidth = chartWidth - LEFT - RIGHT;
   const plotBottom = CHART_HEIGHT - BOTTOM;
   const plotHeight = plotBottom - TOP;
@@ -55,16 +55,11 @@ export function ProjectAgingScatterChart({
 
   return (
     <div ref={containerRef} className="analytics-chart-canvas flex w-full flex-col overflow-hidden">
-      <div className="flex min-h-6 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-accent" />Under 14 days</span>
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-warning" />14–29 days</span>
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-danger" />30+ days</span>
-      </div>
       <svg
         viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}
         width={chartWidth}
         height={CHART_HEIGHT}
-        className="mx-auto block max-w-full overflow-visible"
+        className="relative top-5 mx-0 block max-w-full overflow-visible"
         role="img"
         aria-label="Project age by stage"
       >
@@ -80,7 +75,7 @@ export function ProjectAgingScatterChart({
             </g>
           );
         })}
-        <line x1={LEFT} x2={LEFT} y1={TOP} y2={plotBottom} stroke="var(--muted-foreground)" />
+        <line x1={LEFT} x2={LEFT} y1={TOP - 35} y2={plotBottom} stroke="var(--muted-foreground)" />
         <line x1={LEFT} x2={chartWidth - RIGHT} y1={plotBottom} y2={plotBottom} stroke="var(--muted-foreground)" />
         {xTicks.map((tick) => {
           const x = LEFT + (tick / xMax) * plotWidth;
@@ -106,6 +101,7 @@ export function ProjectAgingScatterChart({
               key={point.id}
               role="button"
               tabIndex={0}
+              aria-pressed={selectedPointId === point.id}
               aria-label={`${point.name}, ${point.stage}, ${point.ageDays} days since update`}
               onClick={() => setSelectedPointId((current) => current === point.id ? null : point.id)}
               onDoubleClick={(event) => {
@@ -135,7 +131,7 @@ export function ProjectAgingScatterChart({
             </g>
           );
         })}
-        <text x={chartWidth - RIGHT} y={CHART_HEIGHT - 4} textAnchor="end" fill="var(--muted-foreground)" fontSize="11">{xAxisLabel}</text>
+        <text x={chartWidth - RIGHT - 22} y={CHART_HEIGHT - 25} textAnchor="end" fill="var(--muted-foreground)" fontSize="11">{xAxisLabel}</text>
       </svg>
       {selectedPoint && (
         <div className="mt-2 flex items-center justify-between gap-4 px-5 pt-3 text-[12px]">

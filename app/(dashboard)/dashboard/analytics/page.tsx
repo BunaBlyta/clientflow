@@ -302,12 +302,21 @@ export default function AnalyticsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
-          <div className="order-1 analytics-card analytics-chart-card relative min-h-[400px] overflow-hidden rounded-lg border-0 p-5 lg:order-none">
+          <div className="analytics-fixed-card order-1 analytics-card analytics-chart-card relative h-[400px] overflow-hidden rounded-lg border-0 p-5 lg:order-none">
             <AnalyticsGridOverlay dependency={agingPoints} />
             <div className="relative z-10">
-              <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
-              <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
-              <div className="mt-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-[15px] font-medium">{t("dashboard.projectAging")}</h2>
+                  <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap justify-end gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-accent" />Under 14 days</span>
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-warning" />14–29 days</span>
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-danger" />30+ days</span>
+                </div>
+              </div>
+              <div className="relative -left-1 mt-8">
                 <ProjectAgingScatterChart data={agingPoints} stages={agingStages} xAxisLabel={t("dashboard.daysSinceUpdate")} />
               </div>
             </div>
@@ -336,10 +345,24 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
-          <div className="order-2 analytics-card analytics-chart-card rounded-lg border-0 p-5 lg:order-none">
-            <h2 className="text-[15px] font-medium">{t("dashboard.upcomingReceivables")}</h2>
-            <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
-            <div className="mt-5">
+          <div className="analytics-fixed-card order-2 analytics-card analytics-chart-card h-[400px] rounded-lg border-0 p-5 lg:order-none">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-[15px] font-medium">{t("dashboard.upcomingReceivables")}</h2>
+                <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
+              </div>
+              <div className="flex shrink-0 flex-wrap justify-end gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-2 whitespace-nowrap"><span className="size-2.5 rounded-sm bg-status-danger" />Overdue</span>
+                <span className="flex items-center gap-2 whitespace-nowrap">
+                  <span>Less due</span>
+                  <span className="size-2.5 rounded-sm bg-muted" />
+                  <span className="size-2.5 rounded-sm bg-brand-accent/50" />
+                  <span className="size-2.5 rounded-sm bg-brand-accent" />
+                  <span>More due</span>
+                </span>
+              </div>
+            </div>
+            <div className="mt-2">
               <ReceivablesHeatmap data={receivableDays} />
             </div>
           </div>

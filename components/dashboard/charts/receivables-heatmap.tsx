@@ -60,18 +60,8 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
   }, [data.length]);
 
   return (
-    <div className="flex flex-col">
-      <div ref={containerRef} className="flex h-[300px] flex-col">
-      <div className="mb-2 flex min-h-6 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-status-danger" />Overdue</span>
-        <span className="flex items-center gap-1.5">
-          <span>Less due</span>
-          <span className="size-2.5 rounded-sm bg-muted" />
-          <span className="size-2.5 rounded-sm bg-brand-accent/50" />
-          <span className="size-2.5 rounded-sm bg-brand-accent" />
-          <span>More due</span>
-        </span>
-      </div>
+    <div className="relative -top-3 flex flex-col">
+      <div ref={containerRef} className="flex h-[300px] flex-col pt-8">
       <div className="mb-1 flex gap-2 text-[10px] text-muted-foreground">
         <span className="w-5 shrink-0" />
         <div
