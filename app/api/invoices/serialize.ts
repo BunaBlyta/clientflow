@@ -8,6 +8,7 @@ type InvoiceRecord = {
   status: 'DRAFT' | 'SENT' | 'PAYMENT_PENDING' | 'PAID' | 'FAILED' | 'VOIDED' | 'REFUNDED';
   dueDate: Date | null;
   paidAt: Date | null;
+  issuedAt?: Date | null;
   createdAt: Date;
 };
 
@@ -29,6 +30,7 @@ export function serializeInvoice(invoice: InvoiceRecord) {
     status: invoice.status,
     ...(invoice.dueDate ? { dueDate: invoice.dueDate.toISOString() } : {}),
     ...(invoice.paidAt ? { paidAt: invoice.paidAt.toISOString() } : {}),
+    ...(invoice.issuedAt ? { issuedAt: invoice.issuedAt.toISOString() } : {}),
     createdAt: invoice.createdAt.toISOString(),
   };
 }

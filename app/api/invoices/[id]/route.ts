@@ -17,6 +17,7 @@ const invoiceSelect = {
   status: true,
   dueDate: true,
   paidAt: true,
+  issuedAt: true,
   createdAt: true,
   stripeCheckoutSessionId: true,
   stripePaymentIntentId: true,

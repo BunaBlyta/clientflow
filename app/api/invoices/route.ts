@@ -18,6 +18,7 @@ const invoiceSelect = {
   status: true,
   dueDate: true,
   paidAt: true,
+  issuedAt: true,
   createdAt: true,
 } as const;
 
@@ -68,6 +69,7 @@ export async function GET(request: NextRequest) {
       status: true,
       dueDate: true,
       paidAt: true,
+      issuedAt: true,
       createdAt: true,
     },
     orderBy: { createdAt: 'desc' },
