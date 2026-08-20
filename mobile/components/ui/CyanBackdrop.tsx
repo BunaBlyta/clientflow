@@ -4,7 +4,7 @@ import { useTheme } from '../../lib/theme';
 
 export function CyanBackdrop() {
   const { color } = useTheme();
-  const isDark = color.background === '#08090A';
+  const isDark = color.background === '#0B0B0B';
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>

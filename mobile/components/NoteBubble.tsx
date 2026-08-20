@@ -137,7 +137,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   systemTime: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.meta,
-    color: '#64747D',
+    color: color.textMuted,
   },
   });
 }

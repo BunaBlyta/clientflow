@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-20 14:04 by Codex — align mobile UI with the web CRM
+Last updated: 2026-08-20 14:19 by Codex — neutralize dark mobile surfaces
 
 ## Current state
 
@@ -10,6 +10,9 @@ Last updated: 2026-08-20 14:04 by Codex — align mobile UI with the web CRM
 - Replaced the earlier blue/cyan treatment with a monochrome accent system:
   black/grey controls and text, with semantic status colors retained only where
   paid, overdue, failed, or project state needs to be scannable.
+- Neutralized dark mode’s remaining blue-green cast: the app canvas, cards,
+  tab navigation, borders, inputs, and splash background now use true charcoal
+  and gray tones. Semantic success, warning, and danger colors remain intact.
 - Replaced gradient primary buttons with a flat monochrome fill and simplified
   the auth backdrop to one very subtle neutral detail.
 - Standardized app-screen top spacing and removed the repeated in-app
@@ -28,6 +31,7 @@ Last updated: 2026-08-20 14:04 by Codex — align mobile UI with the web CRM
 
 - `cd mobile && npx tsc --noEmit`: passed.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-ui-pass`: passed.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-neutral-dark`: passed.
 - `git diff --check -- mobile`: passed.
 - The in-app browser was unavailable, so there was no screenshot or click-through
   review in this environment.
