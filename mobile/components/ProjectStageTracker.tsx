@@ -1,7 +1,7 @@
 import { Check, CircleDot, Code2, Eye, PauseCircle, PencilRuler, Rocket, Search, XCircle } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, PROJECT_STAGES } from '../lib/status';
 import { useI18n } from '../lib/i18n';
@@ -158,21 +158,14 @@ function StageIndicator({
     );
   }
 
-  const gradientId = `stage-${stage.toLowerCase()}`;
   return (
     <View style={styles.circleWrap}>
       <Svg width={INDICATOR_SIZE} height={INDICATOR_SIZE} viewBox={`0 0 ${INDICATOR_SIZE} ${INDICATOR_SIZE}`}>
-        <Defs>
-          <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={colors.accentPressed} />
-            <Stop offset="1" stopColor={colors.accent} />
-          </LinearGradient>
-        </Defs>
         <Circle
           cx={INDICATOR_SIZE / 2}
           cy={INDICATOR_SIZE / 2}
           r={CIRCLE_SIZE / 2}
-          fill={`url(#${gradientId})`}
+          fill={colors.accent}
         />
       </Svg>
       <Check size={CHECK_SIZE} color={colors.textOnAccent} strokeWidth={3} style={styles.circleIcon} />
@@ -274,7 +267,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     currentMeta: {
       fontFamily: fontFamily.medium,
       fontSize: fontSize.caption,
-      color: color.accentPressed,
+      color: color.accentText,
       textAlign: 'center',
       lineHeight: 17,
       marginTop: 2,
@@ -286,13 +279,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       backgroundColor: color.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: color.border,
-      borderRadius: radius.lg,
+      borderRadius: radius.md,
       padding: spacing.md,
       overflow: 'hidden',
-      shadowColor: color.shadow,
-      shadowOpacity: 0.06,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 3 },
     },
     bannerAccent: {
       width: 3,

@@ -187,6 +187,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   detailsBlock: {
     marginTop: spacing.xl,
     marginBottom: spacing.xl,
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   row: {
     flexDirection: 'row',

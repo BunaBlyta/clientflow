@@ -54,7 +54,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderBottomColor: color.border,
   },
   clientMessage: {
-    backgroundColor: 'rgba(202, 244, 255, 0.16)',
+    backgroundColor: color.accentSoft,
     marginHorizontal: -spacing.sm,
     paddingHorizontal: spacing.sm,
   },

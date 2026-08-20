@@ -1,56 +1,52 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-17 15:35 by Codex — harden Expo token rotation
+Last updated: 2026-08-20 14:04 by Codex — align mobile UI with the web CRM
 
 ## Current state
 
-- The Expo app is configured for iOS push notifications with bundle identifier
-  `com.tetbit.clientflow`, the existing EAS project ID, and the
-  `expo-notifications` config plugin. The user-installed Expo packages and
-  `eas.json` are included in the mobile lane commit.
-- A native-only notification coordinator requests permission after a session is
-  restored, registers Expo tokens at `POST /api/notifications/devices`, handles
-  token rotation and best-effort unregister on logout, reconciles foreground and
-  tapped notifications through authoritative API reads, and catches up on app
-  resume. Web builds do nothing in this layer.
-- Native APNs token-rotation events now trigger a fresh project-aware
-  `getExpoPushTokenAsync` exchange; the native APNs token is never sent to the
-  backend as if it were an Expo push token.
-- Generated Expo web output is excluded from TypeScript input so a later export
-  cannot make `npx tsc` recurse into the bundled JavaScript and overflow.
-- Taps accept only validated notification IDs and known event types. Notes open
-  the project notes screen; invoice and project events open their detail route.
-  Notification payloads never provide client state or arbitrary URLs.
-- Checkout reacts to webhook-backed invoice updates while open, so a live PAID
-  or FAILED invoice moves the UI to the matching state.
-- Zustand data is cleared on logout/account switch, production builds no longer
-  start with fixtures, and per-resource request generations prevent stale API
-  responses from overwriting newer data.
+- Reworked the mobile visual system around the web CRM’s restrained direction:
+  grey canvas, white bordered panels, neutral list surfaces, hairline
+  separators, smaller radii, and no elevation shadows.
+- Replaced the earlier blue/cyan treatment with a monochrome accent system:
+  black/grey controls and text, with semantic status colors retained only where
+  paid, overdue, failed, or project state needs to be scannable.
+- Replaced gradient primary buttons with a flat monochrome fill and simplified
+  the auth backdrop to one very subtle neutral detail.
+- Standardized app-screen top spacing and removed the repeated in-app
+  `CLIENTFLOW` eyebrow so each tab starts with its page heading or greeting.
+- Reworked Home into a web-aligned overview: a personal header, a white
+  bordered project-status panel with a muted tracker area, and paid/outstanding
+  metrics before the next action.
+- Added paid/outstanding summary metrics to the global Invoices tab and removed
+  the empty-state description when invoices are already present.
+- Added status-colored rails to project rows and kept the project list and
+  invoice lists in the web CRM’s dense, quiet table language.
+- Kept all routes, API calls, stores, payment behavior, push handling, theme
+  switching, language switching, and logout behavior unchanged.
 
 ## Verification
 
-- `cd mobile && npx tsc --noEmit`: passed (including after web export).
-- `cd mobile && npx expo config --type public --json`: passed; bundle identifier,
-  notification plugin, and EAS project ID are present.
-- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-push-check`:
-  passed.
-- `git diff --check -- mobile`: passed for the follow-up change.
-- No physical iPhone or iOS development build was available for a real APNs
-  delivery test. Mobile has no test runner installed, so pure helper tests were
-  not added without introducing an install.
+- `cd mobile && npx tsc --noEmit`: passed.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-ui-pass`: passed.
+- `git diff --check -- mobile`: passed.
+- The in-app browser was unavailable, so there was no screenshot or click-through
+  review in this environment.
 
-## API seam for next session
+## Known limits
+
+- The app still needs a real iPhone or simulator review for native spacing,
+  tab-bar safe-area behavior, and the SF Pro rendering path.
+- The existing `mobile/package.json` script change was left untouched and is not
+  part of this UI commit.
+- The app still uses fixture-backed request-status UI where the API has no
+  public prospect status endpoint.
+
+## API seam
 
 - Mobile sends `{ token, platform: "IOS", appVersion? }` to
   `POST /api/notifications/devices` and `{ token }` to the same endpoint with
   `DELETE`, authenticated with the normal bearer token.
-- Push data is expected to contain only `notificationId`, `type`, and optional
-  `projectId`, `invoiceId`, and `requestId`. The mobile coordinator refetches
-  notifications and affected entities after delivery.
-
-## Known limits
-
+- Push data contains only `notificationId`, `type`, and optional `projectId`,
+  `invoiceId`, and `requestId`; the coordinator refetches authoritative data.
 - APNs credentials and a physical iPhone/development build are still required
   for end-to-end push proof. Expo Go is not sufficient for remote push.
-- The app still uses existing fixture-backed request-status UI where the API has
-  no public prospect status endpoint.

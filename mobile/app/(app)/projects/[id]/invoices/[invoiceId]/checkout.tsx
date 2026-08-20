@@ -252,10 +252,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
   },
   card: {
-    paddingVertical: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    padding: spacing.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
+    borderRadius: 8,
+    backgroundColor: color.surface,
     marginBottom: spacing.xl,
   },
   merchant: {

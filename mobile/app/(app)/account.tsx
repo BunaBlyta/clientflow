@@ -32,7 +32,6 @@ export default function AccountScreen() {
         paddingBottom: 64 + spacing.md,
       }}
     >
-      <Text style={styles.eyebrow}>CLIENTFLOW</Text>
       <Text style={styles.heading}>{t('account.title')}</Text>
 
       <View style={styles.profileHeader}>
@@ -166,14 +165,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontFamily: fontFamily.semibold,
       fontSize: fontSize.headingLg,
       color: color.textPrimary,
-      marginTop: spacing.sm,
       marginBottom: spacing.xl,
-    },
-    eyebrow: {
-      fontFamily: fontFamily.medium,
-      fontSize: fontSize.meta,
-      letterSpacing: 1.6,
-      color: color.accentText,
     },
     profileHeader: {
       flexDirection: 'row',
@@ -210,9 +202,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     infoSection: {
       backgroundColor: color.surface,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: color.border,
+      borderRadius: 8,
       paddingHorizontal: spacing.md,
       overflow: 'hidden',
       marginBottom: spacing.xl,
@@ -251,9 +243,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       marginBottom: spacing.sm,
     },
     preferenceOptions: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: color.border,
+      borderRadius: 8,
     },
     preferenceOption: {
       flexDirection: 'row',

@@ -36,7 +36,7 @@ export function Screen({
         style={styles.scroll}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + spacing.md },
+          { paddingTop: insets.top + spacing.lg },
           { paddingBottom: spacing.xl + insets.bottom },
           contentContainerStyle,
         ]}
@@ -53,11 +53,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: color.canvas,
   },
   scroll: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: color.canvas,
   },
   content: {
     padding: spacing.lg,

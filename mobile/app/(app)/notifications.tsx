@@ -75,8 +75,7 @@ export default function NotificationsScreen() {
     >
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.eyebrow}>CLIENTFLOW</Text>
-        <Text style={styles.heading}>{t('notifications.title')}</Text>
+          <Text style={styles.heading}>{t('notifications.title')}</Text>
         </View>
         {unread > 0 && (
           <Pressable
@@ -130,15 +129,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.sm,
     marginBottom: spacing.md,
-  },
-  eyebrow: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.meta,
-    letterSpacing: 1.6,
-    color: color.accentText,
-    marginBottom: spacing.sm,
   },
   heading: {
     fontFamily: fontFamily.semibold,
@@ -165,9 +156,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   listGroup: {
     backgroundColor: color.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
+    borderRadius: 8,
     paddingHorizontal: spacing.md,
     overflow: 'hidden',
   },

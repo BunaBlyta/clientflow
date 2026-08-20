@@ -150,7 +150,7 @@ export default function ProjectNotesScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  flex: { flex: 1, backgroundColor: color.background },
+  flex: { flex: 1, backgroundColor: color.canvas },
   content: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
@@ -176,7 +176,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingVertical: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border,
-    backgroundColor: color.background,
+    backgroundColor: color.canvas,
   },
   composerRow: {
     flexDirection: 'row',
@@ -201,11 +201,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     width: 40,
     height: 40,
     borderRadius: radius.md,
-    backgroundColor: color.accentPressed,
-    shadowColor: color.accent,
-    shadowOpacity: 0.14,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: color.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },

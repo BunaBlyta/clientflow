@@ -8,7 +8,7 @@ import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
-const TAB_BAR_HEIGHT = 64;
+const TAB_BAR_HEIGHT = 62;
 
 export default function AppTabsLayout() {
   const { color } = useTheme();
@@ -32,13 +32,11 @@ export default function AppTabsLayout() {
           height: TAB_BAR_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: spacing.xs,
-          backgroundColor: color.surface,
+          backgroundColor: color.surfaceMuted,
           borderTopColor: color.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          shadowColor: color.shadow,
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0,
+          elevation: 0,
         },
         tabBarItemStyle: {
           paddingTop: 0,
@@ -46,8 +44,8 @@ export default function AppTabsLayout() {
         },
         tabBarLabelStyle: {
           fontFamily: fontFamily.medium,
-          fontSize: 10,
-          marginTop: 2,
+          fontSize: 11,
+          marginTop: spacing.xs,
         },
       }}
     >
@@ -107,7 +105,7 @@ function TabIcon({
   return (
     <View style={styles.iconWrap}>
       <Icon
-        size={18}
+        size={19}
         color={focused ? color.accentText : color.textMuted}
         strokeWidth={focused ? 2.5 : 1.7}
       />

@@ -1,7 +1,7 @@
 import { ChevronRight, Circle } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { getPackageById } from '../lib/mock-data';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, getProjectStatusMeta } from '../lib/status';
 import { useI18n } from '../lib/i18n';
 import type { Project } from '../lib/types';
@@ -71,18 +71,17 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flex: 1,
   },
   projectMark: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: color.accentSoft,
+    width: 28,
+    height: 24,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     marginRight: spacing.md,
+    paddingTop: 2,
   },
   projectMarkText: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.meta,
-    color: color.textOnAccent,
+    color: color.accentText,
     letterSpacing: 0.6,
   },
   name: {

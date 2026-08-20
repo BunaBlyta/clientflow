@@ -94,7 +94,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: spacing.lg,
+    borderRadius: 8,
     paddingHorizontal: spacing.md,
     overflow: 'hidden',
     marginTop: spacing.md,

@@ -7,6 +7,7 @@ export type ResolvedTheme = 'light' | 'dark';
 
 export interface ThemeColors {
   background: string;
+  canvas: string;
   surface: string;
   surfaceMuted: string;
   accent: string;
@@ -35,19 +36,20 @@ export interface ThemeColors {
 }
 
 export const lightColors: ThemeColors = {
-  background: '#FBFDFD',
+  background: '#FFFFFF',
+  canvas: '#EAEAEA',
   surface: '#FFFFFF',
-  surfaceMuted: '#F2FAFC',
-  accent: '#CAF4FF',
-  accentPressed: '#A0DEFF',
-  accentSoft: '#CAF4FF',
-  accentText: '#2E8AA3',
-  textPrimary: '#14212B',
-  textSecondary: '#596A79',
-  textMuted: '#8998A6',
-  textOnAccent: '#07131D',
-  border: '#E4EBF0',
-  borderStrong: '#BFE7EF',
+  surfaceMuted: '#F3F3F3',
+  accent: '#171717',
+  accentPressed: '#3D3D3D',
+  accentSoft: '#EDEDED',
+  accentText: '#242424',
+  textPrimary: '#0F0F0F',
+  textSecondary: '#4B4B4B',
+  textMuted: '#737373',
+  textOnAccent: '#FFFFFF',
+  border: '#D2D2D2',
+  borderStrong: '#BDBDBD',
   success: '#15803D',
   successBg: '#E7F6EC',
   successBorder: '#BEE6C9',
@@ -60,21 +62,22 @@ export const lightColors: ThemeColors = {
   neutral: '#596A79',
   neutralBg: '#F3F6F8',
   neutralBorder: '#DDE6EC',
-  shadow: '#16434C',
+  shadow: '#0B1117',
 };
 
 export const darkColors: ThemeColors = {
   background: '#08090A',
+  canvas: '#08090A',
   surface: '#101416',
   surfaceMuted: '#171D20',
-  accent: '#CAF4FF',
-  accentPressed: '#A0DEFF',
-  accentSoft: '#CAF4FF',
-  accentText: '#A0DEFF',
+  accent: '#F4F4F4',
+  accentPressed: '#D4D4D4',
+  accentSoft: '#252525',
+  accentText: '#F0F0F0',
   textPrimary: '#F4F7FA',
   textSecondary: '#C1C9D3',
   textMuted: '#8C98A6',
-  textOnAccent: '#07131D',
+  textOnAccent: '#08090A',
   border: '#2B333D',
   borderStrong: '#3A4552',
   success: '#6DDB93',
@@ -93,7 +96,7 @@ export const darkColors: ThemeColors = {
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 10, md: 14, lg: 18, pill: 999 } as const;
+export const radius = { sm: 6, md: 8, lg: 12, pill: 999 } as const;
 export const fontFamily = {
   regular: Platform.select({ ios: 'SFProText-Regular', default: 'Inter_400Regular' }) ?? 'Inter_400Regular',
   medium: Platform.select({ ios: 'SFProText-Medium', default: 'Inter_500Medium' }) ?? 'Inter_500Medium',

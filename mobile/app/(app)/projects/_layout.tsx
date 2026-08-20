@@ -10,7 +10,7 @@ export default function ProjectsStackLayout() {
         headerTitle: '',
         headerBackVisible: true,
         headerBackButtonDisplayMode: 'minimal',
-        headerStyle: { backgroundColor: color.background },
+        headerStyle: { backgroundColor: color.canvas },
         headerShadowVisible: false,
         headerTintColor: color.textPrimary,
         headerTitleStyle: {

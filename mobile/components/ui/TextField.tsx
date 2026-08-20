@@ -106,16 +106,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     backgroundColor: color.surfaceMuted,
-    shadowColor: color.shadow,
-    shadowOpacity: 0.025,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
   },
   inputRowFocused: {
     backgroundColor: color.surface,
-    borderColor: color.accentPressed,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    borderColor: color.accent,
   },
   inputRowError: {
     borderColor: color.danger,

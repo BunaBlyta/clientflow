@@ -228,24 +228,25 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: 2,
   },
   section: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: color.border,
-    paddingTop: spacing.xxl,
-    marginTop: spacing.xxl,
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    borderRadius: 8,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
   },
   statusSection: {
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
   },
   overviewSection: {
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
   },
   notesSection: {
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
   invoicesSection: {
-    marginTop: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    marginTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   previewDivider: {
     marginHorizontal: spacing.sm,

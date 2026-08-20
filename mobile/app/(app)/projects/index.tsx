@@ -27,7 +27,6 @@ export default function ProjectsListScreen() {
 
   return (
     <Screen>
-      <Text style={styles.eyebrow}>CLIENTFLOW</Text>
       <Text style={styles.greeting}>
         {client ? `${t('projects.hi')}, ${client.name.split(' ')[0]}` : t('projects.greeting')}
       </Text>
@@ -63,7 +62,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
-    marginTop: spacing.sm,
   },
   company: {
     fontFamily: fontFamily.regular,
@@ -72,20 +70,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: 2,
     marginBottom: spacing.xl,
   },
-  eyebrow: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.meta,
-    letterSpacing: 1.6,
-    color: color.accentText,
-  },
   list: {
     marginTop: spacing.sm,
   },
   listGroup: {
     backgroundColor: color.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
+    borderRadius: 8,
     overflow: 'hidden',
   },
   });
