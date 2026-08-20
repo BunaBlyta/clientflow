@@ -181,7 +181,7 @@ describe('POST /api/stripe/webhook', () => {
     expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
 
-  it.each(['FINAL', 'EXTRA', 'CUSTOM'] as const)(
+  it.each(['FINAL', 'EXTRA'] as const)(
     'does not advance a pending project for a %s invoice',
     async (type) => {
       configureInvoice(type);
@@ -199,6 +199,29 @@ describe('POST /api/stripe/webhook', () => {
       expect(mocks.notificationCreate).toHaveBeenCalledTimes(1);
     },
   );
+
+  it('marks a custom invoice paid, advances a pending project, and records the payment note', async () => {
+    configureInvoice('CUSTOM');
+
+    const response = await POST(request(paymentEvent('checkout.session.completed'), 'sig_test'));
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
+      data: expect.objectContaining({ status: 'PAID' }),
+    });
+    expect(mocks.projectUpdate).toHaveBeenCalledWith({
+      where: { id: 'project-1' },
+      data: { status: 'DISCOVERY' },
+    });
+    expect(mocks.noteCreate).toHaveBeenCalledWith({
+      data: {
+        projectId: 'project-1',
+        content: 'Custom invoice payment confirmed. Project moved to Discovery.',
+        isSystem: true,
+      },
+    });
+  });
 
   it('marks a failed payment and ignores the identical failure event', async () => {
     let alreadyFailed = false;

@@ -83,7 +83,7 @@ async function markInvoicePaid(
       where: { id: invoice.projectId },
       select: { status: true },
     });
-    if (invoice.type === 'DEPOSIT' && project?.status === 'PENDING') {
+    if ((invoice.type === 'DEPOSIT' || invoice.type === 'CUSTOM') && project?.status === 'PENDING') {
       await transaction.project.update({
         where: { id: invoice.projectId },
         data: { status: 'DISCOVERY' },
@@ -91,7 +91,7 @@ async function markInvoicePaid(
       await transaction.note.create({
         data: {
           projectId: invoice.projectId,
-          content: 'Deposit payment confirmed. Project moved to Discovery.',
+          content: `${invoice.type === 'DEPOSIT' ? 'Deposit' : 'Custom invoice'} payment confirmed. Project moved to Discovery.`,
           isSystem: true,
         },
       });

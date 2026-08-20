@@ -121,10 +121,10 @@ describe('PATCH /api/projects/:id', () => {
       expect(response.status).toBe(409);
       expect(await response.json()).toEqual({
         error:
-          'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
+          'The initial project invoice must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
       });
       expect(mocks.invoiceFindFirst).toHaveBeenCalledWith({
-        where: { projectId: 'proj-1', type: 'DEPOSIT' },
+        where: { projectId: 'proj-1', type: { in: ['DEPOSIT', 'CUSTOM'] } },
         orderBy: { createdAt: 'asc' },
         select: { status: true },
       });
@@ -141,16 +141,31 @@ describe('PATCH /api/projects/:id', () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({
       error:
-        'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
+        'The initial project invoice must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
     });
     expect(mocks.invoiceFindFirst).not.toHaveBeenCalled();
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it('keeps custom PENDING projects available for their existing manual non-Discovery flow', async () => {
+  it('requires a paid custom invoice before a custom project can leave PENDING', async () => {
     mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
     mocks.findUnique.mockResolvedValue(customPendingProject);
-    mocks.invoiceFindFirst.mockResolvedValue(null);
+    mocks.invoiceFindFirst.mockResolvedValue({ status: 'SENT' });
+
+    const response = await PATCH(request('DESIGN'), params());
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error:
+        'The initial project invoice must be paid before the project can move forward. Discovery is set automatically after confirmed payment.',
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('allows a custom PENDING project to leave PENDING after its invoice is paid', async () => {
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue(customPendingProject);
+    mocks.invoiceFindFirst.mockResolvedValue({ status: 'PAID' });
     mocks.updateMany.mockResolvedValue({ count: 1 });
     mocks.transactionFindUnique.mockResolvedValue({ ...customPendingProject, status: 'DESIGN' });
     mocks.clientFindUnique.mockResolvedValue(null);

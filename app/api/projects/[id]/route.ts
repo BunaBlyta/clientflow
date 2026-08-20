@@ -8,7 +8,7 @@ import { createNotification, scheduleEntityChanged, scheduleNotificationEffects 
 export const runtime = 'nodejs';
 
 const PAYMENT_GATE_ERROR =
-  'The deposit must be paid before the project can move forward. Discovery is set automatically after confirmed payment.';
+  'The initial project invoice must be paid before the project can move forward. Discovery is set automatically after confirmed payment.';
 
 class ConcurrentProjectUpdate extends Error {
   constructor() {
@@ -140,14 +140,13 @@ export async function PATCH(
       return NextResponse.json({ error: PAYMENT_GATE_ERROR }, { status: 409 });
     }
 
-    const depositInvoice = await prisma.invoice.findFirst({
-      where: { projectId: id, type: 'DEPOSIT' },
+    const initialInvoice = await prisma.invoice.findFirst({
+      where: { projectId: id, type: { in: ['DEPOSIT', 'CUSTOM'] } },
       orderBy: { createdAt: 'asc' },
       select: { status: true },
     });
 
-    const depositIsRequired = project.packageId !== null || depositInvoice !== null;
-    if (depositIsRequired && depositInvoice?.status !== 'PAID') {
+    if (initialInvoice?.status !== 'PAID') {
       return NextResponse.json({ error: PAYMENT_GATE_ERROR }, { status: 409 });
     }
   }
