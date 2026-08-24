@@ -24,7 +24,7 @@ export default function ProjectDetailScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  useOriginBack(source);
+  const { exitStyle } = useOriginBack(source);
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);
@@ -53,7 +53,7 @@ export default function ProjectDetailScreen() {
 
   if (!project) {
     return (
-      <Screen>
+      <Screen style={exitStyle}>
         <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
       </Screen>
     );
@@ -74,7 +74,7 @@ export default function ProjectDetailScreen() {
   const invoicePreviews = visibleInvoices.slice(0, 2);
 
   return (
-    <Screen>
+    <Screen style={exitStyle}>
       {unreachable && (
         <Text style={styles.error}>
           {t('common.error')}

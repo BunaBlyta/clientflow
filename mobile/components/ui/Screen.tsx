@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import { Animated, ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, useTheme } from '../../lib/theme';
 import { CyanBackdrop } from './CyanBackdrop';
@@ -7,9 +7,11 @@ import { CyanBackdrop } from './CyanBackdrop';
 interface ScreenProps extends PropsWithChildren {
   scroll?: boolean;
   backdrop?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   contentContainerStyle?: ViewStyle;
 }
+
+const AnimatedSafeAreaView = Animated.createAnimatedComponent(SafeAreaView);
 
 export function Screen({
   children,
@@ -23,14 +25,14 @@ export function Screen({
   const styles = createStyles(color);
   if (!scroll) {
     return (
-      <SafeAreaView edges={['top']} style={[styles.container, style]}>
+      <AnimatedSafeAreaView edges={['top']} style={[styles.container, style]}>
         {backdrop && <CyanBackdrop />}
         {children}
-      </SafeAreaView>
+      </AnimatedSafeAreaView>
     );
   }
   return (
-    <SafeAreaView edges={['top']} style={[styles.container, style]}>
+    <AnimatedSafeAreaView edges={['top']} style={[styles.container, style]}>
       {backdrop && <CyanBackdrop />}
       <ScrollView
         style={styles.scroll}
@@ -44,7 +46,7 @@ export function Screen({
       >
         {children}
       </ScrollView>
-    </SafeAreaView>
+    </AnimatedSafeAreaView>
   );
 }
 

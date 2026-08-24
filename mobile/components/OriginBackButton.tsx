@@ -1,7 +1,7 @@
 import { useNavigation, useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCallback, useEffect } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { Animated, Easing, Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 
@@ -12,15 +12,25 @@ export function useOriginBack(source?: string) {
   const navigation = useNavigation();
   const { color } = useTheme();
   const { t } = useI18n();
+  const exitProgress = useRef(new Animated.Value(0)).current;
+  const exiting = useRef(false);
   const origin: Origin | null = source === 'invoices' || source === 'notifications' ? source : null;
   const target = origin === 'invoices' ? '/invoices' : origin === 'notifications' ? '/notifications' : null;
   const label = origin === 'invoices' ? t('tabs.invoices') : origin === 'notifications' ? t('tabs.notifications') : '';
 
   const goToOrigin = useCallback(() => {
-    if (target) {
-      router.dismissTo(target);
-    }
-  }, [router, target]);
+    if (!target || exiting.current) return;
+    exiting.current = true;
+    Animated.timing(exitProgress, {
+      toValue: 1,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start(({ finished }) => {
+      if (finished) router.replace(target);
+      else exiting.current = false;
+    });
+  }, [exitProgress, router, target]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -34,6 +44,13 @@ export function useOriginBack(source?: string) {
       navigation.setOptions({ headerBackVisible: true, headerLeft: undefined });
     };
   }, [color.textPrimary, goToOrigin, label, navigation, target]);
+
+  return {
+    exitStyle: {
+      opacity: exitProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+      transform: [{ translateX: exitProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -24] }) }],
+    },
+  };
 }
 
 function OriginBackButton({ color, label, onPress }: { color: string; label: string; onPress: () => void }) {

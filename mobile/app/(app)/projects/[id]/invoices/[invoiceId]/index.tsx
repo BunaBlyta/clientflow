@@ -23,7 +23,7 @@ export default function InvoiceDetailScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  useOriginBack(source);
+  const { exitStyle } = useOriginBack(source);
   const token = useAuthStore((s) => s.token);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const refreshInvoice = useDataStore((s) => s.refreshInvoice);
@@ -72,7 +72,7 @@ export default function InvoiceDetailScreen() {
 
   if (loading && !invoice) {
     return (
-      <Screen>
+      <Screen style={exitStyle}>
         <ActivityIndicator color={color.accent} />
       </Screen>
     );
@@ -80,7 +80,7 @@ export default function InvoiceDetailScreen() {
 
   if (!invoice) {
     return (
-      <Screen>
+      <Screen style={exitStyle}>
         <EmptyState icon={FileText} title={t('invoices.invoiceNotFound')} />
       </Screen>
     );
@@ -93,7 +93,7 @@ export default function InvoiceDetailScreen() {
   const payable = invoice.status === 'SENT' || invoice.status === 'FAILED';
 
   return (
-    <Screen>
+    <Screen style={exitStyle}>
       <Text style={styles.screenTitle}>{invoice.label}</Text>
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
