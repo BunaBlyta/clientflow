@@ -1,4 +1,4 @@
-import { Check, LogOut, Monitor, Moon, Sun } from 'lucide-react-native';
+import { LogOut, Monitor, Moon, Sun } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -193,7 +193,7 @@ function ThemeOption({
       ]}
     >
       <View style={[styles.themeIcon, selected && styles.themeIconSelected]}>
-        <Icon size={17} color={selected ? color.textOnAccent : color.textMuted} strokeWidth={1.9} />
+        <Icon size={17} color={selected ? color.textPrimary : color.textMuted} strokeWidth={1.9} />
       </View>
       <Text style={[styles.themeOptionText, selected && styles.themeOptionTextSelected]}>
         {label}
@@ -215,7 +215,6 @@ function LanguageOption({
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
 }) {
-  const { color } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -233,11 +232,6 @@ function LanguageOption({
       <Text style={[styles.languageOptionText, selected && styles.languageOptionTextSelected]} numberOfLines={1}>
         {label}
       </Text>
-      {selected && (
-        <View style={styles.languageCheck}>
-          <Check size={11} color={color.textOnAccent} strokeWidth={2.8} />
-        </View>
-      )}
     </Pressable>
   );
 }
@@ -340,7 +334,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       backgroundColor: color.surface,
     },
     themeOptionSelected: {
-      backgroundColor: color.accent,
+      backgroundColor: color.accentSoft,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.borderStrong,
     },
     themeIcon: {
       width: 28,
@@ -351,7 +347,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       backgroundColor: color.surfaceMuted,
     },
     themeIconSelected: {
-      backgroundColor: color.accentPressed,
+      backgroundColor: color.surface,
     },
     themeOptionText: {
       fontFamily: fontFamily.medium,
@@ -360,7 +356,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       textAlign: 'center',
     },
     themeOptionTextSelected: {
-      color: color.textOnAccent,
+      color: color.textPrimary,
     },
     languageControl: {
       flexDirection: 'row',
@@ -375,12 +371,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       paddingHorizontal: spacing.sm,
       borderRadius: radius.lg,
       backgroundColor: color.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.border,
     },
     languageOptionSelected: {
       backgroundColor: color.accentSoft,
-      borderColor: color.accent,
     },
     languageCode: {
       width: 28,
@@ -411,14 +404,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     languageOptionTextSelected: {
       color: color.textPrimary,
-    },
-    languageCheck: {
-      width: 18,
-      height: 18,
-      borderRadius: 9,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: color.accent,
     },
     logoutButton: {
       height: 44,
