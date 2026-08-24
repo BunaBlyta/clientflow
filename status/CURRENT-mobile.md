@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 11:43 by Codex — improve notes preview bubble contrast
+Last updated: 2026-08-24 11:45 by Codex — brighten dark notes preview bubble
 
 ## Current state
 
+- Brightened the project-detail studio note preview bubble further by using the accent-soft surface, making the dark-mode contrast more obvious while keeping light mode darker than the white card.
 - Adjusted studio-authored note bubbles in the project detail preview to use the muted surface, making them darker against light cards and lighter against dark cards; full notes and client-authored bubbles are unchanged.
 - Changed the Projects tab header to show only “Projects,” matching the plain headings used by Invoices and Notifications instead of greeting the client by name.
 - Lowered the home screen greeting slightly and increased “Hi Jordan” from 26px to 28px for a more relaxed, prominent header.

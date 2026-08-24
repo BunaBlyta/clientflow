@@ -139,7 +139,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderRadius: radius.lg,
   },
   previewBodyWrap: {
-    backgroundColor: color.surfaceMuted,
+    backgroundColor: color.accentSoft,
   },
   clientBodyWrap: {
     backgroundColor: color.accentSoft,
