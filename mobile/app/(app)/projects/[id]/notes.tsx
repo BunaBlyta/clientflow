@@ -42,7 +42,9 @@ export default function ProjectNotesScreen() {
   const [postError, setPostError] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const orderedNotes = [...notes].reverse();
+  // The store returns notes oldest-to-newest so the newest message stays
+  // closest to the composer, like a normal chat timeline.
+  const orderedNotes = notes;
 
   useEffect(() => {
     if (!token || !id) {
