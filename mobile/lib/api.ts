@@ -132,6 +132,10 @@ export function notificationsRequest(token: string) {
   return request<Notification[]>('/api/notifications', {}, token);
 }
 
+export function realtimeTokenRequest(token: string) {
+  return request<unknown>('/api/realtime/token', {}, token);
+}
+
 export type PushDevicePlatform = 'IOS';
 
 export function registerPushDeviceRequest(

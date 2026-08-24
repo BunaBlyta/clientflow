@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 10:18 by Codex — add active-app in-app notification banners
+Last updated: 2026-08-24 10:30 by Codex — subscribe to Ably for mobile realtime notifications
 
 ## Current state
 
@@ -43,9 +43,15 @@ Last updated: 2026-08-24 10:18 by Codex — add active-app in-app notification b
 - Notifications now refetch whenever the Notifications tab regains focus, so a
   client does not need to restart the native app after staff sends an invoice.
 - Added an in-app notification banner for native clients. While the app is
-  active, it checks the durable inbox every 15 seconds, ignores the initial
-  snapshot, and shows only newly arrived notifications with tap-through to the
+  active, it shows newly arrived realtime notifications with tap-through to the
   related invoice or project. This does not require Apple push credentials.
+- Replaced the active-app polling banner trigger with a true Ably Realtime
+  subscription to the authenticated client's own user channel. Incoming
+  `notification.created` messages are validated, merged into the inbox
+  immediately, and trigger related invoice/project/note refreshes. The existing
+  app-resume and tab-focus refreshes remain as recovery paths for missed events.
+- Added the mobile `ably` dependency and the bearer-authenticated realtime-token
+  API helper. The private Ably API key remains server-only.
 
 ## Verification
 
@@ -58,6 +64,9 @@ Last updated: 2026-08-24 10:18 by Codex — add active-app in-app notification b
 - `cd mobile && npx tsc --noEmit`: passed after the in-app banner change.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-in-app-notifications`: passed.
 - `git diff --check -- mobile`: passed after the in-app banner change.
+- `cd mobile && npx tsc --noEmit`: passed after the Ably subscription change.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-ably-realtime`: passed.
+- `git diff --check -- mobile`: passed after the Ably subscription change.
 - The in-app browser was unavailable, so there was no screenshot or click-through
   review in this environment.
 
@@ -82,3 +91,5 @@ Last updated: 2026-08-24 10:18 by Codex — add active-app in-app notification b
   `invoiceId`, and `requestId`; the coordinator refetches authoritative data.
 - APNs credentials and a physical iPhone/development build are still required
   for end-to-end push proof. Expo Go is not sufficient for remote push.
+- Ably realtime is foreground-only by nature of the in-app banner. Background
+  and closed-app alerts still require Apple push credentials.

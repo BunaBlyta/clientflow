@@ -34,6 +34,7 @@ interface DataState {
   refreshInvoice: (invoiceId: string, token: string, reconcilePayment?: boolean) => Promise<boolean>;
   refreshNotes: (token: string, projectId?: string) => Promise<boolean>;
   refreshNotifications: (token: string) => Promise<boolean>;
+  mergeNotification: (notification: Notification) => boolean;
   postNote: (projectId: string, body: string, token: string) => Promise<boolean>;
   markNotificationRead: (id: string, token: string) => Promise<boolean>;
   markAllNotificationsRead: (token: string) => Promise<boolean>;
@@ -195,6 +196,15 @@ export const useDataStore = create<DataState>((set, get) => ({
       // Keep the fixtures visible when the local API is unavailable.
       return false;
     }
+  },
+  mergeNotification: (notification) => {
+    const exists = get().notifications.some((item) => item.id === notification.id);
+    set((state) => ({
+      notifications: exists
+        ? state.notifications.map((item) => item.id === notification.id ? notification : item)
+        : [notification, ...state.notifications],
+    }));
+    return !exists;
   },
   postNote: async (projectId, body, token) => {
     const generation = sessionGeneration;

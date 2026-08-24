@@ -1,4 +1,6 @@
 import * as Notifications from 'expo-notifications';
+import { Realtime } from 'ably';
+import type { InboundMessage, TokenDetails, TokenRequest } from 'ably';
 import { useRootNavigationState, useRouter } from 'expo-router';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -6,9 +8,8 @@ import { InAppNotificationBanner } from '../components/InAppNotificationBanner';
 import { useAuthStore } from '../store/auth-store';
 import { useDataStore } from '../store/data-store';
 import { registerPushDevice } from './push-device';
+import { realtimeTokenRequest } from './api';
 import type { Notification as AppNotification } from './types';
-
-const IN_APP_NOTIFICATION_POLL_MS = 15_000;
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -69,6 +70,50 @@ export function parsePushNotificationData(value: unknown): PushNotificationData 
   return parsed;
 }
 
+function parseRealtimeNotification(value: unknown): AppNotification | null {
+  if (!value || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  if (
+    !safeId(data.id) ||
+    !notificationTypes.includes(data.type as AppNotification['type']) ||
+    typeof data.title !== 'string' ||
+    typeof data.body !== 'string' ||
+    typeof data.read !== 'boolean' ||
+    typeof data.createdAt !== 'string'
+  ) return null;
+
+  const notification: AppNotification = {
+    id: data.id,
+    type: data.type as AppNotification['type'],
+    title: data.title,
+    body: data.body,
+    read: data.read,
+    createdAt: data.createdAt,
+  };
+  if (data.projectId !== null && data.projectId !== undefined) {
+    if (!safeId(data.projectId)) return null;
+    notification.projectId = data.projectId;
+  }
+  if (data.invoiceId !== null && data.invoiceId !== undefined) {
+    if (!safeId(data.invoiceId)) return null;
+    notification.invoiceId = data.invoiceId;
+  }
+  if (data.requestId !== null && data.requestId !== undefined) {
+    if (!safeId(data.requestId)) return null;
+    notification.requestId = data.requestId;
+  }
+  return notification;
+}
+
+function decodeMessageData(data: unknown): unknown {
+  if (typeof data !== 'string') return data;
+  try {
+    return JSON.parse(data) as unknown;
+  } catch {
+    return null;
+  }
+}
+
 export function notificationTarget(data: PushNotificationData): string | null {
   const projectId = data.projectId ? encodeURIComponent(data.projectId) : null;
   const invoiceId = data.invoiceId ? encodeURIComponent(data.invoiceId) : null;
@@ -96,6 +141,8 @@ export function NotificationCoordinator() {
   const refreshNotes = useDataStore((state) => state.refreshNotes);
   const refreshProject = useDataStore((state) => state.refreshProject);
   const refreshInvoice = useDataStore((state) => state.refreshInvoice);
+  const mergeNotification = useDataStore((state) => state.mergeNotification);
+  const clientUserId = useAuthStore((state) => state.client?.id);
   const markNotificationRead = useDataStore((state) => state.markNotificationRead);
   const processedResponses = useRef(new Set<string>());
   const [bannerNotification, setBannerNotification] = useState<AppNotification | null>(null);
@@ -203,40 +250,77 @@ export function NotificationCoordinator() {
   ]);
 
   useEffect(() => {
-    if (Platform.OS === 'web' || !isAuthenticated || !token) {
+    if (Platform.OS === 'web' || !isAuthenticated || !token || !clientUserId) {
       setBannerNotification(null);
       return;
     }
 
     const authToken = token;
     let active = true;
-    let hasInitialSnapshot = false;
 
-    async function refreshAndDetect() {
-      if (!active || AppState.currentState !== 'active') return;
-      const previousIds = new Set(useDataStore.getState().notifications.map((item) => item.id));
-      const refreshed = await refreshNotifications(authToken);
-      if (!active || !refreshed) return;
+    const realtime = new Realtime({
+      authCallback: (_params, callback) => {
+        realtimeTokenRequest(authToken)
+          .then((payload) => {
+            callback(null, payload as TokenRequest | TokenDetails | string);
+          })
+          .catch((error: unknown) => {
+            callback(error instanceof Error ? error.message : 'Realtime authentication failed.', null);
+          });
+      },
+    });
+    const channel = realtime.channels.get(`clientflow:user:${clientUserId}`);
+    const handleMessage = (message: InboundMessage) => {
+      if (!active || message.name !== 'notification.created') return;
+      const notification = parseRealtimeNotification(decodeMessageData(message.data));
+      if (!notification) return;
 
-      const current = useDataStore.getState().notifications;
-      if (!hasInitialSnapshot) {
-        hasInitialSnapshot = true;
-        return;
+      if (mergeNotification(notification)) {
+        setBannerNotification(notification);
       }
 
-      const newest = current
-        .filter((item) => !previousIds.has(item.id))
-        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0];
-      if (newest) setBannerNotification(newest);
-    }
+      const data: PushNotificationData = {
+        notificationId: notification.id,
+        type: notification.type,
+        projectId: notification.projectId,
+        invoiceId: notification.invoiceId,
+        requestId: notification.requestId,
+      };
+      if (data.projectId) void refreshProject(data.projectId, authToken);
+      if (data.invoiceId) {
+        void refreshInvoice(
+          data.invoiceId,
+          authToken,
+          data.type === 'PAYMENT_SUCCEEDED' || data.type === 'PAYMENT_FAILED',
+        );
+      }
+      if (data.type === 'NEW_NOTE' && data.projectId) {
+        void refreshNotes(authToken, data.projectId);
+      }
+    };
 
-    void refreshAndDetect();
-    const interval = setInterval(() => void refreshAndDetect(), IN_APP_NOTIFICATION_POLL_MS);
+    void channel.subscribe('notification.created', handleMessage).catch((error: unknown) => {
+      if (active) {
+        console.error('Clientflow mobile realtime subscription failed', {
+          message: error instanceof Error ? error.message : 'Unknown subscription error',
+        });
+      }
+    });
+
     return () => {
       active = false;
-      clearInterval(interval);
+      channel.unsubscribe('notification.created', handleMessage);
+      realtime.close();
     };
-  }, [isAuthenticated, refreshNotifications, token]);
+  }, [
+    clientUserId,
+    isAuthenticated,
+    mergeNotification,
+    refreshInvoice,
+    refreshNotes,
+    refreshProject,
+    token,
+  ]);
 
   const dismissBanner = useCallback(() => setBannerNotification(null), []);
   const openBanner = useCallback(() => {
