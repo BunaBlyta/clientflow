@@ -31,6 +31,7 @@ export default function AppTabsLayout() {
           animation: 'timing',
           config: { duration: Platform.OS === 'web' ? 0 : 180 },
         },
+        sceneStyle: { backgroundColor: color.canvas },
         tabBarActiveTintColor: color.accentText,
         tabBarInactiveTintColor: color.textMuted,
         tabBarStyle: {

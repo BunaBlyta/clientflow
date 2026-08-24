@@ -9,6 +9,7 @@ export default function ProjectsStackLayout() {
       screenOptions={{
         headerShown: true,
         animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
+        contentStyle: { backgroundColor: color.canvas },
         headerTitle: '',
         headerBackVisible: true,
         headerBackButtonDisplayMode: 'minimal',

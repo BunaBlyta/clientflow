@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 11:59 by Codex — fix web navigation animation regression
+Last updated: 2026-08-24 13:04 by Codex — remove dark navigation flash
 
 ## Current state
 
+- Set tab and project-stack scene backgrounds to the active theme canvas, removing the white transition flash that appeared in dark mode while preserving native motion.
 - Kept the tab shift and project slide animations on native platforms but disabled navigator animations on web, fixing the blank Notifications scene and white flash during web tab switching.
 - Added subtle motion to tab switching and cross-tab back navigation: tabs shift over 180ms, project-stack screens slide from the right, and origin returns dismiss toward the source tab instead of hard-replacing it.
 - Preserved the originating tab when opening project or invoice details from Invoices or Notifications. Their custom back action and native back handling now return to the source tab instead of stopping inside the project stack.
