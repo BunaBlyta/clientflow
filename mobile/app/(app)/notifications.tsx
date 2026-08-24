@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { NotificationRow } from '../../components/NotificationRow';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
@@ -32,16 +32,18 @@ export default function NotificationsScreen() {
   );
   const unread = useDataStore((s) => s.unreadNotificationCount());
 
-  useEffect(() => {
-    if (!token) return;
-    let active = true;
-    void refreshNotifications(token).then((ok) => {
-      if (active) setUnreachable(!ok);
-    });
-    return () => {
-      active = false;
-    };
-  }, [refreshNotifications, token]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return undefined;
+      let active = true;
+      void refreshNotifications(token).then((ok) => {
+        if (active) setUnreachable(!ok);
+      });
+      return () => {
+        active = false;
+      };
+    }, [refreshNotifications, token]),
+  );
 
   async function handlePress(notification: Notification) {
     if (markingId || markingAll) return;

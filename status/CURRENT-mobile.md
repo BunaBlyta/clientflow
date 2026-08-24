@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 09:57 by Codex — fix native safe-area spacing for tab screens
+Last updated: 2026-08-24 10:08 by Codex — refresh notifications when the tab regains focus
 
 ## Current state
 
@@ -40,12 +40,17 @@ Last updated: 2026-08-24 09:57 by Codex — fix native safe-area spacing for tab
   of asking each tab to calculate notch spacing independently. Removed duplicate
   top-inset overrides from Notifications and Account so tab titles and subtitles
   begin below the iPhone notch consistently.
+- Notifications now refetch whenever the Notifications tab regains focus, so a
+  client does not need to restart the native app after staff sends an invoice.
 
 ## Verification
 
 - `cd mobile && npx tsc --noEmit`: passed after the safe-area change.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-notifications-safe-area`: passed.
 - `git diff --check -- mobile`: passed after the safe-area change.
+- `cd mobile && npx tsc --noEmit`: passed after the focus-refresh change.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-notification-focus`: passed.
+- `git diff --check -- mobile`: passed after the focus-refresh change.
 - The in-app browser was unavailable, so there was no screenshot or click-through
   review in this environment.
 
