@@ -72,7 +72,7 @@ export default function InvoiceDetailScreen() {
 
   if (loading && !invoice) {
     return (
-      <Screen style={exitStyle}>
+      <Screen tabTransition style={exitStyle}>
         <ActivityIndicator color={color.accent} />
       </Screen>
     );
@@ -80,7 +80,7 @@ export default function InvoiceDetailScreen() {
 
   if (!invoice) {
     return (
-      <Screen style={exitStyle}>
+      <Screen tabTransition style={exitStyle}>
         <EmptyState icon={FileText} title={t('invoices.invoiceNotFound')} />
       </Screen>
     );
@@ -93,7 +93,7 @@ export default function InvoiceDetailScreen() {
   const payable = invoice.status === 'SENT' || invoice.status === 'FAILED';
 
   return (
-    <Screen style={exitStyle}>
+    <Screen tabTransition style={exitStyle}>
       <Text style={styles.screenTitle}>{invoice.label}</Text>
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}

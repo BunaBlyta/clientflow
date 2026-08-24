@@ -84,7 +84,7 @@ export default function ProjectNotesScreen() {
 
   if (loading && notes.length === 0) {
     return (
-      <Screen>
+      <Screen tabTransition>
         <ActivityIndicator color={color.accent} style={styles.loading} />
       </Screen>
     );

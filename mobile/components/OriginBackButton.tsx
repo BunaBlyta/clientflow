@@ -46,10 +46,12 @@ export function useOriginBack(source?: string) {
   }, [color.textPrimary, goToOrigin, label, navigation, target]);
 
   return {
-    exitStyle: {
-      opacity: exitProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-      transform: [{ translateX: exitProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -24] }) }],
-    },
+    exitStyle: target
+      ? {
+          opacity: exitProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+          transform: [{ translateX: exitProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -24] }) }],
+        }
+      : undefined,
   };
 }
 

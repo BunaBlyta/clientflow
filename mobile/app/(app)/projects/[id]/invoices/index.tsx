@@ -44,7 +44,7 @@ export default function ProjectInvoicesScreen() {
 
   if (loading && invoices.length === 0) {
     return (
-      <Screen>
+      <Screen tabTransition>
         <Text style={styles.title}>{t('projects.invoices')}</Text>
         <ActivityIndicator color={color.accent} />
       </Screen>
@@ -53,7 +53,7 @@ export default function ProjectInvoicesScreen() {
 
   if (invoices.length === 0) {
     return (
-      <Screen>
+      <Screen tabTransition>
         <Text style={styles.title}>{t('projects.invoices')}</Text>
         <EmptyState
           icon={FileText}
@@ -65,7 +65,7 @@ export default function ProjectInvoicesScreen() {
   }
 
   return (
-    <Screen>
+    <Screen tabTransition>
       <Text style={styles.title}>{t('projects.invoices')}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       <View style={styles.listGroup}>

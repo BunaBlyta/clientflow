@@ -53,7 +53,7 @@ export default function ProjectDetailScreen() {
 
   if (!project) {
     return (
-      <Screen style={exitStyle}>
+      <Screen tabTransition style={exitStyle}>
         <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
       </Screen>
     );
@@ -74,7 +74,7 @@ export default function ProjectDetailScreen() {
   const invoicePreviews = visibleInvoices.slice(0, 2);
 
   return (
-    <Screen style={exitStyle}>
+    <Screen tabTransition style={exitStyle}>
       {unreachable && (
         <Text style={styles.error}>
           {t('common.error')}
