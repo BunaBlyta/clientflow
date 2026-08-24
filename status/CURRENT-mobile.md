@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 10:30 by Codex — subscribe to Ably for mobile realtime notifications
+Last updated: 2026-08-24 11:38 by Codex — lower and enlarge the home greeting
 
 ## Current state
 
+- Lowered the home screen greeting slightly and increased “Hi Jordan” from 26px to 28px for a more relaxed, prominent header.
 - Reworked the mobile visual system around the web CRM’s restrained direction:
   grey canvas, white bordered panels, neutral list surfaces, hairline
   separators, smaller radii, and no elevation shadows.

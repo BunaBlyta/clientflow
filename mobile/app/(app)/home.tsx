@@ -162,9 +162,9 @@ export default function HomeScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
     headingCopy: { flex: 1 },
-    greeting: { fontFamily: fontFamily.semibold, fontSize: 26, color: color.textPrimary },
+    greeting: { fontFamily: fontFamily.semibold, fontSize: 28, color: color.textPrimary },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.xs },
     avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md },
     avatarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accentText },
