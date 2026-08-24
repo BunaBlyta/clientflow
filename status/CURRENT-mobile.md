@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 13:39 by Codex — animate nested project tab switches
+Last updated: 2026-08-24 13:41 by Codex — remove tab transition flash
 
 ## What changed
 
@@ -8,6 +8,7 @@ Last updated: 2026-08-24 13:39 by Codex — animate nested project tab switches
 - Detail screens opened from Projects still use the normal native stack back behavior.
 - Added a short 180ms fade and 12px slide-in to the five tab screens on focus. This keeps the tab navigator on its stable default mounting path, avoiding the blank Notifications issue and dark-mode white flash associated with native tab animations.
 - Applied the same focus transition to nested project detail, notes, and invoice screens, so returning to the Projects tab with a project already selected animates the preserved screen too.
+- Removed the opacity fade from tab transitions and reduced the motion to an 8px, 160ms translate-only slide, preventing the brief dim/re-render effect while keeping the switch smooth.
 
 ## Verification
 
@@ -16,6 +17,7 @@ Last updated: 2026-08-24 13:39 by Codex — animate nested project tab switches
 - `npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-tabs-motion` passed.
 - `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-web-tabs-motion` passed.
 - `npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-nested-tabs-motion` passed.
+- `npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-tabs-no-flash` passed.
 
 ## Current state
 

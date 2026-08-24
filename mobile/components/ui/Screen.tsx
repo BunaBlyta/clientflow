@@ -33,7 +33,7 @@ export function Screen({
       tabProgress.setValue(0);
       const animation = Animated.timing(tabProgress, {
         toValue: 1,
-        duration: 180,
+        duration: 160,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: Platform.OS !== 'web',
       });
@@ -43,8 +43,7 @@ export function Screen({
   );
   const tabTransitionStyle = tabTransition
     ? {
-        opacity: tabProgress.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }),
-        transform: [{ translateX: tabProgress.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
+        transform: [{ translateX: tabProgress.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
       }
     : undefined;
   if (!scroll) {
