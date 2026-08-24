@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24  by Codex — give project notes a mobile chat interface
+Last updated: 2026-08-24 09:15 by Codex — give account preferences a stronger visual treatment
 
 ## Current state
 
@@ -23,6 +23,10 @@ Last updated: 2026-08-24  by Codex — give project notes a mobile chat interfac
   message times inside each bubble, uses compact bottom-aligned avatars, and
   provides a keyboard-safe composer with native-sized touch targets. Live note
   loading and posting behavior remain unchanged.
+- Replaced the plain stacked theme and language rows in Account with more
+  expressive controls: an icon-based system/light/dark selector and compact
+  language cards with EN/SQ/DE code badges and a clear selected state. The
+  existing theme persistence and language switching behavior are unchanged.
 - Reworked Home into a web-aligned overview: a personal header, a white
   bordered project-status panel with a muted tracker area, and paid/outstanding
   metrics before the next action.

@@ -1,4 +1,5 @@
-import { Check, LogOut } from 'lucide-react-native';
+import { Check, LogOut, Monitor, Moon, Sun } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
@@ -52,21 +53,55 @@ export default function AccountScreen() {
       </View>
 
       <PreferenceGroup label={t('account.theme')}>
-        {(['system', 'light', 'dark'] as ThemeMode[]).map((option) => (
-          <PreferenceOption
-            key={option}
-            label={t(`account.${option}` as 'account.system' | 'account.light' | 'account.dark')}
-            selected={mode === option}
-            onPress={() => setMode(option)}
+        <View style={styles.themeControl}>
+          <ThemeOption
+            icon={Monitor}
+            label={t('account.system')}
+            selected={mode === 'system'}
+            onPress={() => setMode('system')}
             styles={styles}
           />
-        ))}
+          <ThemeOption
+            icon={Sun}
+            label={t('account.light')}
+            selected={mode === 'light'}
+            onPress={() => setMode('light')}
+            styles={styles}
+          />
+          <ThemeOption
+            icon={Moon}
+            label={t('account.dark')}
+            selected={mode === 'dark'}
+            onPress={() => setMode('dark')}
+            styles={styles}
+          />
+        </View>
       </PreferenceGroup>
 
       <PreferenceGroup label={t('account.language')}>
-        <PreferenceOption label={t('account.english')} selected={language === 'en'} onPress={() => setLanguage('en')} styles={styles} />
-        <PreferenceOption label={t('account.albanian')} selected={language === 'sq'} onPress={() => setLanguage('sq')} styles={styles} />
-        <PreferenceOption label={t('account.german')} selected={language === 'de'} onPress={() => setLanguage('de')} styles={styles} />
+        <View style={styles.languageControl}>
+          <LanguageOption
+            code="EN"
+            label={t('account.english')}
+            selected={language === 'en'}
+            onPress={() => setLanguage('en')}
+            styles={styles}
+          />
+          <LanguageOption
+            code="SQ"
+            label={t('account.albanian')}
+            selected={language === 'sq'}
+            onPress={() => setLanguage('sq')}
+            styles={styles}
+          />
+          <LanguageOption
+            code="DE"
+            label={t('account.german')}
+            selected={language === 'de'}
+            onPress={() => setLanguage('de')}
+            styles={styles}
+          />
+        </View>
       </PreferenceGroup>
 
       {confirmingLogout ? (
@@ -134,12 +169,14 @@ function PreferenceGroup({ label, children }: { label: string; children: ReactNo
   );
 }
 
-function PreferenceOption({
+function ThemeOption({
+  icon: Icon,
   label,
   selected,
   onPress,
   styles,
 }: {
+  icon: LucideIcon;
   label: string;
   selected: boolean;
   onPress: () => void;
@@ -149,12 +186,58 @@ function PreferenceOption({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.preferenceOption, selected && styles.preferenceOptionSelected]}
+      style={({ pressed }) => [
+        styles.themeOption,
+        selected && styles.themeOptionSelected,
+        pressed && styles.pressed,
+      ]}
     >
-      <Text style={[styles.preferenceOptionText, selected && styles.preferenceOptionTextSelected]}>
+      <View style={[styles.themeIcon, selected && styles.themeIconSelected]}>
+        <Icon size={17} color={selected ? color.textOnAccent : color.textMuted} strokeWidth={1.9} />
+      </View>
+      <Text style={[styles.themeOptionText, selected && styles.themeOptionTextSelected]}>
         {label}
       </Text>
-      {selected && <Check size={16} color={color.accentText} strokeWidth={2.5} />}
+    </Pressable>
+  );
+}
+
+function LanguageOption({
+  code,
+  label,
+  selected,
+  onPress,
+  styles,
+}: {
+  code: string;
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const { color } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.languageOption,
+        selected && styles.languageOptionSelected,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={[styles.languageCode, selected && styles.languageCodeSelected]}>
+        <Text style={[styles.languageCodeText, selected && styles.languageCodeTextSelected]}>
+          {code}
+        </Text>
+      </View>
+      <Text style={[styles.languageOptionText, selected && styles.languageOptionTextSelected]} numberOfLines={1}>
+        {label}
+      </Text>
+      {selected && (
+        <View style={styles.languageCheck}>
+          <Check size={11} color={color.textOnAccent} strokeWidth={2.8} />
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -238,26 +321,104 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     preferenceOptions: {
       gap: spacing.xs,
     },
-    preferenceOption: {
+    themeControl: {
       flexDirection: 'row',
+      gap: spacing.xs,
+      padding: spacing.xs,
+      borderRadius: radius.lg,
+      backgroundColor: color.surfaceMuted,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.border,
+    },
+    themeOption: {
+      flex: 1,
+      minHeight: 66,
       alignItems: 'center',
-      minHeight: 42,
       justifyContent: 'center',
-      paddingHorizontal: spacing.md,
+      gap: spacing.xs,
       borderRadius: radius.md,
       backgroundColor: color.surface,
     },
-    preferenceOptionSelected: {
-      backgroundColor: color.accentSoft,
+    themeOptionSelected: {
+      backgroundColor: color.accent,
     },
-    preferenceOptionText: {
+    themeIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.surfaceMuted,
+    },
+    themeIconSelected: {
+      backgroundColor: color.accentPressed,
+    },
+    themeOptionText: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
+      textAlign: 'center',
+    },
+    themeOptionTextSelected: {
+      color: color.textOnAccent,
+    },
+    languageControl: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    languageOption: {
       flex: 1,
+      minHeight: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      borderRadius: radius.lg,
+      backgroundColor: color.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.border,
+    },
+    languageOptionSelected: {
+      backgroundColor: color.accentSoft,
+      borderColor: color.accent,
+    },
+    languageCode: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.surfaceMuted,
+    },
+    languageCodeSelected: {
+      backgroundColor: color.accent,
+    },
+    languageCodeText: {
+      fontFamily: fontFamily.semibold,
+      fontSize: 10,
+      color: color.textMuted,
+      letterSpacing: 0.4,
+    },
+    languageCodeTextSelected: {
+      color: color.textOnAccent,
+    },
+    languageOptionText: {
+      flex: 1,
+      minWidth: 0,
       fontFamily: fontFamily.medium,
       fontSize: fontSize.meta,
       color: color.textMuted,
     },
-    preferenceOptionTextSelected: {
-      color: color.accentText,
+    languageOptionTextSelected: {
+      color: color.textPrimary,
+    },
+    languageCheck: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.accent,
     },
     logoutButton: {
       height: 44,
