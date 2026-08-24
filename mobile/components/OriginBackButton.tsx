@@ -18,7 +18,7 @@ export function useOriginBack(source?: string) {
 
   const goToOrigin = useCallback(() => {
     if (target) {
-      router.replace(target);
+      router.dismissTo(target);
     }
   }, [router, target]);
 
