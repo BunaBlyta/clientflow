@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 13:04 by Codex — remove dark navigation flash
+Last updated: 2026-08-24 13:07 by Codex — fix intermittent native blank tabs
 
 ## Current state
 
+- Removed the native bottom-tab shift animation after it intermittently left the Notifications tab on a blank screen; tab changes now use the stable default mounting path, while project-detail stack slides remain enabled.
 - Set tab and project-stack scene backgrounds to the active theme canvas, removing the white transition flash that appeared in dark mode while preserving native motion.
 - Kept the tab shift and project slide animations on native platforms but disabled navigator animations on web, fixing the blank Notifications scene and white flash during web tab switching.
 - Added subtle motion to tab switching and cross-tab back navigation: tabs shift over 180ms, project-stack screens slide from the right, and origin returns dismiss toward the source tab instead of hard-replacing it.
