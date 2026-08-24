@@ -117,10 +117,10 @@ export default function NotificationsScreen() {
 
 function getNotificationTarget(notification: Notification): string | null {
   if (notification.projectId && notification.invoiceId) {
-    return `/projects/${notification.projectId}/invoices/${notification.invoiceId}`;
+    return `/projects/${notification.projectId}/invoices/${notification.invoiceId}?source=notifications`;
   }
   if (notification.projectId && (notification.requestId || !notification.invoiceId)) {
-    return `/projects/${notification.projectId}`;
+    return `/projects/${notification.projectId}?source=notifications`;
   }
   return null;
 }

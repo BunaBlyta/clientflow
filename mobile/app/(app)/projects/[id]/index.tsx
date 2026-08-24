@@ -16,13 +16,15 @@ import { useDataStore } from '../../../../store/data-store';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { SurfaceGradient } from '../../../../components/ui/SurfaceGradient';
+import { useOriginBack } from '../../../../components/OriginBackButton';
 
 export default function ProjectDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
   const router = useRouter();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  useOriginBack(source);
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);

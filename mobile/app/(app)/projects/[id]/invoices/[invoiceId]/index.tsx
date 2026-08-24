@@ -15,13 +15,15 @@ import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../../
 import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
+import { useOriginBack } from '../../../../../../components/OriginBackButton';
 
 export default function InvoiceDetailScreen() {
-  const { id, invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
+  const { id, invoiceId, source } = useLocalSearchParams<{ id: string; invoiceId: string; source?: string }>();
   const router = useRouter();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
+  useOriginBack(source);
   const token = useAuthStore((s) => s.token);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const refreshInvoice = useDataStore((s) => s.refreshInvoice);

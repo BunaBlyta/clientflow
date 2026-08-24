@@ -69,7 +69,7 @@ export default function InvoicesScreen() {
               <InvoiceRow
                 key={invoice.id}
                 invoice={invoice}
-                onPress={() => router.push(`/projects/${invoice.projectId}/invoices/${invoice.id}`)}
+                onPress={() => router.push(`/projects/${invoice.projectId}/invoices/${invoice.id}?source=invoices`)}
               />
             ))}
           </View>
