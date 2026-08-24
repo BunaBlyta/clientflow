@@ -1,11 +1,14 @@
 import * as Notifications from 'expo-notifications';
 import { useRootNavigationState, useRouter } from 'expo-router';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { InAppNotificationBanner } from '../components/InAppNotificationBanner';
 import { useAuthStore } from '../store/auth-store';
 import { useDataStore } from '../store/data-store';
 import { registerPushDevice } from './push-device';
 import type { Notification as AppNotification } from './types';
+
+const IN_APP_NOTIFICATION_POLL_MS = 15_000;
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -95,6 +98,7 @@ export function NotificationCoordinator() {
   const refreshInvoice = useDataStore((state) => state.refreshInvoice);
   const markNotificationRead = useDataStore((state) => state.markNotificationRead);
   const processedResponses = useRef(new Set<string>());
+  const [bannerNotification, setBannerNotification] = useState<AppNotification | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'web' || !isAuthenticated || !token) return;
@@ -198,5 +202,66 @@ export function NotificationCoordinator() {
     token,
   ]);
 
-  return null;
+  useEffect(() => {
+    if (Platform.OS === 'web' || !isAuthenticated || !token) {
+      setBannerNotification(null);
+      return;
+    }
+
+    const authToken = token;
+    let active = true;
+    let hasInitialSnapshot = false;
+
+    async function refreshAndDetect() {
+      if (!active || AppState.currentState !== 'active') return;
+      const previousIds = new Set(useDataStore.getState().notifications.map((item) => item.id));
+      const refreshed = await refreshNotifications(authToken);
+      if (!active || !refreshed) return;
+
+      const current = useDataStore.getState().notifications;
+      if (!hasInitialSnapshot) {
+        hasInitialSnapshot = true;
+        return;
+      }
+
+      const newest = current
+        .filter((item) => !previousIds.has(item.id))
+        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0];
+      if (newest) setBannerNotification(newest);
+    }
+
+    void refreshAndDetect();
+    const interval = setInterval(() => void refreshAndDetect(), IN_APP_NOTIFICATION_POLL_MS);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [isAuthenticated, refreshNotifications, token]);
+
+  const dismissBanner = useCallback(() => setBannerNotification(null), []);
+  const openBanner = useCallback(() => {
+    const notification = bannerNotification;
+    setBannerNotification(null);
+    if (!notification) return;
+
+    if (!notification.read && token) {
+      void markNotificationRead(notification.id, token);
+    }
+    const target = notificationTarget({
+      notificationId: notification.id,
+      type: notification.type,
+      projectId: notification.projectId,
+      invoiceId: notification.invoiceId,
+      requestId: notification.requestId,
+    });
+    router.push(target ?? '/notifications');
+  }, [bannerNotification, markNotificationRead, router, token]);
+
+  return bannerNotification ? (
+    <InAppNotificationBanner
+      notification={bannerNotification}
+      onDismiss={dismissBanner}
+      onPress={openBanner}
+    />
+  ) : null;
 }

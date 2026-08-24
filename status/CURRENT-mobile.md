@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 10:08 by Codex — refresh notifications when the tab regains focus
+Last updated: 2026-08-24 10:18 by Codex — add active-app in-app notification banners
 
 ## Current state
 
@@ -42,6 +42,10 @@ Last updated: 2026-08-24 10:08 by Codex — refresh notifications when the tab r
   begin below the iPhone notch consistently.
 - Notifications now refetch whenever the Notifications tab regains focus, so a
   client does not need to restart the native app after staff sends an invoice.
+- Added an in-app notification banner for native clients. While the app is
+  active, it checks the durable inbox every 15 seconds, ignores the initial
+  snapshot, and shows only newly arrived notifications with tap-through to the
+  related invoice or project. This does not require Apple push credentials.
 
 ## Verification
 
@@ -51,6 +55,9 @@ Last updated: 2026-08-24 10:08 by Codex — refresh notifications when the tab r
 - `cd mobile && npx tsc --noEmit`: passed after the focus-refresh change.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-notification-focus`: passed.
 - `git diff --check -- mobile`: passed after the focus-refresh change.
+- `cd mobile && npx tsc --noEmit`: passed after the in-app banner change.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-in-app-notifications`: passed.
+- `git diff --check -- mobile`: passed after the in-app banner change.
 - The in-app browser was unavailable, so there was no screenshot or click-through
   review in this environment.
 
