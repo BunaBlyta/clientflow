@@ -26,6 +26,7 @@ export default function AccountScreen() {
 
   return (
     <Screen
+      tabTransition
       contentContainerStyle={{
         paddingBottom: 64 + spacing.md,
       }}

@@ -1,16 +1,19 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 13:35 by Codex — animate mobile origin back transition
+Last updated: 2026-08-24 13:37 by Codex — animate mobile tab switches
 
 ## What changed
 
 - Fixed the custom back buttons on project and invoice detail screens opened from Invoices or Notifications. The native project stack no longer intercepts back actions with an unreliable `beforeRemove` listener; the visible origin button now animates the detail screen out before returning to its source tab.
 - Detail screens opened from Projects still use the normal native stack back behavior.
+- Added a short 180ms fade and 12px slide-in to the five tab screens on focus. This keeps the tab navigator on its stable default mounting path, avoiding the blank Notifications issue and dark-mode white flash associated with native tab animations.
 
 ## Verification
 
 - `npx tsc --noEmit` passed from `mobile/`.
 - `npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-smooth-origin` passed.
+- `npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-tabs-motion` passed.
+- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-web-tabs-motion` passed.
 
 ## Current state
 

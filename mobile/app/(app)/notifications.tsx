@@ -69,6 +69,7 @@ export default function NotificationsScreen() {
 
   return (
     <Screen
+      tabTransition
       scroll={notifications.length > 0}
     >
       <View style={styles.headerRow}>

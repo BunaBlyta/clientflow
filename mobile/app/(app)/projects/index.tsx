@@ -25,7 +25,7 @@ export default function ProjectsListScreen() {
   }, [refreshProjects, token]);
 
   return (
-    <Screen>
+    <Screen tabTransition>
       <Text style={styles.title}>{t('tabs.projects')}</Text>
 
       <View style={styles.list}>

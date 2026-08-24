@@ -39,7 +39,7 @@ export default function InvoicesScreen() {
   }, [refreshInvoices, token]);
 
   return (
-    <Screen>
+    <Screen tabTransition>
       <Text style={styles.title}>{t('tabs.invoices')}</Text>
       {invoices.length === 0 && <Text style={styles.subtitle}>{t('invoices.emptySubtitle')}</Text>}
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}

@@ -56,7 +56,7 @@ export default function HomeScreen() {
       : null;
 
   return (
-    <Screen>
+    <Screen tabTransition>
       <View style={styles.headingRow}>
         <View style={styles.headingCopy}>
           <Text style={styles.greeting}>
