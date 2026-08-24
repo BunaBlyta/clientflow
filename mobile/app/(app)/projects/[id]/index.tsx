@@ -145,6 +145,7 @@ export default function ProjectDetailScreen() {
               <NoteBubble key={note.id} note={note} preview />
             ))
         )}
+        <View style={styles.sectionFooterDivider} />
       </SurfaceGradient>
 
       <SurfaceGradient
@@ -179,6 +180,7 @@ export default function ProjectDetailScreen() {
                 )}
               </View>
             ))}
+            <View style={styles.sectionFooterDivider} />
             <Text style={styles.invoiceSummary}>
               {t('projects.invoiceCount', { count: visibleInvoices.length })}
             </Text>
@@ -294,6 +296,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: spacing.md,
+    marginBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border,
+  },
+  sectionFooterDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border,
+    marginTop: spacing.md,
     marginBottom: spacing.md,
   },
   viewAllRow: {

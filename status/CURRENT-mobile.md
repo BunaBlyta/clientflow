@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 11:47 by Codex — prevent invoice row clipping
+Last updated: 2026-08-24 11:50 by Codex — add notes and invoices card separators
 
 ## Current state
 
+- Added restrained hairline separators beneath the Notes and Invoices card headers, plus footer rules before the trailing Notes/Invoices content, so both project-detail cards have clearer structure without changing their surfaces.
 - Hardened invoice rows against narrow-screen clipping by removing the unnecessary overflow constraint and explicitly allowing the invoice text column to shrink within the icon, amount, status, and chevron layout.
 - Brightened the project-detail studio note preview bubble further by using the accent-soft surface, making the dark-mode contrast more obvious while keeping light mode darker than the white card.
 - Adjusted studio-authored note bubbles in the project detail preview to use the muted surface, making them darker against light cards and lighter against dark cards; full notes and client-authored bubbles are unchanged.
