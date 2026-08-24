@@ -66,8 +66,9 @@ export default function ProjectDetailScreen() {
     .filter((i) => i.status === 'SENT' || i.status === 'FAILED' || i.status === 'PAYMENT_PENDING')
     .reduce((sum, i) => sum + i.amountCents, 0);
 
-  // notesForProject sorts newest first, so the first two are the recent preview.
-  const recentNotes = notes.filter((note) => note.authorRole !== 'SYSTEM').slice(0, 1);
+  // notesForProject sorts newest first, so the first note is the recent preview.
+  const visibleNotes = notes.filter((note) => note.authorRole !== 'SYSTEM');
+  const recentNotes = visibleNotes.slice(0, 1);
   const invoicePreviews = visibleInvoices.slice(0, 2);
 
   return (
@@ -146,6 +147,9 @@ export default function ProjectDetailScreen() {
             ))
         )}
         <View style={styles.sectionFooterDivider} />
+        <Text style={styles.noteSummary}>
+          {t('notes.noteCount', { count: visibleNotes.length })}
+        </Text>
       </SurfaceGradient>
 
       <SurfaceGradient
@@ -317,6 +321,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.accentText,
   },
   invoiceSummary: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.caption,
+    color: color.textMuted,
+  },
+  noteSummary: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.caption,
     color: color.textMuted,
