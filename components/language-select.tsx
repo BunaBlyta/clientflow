@@ -5,6 +5,12 @@ import { useLocale, LOCALE_LABELS, LOCALES } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+const LOCALE_FLAGS = {
+  en: "🇬🇧",
+  de: "🇩🇪",
+  sq: "🇦🇱",
+} as const;
+
 export function LanguageSelect({
   compact = false,
   showIcon = true,
@@ -35,9 +41,14 @@ export function LanguageSelect({
         <SelectContent
           align="end"
           alignItemWithTrigger={false}
-          className="marketing-language-content !w-auto !min-w-0"
+          className="marketing-language-content crm-language-content !w-auto !min-w-0"
         >
-          {LOCALES.map((item) => <SelectItem className="!p-2 [&>span:last-child]:hidden" key={item} value={item}>{LOCALE_LABELS[item]}</SelectItem>)}
+          {LOCALES.map((item) => (
+            <SelectItem className="crm-language-item !p-2 [&>span:last-child]:hidden" key={item} value={item}>
+              <span className="text-sm leading-none" aria-hidden="true">{LOCALE_FLAGS[item]}</span>
+              {LOCALE_LABELS[item]}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     );

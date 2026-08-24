@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
+import { PROJECT_STATUS_TONE } from "@/lib/status";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All statuses" },
@@ -71,16 +72,18 @@ function ProjectsPageInner() {
               <Select
                 value={projectStatusFilter}
                 onValueChange={(value) => value && setProjectStatusFilter(value as ProjectStatus | "ALL")}
-              >
+                >
                 <SelectTrigger className="w-44">
-                  {projectStatusFilter === "ALL"
-                    ? t("status.filter.ALL")
-                    : t(`status.project.${projectStatusFilter}`)}
+                  <span className={projectStatusFilter === "ALL" ? "text-foreground" : PROJECT_STATUS_TONE[projectStatusFilter]}>
+                    {projectStatusFilter === "ALL" ? t("status.filter.ALL") : t(`status.project.${projectStatusFilter}`)}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_FILTERS.map((filter) => (
                     <SelectItem key={filter.value} value={filter.value}>
-                      {filter.value === "ALL" ? t("status.filter.ALL") : t(`status.project.${filter.value}`)}
+                      <span className={filter.value === "ALL" ? "text-foreground" : PROJECT_STATUS_TONE[filter.value]}>
+                        {filter.value === "ALL" ? t("status.filter.ALL") : t(`status.project.${filter.value}`)}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

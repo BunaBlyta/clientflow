@@ -2,16 +2,16 @@ import { useRouter } from 'expo-router';
 import { ArrowUpRight, CircleDollarSign, FolderKanban, MessageSquare } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect } from 'react';
-import { ProjectStageTracker } from '../../components/ProjectStageTracker';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
 import { formatCurrency } from '../../lib/format';
-import { getInvoiceStatusMeta } from '../../lib/status';
+import { getInvoiceStatusMeta, getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
+import { SurfaceGradient } from '../../components/ui/SurfaceGradient';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -73,23 +73,39 @@ export default function HomeScreen() {
         <EmptyState icon={FolderKanban} title={t('projects.emptyTitle')} subtitle={t('projects.emptySubtitle')} />
       ) : (
         <>
-          <View style={styles.hero}>
-            <View style={styles.heroTopline}>
-              <Text style={styles.heroKicker}>{t('projects.status')}</Text>
-              <ArrowUpRight size={18} color={color.accentText} />
-            </View>
-            <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
-            <Pressable
-              onPress={() => router.push(`/projects/${project.id}`)}
-              style={({ pressed }) => [styles.trackerLink, pressed && styles.pressed]}
-            >
-              <View style={styles.trackerPanel}>
-                <ProjectStageTracker status={project.status} />
+          <View style={styles.statusSection}>
+            <View style={styles.statusHeader}>
+              <View style={styles.statusCopy}>
+                <Text style={styles.heroKicker}>{t('projects.status')}</Text>
+                <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
               </View>
-            </Pressable>
+              <Pressable
+                onPress={() => router.push(`/projects/${project.id}`)}
+                style={({ pressed }) => [styles.statusLink, pressed && styles.pressed]}
+              >
+                <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>
+                  {getProjectStatusLabel(project.status, t)}
+                </Text>
+                <ArrowUpRight size={17} color={color.textMuted} />
+              </Pressable>
+            </View>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.max(8, ((PROJECT_STAGES.indexOf(project.status) + 1) / PROJECT_STAGES.length) * 100)}%`,
+                    backgroundColor: getProjectStatusMeta(project.status, color, t).text,
+                  },
+                ]}
+              />
+            </View>
           </View>
 
-          <View style={styles.statsRow}>
+          <SurfaceGradient
+            colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
+            style={styles.statsRow}
+          >
             <View style={styles.stat}>
               <Text style={styles.statValue}>{formatCurrency(paidTotal)}</Text>
               <Text style={styles.statLabel}>{t('projects.paidToDate')}</Text>
@@ -101,7 +117,7 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.statLabel}>{t('projects.outstanding')}</Text>
             </View>
-          </View>
+          </SurfaceGradient>
 
           {nextAction && (
             <View style={styles.actionSection}>
@@ -152,26 +168,29 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.xs },
     avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md },
     avatarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accentText },
-    hero: { marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: color.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: color.border },
-    heroTopline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    statusSection: { marginTop: spacing.xxl },
+    statusHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
+    statusCopy: { flex: 1 },
     heroKicker: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.accentText, textTransform: 'uppercase', letterSpacing: 0.8 },
-    projectName: { fontFamily: fontFamily.semibold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm, marginBottom: spacing.lg },
-    trackerLink: { marginHorizontal: -spacing.sm },
-    trackerPanel: { backgroundColor: color.surfaceMuted, borderRadius: radius.md, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
-    statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, backgroundColor: color.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: color.border, borderRadius: radius.lg },
+    projectName: { fontFamily: fontFamily.semibold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm },
+    statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingBottom: 2 },
+    statusValue: { fontFamily: fontFamily.medium, fontSize: fontSize.caption },
+    progressTrack: { height: spacing.xs, borderRadius: spacing.xs / 2, backgroundColor: color.surfaceMuted, marginTop: spacing.lg, overflow: 'hidden' },
+    progressFill: { height: '100%', borderRadius: spacing.xs / 2 },
+    statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderRadius: 16 },
     stat: { flex: 1 },
-    statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: color.border },
+    statDivider: { width: spacing.xs, height: spacing.xs, borderRadius: spacing.xs / 2, backgroundColor: color.surfaceMuted },
     statValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
     statValueWarning: { color: color.warning },
     statLabel: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textMuted, marginTop: spacing.xs },
     actionSection: { marginTop: spacing.xxl },
     sectionLabel: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
-    actionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.border },
+    actionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
     actionIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
     actionCopy: { flex: 1 },
     actionLabel: { fontFamily: fontFamily.medium, fontSize: fontSize.body, color: color.textPrimary },
     actionDetail: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: 2 },
-    summarySection: { marginTop: spacing.xxl, paddingTop: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border },
+    summarySection: { marginTop: spacing.xxl, paddingTop: spacing.lg },
     summaryHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     viewAll: { fontFamily: fontFamily.medium, fontSize: fontSize.caption, color: color.accentText },
     summaryLine: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },

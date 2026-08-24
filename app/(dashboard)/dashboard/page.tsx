@@ -172,7 +172,7 @@ export default function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid overflow-hidden rounded-lg sm:grid-cols-2 lg:grid-cols-4">
+      <div className="overview-kpi-strip grid overflow-hidden rounded-lg dark:border dark:border-border dark:bg-card sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label={t("dashboard.activeProjects")} value={String(activeProjectCount(projects))} hint={t("dashboard.kpiActiveHint")} />
         <StatTile label={t("dashboard.pendingRequests")} value={String(pendingRequests.length)} hint={t("dashboard.kpiPendingHint")} />
         <StatTile label={t("nav.projects")} value={String(projects.length)} hint={t("dashboard.kpiProjectsHint")} />

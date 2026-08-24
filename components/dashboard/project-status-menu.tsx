@@ -64,7 +64,7 @@ export function ProjectStatusMenu({
     <Button
       variant="ghost"
       size="sm"
-      className="h-auto gap-1 px-1 text-[13px] font-normal hover:opacity-70"
+      className="crm-status-trigger h-8 gap-1 rounded-md px-3 text-[13px] font-normal hover:opacity-100"
       disabled={isUpdating || isAwaitingDeposit}
       title={
         isAwaitingDeposit ? t("status.depositGate") : undefined
@@ -85,7 +85,7 @@ export function ProjectStatusMenu({
     return (
       <div className="flex flex-col items-start gap-0.5">
         {statusControl}
-        <span className="px-1 text-[11px] leading-tight text-muted-foreground">
+        <span className="px-3 text-[11px] leading-tight text-muted-foreground">
           {t("status.depositGate")}
         </span>
       </div>
@@ -95,11 +95,12 @@ export function ProjectStatusMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={statusControl} />
-      <DropdownMenuContent align="start" className="w-44">
+      <DropdownMenuContent align="start" className="crm-status-menu w-auto">
         {SELECTABLE_STATUSES.filter((s) => s !== "DISCOVERY" || project.status !== "PENDING").map(
           (status) => (
             <DropdownMenuItem
               key={status}
+              className="crm-status-menu-item"
               disabled={status === project.status || isUpdating}
               onClick={() => void updateStatus(status)}
             >

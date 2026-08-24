@@ -202,23 +202,16 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     infoSection: {
       backgroundColor: color.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.border,
-      borderRadius: 8,
       paddingHorizontal: spacing.md,
-      overflow: 'hidden',
       marginBottom: spacing.xl,
+      borderRadius: radius.lg,
     },
     infoRow: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: spacing.md,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: color.border,
     },
-    infoRowLast: {
-      borderBottomWidth: 0,
-    },
+    infoRowLast: {},
     infoTextCol: {
       flex: 1,
     },
@@ -243,21 +236,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       marginBottom: spacing.sm,
     },
     preferenceOptions: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.border,
-      borderRadius: 8,
+      gap: spacing.xs,
     },
     preferenceOption: {
       flexDirection: 'row',
       alignItems: 'center',
       minHeight: 42,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: color.border,
       justifyContent: 'center',
       paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: color.surface,
     },
     preferenceOptionSelected: {
-      backgroundColor: 'transparent',
+      backgroundColor: color.accentSoft,
     },
     preferenceOptionText: {
       flex: 1,

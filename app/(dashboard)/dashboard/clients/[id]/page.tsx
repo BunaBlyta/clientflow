@@ -58,8 +58,7 @@ export default function ClientDetailPage() {
       </div>
 
       <section className="rounded-lg border border-border p-5 dark:bg-card">
-        <h2 className="text-[15px] font-medium">{t("clients.contactInfo")}</h2>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div><dt className="text-[12px] text-muted-foreground">{t("clients.contact")}</dt><dd className="mt-1 text-[13px]">{client.contactName}</dd></div>
           <div><dt className="text-[12px] text-muted-foreground">{t("auth.email")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Mail className="size-3.5 text-muted-foreground" />{client.email}</dd></div>
           <div><dt className="text-[12px] text-muted-foreground">{t("clients.phone")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Phone className="size-3.5 text-muted-foreground" />{client.phone ?? "—"}</dd></div>

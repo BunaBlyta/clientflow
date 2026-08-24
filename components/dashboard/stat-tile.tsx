@@ -12,8 +12,8 @@ export function StatTile({
   tone?: "default" | "danger";
 }) {
   return (
-    <div className="crm-kpi-tile flex flex-col items-center gap-1.5 border-r border-neutral-300 bg-muted/25 p-4 text-center last:border-r-0 dark:border-border">
-      <span className="text-[13px] text-muted-foreground">{label}</span>
+    <div className="crm-kpi-tile flex flex-col items-center gap-1.5 bg-muted/25 p-4 text-center dark:bg-card">
+      <span className="text-[13px] font-medium text-muted-foreground">{label}</span>
       <span
         className={cn(
           "text-[28px] leading-none font-semibold tracking-tight",
@@ -22,7 +22,7 @@ export function StatTile({
       >
         {value}
       </span>
-      {hint && <span className="text-[12px] leading-4 text-muted-foreground">{hint}</span>}
+      {hint && <span className="text-[12px] font-medium leading-4 text-muted-foreground">{hint}</span>}
     </div>
   );
 }

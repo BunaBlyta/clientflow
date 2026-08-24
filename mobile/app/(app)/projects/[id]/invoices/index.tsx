@@ -3,7 +3,6 @@ import { FileText } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../../../../components/InvoiceRow';
-import { Divider } from '../../../../../components/ui/Divider';
 import { EmptyState } from '../../../../../components/ui/EmptyState';
 import { Screen } from '../../../../../components/ui/Screen';
 import { fontFamily, fontSize, spacing, useTheme } from '../../../../../lib/theme';
@@ -70,14 +69,12 @@ export default function ProjectInvoicesScreen() {
       <Text style={styles.title}>{t('projects.invoices')}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       <View style={styles.listGroup}>
-        {invoices.map((invoice, index) => (
-          <View key={invoice.id}>
-            <InvoiceRow
-              invoice={invoice}
-              onPress={() => router.push(`/projects/${id}/invoices/${invoice.id}`)}
-            />
-            {index < invoices.length - 1 && <Divider />}
-          </View>
+        {invoices.map((invoice) => (
+          <InvoiceRow
+            key={invoice.id}
+            invoice={invoice}
+            onPress={() => router.push(`/projects/${id}/invoices/${invoice.id}`)}
+          />
         ))}
       </View>
     </Screen>
@@ -91,13 +88,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingBottom: spacing.xl,
   },
   listGroup: {
-    backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    overflow: 'hidden',
-    marginTop: spacing.md,
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
   title: {
     fontFamily: fontFamily.semibold,

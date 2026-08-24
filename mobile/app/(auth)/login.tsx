@@ -40,9 +40,14 @@ export default function LoginScreen() {
       return;
     }
     setLoading(true);
-    const ok = await login(email, password);
-    setLoading(false);
-    if (!ok) setError(t('auth.invalidCredentials'));
+    try {
+      const ok = await login(email, password);
+      if (!ok) setError(t('auth.invalidCredentials'));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : t('common.error'));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

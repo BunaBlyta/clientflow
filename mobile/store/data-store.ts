@@ -149,19 +149,36 @@ export const useDataStore = create<DataState>((set, get) => ({
     const requestId = nextRequestId(notesRequestIds, requestKey);
     try {
       const notes = await notesRequest(token, projectId);
+      const visibleNotes =
+        developmentFixtures && notes.length === 0
+          ? MOCK_NOTES.filter((note) => !projectId || note.projectId === projectId)
+          : notes;
       if (generation === sessionGeneration && requestId === notesRequestIds.get(requestKey)) {
         set((state) => ({
           notes: projectId
             ? [
                 ...state.notes.filter((note) => note.projectId !== projectId),
-                ...notes,
+                ...visibleNotes,
               ]
-            : notes,
+            : visibleNotes,
         }));
       }
       return true;
     } catch {
       // Keep the fixtures visible when the local API is unavailable.
+      if (developmentFixtures) {
+        const fallbackNotes = MOCK_NOTES.filter((note) => !projectId || note.projectId === projectId);
+        if (fallbackNotes.length > 0) {
+          set((state) => ({
+            notes: projectId
+              ? [
+                  ...state.notes.filter((note) => note.projectId !== projectId),
+                  ...fallbackNotes,
+                ]
+              : fallbackNotes,
+          }));
+        }
+      }
       return false;
     }
   },

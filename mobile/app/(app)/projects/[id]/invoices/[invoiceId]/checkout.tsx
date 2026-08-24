@@ -253,9 +253,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   card: {
     padding: spacing.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: 8,
+    borderRadius: radius.lg,
     backgroundColor: color.surface,
     marginBottom: spacing.xl,
   },

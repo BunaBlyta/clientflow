@@ -10,6 +10,8 @@ export interface ThemeColors {
   canvas: string;
   surface: string;
   surfaceMuted: string;
+  surfaceGradientStart: string;
+  surfaceGradientEnd: string;
   accent: string;
   accentPressed: string;
   accentSoft: string;
@@ -40,6 +42,8 @@ export const lightColors: ThemeColors = {
   canvas: '#EAEAEA',
   surface: '#FFFFFF',
   surfaceMuted: '#F3F3F3',
+  surfaceGradientStart: '#FFFFFF',
+  surfaceGradientEnd: '#F7F7F7',
   accent: '#171717',
   accentPressed: '#3D3D3D',
   accentSoft: '#EDEDED',
@@ -70,6 +74,8 @@ export const darkColors: ThemeColors = {
   canvas: '#0B0B0B',
   surface: '#121212',
   surfaceMuted: '#1A1A1A',
+  surfaceGradientStart: '#1A1A1A',
+  surfaceGradientEnd: '#111111',
   accent: '#F4F4F4',
   accentPressed: '#D4D4D4',
   accentSoft: '#252525',

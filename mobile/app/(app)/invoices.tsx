@@ -3,7 +3,6 @@ import { FileText } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../components/InvoiceRow';
-import { Divider } from '../../components/ui/Divider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
 import { formatCurrency } from '../../lib/format';
@@ -61,12 +60,17 @@ export default function InvoicesScreen() {
               <Text style={styles.summaryLabel}>{t('projects.paidToDate')}</Text>
             </View>
           </View>
+          <View style={styles.listHeading}>
+            <Text style={styles.listHeadingText}>{t('projects.invoices')}</Text>
+            <Text style={styles.listHeadingCount}>{invoices.length}</Text>
+          </View>
           <View style={styles.listGroup}>
-            {invoices.map((invoice, index) => (
-              <View key={invoice.id}>
-                <InvoiceRow invoice={invoice} onPress={() => router.push(`/projects/${invoice.projectId}/invoices/${invoice.id}`)} />
-                {index < invoices.length - 1 && <Divider />}
-              </View>
+            {invoices.map((invoice) => (
+              <InvoiceRow
+                key={invoice.id}
+                invoice={invoice}
+                onPress={() => router.push(`/projects/${invoice.projectId}/invoices/${invoice.id}`)}
+              />
             ))}
           </View>
         </View>
@@ -81,11 +85,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs, marginBottom: spacing.xl },
     error: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.warning, marginBottom: spacing.md },
     loading: { marginTop: spacing.xxl },
-    summaryRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.xl, paddingVertical: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: color.border },
+    summaryRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.xl, paddingVertical: spacing.lg },
     summaryItem: { flex: 1 },
-    summaryDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: color.border },
+    summaryDivider: { width: spacing.xs, height: spacing.xs, borderRadius: spacing.xs / 2, backgroundColor: color.surfaceMuted },
     summaryValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
     summaryLabel: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textMuted, marginTop: spacing.xs },
-    listGroup: { backgroundColor: color.surface, borderWidth: StyleSheet.hairlineWidth, borderRadius: 8, borderColor: color.border, paddingHorizontal: spacing.md, overflow: 'hidden' },
+    listHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
+    listHeadingText: { fontFamily: fontFamily.medium, fontSize: fontSize.caption, color: color.textSecondary },
+    listHeadingCount: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.textMuted },
+    listGroup: { gap: spacing.xs },
   });
 }

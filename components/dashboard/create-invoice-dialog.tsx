@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldHint } from "@/components/dashboard/field-hint";
+import { DatePicker } from "@/components/dashboard/date-picker";
 import {
   Select,
   SelectContent,
@@ -50,6 +51,7 @@ export function CreateInvoiceDialog({
   const [open, setOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const [kind, setKind] = useState<InvoiceKind>("EXTRA");
+  const [dueDate, setDueDate] = useState("");
   const [pending, setPending] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +112,7 @@ export function CreateInvoiceDialog({
       });
       onCreated?.(invoice);
       formElement.reset();
+      setDueDate("");
       setFieldErrors({});
       setOpen(false);
       toast.success("Invoice created", { description: "The invoice is ready for the client." });
@@ -126,7 +129,7 @@ export function CreateInvoiceDialog({
         <Plus />
         {t("invoices.newInvoice")}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("invoices.newInvoice")}</DialogTitle>
           <DialogDescription>{t("invoices.newInvoiceIntro")}</DialogDescription>
@@ -185,7 +188,14 @@ export function CreateInvoiceDialog({
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label htmlFor="dueDate">{t("invoices.due")}</Label>
               </div>
-              <Input id="dueDate" name="dueDate" type="date" />
+              <DatePicker
+                id="dueDate"
+                name="dueDate"
+                value={dueDate}
+                ariaLabel={t("invoices.due")}
+                onChange={setDueDate}
+                className="w-full"
+              />
             </div>
           </div>
           {error && (
@@ -194,8 +204,11 @@ export function CreateInvoiceDialog({
               <span>{error}</span>
             </div>
           )}
-          <DialogFooter>
-            <Button type="submit" disabled={pending || isLoadingProjects}>
+          <DialogFooter className="w-full flex-row items-center gap-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)} disabled={pending}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" className="flex-1" disabled={pending || isLoadingProjects}>
               {pending ? t("invoices.creating") : t("invoices.createInvoice")}
             </Button>
           </DialogFooter>

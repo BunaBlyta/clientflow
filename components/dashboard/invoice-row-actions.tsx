@@ -78,14 +78,14 @@ export function InvoiceRowActions({
         >
           {isUpdating ? <LoaderCircle className="animate-spin" /> : <MoreHorizontal />}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuContent align="end" className="crm-table-action-menu w-44">
           {canSend && (
-            <DropdownMenuItem onClick={() => void updateStatus("SENT")}>
+            <DropdownMenuItem className="crm-table-action-item" onClick={() => void updateStatus("SENT")}>
               {t("status.sendInvoice")}
             </DropdownMenuItem>
           )}
           {canVoid && (
-            <DropdownMenuItem variant="destructive" onClick={() => setVoidOpen(true)}>
+            <DropdownMenuItem className="crm-table-action-item" variant="destructive" onClick={() => setVoidOpen(true)}>
               {t("status.voidInvoice")}
             </DropdownMenuItem>
           )}

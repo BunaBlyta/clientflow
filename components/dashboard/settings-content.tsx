@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { LoaderCircle, Mail, Plus, RefreshCw } from "lucide-react";
 import { formatDate, formatMajorCurrency, initials } from "@/lib/format";
@@ -17,30 +19,84 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 
-export function SettingsContent() {
+export type SettingsTab = "packages" | "team";
+
+type SettingsContentProps = {
+  activeTab: SettingsTab;
+  onTabChange: (tab: SettingsTab) => void;
+};
+
+function SettingsHeaderAction({ children }: { children: ReactNode }) {
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setTarget(document.querySelector<HTMLElement>("[data-settings-header-action]"));
+  }, []);
+
+  return target ? createPortal(children, target) : null;
+}
+
+export function SettingsContent({ activeTab, onTabChange }: SettingsContentProps) {
   const { t } = useLocale();
+  const [isPackageEditing, setIsPackageEditing] = useState(false);
   return (
-    <Tabs defaultValue="packages">
-      <TabsList className="grid w-full grid-cols-2">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => {
+        if (value === "packages" || value === "team") onTabChange(value);
+      }}
+    >
+      <TabsList className={isPackageEditing ? "hidden" : "grid w-full grid-cols-2"}>
         <TabsTrigger value="packages">{t("nav.packages")}</TabsTrigger>
         <TabsTrigger value="team">{t("settings.team")}</TabsTrigger>
       </TabsList>
-      <TabsContent value="packages" keepMounted className="mt-4">
-        <PackagesSection />
+      <TabsContent value="packages" keepMounted className="mt-5">
+        <PackagesSection isActive={activeTab === "packages"} onEditingChange={setIsPackageEditing} />
       </TabsContent>
-      <TabsContent value="team" keepMounted className="mt-4">
-        <TeamSection />
+      <TabsContent value="team" keepMounted className="mt-5">
+        <TeamSection isActive={activeTab === "team"} />
       </TabsContent>
     </Tabs>
   );
 }
 
-function PackagesSection() {
+function PackagesSection({
+  isActive,
+  onEditingChange,
+}: {
+  isActive: boolean;
+  onEditingChange: (isEditing: boolean) => void;
+}) {
   const { t } = useLocale();
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
+  const [isCreatingPackage, setIsCreatingPackage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePackageCreated = useCallback((pkg: ManagedPackage) => {
+    setPackages((current) => [...current, pkg].sort((a, b) => a.sortOrder - b.sortOrder));
+  }, []);
+
+  const startEditing = useCallback(
+    (packageId: string) => {
+      setEditingPackageId(packageId);
+      onEditingChange(true);
+    },
+    [onEditingChange],
+  );
+
+  const stopEditing = useCallback(() => {
+    setEditingPackageId(null);
+    setIsCreatingPackage(false);
+    onEditingChange(false);
+  }, [onEditingChange]);
+
+  const startCreating = useCallback(() => {
+    setEditingPackageId(null);
+    setIsCreatingPackage(true);
+    onEditingChange(true);
+  }, [onEditingChange]);
 
   const loadPackages = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -74,17 +130,53 @@ function PackagesSection() {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[13px] text-muted-foreground">
-          {t("settings.packagesIntro")}
-        </p>
-        <CreatePackageDialog
-          onCreated={(pkg) => setPackages((current) => [...current, pkg].sort((a, b) => a.sortOrder - b.sortOrder))}
+  const editingPackage = packages.find((pkg) => pkg.id === editingPackageId);
+
+  if (isCreatingPackage) {
+    return (
+      <CreatePackageDialog
+        inline
+        onCreated={(createdPackage) => {
+          handlePackageCreated(createdPackage);
+          stopEditing();
+        }}
+        onCancel={stopEditing}
+      />
+    );
+  }
+
+  if (editingPackage) {
+    return (
+      <div className="settings-package-edit-shell rounded-lg border border-border">
+        <EditPackageDialog
+          pkg={editingPackage}
+          isEditing
+          onEdit={() => startEditing(editingPackage.id)}
+          onCancel={stopEditing}
+          onUpdated={(updatedPackage) => {
+            setPackages((current) =>
+              current.map((currentPackage) =>
+                currentPackage.id === updatedPackage.id ? updatedPackage : currentPackage,
+              ),
+            );
+          }}
+          onDeactivated={() => setPackages((current) => current.filter((pkg) => pkg.id !== editingPackage.id))}
         />
       </div>
-      <div className="h-[360px] overflow-y-auto rounded-lg border border-border">
+    );
+  }
+
+  return (
+    <>
+      {isActive && (
+        <SettingsHeaderAction>
+          <Button type="button" size="sm" onClick={startCreating}>
+            <Plus />
+            {t("settings.newPackage")}
+          </Button>
+        </SettingsHeaderAction>
+      )}
+      <div className="settings-package-list h-[360px] overflow-y-auto rounded-lg border border-border">
         <div className="flex flex-col divide-y divide-border">
         {packages.map((pkg) => {
           const isEditing = editingPackageId === pkg.id;
@@ -94,8 +186,8 @@ function PackagesSection() {
                 <EditPackageDialog
                   pkg={pkg}
                   isEditing
-                  onEdit={() => setEditingPackageId(pkg.id)}
-                  onCancel={() => setEditingPackageId(null)}
+                  onEdit={() => startEditing(pkg.id)}
+                  onCancel={stopEditing}
                   onUpdated={(updatedPackage) => {
                     setPackages((current) =>
                       current.map((currentPackage) =>
@@ -119,8 +211,8 @@ function PackagesSection() {
                   <EditPackageDialog
                     pkg={pkg}
                     isEditing={false}
-                    onEdit={() => setEditingPackageId(pkg.id)}
-                    onCancel={() => setEditingPackageId(null)}
+                    onEdit={() => startEditing(pkg.id)}
+                    onCancel={stopEditing}
                     onUpdated={(updatedPackage) =>
                       setPackages((current) =>
                         current.map((currentPackage) =>
@@ -142,11 +234,11 @@ function PackagesSection() {
         )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-function TeamSection() {
+function TeamSection({ isActive }: { isActive: boolean }) {
   const { t } = useLocale();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -159,6 +251,10 @@ function TeamSection() {
   const [resendingStaffId, setResendingStaffId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ staffId: string; message: string } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "email", string>>>({});
+
+  const toggleInviteForm = useCallback(() => {
+    setIsInviteFormOpen((open) => !open);
+  }, []);
 
   const loadTeam = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -269,14 +365,15 @@ function TeamSection() {
   if (error) return <ErrorState title={t("settings.teamFailed")} error={error} onRetry={() => void loadTeam()} />;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[13px] text-muted-foreground">{t("settings.teamIntro")}</p>
-        <Button type="button" size="sm" onClick={() => setIsInviteFormOpen((open) => !open)}>
-          <Plus />
-          {t("settings.inviteTitle")}
-        </Button>
-      </div>
+    <>
+      {isActive && (
+        <SettingsHeaderAction>
+          <Button type="button" size="sm" onClick={toggleInviteForm}>
+            <Plus />
+            {t("settings.inviteTitle")}
+          </Button>
+        </SettingsHeaderAction>
+      )}
       <div className="h-[360px] overflow-y-auto rounded-lg border border-border">
         <div className="flex flex-col divide-y divide-border">
         {staff.map((staffMember) => (
@@ -338,7 +435,7 @@ function TeamSection() {
           </form>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

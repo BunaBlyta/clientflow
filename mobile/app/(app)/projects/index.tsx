@@ -74,11 +74,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: spacing.sm,
   },
   listGroup: {
-    backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: 8,
-    overflow: 'hidden',
+    gap: spacing.md,
   },
   });
 }

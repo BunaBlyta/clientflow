@@ -15,17 +15,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FieldHint } from "@/components/dashboard/field-hint";
 import type { ManagedPackage } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 
 type PackageField = "name" | "slug" | "price" | "currency" | "description" | "sortOrder";
 
-export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPackage) => void }) {
+export function CreatePackageDialog({
+  onCreated,
+  inline = false,
+  onCancel,
+}: {
+  onCreated: (pkg: ManagedPackage) => void;
+  inline?: boolean;
+  onCancel?: () => void;
+}) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState("usd");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<PackageField, string>>>({});
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -83,8 +93,10 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
       if (!result || !("id" in result)) throw new Error("The server returned an unexpected package response.");
       onCreated(result);
       formElement.reset();
+      setCurrency("usd");
       setFieldErrors({});
       setOpen(false);
+      onCancel?.();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "We couldn't create this package.");
     } finally {
@@ -92,18 +104,20 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" />}>
-        <Plus />
-        {t("settings.newPackage")}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("settings.newPackage")}</DialogTitle>
-          <DialogDescription>{t("settings.newPackageIntro")}</DialogDescription>
-        </DialogHeader>
-        <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+  function handleCancel() {
+    setOpen(false);
+    setError(null);
+    onCancel?.();
+  }
+
+  const formContent = (
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className={`flex min-h-0 flex-1 flex-col rounded-lg ${inline ? "p-0" : "p-4"}`}
+        >
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <div className="flex h-5 items-center justify-between gap-2">
               <Label htmlFor="package-name">{t("settings.name")}</Label>
@@ -118,7 +132,8 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
             </div>
             <Input id="package-slug" name="slug" required pattern="[a-z0-9-]+" aria-invalid={Boolean(fieldErrors.slug)} aria-describedby={fieldErrors.slug ? "package-slug-error" : undefined} placeholder="full-website" onInput={() => setFieldErrors((current) => ({ ...current, slug: undefined }))} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label htmlFor="package-price">{t("settings.price")}</Label>
@@ -131,12 +146,24 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
                 <Label htmlFor="package-currency">{t("settings.currency")}</Label>
                 <FieldHint id="package-currency-error" message={fieldErrors.currency} />
               </div>
-              <Input id="package-currency" name="currency" defaultValue="usd" maxLength={3} required aria-invalid={Boolean(fieldErrors.currency)} aria-describedby={fieldErrors.currency ? "package-currency-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, currency: undefined }))} />
+              <Select value={currency} onValueChange={(value) => { if (value) { setCurrency(value); setFieldErrors((current) => ({ ...current, currency: undefined })); } }}>
+                <SelectTrigger id="package-currency" className="w-full" aria-invalid={Boolean(fieldErrors.currency)} aria-describedby={fieldErrors.currency ? "package-currency-error" : undefined}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="usd">USD</SelectItem>
+                  <SelectItem value="eur">EUR</SelectItem>
+                  <SelectItem value="gbp">GBP</SelectItem>
+                </SelectContent>
+              </Select>
+              <input type="hidden" name="currency" value={currency} />
             </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="package-duration">{t("settings.duration")}</Label>
-            <Input id="package-duration" name="estimatedDuration" placeholder="6–8 weeks" />
+            <div className="flex flex-col gap-1.5">
+              <div className="flex h-5 items-center">
+                <Label htmlFor="package-duration">{t("settings.duration")}</Label>
+              </div>
+              <Input id="package-duration" name="estimatedDuration" placeholder="6–8 weeks" />
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <div className="flex h-5 items-center justify-between gap-2">
@@ -158,12 +185,46 @@ export function CreatePackageDialog({ onCreated }: { onCreated: (pkg: ManagedPac
               <span>{error}</span>
             </div>
           )}
-          <DialogFooter>
-            <Button type="submit" disabled={pending}>
+          <DialogFooter className="relative top-2 mt-auto w-full flex-row items-center gap-2">
+            <Button type="button" variant="outline" className="min-h-10 flex-1" onClick={handleCancel} disabled={pending}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" className="min-h-10 flex-1" disabled={pending}>
               {pending ? t("settings.creating") : t("settings.createPackage")}
             </Button>
           </DialogFooter>
+          </div>
         </form>
+  );
+
+  if (inline) {
+    return (
+      <div className="settings-package-edit-shell rounded-lg border border-border">
+        <div className="flex h-full w-full flex-col rounded-lg bg-muted/30 px-4 pt-4 pb-6">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[14px] font-medium">{t("settings.newPackage")}</p>
+              <p className="mt-1 text-[13px] text-muted-foreground">{t("settings.newPackageIntro")}</p>
+            </div>
+          </div>
+          {formContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button size="sm" />}>
+        <Plus />
+        {t("settings.newPackage")}
+      </DialogTrigger>
+      <DialogContent showCloseButton={false} className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("settings.newPackage")}</DialogTitle>
+          <DialogDescription>{t("settings.newPackageIntro")}</DialogDescription>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );

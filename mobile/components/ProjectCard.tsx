@@ -1,7 +1,7 @@
 import { ChevronRight, Circle } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { getPackageById } from '../lib/mock-data';
-import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, getProjectStatusMeta } from '../lib/status';
 import { useI18n } from '../lib/i18n';
 import type { Project } from '../lib/types';
@@ -22,26 +22,28 @@ export function ProjectCard({ project, index, onPress }: ProjectCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
     >
-      <View style={styles.projectMark}>
-        <Text style={styles.projectMarkText}>{String(index + 1).padStart(2, '0')}</Text>
-      </View>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.name} numberOfLines={2}>
-            {project.name}
-          </Text>
+      <View style={styles.card}>
+        <View style={styles.projectMark}>
+          <Text style={styles.projectMarkText}>{String(index + 1).padStart(2, '0')}</Text>
         </View>
-        <View style={styles.metaRow}>
-          {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
-          <View style={styles.status}>
-            <Circle size={6} color={statusMeta.text} fill={statusMeta.text} />
-            <Text style={[styles.statusText, { color: statusMeta.text }]} numberOfLines={1}>{getProjectStatusLabel(project.status, t)}</Text>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.name} numberOfLines={2}>
+              {project.name}
+            </Text>
+          </View>
+          <View style={styles.metaRow}>
+            {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
+            <View style={styles.status}>
+              <Circle size={6} color={statusMeta.text} fill={statusMeta.text} />
+              <Text style={[styles.statusText, { color: statusMeta.text }]} numberOfLines={1}>{getProjectStatusLabel(project.status, t)}</Text>
+            </View>
           </View>
         </View>
+        <ChevronRight size={17} color={color.textMuted} />
       </View>
-      <ChevronRight size={17} color={color.textMuted} />
     </Pressable>
   );
 }
@@ -51,11 +53,13 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   card: {
     flexDirection: 'row',
     alignItems: 'stretch',
+    borderRadius: radius.pill,
     backgroundColor: color.surface,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
+    paddingVertical: spacing.md,
+  },
+  pressable: {
+    overflow: 'hidden',
   },
   pressed: {
     opacity: 0.78,

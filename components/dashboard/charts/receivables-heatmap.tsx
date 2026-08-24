@@ -88,7 +88,7 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
             aria-pressed={selectedDate === day.date}
             onClick={() => setSelectedDate(day.date)}
             onDoubleClick={() => setSelectedDate(null)}
-            className={`relative flex size-full cursor-pointer items-center justify-center rounded-sm border text-[10px] outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-brand-accent ${day.isToday || selectedDate === day.date ? "border-brand-accent" : "border-transparent"} ${day.amountCents ? "text-foreground" : "text-muted-foreground/70"}`}
+            className={`relative flex size-full cursor-pointer items-center justify-center rounded-sm border text-[10px] outline-none transition-shadow focus-visible:ring-1 focus-visible:ring-foreground/20 ${day.isToday || selectedDate === day.date ? "border-brand-accent" : "border-transparent"} ${day.amountCents ? "text-foreground" : "text-muted-foreground/70"}`}
             style={{ backgroundColor: heatColor(day.amountCents, maxAmount, day.overdue) }}
           >
             {new Date(`${day.date}T12:00:00`).getDate()}

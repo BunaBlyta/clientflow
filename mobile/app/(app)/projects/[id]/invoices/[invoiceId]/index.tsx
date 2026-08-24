@@ -11,7 +11,7 @@ import {
   getInvoiceStatusMeta,
   getOverdueMeta,
 } from '../../../../../../lib/status';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../../../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../../../lib/theme';
 import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
@@ -188,18 +188,15 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: spacing.xl,
     marginBottom: spacing.xl,
     backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: 8,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    gap: spacing.xs,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
   },
   rowLabel: {
     fontFamily: fontFamily.regular,
@@ -215,7 +212,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.warningBg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.warningBorder,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.xl,
   },
@@ -242,7 +239,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.successBg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.successBorder,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.xl,
   },

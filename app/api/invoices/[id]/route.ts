@@ -234,7 +234,10 @@ async function updateInvoice(id: string, invoice: ReconciliationInvoice, nextSta
   return prisma.$transaction(async (transaction) => {
     const claim = await transaction.invoice.updateMany({
       where: { id, status: invoice.status },
-      data: { status: nextStatus },
+      data: {
+        status: nextStatus,
+        ...(nextStatus === 'SENT' && !invoice.issuedAt ? { issuedAt: new Date() } : {}),
+      },
     });
     if (claim.count !== 1) throw new ConcurrentInvoiceUpdate();
     const updated = await transaction.invoice.findUnique({

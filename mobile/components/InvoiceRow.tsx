@@ -1,8 +1,8 @@
-import { ChevronRight, Circle } from 'lucide-react-native';
+import { ChevronRight, Circle, FileText } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatCurrency, formatDate, isPastDue } from '../lib/format';
 import { getInvoiceKindLabel, getInvoiceStatusMeta, getOverdueMeta } from '../lib/status';
-import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import type { Invoice } from '../lib/types';
 
@@ -24,46 +24,62 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, preview && styles.previewRow, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
     >
-      <View style={styles.left}>
-        <Text style={styles.label} numberOfLines={1}>
-          {invoice.label}
-        </Text>
-        <Text style={styles.meta}>
-          {getInvoiceKindLabel(invoice.kind, t)}
-          {invoice.dueDate && invoice.status !== 'PAID'
-            ? ` · ${t('invoices.due')} ${formatDate(invoice.dueDate)}`
-            : ''}
-          {invoice.paidAt ? ` · ${t('invoices.paid')} ${formatDate(invoice.paidAt)}` : ''}
-        </Text>
-      </View>
-      <View style={styles.right}>
-        <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
-        <View style={styles.statusRow}>
-          <Circle size={6} color={meta.text} fill={meta.text} />
-          <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
+      <View style={[styles.row, preview && styles.previewRow]}>
+        <View style={styles.iconWrap}>
+          <FileText size={16} color={color.accentText} strokeWidth={1.8} />
         </View>
+        <View style={styles.left}>
+          <Text style={styles.label} numberOfLines={1}>
+            {invoice.label}
+          </Text>
+          <Text style={styles.meta}>
+            {getInvoiceKindLabel(invoice.kind, t)}
+            {invoice.dueDate && invoice.status !== 'PAID'
+              ? ` · ${t('invoices.due')} ${formatDate(invoice.dueDate)}`
+              : ''}
+            {invoice.paidAt ? ` · ${t('invoices.paid')} ${formatDate(invoice.paidAt)}` : ''}
+          </Text>
+        </View>
+        <View style={styles.right}>
+          <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
+          <View style={styles.statusRow}>
+            <Circle size={6} color={meta.text} fill={meta.text} />
+            <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
+          </View>
+        </View>
+        <ChevronRight size={18} color={color.textMuted} style={{ marginLeft: spacing.sm }} />
       </View>
-      <ChevronRight size={18} color={color.textMuted} style={{ marginLeft: spacing.sm }} />
     </Pressable>
   );
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
+  pressable: {
+    overflow: 'hidden',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    gap: spacing.md,
   },
   previewRow: {
     paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
-    marginHorizontal: spacing.sm,
   },
   pressed: {
     opacity: 0.6,
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: color.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   left: {
     flex: 1,

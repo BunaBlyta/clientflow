@@ -200,7 +200,7 @@ export function Topbar() {
         <div className="crm-header-language flex items-center gap-2">
           <LanguageSelect
             compact
-            triggerClassName="!size-9 !justify-center !rounded-md !bg-transparent transition-colors hover:!bg-muted hover:!text-foreground"
+            triggerClassName="!size-9 !justify-center !rounded-full !bg-transparent transition-colors hover:!bg-muted hover:!text-foreground"
           />
           <ThemeToggle />
         </div>
@@ -217,7 +217,7 @@ export function Topbar() {
             />
           }
         >
-          <Bell className="size-5" />
+          <Bell className="size-4" />
           {hasUnopenedUnreadNotifications && (
             <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-brand-accent" />
           )}
@@ -288,7 +288,7 @@ export function Topbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 px-1.5 hover:!bg-transparent aria-expanded:!bg-transparent"
+              className="size-9 p-0 hover:!bg-transparent aria-expanded:!bg-transparent"
               aria-label={currentUser?.name ?? "Account"}
             />
           }
@@ -299,7 +299,7 @@ export function Topbar() {
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="crm-account-menu w-56">
           <div className="flex items-center gap-3 px-3 py-3">
             <Avatar className="size-9">
               <AvatarFallback className="text-[12px]">
@@ -326,15 +326,15 @@ export function Topbar() {
             </>
           ) : null}
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="gap-4 py-4 pl-3 text-[13px] font-medium" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="size-5" />
+          <DropdownMenuItem className="gap-3 px-3 py-3 text-[13px] font-normal" onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="size-4" />
             {t("dashboard.settings")}
           </DropdownMenuItem>
-          <DropdownMenuItem className="gap-4 py-4 pl-3 text-[13px] font-medium" onClick={() => void handleLogout()} disabled={isLoggingOut}>
+          <DropdownMenuItem className="gap-3 px-3 py-3 text-[13px] font-normal" onClick={() => void handleLogout()} disabled={isLoggingOut}>
             {isLoggingOut ? (
-              <LoaderCircle className="size-5 animate-spin" />
+              <LoaderCircle className="size-4 animate-spin" />
             ) : (
-              <LogOut className="size-5" />
+              <LogOut className="size-4" />
             )}
             {isLoggingOut ? t("common.loading") : t("common.logOut")}
           </DropdownMenuItem>

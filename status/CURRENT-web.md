@@ -1,8 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-24 09:07 by Codex — match project KPI strip to activity shading
+Last updated: 2026-08-24 09:08 by Codex — remove client contact info label
 
 ## Current state
+
+- Removed the redundant “Contact info” heading from the per-client summary card so the contact fields begin directly within the shaded strip.
 
 - Matched the project-detail KPI/summary strip to the activity card’s `var(--card)` surface in dark mode, so the top strip remains visibly separated from the CRM canvas.
 

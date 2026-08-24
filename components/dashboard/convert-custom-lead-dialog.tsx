@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldHint } from "@/components/dashboard/field-hint";
+import { DatePicker } from "@/components/dashboard/date-picker";
 import { useLocale } from "@/lib/i18n";
 
 type ConversionField = "projectName" | "description" | "amount";
@@ -90,15 +91,15 @@ export function ConvertCustomLeadDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+      <DialogTrigger render={<Button size="sm" variant="outline" className="crm-neutral-action rounded-full" />}>
         <WandSparkles />
         {t("inquiries.createProject")}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent showCloseButton={false} className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("inquiries.convertTitle")}</DialogTitle>
           <DialogDescription>
-            This creates or uses a client account, a custom project, and a one-off invoice for {lead.email}.
+            Inquiry received {formatDate(lead.createdAt)}.
           </DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
@@ -109,7 +110,7 @@ export function ConvertCustomLeadDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{t("clients.contact")}</Label>
-              <p className="h-8 truncate border border-input px-2.5 py-1.5 text-[12px] text-muted-foreground">{lead.name} · {lead.email}</p>
+              <p className="crm-modal-contact-field flex h-8 items-center truncate px-3 text-[12px] text-muted-foreground">{lead.name} · {lead.email}</p>
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -138,7 +139,13 @@ export function ConvertCustomLeadDialog({
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label htmlFor={`due-${lead.id}`}>{t("invoices.due")}</Label>
               </div>
-              <Input id={`due-${lead.id}`} value={dueDate} onChange={(event) => setDueDate(event.target.value)} type="date" />
+              <DatePicker
+                id={`due-${lead.id}`}
+                value={dueDate}
+                ariaLabel={t("invoices.due")}
+                onChange={setDueDate}
+                className="w-full"
+              />
             </div>
           </div>
           {error && (
@@ -147,9 +154,11 @@ export function ConvertCustomLeadDialog({
               <span>{error}</span>
             </div>
           )}
-          <DialogFooter className="mt-1 w-full flex-row items-center justify-end gap-3">
-            <p className="-ml-1 text-left text-[11px] text-muted-foreground">Inquiry received {formatDate(lead.createdAt)}.</p>
-            <Button type="submit" disabled={pending}>
+          <DialogFooter className="mt-1 w-full flex-row items-center gap-3">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)} disabled={pending}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" disabled={pending} className="crm-neutral-action flex-1 rounded-full">
               {pending && <LoaderCircle className="animate-spin" />}
               {pending ? t("settings.creating") : t("inquiries.createProject")}
             </Button>

@@ -202,8 +202,9 @@ export default function ClientsPage() {
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
                         <MoreHorizontal />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="crm-table-action-menu w-48">
                         <DropdownMenuItem
+                          className="crm-table-action-item"
                           disabled={resendingClientId !== null}
                           onClick={() => void handleResendInvitation(client)}
                         >

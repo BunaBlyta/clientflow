@@ -25,7 +25,8 @@ import { ProjectAgingScatterChart } from "@/components/dashboard/charts/project-
 import { ReceivablesHeatmap } from "@/components/dashboard/charts/receivables-heatmap";
 import { AnalyticsGridOverlay } from "@/components/dashboard/charts/analytics-grid-overlay";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatePicker } from "@/components/dashboard/date-picker";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
@@ -248,7 +249,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="analytics-page flex flex-col gap-8">
-      <div className="crm-kpi-strip grid overflow-hidden rounded-lg border border-neutral-300 sm:grid-cols-2 lg:grid-cols-4 dark:border-border">
+      <div className="crm-kpi-strip grid overflow-hidden rounded-lg dark:border dark:border-border dark:bg-card sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label={t("dashboard.totalRevenue")} value={formatCurrency(totalPaidRevenue(invoices))} hint={t("dashboard.kpiRevenueHint")} />
         <StatTile
           label={t("dashboard.outstanding")}
@@ -284,7 +285,7 @@ export default function AnalyticsPage() {
             size="sm"
             onClick={() => void generateInsight()}
             disabled={isGeneratingInsight}
-            className="shrink-0"
+            className="analytics-generate-insight shrink-0 text-foreground hover:text-foreground"
           >
             {isGeneratingInsight ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
             {isGeneratingInsight ? t("dashboard.generating") : t("dashboard.generateInsight")}
@@ -302,27 +303,25 @@ export default function AnalyticsPage() {
               <h2 className="text-[15px] font-medium">{t("dashboard.revenueOverTime")}</h2>
               <p className="text-[12px] text-muted-foreground">{t("dashboard.revenuePeriodIntro")}</p>
             </div>
-            <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
+            <div className="analytics-revenue-controls flex shrink-0 flex-wrap items-start justify-end gap-2">
               <div className="flex items-center gap-2">
                 {revenueView === "compare" && (
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-accent/15 text-[11px] font-medium text-brand-accent">A</span>
                 )}
                 <div className="flex gap-2">
-                  <Input
+                  <DatePicker
                     className="w-32"
-                    aria-label={`${t("dashboard.periodOne")} ${t("dashboard.from")}`}
-                    type="date"
+                    ariaLabel={`${t("dashboard.periodOne")} ${t("dashboard.from")}`}
                     value={revenueRange.start}
                     max={revenueRange.end}
-                    onChange={(event) => setRevenueRange((range) => ({ ...range, start: event.target.value }))}
+                    onChange={(start) => setRevenueRange((range) => ({ ...range, start }))}
                   />
-                  <Input
+                  <DatePicker
                     className="w-32"
-                    aria-label={`${t("dashboard.periodOne")} ${t("dashboard.to")}`}
-                    type="date"
+                    ariaLabel={`${t("dashboard.periodOne")} ${t("dashboard.to")}`}
                     value={revenueRange.end}
                     min={revenueRange.start}
-                    onChange={(event) => setRevenueRange((range) => ({ ...range, end: event.target.value }))}
+                    onChange={(end) => setRevenueRange((range) => ({ ...range, end }))}
                   />
                 </div>
               </div>
@@ -330,47 +329,35 @@ export default function AnalyticsPage() {
                 <div className="flex items-center gap-2">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">B</span>
                   <div className="flex gap-2">
-                    <Input
+                    <DatePicker
                       className="w-32"
-                      aria-label={`${t("dashboard.periodTwo")} ${t("dashboard.from")}`}
-                      type="date"
+                      ariaLabel={`${t("dashboard.periodTwo")} ${t("dashboard.from")}`}
                       value={comparisonRange.start}
                       max={comparisonRange.end}
-                      onChange={(event) => setComparisonRange((range) => ({ ...range, start: event.target.value }))}
+                      onChange={(start) => setComparisonRange((range) => ({ ...range, start }))}
                     />
-                    <Input
+                    <DatePicker
                       className="w-32"
-                      aria-label={`${t("dashboard.periodTwo")} ${t("dashboard.to")}`}
-                      type="date"
+                      ariaLabel={`${t("dashboard.periodTwo")} ${t("dashboard.to")}`}
                       value={comparisonRange.end}
                       min={comparisonRange.start}
-                      onChange={(event) => setComparisonRange((range) => ({ ...range, end: event.target.value }))}
+                      onChange={(end) => setComparisonRange((range) => ({ ...range, end }))}
                     />
                   </div>
                 </div>
               )}
-              <div className="flex gap-1 rounded-full bg-muted/50 p-1">
-                <Button
-                  type="button"
-                  size="xs"
-                  variant={revenueView === "single" ? "secondary" : "ghost"}
-                  className="rounded-full"
-                  aria-pressed={revenueView === "single"}
-                  onClick={() => setRevenueView("single")}
-                >
-                  {t("dashboard.singlePeriod")}
-                </Button>
-                <Button
-                  type="button"
-                  size="xs"
-                  variant={revenueView === "compare" ? "secondary" : "ghost"}
-                  className="rounded-full"
-                  aria-pressed={revenueView === "compare"}
-                  onClick={() => setRevenueView("compare")}
-                >
-                  {t("dashboard.comparePeriods")}
-                </Button>
-              </div>
+              <Tabs
+                value={revenueView}
+                onValueChange={(value) => {
+                  if (value === "single" || value === "compare") setRevenueView(value);
+                }}
+                className="analytics-revenue-tab-picker"
+              >
+                <TabsList>
+                  <TabsTrigger value="single">{t("dashboard.singlePeriod")}</TabsTrigger>
+                  <TabsTrigger value="compare">{t("dashboard.comparePeriods")}</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
           {(invalidRevenueRange || (revenueView === "compare" && invalidComparisonRange)) ? (
@@ -449,7 +436,7 @@ export default function AnalyticsPage() {
                   <span className={`w-24 shrink-0 ${PROJECT_STATUS_TONE[s.status]}`}>
                     {t(`status.project.${s.status}`)}
                   </span>
-                  <div className="h-2 flex-1 rounded-full bg-muted">
+                  <div className="analytics-pipeline-track h-2 flex-1 rounded-full bg-muted">
                     <div
                       className="h-2 rounded-full bg-brand-accent"
                       style={{ width: `${(s.count / maxStageCount) * 100}%` }}

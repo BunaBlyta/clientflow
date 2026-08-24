@@ -9,12 +9,13 @@ import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatCurrency, formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { SurfaceGradient } from '../../../../components/ui/SurfaceGradient';
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -100,12 +101,18 @@ export default function ProjectDetailScreen() {
         </View>
       </View>
 
-      <View style={[styles.section, styles.statusSection]}>
+      <SurfaceGradient
+        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
+        style={[styles.section, styles.statusSection]}
+      >
         <Text style={styles.sectionTitle}>{t('projects.status')}</Text>
         <ProjectStageTracker status={project.status} />
-      </View>
+      </SurfaceGradient>
 
-      <View style={[styles.section, styles.overviewSection]}>
+      <SurfaceGradient
+        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
+        style={[styles.section, styles.overviewSection]}
+      >
         <Text style={styles.overviewLabel}>{pkg?.name}</Text>
         {pkg?.description && (
           <Text style={styles.overviewDescription}>{pkg.description}</Text>
@@ -115,9 +122,12 @@ export default function ProjectDetailScreen() {
             {t('common.target')}: {formatDate(project.targetLaunchDate)}
           </Text>
         )}
-      </View>
+      </SurfaceGradient>
 
-      <View style={[styles.section, styles.notesSection]}>
+      <SurfaceGradient
+        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
+        style={[styles.section, styles.notesSection]}
+      >
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.notes')}</Text>
           <Pressable
@@ -135,9 +145,12 @@ export default function ProjectDetailScreen() {
               <NoteBubble key={note.id} note={note} preview />
             ))
         )}
-      </View>
+      </SurfaceGradient>
 
-      <View style={[styles.section, styles.invoicesSection]}>
+      <SurfaceGradient
+        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
+        style={[styles.section, styles.invoicesSection]}
+      >
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.invoices')}</Text>
           <Pressable
@@ -171,7 +184,7 @@ export default function ProjectDetailScreen() {
             </Text>
           </>
         )}
-      </View>
+      </SurfaceGradient>
     </Screen>
   );
 }
@@ -203,8 +216,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: 2,
   },
   titleDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: color.borderStrong,
+    height: spacing.sm,
     marginTop: spacing.lg,
   },
   statRow: {
@@ -228,10 +240,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: 2,
   },
   section: {
-    backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: 8,
+    borderRadius: radius.lg,
     padding: spacing.lg,
     marginTop: spacing.lg,
   },
@@ -285,8 +294,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
     marginBottom: spacing.md,
   },
   viewAllRow: {

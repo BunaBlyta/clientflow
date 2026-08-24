@@ -64,9 +64,9 @@ export function Sidebar({
               href={item.href}
               title={collapsed ? t(item.key) : undefined}
               className={cn(
-                "crm-sidebar-link flex h-12 w-full items-center rounded-full bg-transparent text-[16px] font-normal text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                "crm-sidebar-link flex h-12 w-full items-center rounded-full bg-transparent text-[16px] font-normal text-muted-foreground transition-colors hover:text-foreground",
                 collapsed ? "justify-center px-0" : "justify-start gap-4 px-3.5",
-                isActive && "crm-sidebar-link-active bg-sidebar-accent font-medium text-foreground"
+                isActive && "crm-sidebar-link-active text-foreground font-medium"
               )}
             >
               <item.icon className={cn("size-[18px]", isActive && "text-brand-accent")} />

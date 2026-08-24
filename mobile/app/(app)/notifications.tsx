@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { NotificationRow } from '../../components/NotificationRow';
-import { Divider } from '../../components/ui/Divider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
 import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
@@ -74,8 +73,14 @@ export default function NotificationsScreen() {
       contentContainerStyle={{ paddingTop: insets.top + spacing.lg }}
     >
       <View style={styles.headerRow}>
-        <View>
+        <View style={styles.headingCopy}>
           <Text style={styles.heading}>{t('notifications.title')}</Text>
+          <View style={styles.headingMeta}>
+            <View style={[styles.headingDot, unread > 0 && styles.headingDotUnread]} />
+            <Text style={styles.headingMetaText}>
+              {unread > 0 ? `${unread}` : '0'}
+            </Text>
+          </View>
         </View>
         {unread > 0 && (
           <Pressable
@@ -98,14 +103,12 @@ export default function NotificationsScreen() {
         <EmptyState icon={Bell} title={t('notifications.caughtUp')} />
       ) : (
       <View style={styles.listGroup}>
-          {notifications.map((notification, index) => (
-            <View key={notification.id}>
-              <NotificationRow
-                notification={notification}
-                onPress={() => void handlePress(notification)}
-              />
-              {index < notifications.length - 1 && <Divider />}
-            </View>
+          {notifications.map((notification) => (
+            <NotificationRow
+              key={notification.id}
+              notification={notification}
+              onPress={() => void handlePress(notification)}
+            />
           ))}
         </View>
       )}
@@ -136,6 +139,31 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
   },
+  headingCopy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headingMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingTop: 2,
+  },
+  headingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: color.surfaceMuted,
+  },
+  headingDotUnread: {
+    backgroundColor: color.accent,
+  },
+  headingMetaText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
+    color: color.textMuted,
+  },
   markAllText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
@@ -155,12 +183,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginBottom: spacing.md,
   },
   listGroup: {
-    backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    overflow: 'hidden',
+    gap: spacing.xs,
   },
   });
 }

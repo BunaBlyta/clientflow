@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { invoiceDisplayLabelKey, invoiceDisplayTone } from "@/lib/status";
+import { INVOICE_STATUS_TONE, invoiceDisplayLabelKey, invoiceDisplayTone } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
@@ -171,16 +171,20 @@ export default function InvoicesPage() {
       <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("invoices.search")}>
         <Select value={statusFilter} onValueChange={(value) => value && setStatusFilter(value as typeof statusFilter)}>
           <SelectTrigger className="w-44">
-            {statusFilter === "ALL"
-              ? t("status.filter.ALL")
-              : statusFilter === "OVERDUE"
-                ? t("status.filter.OVERDUE")
-                : t(`status.invoice.${statusFilter}`)}
+            <span className={statusFilter === "ALL" || statusFilter === "OVERDUE" ? "text-foreground" : INVOICE_STATUS_TONE[statusFilter]}>
+              {statusFilter === "ALL"
+                ? t("status.filter.ALL")
+                : statusFilter === "OVERDUE"
+                  ? t("status.filter.OVERDUE")
+                  : t(`status.invoice.${statusFilter}`)}
+            </span>
           </SelectTrigger>
           <SelectContent>
             {STATUS_FILTERS.map((filter) => (
               <SelectItem key={filter.value} value={filter.value}>
-                {filter.value === "ALL" || filter.value === "OVERDUE" ? t(`status.filter.${filter.value}`) : t(`status.invoice.${filter.value}`)}
+                <span className={filter.value === "ALL" || filter.value === "OVERDUE" ? "text-foreground" : INVOICE_STATUS_TONE[filter.value]}>
+                  {filter.value === "ALL" || filter.value === "OVERDUE" ? t(`status.filter.${filter.value}`) : t(`status.invoice.${filter.value}`)}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

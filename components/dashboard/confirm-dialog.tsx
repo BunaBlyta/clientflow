@@ -39,16 +39,16 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="w-full flex-row items-center gap-2">
+          <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={pending}>
             Cancel
           </Button>
-          <Button variant={variant} onClick={handleConfirm} disabled={pending}>
+          <Button variant={variant} className="flex-1" onClick={handleConfirm} disabled={pending}>
             {pending ? "Working…" : confirmLabel}
           </Button>
         </DialogFooter>

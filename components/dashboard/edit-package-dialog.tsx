@@ -130,7 +130,7 @@ export function EditPackageDialog({
           Edit
         </Button>
       ) : (
-        <div className="w-full rounded-lg bg-muted/30 p-4">
+        <div className="flex h-full w-full flex-col rounded-lg bg-muted/30 px-4 pt-4 pb-6">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="text-[14px] font-medium">{t("settings.editPackage", { name: pkg.name })}</p>
@@ -142,7 +142,7 @@ export function EditPackageDialog({
               {t("common.cancel")}
             </Button>
           </div>
-          <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between gap-4">
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
@@ -208,17 +208,18 @@ export function EditPackageDialog({
                 <span>{error}</span>
               </div>
             )}
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="destructive"
+                className="flex-1"
                 onClick={() => setConfirmingDeactivation(true)}
                 disabled={pending}
               >
                 <Trash2 />
                 Delete package
               </Button>
-              <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
+              <Button type="submit" className="flex-1" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
             </div>
           </form>
         </div>

@@ -38,13 +38,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isAuthenticated: true, client, token: response.token });
   },
   login: async (email, password) => {
-    try {
-      const response = await loginRequest(email.trim().toLowerCase(), password);
-      await get().startSession(response);
-      return true;
-    } catch {
-      return false;
-    }
+    const response = await loginRequest(email.trim().toLowerCase(), password);
+    await get().startSession(response);
+    return true;
   },
   logout: async () => {
     const token = get().token;

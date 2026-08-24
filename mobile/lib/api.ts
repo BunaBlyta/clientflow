@@ -2,6 +2,7 @@ import type { Client, Invoice, Note, Notification, Project } from './types';
 
 const configuredBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const baseUrl = configuredBaseUrl || 'http://localhost:3000';
+const REQUEST_TIMEOUT_MS = 12_000;
 
 export class ApiError extends Error {
   status: number;
@@ -14,15 +15,29 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}, token?: string) {
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init.headers,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ApiError('The server took too long to respond. Check your connection and try again.', 408);
+    }
+    throw new ApiError('Unable to reach Clientflow. Check your connection and try again.', 0);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const body = (await response.json().catch(() => null)) as
     | { error?: string }
