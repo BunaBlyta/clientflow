@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 09:15 by Codex — give account preferences a stronger visual treatment
+Last updated: 2026-08-24 09:57 by Codex — fix native safe-area spacing for tab screens
 
 ## Current state
 
@@ -36,14 +36,16 @@ Last updated: 2026-08-24 09:15 by Codex — give account preferences a stronger 
   invoice lists in the web CRM’s dense, quiet table language.
 - Kept all routes, API calls, stores, payment behavior, push handling, theme
   switching, language switching, and logout behavior unchanged.
+- Fixed the shared mobile screen wrapper to use the native top safe area instead
+  of asking each tab to calculate notch spacing independently. Removed duplicate
+  top-inset overrides from Notifications and Account so tab titles and subtitles
+  begin below the iPhone notch consistently.
 
 ## Verification
 
-- `cd mobile && npx tsc --noEmit`: passed.
-- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-ui-pass`: passed.
-- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-neutral-dark`: passed.
-- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-notes-ui-v2`: passed.
-- `git diff --check -- mobile`: passed.
+- `cd mobile && npx tsc --noEmit`: passed after the safe-area change.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-notifications-safe-area`: passed.
+- `git diff --check -- mobile`: passed after the safe-area change.
 - The in-app browser was unavailable, so there was no screenshot or click-through
   review in this environment.
 
@@ -51,6 +53,9 @@ Last updated: 2026-08-24 09:15 by Codex — give account preferences a stronger 
 
 - The app still needs a real iPhone or simulator review for native spacing,
   tab-bar safe-area behavior, and the SF Pro rendering path.
+- Invoice-issued notifications are intentionally delivered to the client linked
+  to the invoice. A staff session should see the invoice table refresh, but not
+  a new inbox notification for sending its own invoice.
 - The existing `mobile/package.json` script change was left untouched and is not
   part of this UI commit.
 - The app still uses fixture-backed request-status UI where the API has no

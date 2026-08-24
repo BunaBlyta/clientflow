@@ -1,7 +1,6 @@
 import { LogOut, Monitor, Moon, Sun } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
@@ -12,7 +11,6 @@ import { useAuthStore } from '../../store/auth-store';
 export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
-  const insets = useSafeAreaInsets();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const { color, mode, setMode } = useTheme();
   const { language, setLanguage, t } = useI18n();
@@ -29,7 +27,6 @@ export default function AccountScreen() {
   return (
     <Screen
       contentContainerStyle={{
-        paddingTop: insets.top + spacing.lg,
         paddingBottom: 64 + spacing.md,
       }}
     >

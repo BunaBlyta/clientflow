@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, useTheme } from '../../lib/theme';
 import { CyanBackdrop } from './CyanBackdrop';
 
@@ -23,20 +23,19 @@ export function Screen({
   const styles = createStyles(color);
   if (!scroll) {
     return (
-      <View style={[styles.container, style]}>
+      <SafeAreaView edges={['top']} style={[styles.container, style]}>
         {backdrop && <CyanBackdrop />}
         {children}
-      </View>
+      </SafeAreaView>
     );
   }
   return (
-    <View style={[styles.container, style]}>
+    <SafeAreaView edges={['top']} style={[styles.container, style]}>
       {backdrop && <CyanBackdrop />}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + spacing.lg },
           { paddingBottom: spacing.xl + insets.bottom },
           contentContainerStyle,
         ]}
@@ -45,7 +44,7 @@ export function Screen({
       >
         {children}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
