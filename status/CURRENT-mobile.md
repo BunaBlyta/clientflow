@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 11:38 by Codex — lower and enlarge the home greeting
+Last updated: 2026-08-24 11:40 by Codex — simplify the Projects tab heading
 
 ## Current state
 
+- Changed the Projects tab header to show only “Projects,” matching the plain headings used by Invoices and Notifications instead of greeting the client by name.
 - Lowered the home screen greeting slightly and increased “Hi Jordan” from 26px to 28px for a more relaxed, prominent header.
 - Reworked the mobile visual system around the web CRM’s restrained direction:
   grey canvas, white bordered panels, neutral list surfaces, hairline

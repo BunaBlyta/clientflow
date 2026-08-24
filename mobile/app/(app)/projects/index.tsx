@@ -16,7 +16,6 @@ export default function ProjectsListScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  const client = useAuthStore((s) => s.client);
   const token = useAuthStore((s) => s.token);
   const projects = useDataStore(useShallow((s) => s.projects));
   const refreshProjects = useDataStore((s) => s.refreshProjects);
@@ -27,10 +26,7 @@ export default function ProjectsListScreen() {
 
   return (
     <Screen>
-      <Text style={styles.greeting}>
-        {client ? `${t('projects.hi')}, ${client.name.split(' ')[0]}` : t('projects.greeting')}
-      </Text>
-      <Text style={styles.company}>{client?.companyName ?? t('projects.greeting')}</Text>
+      <Text style={styles.title}>{t('tabs.projects')}</Text>
 
       <View style={styles.list}>
         {projects.length === 0 ? (
@@ -58,16 +54,10 @@ export default function ProjectsListScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  greeting: {
+  title: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
-  },
-  company: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.body,
-    color: color.textMuted,
-    marginTop: 2,
     marginBottom: spacing.xl,
   },
   list: {
