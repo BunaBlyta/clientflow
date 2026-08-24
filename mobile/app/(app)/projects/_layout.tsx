@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { Platform } from 'react-native';
 import { fontFamily, fontSize, useTheme } from '../../../lib/theme';
 
 export default function ProjectsStackLayout() {
@@ -7,7 +8,7 @@ export default function ProjectsStackLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        animation: 'slide_from_right',
+        animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
         headerTitle: '',
         headerBackVisible: true,
         headerBackButtonDisplayMode: 'minimal',

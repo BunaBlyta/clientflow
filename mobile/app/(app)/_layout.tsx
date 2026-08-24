@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Bell, FileText, FolderKanban, House, UserRound } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fontFamily, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -26,10 +26,10 @@ export default function AppTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: 'shift',
+        animation: Platform.OS === 'web' ? 'none' : 'shift',
         transitionSpec: {
           animation: 'timing',
-          config: { duration: 180 },
+          config: { duration: Platform.OS === 'web' ? 0 : 180 },
         },
         tabBarActiveTintColor: color.accentText,
         tabBarInactiveTintColor: color.textMuted,
