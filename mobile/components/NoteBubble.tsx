@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatRelativeTime } from '../lib/format';
-import { fontFamily, fontSize, spacing, useTheme } from '../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import type { Note } from '../lib/types';
 
@@ -16,29 +16,39 @@ export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
   if (note.authorRole === 'SYSTEM') {
     return (
       <View style={[styles.systemRow, preview && styles.previewSystemRow]}>
+        <View style={styles.systemLine} />
         <Text style={styles.systemText}>
-          {note.body}
-          <Text style={styles.systemTime}> · {formatRelativeTime(note.createdAt)}</Text>
+          {note.body} · {formatRelativeTime(note.createdAt)}
         </Text>
+        <View style={styles.systemLine} />
       </View>
     );
   }
 
   const isClient = note.authorRole === 'CLIENT';
+  const initials = note.authorName
+    .split(' ')
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   return (
     <View style={[styles.message, preview && styles.previewMessage, isClient && styles.clientMessage]}>
-      <View style={styles.markerColumn}>
-        <View style={[styles.marker, isClient ? styles.clientMarker : styles.studioMarker]} />
+      <View style={[styles.avatar, isClient ? styles.clientAvatar : styles.studioAvatar]}>
+        <Text style={[styles.avatarText, isClient && styles.clientAvatarText]}>{initials}</Text>
       </View>
-      <View style={styles.messageContent}>
-        <View style={styles.metaRow}>
+      <View style={[styles.messageContent, isClient && styles.clientMessageContent]}>
+        <View style={[styles.metaRow, isClient && styles.clientMetaRow]}>
           <Text style={styles.author}>{note.authorName}</Text>
           <Text style={styles.roleTag}>{isClient ? t('notes.you') : t('notes.studio')}</Text>
-          <Text style={styles.time}>{formatRelativeTime(note.createdAt)}</Text>
         </View>
         <View style={[styles.bodyWrap, isClient && styles.clientBodyWrap]}>
-          <Text style={styles.body}>{note.body}</Text>
+          <Text style={[styles.body, isClient && styles.clientBody]}>{note.body}</Text>
+          <Text style={[styles.time, isClient && styles.clientTime]}>
+            {formatNoteTime(note.createdAt)}
+          </Text>
         </View>
       </View>
     </View>
@@ -49,17 +59,39 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   message: {
     flexDirection: 'row',
-    paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
+    alignItems: 'flex-end',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   clientMessage: {
-    backgroundColor: color.accentSoft,
-    marginHorizontal: -spacing.sm,
-    paddingHorizontal: spacing.sm,
+    flexDirection: 'row-reverse',
   },
   previewMessage: {
     paddingVertical: spacing.sm,
+  },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  studioAvatar: {
+    backgroundColor: color.surfaceMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+  },
+  clientAvatar: {
+    backgroundColor: color.accent,
+  },
+  avatarText: {
+    fontFamily: fontFamily.medium,
+    fontSize: 10,
+    color: color.textSecondary,
+    letterSpacing: 0.3,
+  },
+  clientAvatarText: {
+    color: color.textOnAccent,
   },
   metaRow: {
     flexDirection: 'row',
@@ -67,24 +99,16 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     gap: spacing.sm,
     marginBottom: spacing.xs,
   },
-  markerColumn: {
-    width: 14,
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  marker: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  clientMarker: {
-    backgroundColor: color.accentPressed,
-  },
-  studioMarker: {
-    backgroundColor: color.borderStrong,
+  clientMetaRow: {
+    justifyContent: 'flex-end',
   },
   messageContent: {
     flex: 1,
+    maxWidth: '84%',
+    minWidth: 0,
+  },
+  clientMessageContent: {
+    alignItems: 'flex-end',
   },
   author: {
     fontFamily: fontFamily.medium,
@@ -97,16 +121,26 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
   },
   time: {
+    alignSelf: 'flex-end',
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
-    marginLeft: 'auto',
+    marginTop: spacing.xs,
+  },
+  clientTime: {
+    color: color.textMuted,
   },
   bodyWrap: {
-    paddingRight: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    borderRadius: radius.lg,
   },
   clientBodyWrap: {
-    paddingRight: 0,
+    backgroundColor: color.accentSoft,
+    borderColor: color.accentSoft,
   },
   body: {
     fontFamily: fontFamily.regular,
@@ -114,30 +148,42 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textSecondary,
     lineHeight: 20,
   },
+  clientBody: {
+    color: color.textPrimary,
+  },
   systemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.sm,
-    paddingVertical: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
-    borderTopColor: color.border,
+    gap: spacing.sm,
+    marginVertical: spacing.md,
+  },
+  systemLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border,
   },
   previewSystemRow: {
     marginVertical: spacing.xs,
   },
   systemText: {
-    flex: 1,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
     fontStyle: 'italic',
+    flexShrink: 1,
+    textAlign: 'center',
   },
   systemTime: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.meta,
     color: color.textMuted,
   },
+  });
+}
+
+function formatNoteTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }

@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { MessageSquare, Send } from 'lucide-react-native';
+import { Info, MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { EmptyState } from '../../../../components/ui/EmptyState';
+import { formatDate } from '../../../../lib/format';
 import { Screen } from '../../../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
@@ -29,6 +30,7 @@ export default function ProjectNotesScreen() {
   const styles = createStyles(color);
   const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
+  const project = useDataStore((s) => s.projectById(id));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const postNote = useDataStore((s) => s.postNote);
   const refreshNotes = useDataStore((s) => s.refreshNotes);
@@ -38,7 +40,9 @@ export default function ProjectNotesScreen() {
   const [posting, setPosting] = useState(false);
   const [unreachable, setUnreachable] = useState(false);
   const [postError, setPostError] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const orderedNotes = [...notes].reverse();
 
   useEffect(() => {
     if (!token || !id) {
@@ -95,24 +99,67 @@ export default function ProjectNotesScreen() {
         style={styles.flex}
         contentContainerStyle={[
           styles.content,
+          { flexGrow: 1 },
           { paddingTop: insets.top + spacing.lg },
         ]}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          if (notes.length > 0) scrollRef.current?.scrollToEnd({ animated: false });
+        }}
       >
-        <Text style={styles.screenTitle}>{t('projects.notes')}</Text>
+        <View style={styles.header}>
+          <View style={styles.headerIcon}>
+            <MessageSquare size={20} color={color.accentText} strokeWidth={1.8} />
+          </View>
+          <View style={styles.headerCopy}>
+            <Text style={styles.screenTitle}>{t('projects.notes')}</Text>
+            {project?.name ? (
+              <Text style={styles.projectName} numberOfLines={1}>
+                {project.name}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+        <View style={styles.infoRow}>
+          <Info size={15} color={color.textMuted} strokeWidth={1.8} />
+          <Text style={styles.intro}>{t('notes.intro')}</Text>
+        </View>
         {unreachable && (
           <Text style={styles.error}>
             {t('notes.unavailable')}
           </Text>
         )}
         {notes.length === 0 ? (
-          <EmptyState
-            icon={MessageSquare}
-            title={t('notes.noNotes')}
-            subtitle={t('notes.emptySubtitle')}
-          />
+          <View style={styles.emptyState}>
+            <EmptyState
+              icon={MessageSquare}
+              title={t('notes.noNotes')}
+              subtitle={t('notes.emptySubtitle')}
+            />
+          </View>
         ) : (
-          notes.map((note) => <NoteBubble key={note.id} note={note} />)
+          <View style={styles.timeline}>
+            {orderedNotes.map((note, index) => {
+              const previousNote = orderedNotes[index - 1];
+              const noteDate = formatDate(note.createdAt);
+              const showDate = !previousNote || formatDate(previousNote.createdAt) !== noteDate;
+
+              return (
+                <View key={note.id}>
+                  {showDate && (
+                    <View style={styles.dateSeparator}>
+                      <View style={styles.dateLine} />
+                      <Text style={styles.dateLabel}>{noteDate}</Text>
+                      <View style={styles.dateLine} />
+                    </View>
+                  )}
+                  <NoteBubble note={note} />
+                </View>
+              );
+            })}
+          </View>
         )}
       </ScrollView>
 
@@ -127,14 +174,22 @@ export default function ProjectNotesScreen() {
             }}
             placeholder={t('notes.writeNote')}
             placeholderTextColor={color.textMuted}
-            style={styles.input}
+            style={[styles.input, inputFocused && styles.inputFocused]}
             multiline
             editable={!posting}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
           />
           <Pressable
             onPress={() => void handleSend()}
             disabled={!draft.trim() || posting}
-            style={[styles.sendButton, (!draft.trim() || posting) && styles.sendButtonDisabled]}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.send')}
+            style={({ pressed }) => [
+              styles.sendButton,
+              (!draft.trim() || posting) && styles.sendButtonDisabled,
+              pressed && draft.trim().length > 0 && !posting && styles.sendButtonPressed,
+            ]}
           >
             {posting ? (
               <ActivityIndicator size="small" color={color.textOnAccent} />
@@ -154,7 +209,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   content: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
   },
   loading: {
     marginTop: spacing.xxl,
@@ -165,15 +220,81 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.warning,
     marginBottom: spacing.md,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: color.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
   screenTitle: {
     fontFamily: fontFamily.semibold,
-    fontSize: fontSize.headingLg,
+    fontSize: fontSize.heading,
     color: color.textPrimary,
-    marginBottom: spacing.xl,
+  },
+  projectName: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.caption,
+    color: color.textMuted,
+    marginTop: spacing.xs,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+    backgroundColor: color.surfaceMuted,
+    borderRadius: radius.md,
+  },
+  intro: {
+    flex: 1,
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    lineHeight: 17,
+    color: color.textMuted,
+  },
+  timeline: {
+    paddingBottom: spacing.sm,
+  },
+  dateSeparator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  dateLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border,
+  },
+  dateLabel: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.meta,
+    color: color.textMuted,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 260,
   },
   composer: {
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border,
     backgroundColor: color.canvas,
@@ -185,25 +306,32 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   input: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 46,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textPrimary,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    textAlignVertical: 'center',
-    maxHeight: 100,
+    paddingVertical: spacing.md,
+    textAlignVertical: 'top',
+    backgroundColor: color.surface,
+    maxHeight: 112,
+  },
+  inputFocused: {
+    borderColor: color.accent,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
+    width: 46,
+    height: 46,
+    borderRadius: radius.lg,
     backgroundColor: color.accent,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sendButtonPressed: {
+    opacity: 0.78,
   },
   sendButtonDisabled: {
     opacity: 0.4,

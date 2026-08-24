@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-20 14:19 by Codex — neutralize dark mobile surfaces
+Last updated: 2026-08-24  by Codex — give project notes a mobile chat interface
 
 ## Current state
 
@@ -17,6 +17,12 @@ Last updated: 2026-08-20 14:19 by Codex — neutralize dark mobile surfaces
   the auth backdrop to one very subtle neutral detail.
 - Standardized app-screen top spacing and removed the repeated in-app
   `CLIENTFLOW` eyebrow so each tab starts with its page heading or greeting.
+- Reworked the full project Notes screen into a mobile chat interface: it now
+  shows the project context and shared-record hint, renders messages in
+  chronological order, groups them under chat-style date separators, keeps
+  message times inside each bubble, uses compact bottom-aligned avatars, and
+  provides a keyboard-safe composer with native-sized touch targets. Live note
+  loading and posting behavior remain unchanged.
 - Reworked Home into a web-aligned overview: a personal header, a white
   bordered project-status panel with a muted tracker area, and paid/outstanding
   metrics before the next action.
@@ -32,6 +38,7 @@ Last updated: 2026-08-20 14:19 by Codex — neutralize dark mobile surfaces
 - `cd mobile && npx tsc --noEmit`: passed.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-ui-pass`: passed.
 - `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-neutral-dark`: passed.
+- `cd mobile && npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-notes-ui-v2`: passed.
 - `git diff --check -- mobile`: passed.
 - The in-app browser was unavailable, so there was no screenshot or click-through
   review in this environment.
