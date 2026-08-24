@@ -26,6 +26,11 @@ export default function AppTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: 'shift',
+        transitionSpec: {
+          animation: 'timing',
+          config: { duration: 180 },
+        },
         tabBarActiveTintColor: color.accentText,
         tabBarInactiveTintColor: color.textMuted,
         tabBarStyle: {

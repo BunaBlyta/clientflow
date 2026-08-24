@@ -7,6 +7,7 @@ export default function ProjectsStackLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
+        animation: 'slide_from_right',
         headerTitle: '',
         headerBackVisible: true,
         headerBackButtonDisplayMode: 'minimal',

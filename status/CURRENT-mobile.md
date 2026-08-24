@@ -1,9 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 11:55 by Codex — restore originating tab on back
+Last updated: 2026-08-24 11:57 by Codex — smooth tab and back transitions
 
 ## Current state
 
+- Added subtle motion to tab switching and cross-tab back navigation: tabs shift over 180ms, project-stack screens slide from the right, and origin returns dismiss toward the source tab instead of hard-replacing it.
 - Preserved the originating tab when opening project or invoice details from Invoices or Notifications. Their custom back action and native back handling now return to the source tab instead of stopping inside the project stack.
 - Added a localized note count to the Notes card footer, matching the invoice count treatment and excluding system audit entries from the total.
 - Added restrained hairline separators beneath the Notes and Invoices card headers, plus footer rules before the trailing Notes/Invoices content, so both project-detail cards have clearer structure without changing their surfaces.

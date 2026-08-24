@@ -20,7 +20,7 @@ export function useOriginBack(source?: string) {
   const goToOrigin = useCallback(() => {
     if (target) {
       redirecting.current = true;
-      router.replace(target);
+      router.dismissTo(target);
     }
   }, [router, target]);
 
