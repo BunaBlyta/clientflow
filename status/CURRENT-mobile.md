@@ -1,6 +1,16 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 13:07 by Codex — fix intermittent native blank tabs
+Last updated: 2026-08-24 13:20 by Codex — restore mobile origin back buttons
+
+## What changed
+
+- Fixed the custom back buttons on project and invoice detail screens opened from Invoices or Notifications. The native project stack no longer intercepts back actions with an unreliable `beforeRemove` listener; the visible origin button now replaces the detail route with its source tab directly.
+- Detail screens opened from Projects still use the normal native stack back behavior.
+
+## Verification
+
+- `npx tsc --noEmit` passed from `mobile/`.
+- `npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-back-fix` passed.
 
 ## Current state
 
