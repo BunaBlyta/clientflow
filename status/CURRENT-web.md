@@ -1,8 +1,90 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-19 11:24 by Claude Code — analytics chart grid-paper overlay
+Last updated: 2026-08-24 09:07 by Codex — match project KPI strip to activity shading
 
 ## Current state
+
+- Matched the project-detail KPI/summary strip to the activity card’s `var(--card)` surface in dark mode, so the top strip remains visibly separated from the CRM canvas.
+
+- Made every shared KPI tile use the same solid `var(--card)` dark surface as the project activity card; removed the dark gradient/grid variation so Overview and Analytics match.
+
+- Applied the same visible dark card surface and hairline border to the Analytics KPI strip, which was still using its older grid treatment.
+
+- Made the Overview KPI strip itself a visible dark card with a hairline border and transparent inner tiles, so its shading is not hidden by tile backgrounds.
+
+- Matched the Overview KPI strip to the project activity card with a full dark card surface so the metric band is separated from the dark CRM canvas.
+
+- Added a subtle dark-mode surface to each project’s activity card so the note feed is visually separated from the CRM canvas.
+
+- Removed the duplicate side padding from inline Create package so its field edges align with Edit package.
+
+- Made inline Create package textfields fill their grid columns and made its action buttons explicitly fill the equal-width footer halves, matching Edit package.
+
+- Increased the New package Cancel/Create buttons to a 40px minimum height so they are slightly taller than the textfields.
+
+- Nudged the New package Cancel/Create buttons directly 8px lower after the flex spacer did not visibly move the rendered row.
+
+- Pushed the New package Cancel/Create action row lower within the replacement card.
+
+- Matched the New package replacement card background to the Edit package card while keeping the fields themselves free of an extra nested square surface.
+
+- Removed the muted square background behind the New package fields while keeping the existing spacing and pill-shaped controls.
+
+- Aligned the Estimated duration label row with Price and Currency so its field no longer sits higher.
+
+- Made all visible CRM text inputs, textareas, and select fields pill-shaped, including modal forms.
+
+- Compacted inline Create package fields into Name/Slug and Price/Currency/Estimated duration rows, changed Currency to a small dropdown, and removed forced vertical stretching so the action buttons remain visible.
+
+- Fixed inline Create package so its action buttons stay visible and made the replacement surface opaque, preventing the previous Settings content from showing through.
+
+- Convert inquiry now uses its received date as the modal description, has a 50/50 Cancel/Create footer, and no close X. Settings’ Create package action now replaces the Settings content with an inline form matching Edit package instead of opening a second modal.
+
+- Added equal-width Cancel/Create actions to invoice and package creation, split Convert inquiry’s metadata and action 50/50, styled Create package with the same in-modal card treatment as edit, made destructive confirmation actions 50/50, and removed close X controls wherever Cancel is available.
+
+- Made Delete package and Save changes share the edit footer evenly at 50/50 width.
+
+- Fixed the edit card layout so the form uses only the space below its title, keeping Delete package and Save changes visible while retaining the vertical field spacing.
+
+- Made the package edit form fill the card vertically and distribute its field groups so the remaining space is used between fields rather than left as a bottom gap.
+
+- Made the package edit card fill the available edit-mode body so its bottom edge aligns with the surrounding modal spacing instead of leaving an uneven gap.
+
+- Increased the package edit card bottom inset to 24px so it matches the modal’s standard spacing more closely.
+
+- Added a small amount of bottom inset to the package edit card so the lower gap balances with the surrounding spacing.
+
+- Removed the extra outer padding around the package edit card so the inner form card sits flush within the modal content while retaining its internal field spacing.
+
+- Package editing now replaces the package list, tabs, and modal header inside the fixed Settings modal, showing only the full edit form with its Cancel/Save controls and no scrollbar; normal Settings remains compact.
+
+- Increased the Settings modal height from 528px to 536px for a little more breathing room while keeping the bottom gap compact.
+
+- Reduced the fixed Settings modal height to 528px so the 360px list and header fit with only normal padding instead of an oversized empty bottom area.
+
+- Removed the Settings modal close X and reduced the modal height to 568px now that the active action button lives in the header, tightening the bottom gap.
+
+- Nudged the active Settings header action 4px down and 4px inward from the modal edge.
+
+- Moved the active Packages/Team action button into the right side of the Settings modal header; it switches with the selected tab and no longer occupies space above the rows.
+
+- Moved each tab’s description into the Settings modal header and made it switch with the active tab; removed the duplicate descriptions from the tab content rows.
+
+- Removed the redundant description beneath the Settings modal title, leaving the Packages and Team tabs as the direct entry point.
+
+- Added a 4px top offset to both Settings tabs so their action button, description, and list rows sit slightly lower without changing the modal height.
+
+- Restored the Settings modal to 584px after 568px felt too tight, keeping the updated description that only mentions Packages and Team.
+
+- Restored the account dropdown row spacing after briefly adjusting the wrong surface.
+
+- Matched the account dropdown actions to the rest of the CRM menu styling: regular 13px text, standard padding and gaps, and 16px icons instead of the previous heavier, oversized treatment.
+
+- Removed the resting pill-shaped shading from the user/account dropdown items; only the full-width hover state keeps a subtle muted surface.
+
+- Added hand-pointer cursors to CRM links, buttons, tabs, selects, options, and menu items, with disabled controls retaining a not-allowed cursor.
+
+- Lightened the dark-mode CRM table header, zebra rows, and hover row surface slightly while preserving the existing stripe pattern and leaving the compact Analytics status table unstriped.
 
 - Added an `AnalyticsGridOverlay` component to the four Analytics gridline charts (Revenue over time, Revenue by package, Turnaround by package, Project aging). Each chart already draws real horizontal (and, for Project aging, dashed vertical) gridlines; the overlay measures those real lines' exact pitch, phase, and dash pattern at runtime and continues them as additional lines filling the rest of the card — through the title/description, any footer padding, and behind chart chrome like the Project aging legend — so each card reads as one continuous sheet of graph paper instead of the lines stopping at the chart's own plot area. It never invents a pattern an chart doesn't already have (an axis with no real lines to measure contributes nothing), and it re-measures via `ResizeObserver` (card-level layout changes) and `MutationObserver` (the chart's own internal redraws, e.g. Recharts' `ResponsiveContainer` correcting its initial width) so the lines stay aligned after resizes and data updates. Also folded in the pre-existing uncommitted CRM/analytics/invoices polish that was already in the tree (Sent date column on the invoices table, `analytics-card` styling unification, notification-dropdown open-state tracking, and related overview/topbar/language-select tweaks) — see the diff for exact scope.
 

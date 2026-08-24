@@ -57,7 +57,7 @@ export default function ClientDetailPage() {
         <p className="mt-1 text-[13px] text-muted-foreground">Client since {formatDate(client.createdAt)}</p>
       </div>
 
-      <section className="rounded-lg border border-border p-5">
+      <section className="rounded-lg border border-border p-5 dark:bg-card">
         <h2 className="text-[15px] font-medium">{t("clients.contactInfo")}</h2>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div><dt className="text-[12px] text-muted-foreground">{t("clients.contact")}</dt><dd className="mt-1 text-[13px]">{client.contactName}</dd></div>
@@ -79,9 +79,9 @@ export default function ClientDetailPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-[15px] font-medium">{t("dashboard.invoices")}</h2>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-[13px]"><thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th><th className="px-4 py-2.5 font-normal">{t("invoices.project")}</th><th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th><th className="px-4 py-2.5 font-normal">{t("common.status")}</th><th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th></tr></thead><tbody>
-            {client.invoices.map((invoice) => <tr key={invoice.id} className="border-b border-border last:border-0"><td className="px-4 py-3 font-medium">{invoice.label}</td><td className="px-4 py-3"><Link href={`/dashboard/projects/${invoice.projectId}`} className="text-muted-foreground hover:text-brand-accent">{client.projects.find((project) => project.id === invoice.projectId)?.name ?? t("project.viewProject")}</Link></td><td className="px-4 py-3 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td><td className={`px-4 py-3 ${invoiceDisplayTone(invoice)}`}>{t(invoiceDisplayLabelKey(invoice))}</td><td className="px-4 py-3 text-right text-muted-foreground">{invoice.dueDate ? formatDate(invoice.dueDate) : "—"}</td></tr>)}
-            {client.invoices.length === 0 && <EmptyRow colSpan={5} text="No invoices for this client yet." />}
+          <table className="w-full text-[13px]"><thead><tr className="border-b border-border text-left text-[12px] text-muted-foreground"><th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th><th className="px-4 py-2.5 font-normal">{t("invoices.project")}</th><th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th><th className="px-4 py-2.5 font-normal">{t("common.status")}</th><th className="px-4 py-2.5 font-normal">{t("invoices.sent")}</th><th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th></tr></thead><tbody>
+            {client.invoices.map((invoice) => <tr key={invoice.id} className="border-b border-border last:border-0"><td className="px-4 py-3 font-medium">{invoice.label}</td><td className="px-4 py-3"><Link href={`/dashboard/projects/${invoice.projectId}`} className="text-muted-foreground hover:text-brand-accent">{client.projects.find((project) => project.id === invoice.projectId)?.name ?? t("project.viewProject")}</Link></td><td className="px-4 py-3 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td><td className={`px-4 py-3 ${invoiceDisplayTone(invoice)}`}>{t(invoiceDisplayLabelKey(invoice))}</td><td className="px-4 py-3 text-muted-foreground">{invoice.issuedAt ? formatDate(invoice.issuedAt) : "—"}</td><td className="px-4 py-3 text-right text-muted-foreground">{invoice.dueDate ? formatDate(invoice.dueDate) : "—"}</td></tr>)}
+            {client.invoices.length === 0 && <EmptyRow colSpan={6} text="No invoices for this client yet." />}
           </tbody></table>
         </div>
       </section>

@@ -214,7 +214,7 @@ export default function ProjectDetailPage() {
         <ProjectStatusMenu project={project} onProjectUpdated={handleProjectUpdated} />
       </div>
 
-      <div className="rounded-lg border border-border p-5">
+      <div className="rounded-lg border border-border p-5 dark:bg-card">
         <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="text-[12px] text-muted-foreground">{t("projects.client")}</dt>
@@ -271,6 +271,7 @@ export default function ProjectDetailPage() {
                 <th className="px-4 py-2.5 font-normal">{t("invoices.invoice")}</th>
                 <th className="px-4 py-2.5 text-right font-normal">{t("common.amount")}</th>
                 <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
+                <th className="px-4 py-2.5 font-normal">{t("invoices.sent")}</th>
                 <th className="px-4 py-2.5 text-right font-normal">{t("invoices.due")}</th>
                 <th className="px-4 py-2.5" />
               </tr>
@@ -286,6 +287,9 @@ export default function ProjectDetailPage() {
                     <td className="px-4 py-3">
                       <span className={invoiceDisplayTone(inv)}>{t(invoiceDisplayLabelKey(inv))}</span>
                     </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {inv.issuedAt ? formatDate(inv.issuedAt) : "—"}
+                    </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
                       {inv.dueDate ? formatDate(inv.dueDate) : "—"}
                     </td>
@@ -296,7 +300,7 @@ export default function ProjectDetailPage() {
                 ))}
               {invoices.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                     No invoices for this project yet.
                   </td>
                 </tr>
@@ -308,7 +312,7 @@ export default function ProjectDetailPage() {
 
       <div className="flex flex-col gap-4">
         <h2 className="text-[15px] font-medium">{t("project.activity")}</h2>
-        <div className="flex flex-col gap-4 rounded-lg border border-border p-5">
+        <div className="flex flex-col gap-4 rounded-lg border border-border p-5 dark:bg-card">
           {sortedNotes.length === 0 ? (
             <p className="text-[13px] text-muted-foreground">{t("project.noActivity")}</p>
           ) : (
