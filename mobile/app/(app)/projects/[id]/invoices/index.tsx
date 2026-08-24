@@ -10,9 +10,10 @@ import { useI18n } from '../../../../../lib/i18n';
 import { useDataStore } from '../../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '../../../../../store/auth-store';
+import { AppBackButton } from '../../../../../components/OriginBackButton';
 
 export default function ProjectInvoicesScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
   const { color } = useTheme();
   const { t } = useI18n();
@@ -44,7 +45,8 @@ export default function ProjectInvoicesScreen() {
 
   if (loading && invoices.length === 0) {
     return (
-      <Screen tabTransition>
+      <Screen>
+        <AppBackButton accessibilityLabel={t('common.backToProject')} />
         <Text style={styles.title}>{t('projects.invoices')}</Text>
         <ActivityIndicator color={color.accent} />
       </Screen>
@@ -53,7 +55,8 @@ export default function ProjectInvoicesScreen() {
 
   if (invoices.length === 0) {
     return (
-      <Screen tabTransition>
+      <Screen>
+        <AppBackButton accessibilityLabel={t('common.backToProject')} />
         <Text style={styles.title}>{t('projects.invoices')}</Text>
         <EmptyState
           icon={FileText}
@@ -65,7 +68,8 @@ export default function ProjectInvoicesScreen() {
   }
 
   return (
-    <Screen tabTransition>
+    <Screen>
+      <AppBackButton accessibilityLabel={t('common.backToProject')} />
       <Text style={styles.title}>{t('projects.invoices')}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       <View style={styles.listGroup}>
@@ -73,7 +77,13 @@ export default function ProjectInvoicesScreen() {
           <InvoiceRow
             key={invoice.id}
             invoice={invoice}
-            onPress={() => router.push(`/projects/${id}/invoices/${invoice.id}`)}
+            onPress={() =>
+              router.push(
+                tab === 'notifications'
+                  ? `/notifications/projects/${id}/invoices/${invoice.id}?tab=notifications`
+                  : `/projects/${id}/invoices/${invoice.id}`,
+              )
+            }
           />
         ))}
       </View>

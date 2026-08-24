@@ -1,19 +1,24 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCallback, useState } from 'react';
-import { NotificationRow } from '../../components/NotificationRow';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { Screen } from '../../components/ui/Screen';
-import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
-import { useAuthStore } from '../../store/auth-store';
-import { useDataStore } from '../../store/data-store';
-import type { Notification } from '../../lib/types';
+import { NotificationRow } from '../../../components/NotificationRow';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { Screen } from '../../../components/ui/Screen';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
+import { useAuthStore } from '../../../store/auth-store';
+import { useDataStore } from '../../../store/data-store';
+import type { Notification } from '../../../lib/types';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function NotificationsScreen() {
-  const router = useRouter();
+  const navigation = useNavigation() as unknown as {
+    navigate: (
+      screen: 'projects/[id]/index' | 'projects/[id]/invoices/[invoiceId]/index',
+      params: { id: string; invoiceId?: string; tab: 'notifications' },
+    ) => void;
+  };
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -54,8 +59,18 @@ export default function NotificationsScreen() {
       setMarkingId(null);
       if (!ok) setActionError(t('notifications.markFailed'));
     }
-    const target = getNotificationTarget(notification);
-    if (target) router.push(target);
+    if (notification.projectId && notification.invoiceId) {
+      navigation.navigate('projects/[id]/invoices/[invoiceId]/index', {
+        id: notification.projectId,
+        invoiceId: notification.invoiceId,
+        tab: 'notifications',
+      });
+    } else if (notification.projectId) {
+      navigation.navigate('projects/[id]/index', {
+        id: notification.projectId,
+        tab: 'notifications',
+      });
+    }
   }
 
   async function handleMarkAll() {
@@ -68,10 +83,7 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <Screen
-      tabTransition
-      scroll={notifications.length > 0}
-    >
+    <Screen scroll={notifications.length > 0}>
       <View style={styles.headerRow}>
         <View style={styles.headingCopy}>
           <Text style={styles.heading}>{t('notifications.title')}</Text>
@@ -114,16 +126,6 @@ export default function NotificationsScreen() {
       )}
     </Screen>
   );
-}
-
-function getNotificationTarget(notification: Notification): string | null {
-  if (notification.projectId && notification.invoiceId) {
-    return `/projects/${notification.projectId}/invoices/${notification.invoiceId}?source=notifications`;
-  }
-  if (notification.projectId && (notification.requestId || !notification.invoiceId)) {
-    return `/projects/${notification.projectId}?source=notifications`;
-  }
-  return null;
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {

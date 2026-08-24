@@ -22,9 +22,10 @@ import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
+import { AppBackButton } from '../../../../components/OriginBackButton';
 
 export default function ProjectNotesScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -84,7 +85,8 @@ export default function ProjectNotesScreen() {
 
   if (loading && notes.length === 0) {
     return (
-      <Screen tabTransition>
+      <Screen>
+        <AppBackButton source={source} accessibilityLabel={t('common.backToProject')} />
         <ActivityIndicator color={color.accent} style={styles.loading} />
       </Screen>
     );
@@ -111,6 +113,7 @@ export default function ProjectNotesScreen() {
           if (notes.length > 0) scrollRef.current?.scrollToEnd({ animated: false });
         }}
       >
+        <AppBackButton source={source} accessibilityLabel={t('common.backToProject')} />
         <View style={styles.header}>
           <View style={styles.headerIcon}>
             <MessageSquare size={20} color={color.accentText} strokeWidth={1.8} />

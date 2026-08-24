@@ -1,19 +1,24 @@
-import { useRouter } from 'expo-router';
+import { useNavigation } from 'expo-router';
 import { FileText } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
-import { InvoiceRow } from '../../components/InvoiceRow';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { Screen } from '../../components/ui/Screen';
-import { formatCurrency } from '../../lib/format';
-import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
-import { useAuthStore } from '../../store/auth-store';
-import { useDataStore } from '../../store/data-store';
+import { InvoiceRow } from '../../../components/InvoiceRow';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { Screen } from '../../../components/ui/Screen';
+import { formatCurrency } from '../../../lib/format';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
+import { useAuthStore } from '../../../store/auth-store';
+import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function InvoicesScreen() {
-  const router = useRouter();
+  const navigation = useNavigation() as unknown as {
+    navigate: (
+      screen: '[invoiceId]',
+      params: { invoiceId: string; id: string; tab: 'invoices' },
+    ) => void;
+  };
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -39,7 +44,7 @@ export default function InvoicesScreen() {
   }, [refreshInvoices, token]);
 
   return (
-    <Screen tabTransition>
+    <Screen>
       <Text style={styles.title}>{t('tabs.invoices')}</Text>
       {invoices.length === 0 && <Text style={styles.subtitle}>{t('invoices.emptySubtitle')}</Text>}
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
@@ -69,7 +74,13 @@ export default function InvoicesScreen() {
               <InvoiceRow
                 key={invoice.id}
                 invoice={invoice}
-                onPress={() => router.push(`/projects/${invoice.projectId}/invoices/${invoice.id}?source=invoices`)}
+                onPress={() =>
+                  navigation.navigate('[invoiceId]', {
+                    invoiceId: invoice.id,
+                    id: invoice.projectId,
+                    tab: 'invoices',
+                  })
+                }
               />
             ))}
           </View>

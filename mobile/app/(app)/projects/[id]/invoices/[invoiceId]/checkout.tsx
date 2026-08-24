@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { CheckCircle2, Lock, XCircle } from 'lucide-react-native';
@@ -18,6 +18,7 @@ import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
 import { ApiError, checkoutRequest } from '../../../../../../lib/api';
+import { AppBackButton } from '../../../../../../components/OriginBackButton';
 
 type Step = 'select' | 'processing' | 'success' | 'failed';
 
@@ -25,14 +26,32 @@ const PAYMENT_STATUS_ATTEMPTS = 8;
 const PAYMENT_STATUS_DELAY_MS = 1500;
 
 export default function CheckoutScreen() {
-  const { id, invoiceId } = useLocalSearchParams<{ id: string; invoiceId: string }>();
+  const { id, invoiceId, tab } = useLocalSearchParams<{
+    id: string;
+    invoiceId: string;
+    tab?: string;
+  }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const token = useAuthStore((s) => s.token);
   const refreshInvoice = useDataStore((s) => s.refreshInvoice);
+  const invoiceRoute = tab === 'invoices'
+    ? `/invoices/${invoiceId}?id=${id}&tab=invoices` as const
+    : tab === 'notifications'
+      ? `/notifications/projects/${id}/invoices/${invoiceId}?tab=notifications` as const
+    : `/projects/${id}/invoices/${invoiceId}` as const;
+
+  function returnToInvoice() {
+    if ((tab === 'invoices' || tab === 'notifications') && navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    router.replace(invoiceRoute);
+  }
 
   const [step, setStep] = useState<Step>('select');
   const [message, setMessage] = useState<string | null>(null);
@@ -146,6 +165,7 @@ export default function CheckoutScreen() {
   if (!invoice) {
     return (
       <Screen>
+        <AppBackButton accessibilityLabel={t('common.backToInvoice')} />
         <Text style={styles.notFound}>{t('checkout.notFound')}</Text>
       </Screen>
     );
@@ -153,6 +173,7 @@ export default function CheckoutScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
+      <AppBackButton accessibilityLabel={t('common.backToInvoice')} />
       <Text style={styles.screenTitle}>{t('checkout.title')}</Text>
       <View style={styles.disclaimer}>
         <Lock size={12} color={color.textMuted} />
@@ -200,7 +221,7 @@ export default function CheckoutScreen() {
           <View style={{ height: spacing.lg }} />
           <Button
             label={t('checkout.returnToInvoice')}
-            onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)}
+            onPress={returnToInvoice}
           />
         </View>
       )}
@@ -215,7 +236,7 @@ export default function CheckoutScreen() {
           <View style={{ height: spacing.lg }} />
           <Button label={t('common.retry')} onPress={() => setStep('select')} />
           <View style={{ height: spacing.sm }} />
-          <Pressable onPress={() => router.replace(`/projects/${id}/invoices/${invoiceId}`)}>
+          <Pressable onPress={returnToInvoice}>
             <Text style={styles.backLink}>{t('checkout.returnToInvoice')}</Text>
           </Pressable>
         </View>

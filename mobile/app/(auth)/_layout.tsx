@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { useTheme, fontFamily, fontSize } from '../../lib/theme';
+import { useTheme } from '../../lib/theme';
 
 export default function AuthLayout() {
   const { color } = useTheme();
@@ -7,25 +7,16 @@ export default function AuthLayout() {
     <Stack
       initialRouteName="login"
       screenOptions={{
-        headerShown: true,
-        headerStyle: { backgroundColor: color.background },
-        headerShadowVisible: false,
-        headerTintColor: color.textPrimary,
-        headerBackVisible: true,
-        headerBackButtonDisplayMode: 'minimal',
-        headerBackTitle: '',
-        headerTitleStyle: {
-          fontFamily: fontFamily.semibold,
-          fontSize: fontSize.sectionTitle,
-          color: color.textPrimary,
-        },
+        headerShown: false,
+        animation: 'slide_from_right',
+        contentStyle: { backgroundColor: color.background },
       }}
     >
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="verify-code" options={{ title: '' }} />
-      <Stack.Screen name="set-password" options={{ title: '' }} />
-      <Stack.Screen name="forgot-password" options={{ title: '' }} />
-      <Stack.Screen name="request-status" options={{ title: '' }} />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="verify-code" />
+      <Stack.Screen name="set-password" />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="request-status" />
     </Stack>
   );
 }

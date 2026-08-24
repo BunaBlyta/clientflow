@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { CheckCircle2, FileText } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -15,15 +15,25 @@ import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../../
 import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
-import { useOriginBack } from '../../../../../../components/OriginBackButton';
+import { AppBackButton } from '../../../../../../components/OriginBackButton';
 
 export default function InvoiceDetailScreen() {
-  const { id, invoiceId, source } = useLocalSearchParams<{ id: string; invoiceId: string; source?: string }>();
+  const { id, invoiceId, source, tab } = useLocalSearchParams<{
+    id: string;
+    invoiceId: string;
+    source?: string;
+    tab?: string;
+  }>();
   const router = useRouter();
+  const navigation = useNavigation() as unknown as {
+    navigate: (
+      screen: '[invoiceId]/checkout',
+      params: { invoiceId: string; id: string; tab: 'invoices' },
+    ) => void;
+  };
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  const { exitStyle } = useOriginBack(source);
   const token = useAuthStore((s) => s.token);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const refreshInvoice = useDataStore((s) => s.refreshInvoice);
@@ -72,7 +82,8 @@ export default function InvoiceDetailScreen() {
 
   if (loading && !invoice) {
     return (
-      <Screen tabTransition style={exitStyle}>
+      <Screen>
+        <AppBackButton source={source} accessibilityLabel={t('common.backToInvoice')} />
         <ActivityIndicator color={color.accent} />
       </Screen>
     );
@@ -80,7 +91,8 @@ export default function InvoiceDetailScreen() {
 
   if (!invoice) {
     return (
-      <Screen tabTransition style={exitStyle}>
+      <Screen>
+        <AppBackButton source={source} accessibilityLabel={t('common.backToInvoice')} />
         <EmptyState icon={FileText} title={t('invoices.invoiceNotFound')} />
       </Screen>
     );
@@ -93,7 +105,8 @@ export default function InvoiceDetailScreen() {
   const payable = invoice.status === 'SENT' || invoice.status === 'FAILED';
 
   return (
-    <Screen tabTransition style={exitStyle}>
+    <Screen>
+      <AppBackButton source={source} accessibilityLabel={t('common.backToInvoice')} />
       <Text style={styles.screenTitle}>{invoice.label}</Text>
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
@@ -142,9 +155,23 @@ export default function InvoiceDetailScreen() {
       {payable && (
         <Button
           label={invoice.status === 'FAILED' ? t('invoices.retryPayment') : t('invoices.payNow')}
-          onPress={() =>
-            router.push(`/projects/${id}/invoices/${invoiceId}/checkout`)
-          }
+          onPress={() => {
+            if (tab === 'invoices') {
+              navigation.navigate('[invoiceId]/checkout', {
+                invoiceId,
+                id,
+                tab: 'invoices',
+              });
+              return;
+            }
+            if (tab === 'notifications') {
+              router.push(
+                `/notifications/projects/${id}/invoices/${invoiceId}/checkout?tab=notifications`,
+              );
+              return;
+            }
+            router.push(`/projects/${id}/invoices/${invoiceId}/checkout`);
+          }}
         />
       )}
     </Screen>

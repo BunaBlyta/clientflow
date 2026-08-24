@@ -10,6 +10,7 @@ import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
+import { AppBackButton } from '../../components/OriginBackButton';
 
 export default function SetPasswordScreen() {
   const router = useRouter();
@@ -59,8 +60,14 @@ export default function SetPasswordScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.lg },
+      ]}
+    >
       <CyanBackdrop />
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.iconWrap}>
         <KeyRound size={22} color={color.accent} />
       </View>

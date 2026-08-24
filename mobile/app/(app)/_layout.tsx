@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Bell, FileText, FolderKanban, House, UserRound } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Easing, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fontFamily, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -9,6 +9,25 @@ import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
 const TAB_BAR_HEIGHT = 62;
+const TAB_TRANSITION_DISTANCE = 24;
+const TAB_TRANSITION_DURATION = 180;
+
+const tabSceneStyleInterpolator = ({
+  current,
+}: {
+  current: { progress: import('react-native').Animated.Value };
+}) => ({
+  sceneStyle: {
+    transform: [
+      {
+        translateX: current.progress.interpolate({
+          inputRange: [-1, 0, 1],
+          outputRange: [-TAB_TRANSITION_DISTANCE, 0, TAB_TRANSITION_DISTANCE],
+        }),
+      },
+    ],
+  },
+});
 
 export default function AppTabsLayout() {
   const { color } = useTheme();
@@ -24,8 +43,19 @@ export default function AppTabsLayout() {
 
   return (
     <Tabs
+      detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
+        lazy: false,
+        animation: Platform.OS === 'web' ? 'none' : 'shift',
+        sceneStyleInterpolator: tabSceneStyleInterpolator,
+        transitionSpec: {
+          animation: 'timing',
+          config: {
+            duration: TAB_TRANSITION_DURATION,
+            easing: Easing.out(Easing.cubic),
+          },
+        },
         sceneStyle: { backgroundColor: color.canvas },
         tabBarActiveTintColor: color.accentText,
         tabBarInactiveTintColor: color.textMuted,

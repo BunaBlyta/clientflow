@@ -16,15 +16,18 @@ import { useDataStore } from '../../../../store/data-store';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { SurfaceGradient } from '../../../../components/ui/SurfaceGradient';
-import { useOriginBack } from '../../../../components/OriginBackButton';
+import { AppBackButton } from '../../../../components/OriginBackButton';
 
 export default function ProjectDetailScreen() {
-  const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
+  const { id, source, tab } = useLocalSearchParams<{
+    id: string;
+    source?: string;
+    tab?: string;
+  }>();
   const router = useRouter();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  const { exitStyle } = useOriginBack(source);
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);
@@ -33,6 +36,9 @@ export default function ProjectDetailScreen() {
   const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const [unreachable, setUnreachable] = useState(false);
+  const projectRoute = tab === 'notifications'
+    ? `/notifications/projects/${id}` as const
+    : `/projects/${id}` as const;
 
   useEffect(() => {
     if (!id || !token) return;
@@ -53,7 +59,8 @@ export default function ProjectDetailScreen() {
 
   if (!project) {
     return (
-      <Screen tabTransition style={exitStyle}>
+      <Screen>
+        <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
         <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
       </Screen>
     );
@@ -74,7 +81,8 @@ export default function ProjectDetailScreen() {
   const invoicePreviews = visibleInvoices.slice(0, 2);
 
   return (
-    <Screen tabTransition style={exitStyle}>
+    <Screen>
+      <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
       {unreachable && (
         <Text style={styles.error}>
           {t('common.error')}
@@ -134,7 +142,13 @@ export default function ProjectDetailScreen() {
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.notes')}</Text>
           <Pressable
-            onPress={() => router.push(`/projects/${project.id}/notes`)}
+            onPress={() =>
+              router.push(
+                tab === 'notifications'
+                  ? `${projectRoute}/notes?tab=notifications`
+                  : `${projectRoute}/notes`,
+              )
+            }
             style={styles.viewAllRow}
           >
             <Text style={styles.viewAllText}>{t('common.viewAll')}</Text>
@@ -161,7 +175,13 @@ export default function ProjectDetailScreen() {
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.invoices')}</Text>
           <Pressable
-            onPress={() => router.push(`/projects/${project.id}/invoices`)}
+            onPress={() =>
+              router.push(
+                tab === 'notifications'
+                  ? `${projectRoute}/invoices?tab=notifications`
+                  : `${projectRoute}/invoices`,
+              )
+            }
             style={styles.viewAllRow}
           >
             <Text style={styles.viewAllText}>{t('common.viewAll')}</Text>
@@ -176,7 +196,13 @@ export default function ProjectDetailScreen() {
               <View key={invoice.id}>
                 <InvoiceRow
                   invoice={invoice}
-                  onPress={() => router.push(`/projects/${id}/invoices/${invoice.id}`)}
+                  onPress={() =>
+                    router.push(
+                      tab === 'notifications'
+                        ? `${projectRoute}/invoices/${invoice.id}?tab=notifications`
+                        : `${projectRoute}/invoices/${invoice.id}`,
+                    )
+                  }
                   preview
                 />
                 {index < invoicePreviews.length - 1 && (

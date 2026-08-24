@@ -12,9 +12,11 @@ import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { SurfaceGradient } from '../../components/ui/SurfaceGradient';
+import { useProjectTabNavigation } from '../../lib/project-tab-navigation';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const projectNavigation = useProjectTabNavigation();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -44,19 +46,19 @@ export default function HomeScreen() {
         icon: CircleDollarSign,
         label: payableInvoice.status === 'FAILED' ? t('invoices.retryPayment') : t('invoices.payNow'),
         detail: `${payableInvoice.label} · ${formatCurrency(payableInvoice.amountCents)}`,
-        onPress: () => router.push(`/projects/${payableInvoice.projectId}/invoices/${payableInvoice.id}`),
+        onPress: () => projectNavigation.openInvoice(payableInvoice.projectId, payableInvoice.id, 'home'),
       }
     : project
       ? {
           icon: MessageSquare,
           label: t('projects.notes'),
           detail: t('notes.writeNote'),
-          onPress: () => router.push(`/projects/${project.id}/notes`),
+          onPress: () => projectNavigation.openNotes(project.id, 'home'),
         }
       : null;
 
   return (
-    <Screen tabTransition>
+    <Screen>
       <View style={styles.headingRow}>
         <View style={styles.headingCopy}>
           <Text style={styles.greeting}>
@@ -80,7 +82,7 @@ export default function HomeScreen() {
                 <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
               </View>
               <Pressable
-                onPress={() => router.push(`/projects/${project.id}`)}
+                onPress={() => projectNavigation.openProject(project.id, 'home')}
                 style={({ pressed }) => [styles.statusLink, pressed && styles.pressed]}
               >
                 <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>

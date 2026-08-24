@@ -10,6 +10,7 @@ import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { ProjectRequest } from '../../lib/types';
 import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
+import { AppBackButton } from '../../components/OriginBackButton';
 
 export default function RequestStatusScreen() {
   const { color } = useTheme();
@@ -32,8 +33,14 @@ export default function RequestStatusScreen() {
   const pkg = result ? getPackageById(result.packageId) : null;
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.lg },
+      ]}
+    >
       <CyanBackdrop />
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <Text style={styles.heading}>{t('auth.checkYourRequest')}</Text>
       <Text style={styles.subheading}>
         {t('auth.requestSubheading')}

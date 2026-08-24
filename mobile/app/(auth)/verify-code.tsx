@@ -9,6 +9,7 @@ import { verificationCheckRequest, verificationSendRequest } from '../../lib/api
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
+import { AppBackButton } from '../../components/OriginBackButton';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
@@ -91,8 +92,14 @@ export default function VerifyCodeScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + spacing.lg }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.lg },
+      ]}
+    >
       <CyanBackdrop />
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.iconWrap}>
         <MailCheck size={22} color={color.accent} />
       </View>

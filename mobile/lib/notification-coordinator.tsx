@@ -117,9 +117,13 @@ function decodeMessageData(data: unknown): unknown {
 export function notificationTarget(data: PushNotificationData): string | null {
   const projectId = data.projectId ? encodeURIComponent(data.projectId) : null;
   const invoiceId = data.invoiceId ? encodeURIComponent(data.invoiceId) : null;
-  if (data.type === 'NEW_NOTE' && projectId) return `/projects/${projectId}/notes`;
-  if (projectId && invoiceId) return `/projects/${projectId}/invoices/${invoiceId}`;
-  if (projectId) return `/projects/${projectId}`;
+  if (data.type === 'NEW_NOTE' && projectId) {
+    return `/notifications/projects/${projectId}/notes?tab=notifications`;
+  }
+  if (projectId && invoiceId) {
+    return `/notifications/projects/${projectId}/invoices/${invoiceId}?tab=notifications`;
+  }
+  if (projectId) return `/notifications/projects/${projectId}?tab=notifications`;
   return null;
 }
 function dataFromNotification(notification: Notifications.Notification) {

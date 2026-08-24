@@ -1,36 +1,48 @@
 import { Stack } from 'expo-router';
-import { fontFamily, fontSize, useTheme } from '../../../lib/theme';
+import { useTheme } from '../../../lib/theme';
 
 export default function ProjectsStackLayout() {
   const { color } = useTheme();
   return (
     <Stack
       screenOptions={{
-        headerShown: true,
-        animation: 'none',
+        headerShown: false,
+        animation: 'slide_from_right',
         contentStyle: { backgroundColor: color.canvas },
-        headerTitle: '',
-        headerBackVisible: true,
-        headerBackButtonDisplayMode: 'minimal',
-        headerStyle: { backgroundColor: color.canvas },
-        headerShadowVisible: false,
-        headerTintColor: color.textPrimary,
-        headerTitleStyle: {
-          fontFamily: fontFamily.semibold,
-          fontSize: fontSize.sectionTitle,
-          color: color.textPrimary,
-        },
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="[id]/index" options={{ title: '' }} />
-      <Stack.Screen name="[id]/notes" options={{ title: '' }} />
+      <Stack.Screen name="index" />
+      <Stack.Screen
+        name="[id]/index"
+        options={({ route }) => ({
+          title: '',
+          animation: hasTabSource(route.params) ? 'none' : 'slide_from_right',
+        })}
+      />
+      <Stack.Screen
+        name="[id]/notes"
+        options={({ route }) => ({
+          title: '',
+          animation: hasTabSource(route.params) ? 'none' : 'slide_from_right',
+        })}
+      />
       <Stack.Screen name="[id]/invoices/index" options={{ title: '' }} />
-      <Stack.Screen name="[id]/invoices/[invoiceId]/index" options={{ title: '' }} />
+      <Stack.Screen
+        name="[id]/invoices/[invoiceId]/index"
+        options={({ route }) => ({
+          title: '',
+          animation: hasTabSource(route.params) ? 'none' : 'slide_from_right',
+        })}
+      />
       <Stack.Screen
         name="[id]/invoices/[invoiceId]/checkout"
         options={{ presentation: 'modal' }}
       />
     </Stack>
   );
+}
+
+function hasTabSource(params: object | undefined) {
+  if (!params || !('source' in params)) return false;
+  return params.source === 'home' || params.source === 'invoices' || params.source === 'notifications';
 }
