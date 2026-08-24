@@ -44,7 +44,7 @@ export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
           <Text style={styles.author}>{note.authorName}</Text>
           <Text style={styles.roleTag}>{isClient ? t('notes.you') : t('notes.studio')}</Text>
         </View>
-        <View style={[styles.bodyWrap, isClient && styles.clientBodyWrap]}>
+        <View style={[styles.bodyWrap, preview && !isClient && styles.previewBodyWrap, isClient && styles.clientBodyWrap]}>
           <Text style={[styles.body, isClient && styles.clientBody]}>{note.body}</Text>
           <Text style={[styles.time, isClient && styles.clientTime]}>
             {formatNoteTime(note.createdAt)}
@@ -137,6 +137,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
     borderRadius: radius.lg,
+  },
+  previewBodyWrap: {
+    backgroundColor: color.surfaceMuted,
   },
   clientBodyWrap: {
     backgroundColor: color.accentSoft,
