@@ -58,11 +58,12 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   pressable: {
-    overflow: 'hidden',
+    width: '100%',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    minWidth: 0,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xs,
     gap: spacing.md,
@@ -83,6 +84,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   left: {
     flex: 1,
+    minWidth: 0,
     marginRight: spacing.md,
   },
   label: {
