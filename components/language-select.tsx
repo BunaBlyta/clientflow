@@ -68,7 +68,11 @@ export function LanguageSelect({
           {shortLabel ? <span className="text-[11px]">{locale.toUpperCase()}</span> : <SelectValue />}
         </SelectTrigger>
         <SelectContent className={contentClassName}>
-          {LOCALES.map((item) => <SelectItem key={item} value={item}>{LOCALE_LABELS[item]}</SelectItem>)}
+          {LOCALES.map((item) => (
+            <SelectItem className="crm-language-item [&>span:last-child]:hidden" key={item} value={item}>
+              {LOCALE_LABELS[item]}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

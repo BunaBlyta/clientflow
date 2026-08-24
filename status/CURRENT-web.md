@@ -1,8 +1,10 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-24 09:08 by Codex — remove client contact info label
+Last updated: 2026-08-24 09:10 by Codex — soften language selection styling
 
 ## Current state
+
+- Removed the checkmark from language options and softened the selected-language background in both light and dark themes so selection stays quiet rather than reading as a strong highlight.
 
 - Removed the redundant “Contact info” heading from the per-client summary card so the contact fields begin directly within the shaded strip.
 

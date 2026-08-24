@@ -1574,13 +1574,13 @@ html:not(.dark) .marketing-header [data-slot="select-trigger"],
 }
 
 html:not(.dark) .marketing-language-content [data-slot="select-item"][data-selected] {
-  background: rgb(202 244 255 / 0.32) !important;
-  color: #16404b !important;
+  background: color-mix(in oklch, var(--card) 94%, var(--foreground) 6%) !important;
+  color: var(--foreground) !important;
 }
 
 .dark .marketing-language-content [data-slot="select-item"][data-selected] {
-  background: rgb(202 244 255 / 0.14) !important;
-  color: #e9fbff !important;
+  background: color-mix(in oklch, var(--card) 94%, var(--foreground) 6%) !important;
+  color: var(--foreground) !important;
 }
 
 .marketing-header nav a:hover,
@@ -2794,11 +2794,11 @@ html:not(.dark) body:has(.crm-shell) .crm-language-content [data-slot="select-it
 }
 
 html:not(.dark) body:has(.crm-shell) .crm-language-content [data-slot="select-item"].crm-language-item[data-selected] {
-  background-color: rgb(238 238 238) !important;
+  background-color: color-mix(in oklch, var(--card) 94%, var(--foreground) 6%) !important;
 }
 
 .dark body:has(.crm-shell) .crm-language-content [data-slot="select-item"].crm-language-item[data-selected] {
-  background-color: color-mix(in oklch, var(--card) 86%, white 14%) !important;
+  background-color: color-mix(in oklch, var(--card) 94%, var(--foreground) 6%) !important;
 }
 
 body:has(.crm-shell) .notifications-menu [data-slot="dropdown-menu-item"].notification-menu-item,
