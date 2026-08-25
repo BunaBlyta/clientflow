@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../../../../components/InvoiceRow';
 import { EmptyState } from '../../../../../components/ui/EmptyState';
 import { Screen } from '../../../../../components/ui/Screen';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../../../lib/theme';
+import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../../../lib/theme';
 import { useI18n } from '../../../../../lib/i18n';
 import { useDataStore } from '../../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
@@ -98,14 +98,15 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingBottom: spacing.xl,
   },
   listGroup: {
-    gap: spacing.sm,
     marginTop: spacing.lg,
+    gap: spacing.md,
   },
   title: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
     marginBottom: spacing.md,
+    ...textShadow,
   },
   error: {
     paddingTop: spacing.md,

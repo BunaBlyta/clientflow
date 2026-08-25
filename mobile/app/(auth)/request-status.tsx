@@ -6,11 +6,12 @@ import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { getPackageById, MOCK_REQUESTS } from '../../lib/mock-data';
 import { getRequestStatusMeta } from '../../lib/status';
-import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../lib/theme';
+import { Card } from '../../components/ui/Card';
 import { useI18n } from '../../lib/i18n';
 import type { ProjectRequest } from '../../lib/types';
-import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 import { AppBackButton } from '../../components/OriginBackButton';
+import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
 
 export default function RequestStatusScreen() {
   const { color } = useTheme();
@@ -39,7 +40,7 @@ export default function RequestStatusScreen() {
         { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.lg },
       ]}
     >
-      <CyanBackdrop />
+      <AtmosphereBackground />
       <AppBackButton accessibilityLabel={t('common.back')} />
       <Text style={styles.heading}>{t('auth.checkYourRequest')}</Text>
       <Text style={styles.subheading}>
@@ -62,15 +63,15 @@ export default function RequestStatusScreen() {
       <Button label={t('auth.checkStatus')} onPress={handleCheck} disabled={!email.trim()} />
 
       {searched && !result && (
-        <View style={[styles.resultCard, styles.notFound]}>
+        <Card tone="muted" style={styles.resultCard}>
           <Text style={styles.notFoundText}>
             {t('auth.noRequestDetails')}
           </Text>
-        </View>
+        </Card>
       )}
 
       {searched && result && meta && (
-        <View style={styles.resultCard}>
+        <Card style={styles.resultCard}>
           <View style={styles.resultHeader}>
             {result.status === 'PENDING' && <Clock3 size={20} color={meta.text} />}
             {result.status === 'APPROVED' && <ShieldCheck size={20} color={meta.text} />}
@@ -86,7 +87,7 @@ export default function RequestStatusScreen() {
             {result.status === 'APPROVED' && t('auth.approvedRequest')}
             {result.status === 'REJECTED' && t('auth.rejectedRequest')}
           </Text>
-        </View>
+        </Card>
       )}
     </View>
   );
@@ -101,24 +102,22 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingTop: spacing.lg,
   },
   heading: {
-    fontFamily: fontFamily.semibold,
+    ...textShadow,
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
   },
   subheading: {
+    ...textShadow,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing.xl,
     lineHeight: 20,
   },
   resultCard: {
     marginTop: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
   },
   resultHeader: {
     flexDirection: 'row',
@@ -147,10 +146,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textSecondary,
     marginTop: spacing.md,
     lineHeight: 19,
-  },
-  notFound: {
-    backgroundColor: color.neutralBg,
-    borderColor: color.neutralBorder,
   },
   notFoundText: {
     fontFamily: fontFamily.regular,

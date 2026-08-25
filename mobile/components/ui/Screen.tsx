@@ -2,11 +2,10 @@ import type { PropsWithChildren } from 'react';
 import { ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, useTheme } from '../../lib/theme';
-import { CyanBackdrop } from './CyanBackdrop';
+import { AtmosphereBackground } from './AtmosphereBackground';
 
 interface ScreenProps extends PropsWithChildren {
   scroll?: boolean;
-  backdrop?: boolean;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: ViewStyle;
 }
@@ -14,7 +13,6 @@ interface ScreenProps extends PropsWithChildren {
 export function Screen({
   children,
   scroll = true,
-  backdrop = false,
   style,
   contentContainerStyle,
 }: ScreenProps) {
@@ -24,14 +22,14 @@ export function Screen({
   if (!scroll) {
     return (
       <SafeAreaView edges={['top']} style={[styles.container, style]}>
-        {backdrop && <CyanBackdrop />}
+        <AtmosphereBackground />
         {children}
       </SafeAreaView>
     );
   }
   return (
     <SafeAreaView edges={['top']} style={[styles.container, style]}>
-      {backdrop && <CyanBackdrop />}
+      <AtmosphereBackground />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -52,11 +50,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.canvas,
+    backgroundColor: color.background,
   },
   scroll: {
     flex: 1,
-    backgroundColor: color.canvas,
+    backgroundColor: 'transparent',
   },
   content: {
     padding: spacing.lg,

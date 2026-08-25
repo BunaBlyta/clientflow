@@ -105,10 +105,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderColor: color.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
-    backgroundColor: color.surface,
+    backgroundColor: color.accentSoft,
   },
   inputRowFocused: {
-    backgroundColor: color.surface,
+    backgroundColor: color.accentSoft,
     borderColor: color.accent,
   },
   inputRowError: {

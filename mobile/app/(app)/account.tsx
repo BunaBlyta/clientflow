@@ -29,7 +29,6 @@ export default function AccountScreen() {
   return (
     <Screen
       contentContainerStyle={{
-        flexGrow: 1,
         paddingBottom: 64 + spacing.md,
       }}
     >
@@ -386,9 +385,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     confirmLogoutButton: {
       flex: 1,
       height: 48,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.dangerBorder,
       borderRadius: radius.pill,
+      backgroundColor: color.dangerBg,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -421,7 +419,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.meta,
       color: color.textMuted,
       textAlign: 'center',
-      marginTop: 'auto',
+      marginTop: spacing.xl,
     },
   });
 }

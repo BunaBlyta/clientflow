@@ -36,6 +36,12 @@ Last updated: 2026-08-25 16:19 by Codex — final Meridian interaction polish
 - Changed the primary Logout action to a filled semantic-red button with a light icon and label.
 - Softened the Logout fill to the theme’s pastel danger background while retaining red text and icon.
 - Anchored the Account version footer to the bottom of the available screen space.
+- Added an explicit flexible spacer so the version line remains pinned just above the bottom navigation on short Account pages.
+- Filled the confirmation-state Logout action with the same pastel danger background as the primary action.
+- Replaced the login brand image with a Lucide Layers3 icon inside the existing brand mark.
+- Centered the Lucide brand icon within its background mark.
+- Removed the secondary Check a project request action from the login screen.
+- Changed shared textboxes to use the app’s light sage-green surface.
 
 ## Verification
 

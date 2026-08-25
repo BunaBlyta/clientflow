@@ -1,0 +1,270 @@
+<!doctype html>
+<html>
+<head>
+  <title>Meridian Client Portal — Project Detail — Light</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    :root{
+      --bg:#F5F6F3; --surface:#FFFFFF; --surface-sage:#ECF0EA; --border:#DCE3DB;
+      --text:#182524; --text-2:#58655F; --text-3:#93A19A;
+      --accent:#1D6F5B; --accent-tint:#DCEEE6;
+      --neutral-tint:#E9ECE7; --neutral-text:#5B665F;
+      --danger:#9C3F35; --danger-tint:#F3E0DC;
+      --radius-md:14px; --radius-lg:18px;
+      --font-serif:'Lora',Georgia,serif;
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;}
+    body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+    a{color:var(--accent);text-decoration:none;}
+    .screen{width:390px;height:844px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+    .content{flex:1 1 auto;overflow-y:auto;padding:54px 20px 20px;display:flex;flex-direction:column;gap:22px;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .h1{font-size:24px;font-family:var(--font-serif);font-weight:600;margin:0;color:var(--text);}
+    .row-sub{font-size:12.5px;color:var(--text-2);margin-top:2px;}
+    .back-chip{width:38px;height:38px;border-radius:12px;background:var(--neutral-tint);display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;}
+    .section-title{font-size:16px;font-family:var(--font-serif);font-weight:600;margin:0;color:var(--text);}
+    .pill{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;font-size:10.5px;font-weight:800;white-space:nowrap;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;}
+    .pill-neutral{background:var(--neutral-tint);color:var(--neutral-text);}
+    .pill-accent{background:var(--accent);color:#ffffff;}
+    .pill-danger{background:var(--danger-tint);color:var(--danger);}
+    .phase-mini{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}
+    .phase-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+    .phase-dot.done{background:var(--accent);color:#ffffff;}
+    .phase-dot.current{background:var(--surface);border:2px solid var(--accent);color:var(--accent);}
+    .phase-dot.upcoming{background:var(--neutral-tint);color:var(--text-3);}
+    .phase-label{font-size:9.5px;font-weight:700;color:var(--text-3);text-align:center;}
+    .phase-label.current{color:var(--text);}
+    .row-title{font-size:14px;font-weight:600;color:var(--text);}
+    .amount{font-size:18px;font-family:var(--font-serif);font-weight:600;color:var(--text);}
+    .stat-sub{font-size:11.5px;color:var(--text-3);}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 18px;border-radius:12px;font-size:13.5px;font-weight:700;border:none;cursor:pointer;flex-shrink:0;}
+    .btn-primary{background:var(--accent);color:#ffffff;}
+    .btn-ghost{background:transparent;color:var(--text-2);border:1px solid var(--border);}
+    .inset-row{position:relative;background:var(--surface-sage);border-radius:12px;padding:14px 16px 14px 20px;display:flex;flex-direction:column;gap:12px;}
+    .inset-row::before{content:'';position:absolute;left:8px;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--accent);}
+    .bubble-row{display:flex;gap:10px;}
+    .bubble-row.mine{justify-content:flex-end;}
+    .bubble-avatar{width:28px;height:28px;border-radius:50%;background:var(--neutral-tint);color:var(--text-2);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex-shrink:0;}
+    .bubble{max-width:210px;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.4;}
+    .bubble.theirs{background:var(--surface-sage);color:var(--text);border-bottom-left-radius:4px;}
+    .bubble.mine{background:var(--accent);color:#ffffff;border-bottom-right-radius:4px;}
+    .bubble-time{font-size:10.5px;color:var(--text-3);margin-top:4px;}
+    .chat-input{display:flex;align-items:center;gap:8px;margin-top:2px;}
+    .chat-input-field{flex:1;height:42px;border-radius:999px;background:var(--neutral-tint);padding:0 16px;display:flex;align-items:center;font-size:12.5px;color:var(--text-3);}
+    .send-btn{width:42px;height:42px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#ffffff;flex-shrink:0;}
+    .tabbar{display:grid;grid-template-columns:repeat(5,1fr);align-items:center;background:var(--surface);border-top:1px solid var(--border);padding:10px 6px 22px;flex-shrink:0;}
+    .tab-item{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text-3);}
+    .tab-chip{width:44px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+    .tab-item.active{color:var(--accent);}
+    .tab-item.active .tab-chip{background:var(--accent-tint);}
+    .tab-item.active .tab-label{color:var(--text);}
+    .tab-label{font-size:9px;font-weight:700;white-space:nowrap;letter-spacing:-0.01em;color:var(--text-3);}
+    body{display:flex;align-items:flex-start;justify-content:center;padding:32px;background:#e9e4da;}
+  </style>
+</head>
+<body>
+  <div class="screen">
+  <div class="content">
+
+    <div class="topbar">
+      <div class="back-chip">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div class="h1" style="font-size:17px;">Website Redesign</div>
+        <div class="row-sub" style="margin-top:0;">Meridian Consulting</div>
+      </div>
+      <div style="width:38px;flex-shrink:0;"></div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:18px;align-items:center;">
+      <div class="section-head" style="width:100%;">
+        <div class="section-title">Project overview</div>
+        <span class="pill pill-neutral">In Progress</span>
+      </div>
+
+      <div style="position:relative;width:136px;height:136px;">
+        <svg width="136" height="136" viewBox="0 0 120 120" style="transform:rotate(-90deg);">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent)" stroke-width="10" pathLength="100" stroke-dasharray="18 82" stroke-dashoffset="0"></circle>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent)" stroke-width="10" pathLength="100" stroke-dasharray="18 82" stroke-dashoffset="-20"></circle>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent)" stroke-width="10" pathLength="100" stroke-dasharray="18 82" stroke-dashoffset="-40"></circle>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="10" pathLength="100" stroke-dasharray="18 82" stroke-dashoffset="-60"></circle>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="10" pathLength="100" stroke-dasharray="18 82" stroke-dashoffset="-80"></circle>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="font-size:30px;font-family:var(--font-serif);font-weight:600;color:var(--text);line-height:1;">3<span style="font-size:15px;color:var(--text-3);font-weight:600;"> / 5</span></div>
+          <div style="font-size:9.5px;color:var(--text-2);font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:6px;text-align:center;">Phases</div>
+          <div style="font-size:9.5px;color:var(--text-2);font-weight:700;text-transform:uppercase;letter-spacing:.03em;text-align:center;">active</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;width:100%;">
+        <div class="phase-mini">
+          <div class="phase-dot done">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
+          </div>
+          <div class="phase-label">Discovery</div>
+        </div>
+        <div class="phase-mini">
+          <div class="phase-dot done">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 10-10-3-3L5 16l-1 4Z"/><path d="M14 6l3 3"/></svg>
+          </div>
+          <div class="phase-label">Design</div>
+        </div>
+        <div class="phase-mini">
+          <div class="phase-dot current">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7 4 12l4.5 5"/><path d="M15.5 7 20 12l-4.5 5"/></svg>
+          </div>
+          <div class="phase-label current">Development</div>
+        </div>
+        <div class="phase-mini">
+          <div class="phase-dot upcoming">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12.2l2 2 4-4.2"/></svg>
+          </div>
+          <div class="phase-label">Review</div>
+        </div>
+        <div class="phase-mini">
+          <div class="phase-dot upcoming">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c3 2 5 6 5 10 0 2-1 4-2 5l-3 3-3-3c-1-1-2-3-2-5 0-4 2-8 5-10Z"/><path d="M9 15l-3 1 1-3"/><path d="M15 15l3 1-1-3"/><circle cx="12" cy="10" r="1.5"/></svg>
+          </div>
+          <div class="phase-label">Launch</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding-top:14px;border-top:1px solid var(--border);">
+        <span style="font-size:12px;color:var(--text-2);font-weight:600;">Started Jun 2, 2026</span>
+        <span style="font-size:12px;color:var(--text-3);">Est. launch Sep 20, 2026</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="section-title">Notes</div>
+      <div class="card" style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="bubble-row">
+          <div class="bubble-avatar">MC</div>
+          <div>
+            <div class="bubble theirs">Just kicked off development &mdash; starting with the homepage template.</div>
+            <div class="bubble-time">Maya Chen &middot; Aug 23, 2:10 PM</div>
+          </div>
+        </div>
+
+        <div class="bubble-row mine">
+          <div>
+            <div class="bubble mine">Sounds good! Let me know if you need anything from our side.</div>
+            <div class="bubble-time" style="text-align:right;">Aug 23, 4:45 PM</div>
+          </div>
+        </div>
+
+        <div class="bubble-row">
+          <div class="bubble-avatar">MC</div>
+          <div>
+            <div class="bubble theirs">Just pushed the staging link over &mdash; take a look when you can.</div>
+            <div class="bubble-time">Maya Chen &middot; Today, 11:40 AM</div>
+          </div>
+        </div>
+
+        <div class="chat-input">
+          <div class="chat-input-field">Write a note to Maya&hellip;</div>
+          <div class="send-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="section-title">Invoices</div>
+
+      <div class="inset-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div>
+            <div class="row-title">Invoice #1045</div>
+          </div>
+          <span class="pill pill-danger">Overdue</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="amount">$650.00</div>
+            <div class="stat-sub" style="margin-top:2px;">Due Aug 20, 2026</div>
+          </div>
+          <button class="btn btn-primary">Pay now</button>
+        </div>
+      </div>
+
+      <div class="inset-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div>
+            <div class="row-title">Invoice #1042</div>
+          </div>
+          <span class="pill pill-neutral">Due</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="amount">$1,850.00</div>
+            <div class="stat-sub" style="margin-top:2px;">Due Aug 30, 2026</div>
+          </div>
+          <button class="btn btn-primary">Pay now</button>
+        </div>
+      </div>
+
+      <div class="inset-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div>
+            <div class="row-title">Invoice #1038</div>
+          </div>
+          <span class="pill pill-accent">Paid</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="amount">$2,400.00</div>
+            <div class="stat-sub" style="margin-top:2px;">Paid Aug 2, 2026</div>
+          </div>
+          <button class="btn btn-ghost">View</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="tabbar">
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20a1 1 0 0 0 1 1H10v-5.5a2 2 0 0 1 2-2 2 2 0 0 1 2 2V21h3.5a1 1 0 0 0 1-1V9.5"/></svg>
+      </div>
+      <span class="tab-label">Home</span>
+    </div>
+    <div class="tab-item active">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>
+      </div>
+      <span class="tab-label">Projects</span>
+    </div>
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-2 2-2-2-2 2-3-2Z"/><path d="M9 8h6M9 12h6"/></svg>
+      </div>
+      <span class="tab-label">Invoices</span>
+    </div>
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg>
+      </div>
+      <span class="tab-label">Notifications</span>
+    </div>
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.25"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      </div>
+      <span class="tab-label">Account</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -47,7 +47,7 @@ export function Sidebar({
           )}
           aria-label="Clientflow overview"
         >
-          <BrandLogo />
+          <BrandLogo variant="crm" />
           <span className={cn("truncate transition-opacity duration-150", collapsed && "sr-only")}>
             Clientflow
           </span>

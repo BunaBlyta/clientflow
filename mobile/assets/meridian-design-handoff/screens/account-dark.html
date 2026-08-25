@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <title>Meridian Client Portal — Account — Dark</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    :root{
+      --bg:#12181A; --surface:#1A2224; --border:#2A3436;
+      --text:#EDF2F0; --text-2:#9FB0AB; --text-3:#6C7C77;
+      --accent:#2FBF9F; --accent-tint:#1B332D;
+      --neutral-tint:#212B2C;
+      --danger:#E28277; --danger-tint:#3A211D;
+      --radius-lg:18px;
+      --font-serif:'Lora',Georgia,serif;
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;}
+    body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+    a{color:var(--accent);text-decoration:none;}
+    .screen{width:390px;height:844px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+    .content{flex:1 1 auto;overflow-y:auto;padding:54px 20px 20px;display:flex;flex-direction:column;gap:20px;}
+    .h1{font-size:24px;font-family:var(--font-serif);font-weight:600;margin:0;color:var(--text);}
+    .avatar-lg{width:72px;height:72px;border-radius:50%;background:var(--accent-tint);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;flex-shrink:0;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+    .name{font-size:19px;font-family:var(--font-serif);font-weight:600;color:var(--text);}
+    .row-sub{font-size:13px;color:var(--text-2);}
+    .group-label{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px 2px;}
+    .icon-chip{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .list-row{display:flex;align-items:center;gap:12px;padding:14px 6px;border-bottom:1px solid var(--border);}
+    .list-row:last-child{border-bottom:none;}
+    .row-title{font-size:14px;font-weight:600;flex:1;color:var(--text);}
+    .tabbar{display:grid;grid-template-columns:repeat(5,1fr);align-items:center;background:var(--surface);border-top:1px solid var(--border);padding:10px 6px 22px;flex-shrink:0;}
+    .tab-item{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text-3);}
+    .tab-chip{width:44px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+    .tab-item.active{color:var(--accent);}
+    .tab-item.active .tab-chip{background:var(--accent-tint);}
+    .tab-item.active .tab-label{color:var(--text);}
+    .tab-label{font-size:9px;font-weight:700;white-space:nowrap;letter-spacing:-0.01em;color:var(--text-3);}
+    body{display:flex;align-items:flex-start;justify-content:center;padding:32px;background:#e9e4da;}
+  </style>
+</head>
+<body>
+  <div class="screen">
+  <div class="content">
+
+    <h1 class="h1">Account</h1>
+
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:28px 20px;">
+      <div class="avatar-lg" style="margin-bottom:6px;">JE</div>
+      <div class="name">Jordan Ellis</div>
+      <div class="row-sub">jordan@meridianconsulting.com</div>
+      <div class="row-sub" style="color:var(--text-3);font-size:12px;margin-top:4px;">Client since Jun 2026</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="group-label">Settings</div>
+      <div class="card" style="padding:4px 14px;">
+        <div class="list-row">
+          <div class="icon-chip" style="background:var(--neutral-tint);color:var(--text-2);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10.5h18"/><path d="M7 14.5h4"/></svg>
+          </div>
+          <div class="row-title">Payment methods</div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+        <div class="list-row">
+          <div class="icon-chip" style="background:var(--neutral-tint);color:var(--text-2);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg>
+          </div>
+          <div class="row-title">Notification settings</div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+        <div class="list-row">
+          <div class="icon-chip" style="background:var(--neutral-tint);color:var(--text-2);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 2.6c-.9.5-1.1 1-1.1 1.8"/><path d="M12 17h.01"/></svg>
+          </div>
+          <div class="row-title">Help &amp; Support</div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+        <div class="list-row">
+          <div class="icon-chip" style="background:var(--neutral-tint);color:var(--text-2);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
+          </div>
+          <div class="row-title">Language</div>
+          <span style="font-size:12.5px;color:var(--text-3);font-weight:600;margin-right:4px;">English</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:4px 14px;">
+      <div class="list-row">
+        <div class="icon-chip" style="background:var(--danger-tint);color:var(--danger);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9.5"/></svg>
+        </div>
+        <div class="row-title" style="color:var(--danger);font-weight:700;">Log out</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tabbar">
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20a1 1 0 0 0 1 1H10v-5.5a2 2 0 0 1 2-2 2 2 0 0 1 2 2V21h3.5a1 1 0 0 0 1-1V9.5"/></svg>
+      </div>
+      <span class="tab-label">Home</span>
+    </div>
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>
+      </div>
+      <span class="tab-label">Projects</span>
+    </div>
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-2 2-2-2-2 2-3-2Z"/><path d="M9 8h6M9 12h6"/></svg>
+      </div>
+      <span class="tab-label">Invoices</span>
+    </div>
+    <div class="tab-item">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg>
+      </div>
+      <span class="tab-label">Notifications</span>
+    </div>
+    <div class="tab-item active">
+      <div class="tab-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.25"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      </div>
+      <span class="tab-label">Account</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

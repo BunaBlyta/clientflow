@@ -1,6 +1,15 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-24 09:10 by Codex — soften language selection styling
+Last updated: 2026-08-25 16:59 by Codex — lighten dark Most Popular package accents
+
+## Current task
+
+- Updated only the landing page’s dark-mode Most Popular package treatment: its circular stamp, price number, radial gradient, and matching shadow now use the light cyan `#CAF4FF` instead of the deeper blue accent.
+
+## Verification
+
+- `git diff --check`: passed.
+- `npm run verify`: blocked at the existing web-lane ESLint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`; the changed `app/globals.css` is not implicated. Existing `mobile-app-section.tsx` image warnings remain.
 
 ## Current state
 

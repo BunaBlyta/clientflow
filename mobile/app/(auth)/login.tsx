@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CheckCircle2, ChevronRight } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight, Layers3 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  Image,
   StyleSheet,
   Text,
   View,
@@ -14,15 +14,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { MOCK_CLIENT } from '../../lib/mock-data';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
-import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
+import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
 
 export default function LoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ banner?: string }>();
-  const { color } = useTheme();
+  const { color, mode } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
   const insets = useSafeAreaInsets();
@@ -56,9 +56,15 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.container, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}>
-        <CyanBackdrop />
+        <AtmosphereBackground />
         <View style={styles.brandRow}>
-          <Image source={require('../../assets/icon.png')} style={styles.logoMark} />
+          <View style={styles.logoMark}>
+            {mode === 'light' ? (
+              <Image source={require('../../assets/clientflow-logo-green.png')} style={styles.logoImage} />
+            ) : (
+              <Layers3 size={19} color={color.accentText} strokeWidth={1.8} />
+            )}
+          </View>
           <Text style={styles.brand}>Clientflow</Text>
         </View>
 
@@ -114,15 +120,6 @@ export default function LoginScreen() {
           <Text style={styles.inviteLinkText}>{t('auth.inviteCode')}</Text>
           <ChevronRight size={16} color={color.accent} />
         </Pressable>
-
-        <Pressable
-          onPress={() => router.push('/(auth)/request-status')}
-          style={styles.statusLink}
-        >
-          <Text style={styles.statusLinkText}>
-            {t('auth.checkRequest')}
-          </Text>
-        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -147,23 +144,33 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     height: 32,
     borderRadius: radius.sm,
     overflow: 'hidden',
-    backgroundColor: color.accentSoft,
+    backgroundColor: color.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
   },
   brand: {
-    fontFamily: fontFamily.semibold,
+    fontFamily: fontFamily.serif,
     fontSize: fontSize.sectionTitle,
     color: color.textPrimary,
+    ...textShadow,
   },
   heading: {
-    fontFamily: fontFamily.semibold,
+    ...textShadow,
+    fontFamily: fontFamily.serif,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
   },
   subheading: {
+    ...textShadow,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
   banner: {
@@ -200,7 +207,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   forgotLinkText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    color: color.accent,
+    color: color.accentText,
   },
   demoHint: {
     fontFamily: fontFamily.regular,
@@ -220,19 +227,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   inviteLinkText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    color: color.accent,
+    color: color.accentText,
   },
   pressed: {
     opacity: 0.7,
-  },
-  statusLink: {
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  statusLinkText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accent,
   },
   });
 }

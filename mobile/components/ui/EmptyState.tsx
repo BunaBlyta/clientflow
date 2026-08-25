@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
-import { fontFamily, fontSize, spacing, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -13,7 +13,9 @@ export function EmptyState({ icon: Icon, title, subtitle }: EmptyStateProps) {
   const styles = createStyles(color);
   return (
     <View style={styles.container}>
-      <Icon size={28} color={color.textMuted} strokeWidth={1.5} />
+      <View style={styles.iconWrap}>
+        <Icon size={26} color={color.accentText} strokeWidth={1.6} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
@@ -28,6 +30,15 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingVertical: spacing.xxl,
     paddingHorizontal: spacing.xl,
     gap: spacing.sm,
+  },
+  iconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: radius.pill,
+    backgroundColor: color.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
   },
   title: {
     fontFamily: fontFamily.medium,

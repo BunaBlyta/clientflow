@@ -2,6 +2,7 @@ import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
+  Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
 import { Stack } from 'expo-router';
@@ -11,7 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/auth-store';
 import { I18nProvider } from '../lib/i18n';
-import { ThemeProvider, useTheme } from '../lib/theme';
+import { ThemeProvider } from '../lib/theme';
 import { NotificationCoordinator } from '../lib/notification-coordinator';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -21,6 +22,7 @@ export default function RootLayout() {
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
+    Inter_700Bold,
   });
   const restoreSession = useAuthStore((s) => s.restoreSession);
   const isRestoring = useAuthStore((s) => s.isRestoring);
@@ -43,18 +45,13 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <I18nProvider>
-          <ThemedStatusBar />
+          <StatusBar style="dark" />
           <NotificationCoordinator />
           <RootNavigator />
         </I18nProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
-}
-
-function ThemedStatusBar() {
-  const { resolvedMode } = useTheme();
-  return <StatusBar style={resolvedMode === 'dark' ? 'light' : 'dark'} />;
 }
 
 function RootNavigator() {

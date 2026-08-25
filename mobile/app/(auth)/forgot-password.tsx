@@ -6,10 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { ApiError, verificationSendRequest } from '../../lib/api';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
-import { CyanBackdrop } from '../../components/ui/CyanBackdrop';
 import { AppBackButton } from '../../components/OriginBackButton';
+import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function ForgotPasswordScreen() {
         { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.lg },
       ]}
     >
-      <CyanBackdrop />
+      <AtmosphereBackground />
       <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.iconWrap}>
         <Send size={20} color={color.accent} />
@@ -96,15 +96,17 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginBottom: spacing.lg,
   },
   heading: {
-    fontFamily: fontFamily.semibold,
+    ...textShadow,
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
   },
   subheading: {
+    ...textShadow,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing.xl,
     lineHeight: 20,
   },

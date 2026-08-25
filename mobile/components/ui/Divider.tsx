@@ -1,14 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme } from '../../lib/theme';
 
 export function Divider() {
-  useTheme();
-  return <View style={styles.divider} />;
+  const { color } = useTheme();
+  return <View style={{ height: 1, backgroundColor: color.border }} />;
 }
-
-const styles = StyleSheet.create({
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'transparent',
-  },
-});
