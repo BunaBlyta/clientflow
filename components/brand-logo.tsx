@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function BrandLogo() {
   return (
-    <span className="relative size-7 shrink-0 overflow-hidden" aria-hidden="true">
+    <span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-sidebar" aria-hidden="true">
       <Image
         src="/light-logo.png"
         alt=""
