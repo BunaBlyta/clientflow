@@ -61,20 +61,21 @@ export function Button({
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   base: {
-    height: 50,
+    height: 52,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    overflow: 'hidden',
+    paddingHorizontal: spacing.xl,
   },
   primary: {
     backgroundColor: color.accent,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   secondary: {
-    backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
+    backgroundColor: color.surfaceMuted,
+    borderWidth: 1,
+    borderColor: color.glassBorder,
   },
   ghost: {
     backgroundColor: 'transparent',

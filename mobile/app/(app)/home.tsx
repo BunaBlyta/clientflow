@@ -4,14 +4,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect } from 'react';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
-import { formatCurrency } from '../../lib/format';
+import { formatCurrency, formatDate } from '../../lib/format';
 import { getInvoiceStatusMeta, getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
-import { SurfaceGradient } from '../../components/ui/SurfaceGradient';
+import { Card } from '../../components/ui/Card';
 import { useProjectTabNavigation } from '../../lib/project-tab-navigation';
 
 export default function HomeScreen() {
@@ -75,10 +75,10 @@ export default function HomeScreen() {
         <EmptyState icon={FolderKanban} title={t('projects.emptyTitle')} subtitle={t('projects.emptySubtitle')} />
       ) : (
         <>
-          <View style={styles.statusSection}>
+          <Card tone="glow" style={styles.statusSection}>
             <View style={styles.statusHeader}>
               <View style={styles.statusCopy}>
-                <Text style={styles.heroKicker}>{t('projects.status')}</Text>
+                <Text style={styles.heroKicker}>{client?.companyName ?? t('projects.status')}</Text>
                 <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
               </View>
               <Pressable
@@ -91,6 +91,10 @@ export default function HomeScreen() {
                 <ArrowUpRight size={17} color={color.textMuted} />
               </Pressable>
             </View>
+            <View style={styles.phaseRow}>
+              <Text style={styles.phaseText}>{getProjectStatusLabel(project.status, t)} phase</Text>
+              <Text style={styles.phaseText}>{Math.round(Math.max(8, ((PROJECT_STAGES.indexOf(project.status) + 1) / PROJECT_STAGES.length) * 100))}%</Text>
+            </View>
             <View style={styles.progressTrack}>
               <View
                 style={[
@@ -102,59 +106,70 @@ export default function HomeScreen() {
                 ]}
               />
             </View>
-          </View>
+            <View style={styles.dateRow}>
+              <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
+              <Text style={styles.dateText}>{project.targetLaunchDate ? `Est. launch ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}</Text>
+            </View>
+            <Pressable onPress={() => projectNavigation.openProject(project.id, 'home')} style={styles.detailsRow}>
+              <Text style={styles.detailsText}>View details</Text>
+              <ArrowUpRight size={18} color={color.accent} />
+            </Pressable>
+          </Card>
 
-          <SurfaceGradient
-            colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
-            style={styles.statsRow}
-          >
+          <View style={styles.statsRow}>
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{formatCurrency(paidTotal)}</Text>
+              <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+                {formatCurrency(paidTotal)}
+              </Text>
               <Text style={styles.statLabel}>{t('projects.paidToDate')}</Text>
             </View>
-            <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={[styles.statValue, outstandingTotal > 0 && styles.statValueWarning]}>
+              <Text
+                style={[styles.statValue, outstandingTotal > 0 && styles.statValueWarning]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {formatCurrency(outstandingTotal)}
               </Text>
               <Text style={styles.statLabel}>{t('projects.outstanding')}</Text>
             </View>
-          </SurfaceGradient>
+          </View>
 
-          {nextAction && (
-            <View style={styles.actionSection}>
-              <Text style={styles.sectionLabel}>{t('home.nextAction')}</Text>
-              <Pressable
-                onPress={nextAction.onPress}
-                style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
-              >
-                <View style={styles.actionIcon}>
-                  <nextAction.icon size={18} color={color.accentText} />
-                </View>
-                <View style={styles.actionCopy}>
-                  <Text style={styles.actionLabel}>{nextAction.label}</Text>
+          <View style={styles.bentoRow}>
+            {nextAction && (
+              <Card tone="accent" style={styles.actionCard} padding={14}>
+                <Pressable
+                  onPress={nextAction.onPress}
+                  style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
+                >
+                  <View style={styles.actionIcon}>
+                    <nextAction.icon size={18} color={color.accentText} />
+                  </View>
+                  <Text style={styles.actionLabel} numberOfLines={1}>{nextAction.label}</Text>
                   <Text style={styles.actionDetail} numberOfLines={1}>{nextAction.detail}</Text>
-                </View>
-                <ArrowUpRight size={17} color={color.textMuted} />
-              </Pressable>
-            </View>
-          )}
+                  <View style={styles.actionArrow}>
+                    <ArrowUpRight size={15} color={color.accentText} />
+                  </View>
+                </Pressable>
+              </Card>
+            )}
 
-          <View style={styles.summarySection}>
-            <View style={styles.summaryHeading}>
-              <Text style={styles.sectionLabel}>{t('projects.invoices')}</Text>
-              <Pressable onPress={() => router.push('/invoices')} style={({ pressed }) => pressed && styles.pressed}>
-                <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
-              </Pressable>
-            </View>
-            <View style={styles.summaryLine}>
-              <Text style={styles.summaryText}>{t('projects.invoiceCount', { count: invoices.length })}</Text>
-              {invoices[0] && (
-                <Text style={[styles.summaryStatus, { color: getInvoiceStatusMeta(invoices[0].status, color, t).text }]}>
-                  {getInvoiceStatusMeta(invoices[0].status, color, t).label}
+            <Card tone="dark" style={styles.summaryCard} padding={14}>
+              <Pressable
+                onPress={() => router.push('/invoices')}
+                style={({ pressed }) => [styles.summaryPressable, pressed && styles.pressed]}
+              >
+                <Text style={styles.sectionLabel}>{t('projects.invoices')}</Text>
+                <Text style={styles.summaryText} numberOfLines={1} adjustsFontSizeToFit>
+                  {t('projects.invoiceCount', { count: invoices.length })}
                 </Text>
-              )}
-            </View>
+                {invoices[0] && (
+                  <Text style={[styles.summaryStatus, { color: getInvoiceStatusMeta(invoices[0].status, color, t).text }]}>
+                    {getInvoiceStatusMeta(invoices[0].status, color, t).label}
+                  </Text>
+                )}
+              </Pressable>
+            </Card>
           </View>
         </>
       )}
@@ -164,39 +179,43 @@ export default function HomeScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
+    headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.lg },
     headingCopy: { flex: 1 },
-    greeting: { fontFamily: fontFamily.semibold, fontSize: 28, color: color.textPrimary },
-    subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.xs },
-    avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md },
+    greeting: { fontFamily: fontFamily.regular, fontSize: fontSize.sectionTitle, color: color.textSecondary, ...textShadow },
+    subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.sm, ...textShadow },
+    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md },
     avatarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accentText },
     statusSection: { marginTop: spacing.xxl },
     statusHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
     statusCopy: { flex: 1 },
-    heroKicker: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.accentText, textTransform: 'uppercase', letterSpacing: 0.8 },
-    projectName: { fontFamily: fontFamily.semibold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm },
-    statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingBottom: 2 },
-    statusValue: { fontFamily: fontFamily.medium, fontSize: fontSize.caption },
-    progressTrack: { height: spacing.xs, borderRadius: spacing.xs / 2, backgroundColor: color.surfaceMuted, marginTop: spacing.lg, overflow: 'hidden' },
+    heroKicker: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.textPrimary },
+    projectName: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textSecondary, marginTop: spacing.xs },
+    statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: color.surfaceMuted },
+    statusValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
+    phaseRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl },
+    phaseText: { fontFamily: fontFamily.medium, fontSize: fontSize.body, color: color.textSecondary },
+    progressTrack: { height: spacing.md, borderRadius: spacing.md / 2, backgroundColor: color.surfaceMuted, marginTop: spacing.sm, overflow: 'hidden' },
     progressFill: { height: '100%', borderRadius: spacing.xs / 2 },
-    statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderRadius: 16 },
-    stat: { flex: 1 },
-    statDivider: { width: spacing.xs, height: spacing.xs, borderRadius: spacing.xs / 2, backgroundColor: color.surfaceMuted },
-    statValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
+    dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.xl, paddingTop: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border },
+    dateText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted },
+    detailsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs, marginTop: spacing.lg },
+    detailsText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
+    statsRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.lg, marginTop: spacing.lg },
+    stat: { flex: 1, padding: spacing.lg, minHeight: 128, borderRadius: radius.lg, backgroundColor: color.surfaceMuted },
+    statValue: { fontFamily: fontFamily.bold, fontSize: fontSize.heading, color: color.textPrimary },
     statValueWarning: { color: color.warning },
-    statLabel: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textMuted, marginTop: spacing.xs },
-    actionSection: { marginTop: spacing.xxl },
-    sectionLabel: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
-    actionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
-    actionIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
-    actionCopy: { flex: 1 },
-    actionLabel: { fontFamily: fontFamily.medium, fontSize: fontSize.body, color: color.textPrimary },
-    actionDetail: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: 2 },
-    summarySection: { marginTop: spacing.xxl, paddingTop: spacing.lg },
-    summaryHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    viewAll: { fontFamily: fontFamily.medium, fontSize: fontSize.caption, color: color.accentText },
-    summaryLine: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
-    summaryText: { flex: 1, fontFamily: fontFamily.medium, fontSize: fontSize.body, color: color.textPrimary },
+    statLabel: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textSecondary, marginTop: spacing.sm },
+    bentoRow: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xl },
+    sectionLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textMuted, textTransform: 'uppercase', letterSpacing: 1.4 },
+    actionCard: { flex: 1 },
+    actionRow: { flex: 1, gap: spacing.sm },
+    actionIcon: { width: 34, height: 34, borderRadius: radius.md, backgroundColor: color.surface, alignItems: 'center', justifyContent: 'center' },
+    actionArrow: { position: 'absolute', top: 0, right: 0, width: 26, height: 26, borderRadius: radius.pill, backgroundColor: color.surface, alignItems: 'center', justifyContent: 'center' },
+    actionLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.textPrimary, marginTop: spacing.sm },
+    actionDetail: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.accentText },
+    summaryCard: { flex: 1 },
+    summaryPressable: { flex: 1, gap: spacing.sm, justifyContent: 'space-between' },
+    summaryText: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary },
     summaryStatus: { fontFamily: fontFamily.medium, fontSize: fontSize.meta },
     pressed: { opacity: 0.62 },
   });

@@ -100,12 +100,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 50,
-    borderWidth: StyleSheet.hairlineWidth,
+    height: 52,
+    borderWidth: 1,
     borderColor: color.border,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    backgroundColor: color.surfaceMuted,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: color.surface,
   },
   inputRowFocused: {
     backgroundColor: color.surface,

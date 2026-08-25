@@ -1,9 +1,5 @@
-import * as SecureStore from 'expo-secure-store';
-import { createContext, createElement, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
-import { Platform, useColorScheme } from 'react-native';
-
-export type ThemeMode = 'system' | 'light' | 'dark';
-export type ResolvedTheme = 'light' | 'dark';
+import { createContext, createElement, PropsWithChildren, useContext, useMemo } from 'react';
+import { Platform } from 'react-native';
 
 export interface ThemeColors {
   background: string;
@@ -35,155 +31,113 @@ export interface ThemeColors {
   neutralBg: string;
   neutralBorder: string;
   shadow: string;
+  navBackground: string;
+  navActive: string;
+  navInactive: string;
+  navActiveBg: string;
+  glassBorder: string;
+  glassBorderStrong: string;
+  glowStart: string;
+  glowEnd: string;
+  darkGlass: string;
+  darkGlassBorder: string;
+  violet: string;
+  violetSoft: string;
+  violetText: string;
 }
 
-export const lightColors: ThemeColors = {
-  background: '#FFFFFF',
-  canvas: '#EAEAEA',
+// The vertical atmosphere the whole app sits on: the brand sky blue at the
+// top, through a midnight navy, down to near-black at the floor. Rendered
+// by AtmosphereBackground behind every screen; card tones below are picked
+// to hold their own contrast regardless of where they land on that
+// gradient.
+export const backgroundGradientStops: readonly [offset: string, color: string][] = [
+  ['0%', '#F5F6F3'],
+  ['100%', '#F5F6F3'],
+];
+
+export const colors: ThemeColors = {
+  background: '#F5F6F3',
+  canvas: '#F5F6F3',
   surface: '#FFFFFF',
-  surfaceMuted: '#F3F3F3',
-  surfaceGradientStart: '#FFFFFF',
-  surfaceGradientEnd: '#F7F7F7',
-  accent: '#171717',
-  accentPressed: '#3D3D3D',
-  accentSoft: '#EDEDED',
-  accentText: '#242424',
-  textPrimary: '#0F0F0F',
-  textSecondary: '#4B4B4B',
-  textMuted: '#737373',
+  surfaceMuted: '#E9EDE8',
+  surfaceGradientStart: '#E9EDE8',
+  surfaceGradientEnd: '#E9EDE8',
+  accent: '#1D7A68',
+  accentPressed: '#155F53',
+  accentSoft: '#DCEFE9',
+  accentText: '#1D7162',
+  textPrimary: '#122027',
+  textSecondary: '#52615D',
+  textMuted: '#98A39F',
   textOnAccent: '#FFFFFF',
-  border: '#D2D2D2',
-  borderStrong: '#BDBDBD',
-  success: '#15803D',
-  successBg: '#E7F6EC',
-  successBorder: '#BEE6C9',
-  warning: '#B45309',
-  warningBg: '#FEF3C7',
-  warningBorder: '#FBE1A3',
-  danger: '#C0362C',
-  dangerBg: '#FCEAE8',
-  dangerBorder: '#F3C3BE',
-  neutral: '#596A79',
-  neutralBg: '#F3F6F8',
-  neutralBorder: '#DDE6EC',
-  shadow: '#0B1117',
+  border: '#DCE2DD',
+  borderStrong: '#C9D3CD',
+  success: '#1D7A68',
+  successBg: '#DCEFE9',
+  successBorder: '#C6E3D9',
+  warning: '#A87920',
+  warningBg: '#F4EBD8',
+  warningBorder: '#E8D9B5',
+  danger: '#A64C43',
+  dangerBg: '#F7DEDA',
+  dangerBorder: '#EBC7C1',
+  neutral: '#71807B',
+  neutralBg: '#E9EDE8',
+  neutralBorder: '#D9E0DB',
+  shadow: '#6A756F',
+  navBackground: '#FFFFFF',
+  navActive: '#1D7A68',
+  navInactive: '#98A39F',
+  navActiveBg: '#DCEFE9',
+  glassBorder: '#DCE2DD',
+  glassBorderStrong: '#C9D3CD',
+  glowStart: '#FFFFFF',
+  glowEnd: '#FFFFFF',
+  darkGlass: '#E9EDE8',
+  darkGlassBorder: '#DCE2DD',
+  violet: '#A87920',
+  violetSoft: '#F4EBD8',
+  violetText: '#85671E',
 };
 
-export const darkColors: ThemeColors = {
-  background: '#0B0B0B',
-  canvas: '#0B0B0B',
-  surface: '#121212',
-  surfaceMuted: '#1A1A1A',
-  surfaceGradientStart: '#1A1A1A',
-  surfaceGradientEnd: '#111111',
-  accent: '#F4F4F4',
-  accentPressed: '#D4D4D4',
-  accentSoft: '#252525',
-  accentText: '#F0F0F0',
-  textPrimary: '#F4F4F4',
-  textSecondary: '#C6C6C6',
-  textMuted: '#929292',
-  textOnAccent: '#0B0B0B',
-  border: '#2B2B2B',
-  borderStrong: '#3A3A3A',
-  success: '#6DDB93',
-  successBg: '#163A27',
-  successBorder: '#285C3D',
-  warning: '#F5BE67',
-  warningBg: '#44351B',
-  warningBorder: '#745922',
-  danger: '#FF8E83',
-  dangerBg: '#482321',
-  dangerBorder: '#783D38',
-  neutral: '#C6C6C6',
-  neutralBg: '#252525',
-  neutralBorder: '#414141',
-  shadow: '#000000',
-};
+// Applied to large headings that can land over the lighter part of the
+// atmosphere gradient, so white text stays legible regardless of position.
+export const textShadow = {
+  textShadowColor: 'transparent',
+  textShadowOffset: { width: 0, height: 0 },
+  textShadowRadius: 0,
+} as const;
 
-export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 6, md: 8, lg: 12, pill: 999 } as const;
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
+export const radius = { xs: 8, sm: 12, md: 16, lg: 20, xl: 26, pill: 999 } as const;
 export const fontFamily = {
   regular: Platform.select({ ios: 'SFProText-Regular', default: 'Inter_400Regular' }) ?? 'Inter_400Regular',
   medium: Platform.select({ ios: 'SFProText-Medium', default: 'Inter_500Medium' }) ?? 'Inter_500Medium',
   semibold: Platform.select({ ios: 'SFProText-Semibold', default: 'Inter_600SemiBold' }) ?? 'Inter_600SemiBold',
+  bold: Platform.select({ ios: 'SFProText-Semibold', default: 'Inter_600SemiBold' }) ?? 'Inter_600SemiBold',
 } as const;
+// A wider spread than a typical scale on purpose: meta/caption stay small and
+// quiet so heading and hero sizes read as a real jump, not a nudge.
 export const fontSize = {
   meta: 12,
-  caption: 13,
-  body: 14,
-  cardTitle: 15,
-  sectionTitle: 16,
-  heading: 20,
-  headingLg: 22,
+  caption: 14,
+  body: 15,
+  cardTitle: 16,
+  sectionTitle: 20,
+  heading: 28,
+  headingLg: 32,
+  hero: 46,
 } as const;
 
-const THEME_KEY = 'clientflow.preferences.theme';
-
-function getWebStorage(): Storage | null {
-  if (Platform.OS !== 'web' || typeof globalThis === 'undefined' || !('localStorage' in globalThis)) {
-    return null;
-  }
-  return globalThis.localStorage;
-}
-
-async function readThemePreference(): Promise<ThemeMode | null> {
-  const value = Platform.OS === 'web'
-    ? getWebStorage()?.getItem(THEME_KEY)
-    : await SecureStore.getItemAsync(THEME_KEY);
-  return value === 'light' || value === 'dark' ? value : null;
-}
-
-async function writeThemePreference(mode: ThemeMode) {
-  if (Platform.OS === 'web') {
-    if (mode === 'system') getWebStorage()?.removeItem(THEME_KEY);
-    else getWebStorage()?.setItem(THEME_KEY, mode);
-    return;
-  }
-  if (mode === 'system') await SecureStore.deleteItemAsync(THEME_KEY);
-  else await SecureStore.setItemAsync(THEME_KEY, mode);
-}
-
 interface ThemeContextValue {
-  mode: ThemeMode;
-  resolvedMode: ResolvedTheme;
   color: ThemeColors;
-  setMode: (mode: ThemeMode) => void;
-  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const systemScheme = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>('system');
-  const resolvedMode: ResolvedTheme = mode === 'system'
-    ? systemScheme === 'dark' ? 'dark' : 'light'
-    : mode;
-
-  useEffect(() => {
-    let active = true;
-    void readThemePreference().then((stored) => {
-      if (active && stored) setModeState(stored);
-    });
-    return () => { active = false; };
-  }, []);
-
-  const value = useMemo<ThemeContextValue>(() => ({
-    mode,
-    resolvedMode,
-    color: resolvedMode === 'dark' ? darkColors : lightColors,
-    setMode: (nextMode) => {
-      setModeState(nextMode);
-      void writeThemePreference(nextMode);
-    },
-    toggleTheme: () => {
-      const nextMode: ThemeMode = resolvedMode === 'dark' ? 'light' : 'dark';
-      setModeState(nextMode);
-      void writeThemePreference(nextMode);
-    },
-  }), [mode, resolvedMode]);
-
+  const value = useMemo<ThemeContextValue>(() => ({ color: colors }), []);
   return createElement(ThemeContext.Provider, { value }, children);
 }
 
@@ -193,6 +147,6 @@ export function useTheme() {
   return value;
 }
 
-// Kept as a light-theme compatibility export for non-rendering helpers. Rendered
-// components use useTheme().color so a preference change updates immediately.
-export const color = lightColors;
+// Kept as a compatibility export for non-rendering helpers that need colors
+// outside a component tree.
+export const color = colors;

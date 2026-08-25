@@ -4,18 +4,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { ProjectStageTracker } from '../../../../components/ProjectStageTracker';
 import { InvoiceRow } from '../../../../components/InvoiceRow';
-import { Divider } from '../../../../components/ui/Divider';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatCurrency, formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
+import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { SurfaceGradient } from '../../../../components/ui/SurfaceGradient';
+import { Card } from '../../../../components/ui/Card';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 
 export default function ProjectDetailScreen() {
@@ -96,7 +96,9 @@ export default function ProjectDetailScreen() {
 
       <View style={styles.statRow}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatCurrency(paidTotal)}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(paidTotal)}
+          </Text>
           <Text style={styles.statLabel}>{t('projects.paidToDate')}</Text>
         </View>
         <View style={styles.stat}>
@@ -105,6 +107,8 @@ export default function ProjectDetailScreen() {
               styles.statValue,
               outstandingTotal > 0 && { color: color.warning },
             ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
           >
             {formatCurrency(outstandingTotal)}
           </Text>
@@ -113,17 +117,14 @@ export default function ProjectDetailScreen() {
       </View>
 
       <SurfaceGradient
-        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
+        colors={[color.surface, color.surface]}
         style={[styles.section, styles.statusSection]}
       >
         <Text style={styles.sectionTitle}>{t('projects.status')}</Text>
         <ProjectStageTracker status={project.status} />
       </SurfaceGradient>
 
-      <SurfaceGradient
-        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
-        style={[styles.section, styles.overviewSection]}
-      >
+      <Card tone="muted" style={[styles.section, styles.overviewSection]}>
         <Text style={styles.overviewLabel}>{pkg?.name}</Text>
         {pkg?.description && (
           <Text style={styles.overviewDescription}>{pkg.description}</Text>
@@ -133,12 +134,9 @@ export default function ProjectDetailScreen() {
             {t('common.target')}: {formatDate(project.targetLaunchDate)}
           </Text>
         )}
-      </SurfaceGradient>
+      </Card>
 
-      <SurfaceGradient
-        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
-        style={[styles.section, styles.notesSection]}
-      >
+      <Card tone="surface" style={[styles.section, styles.notesSection]}>
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.notes')}</Text>
           <Pressable
@@ -166,12 +164,9 @@ export default function ProjectDetailScreen() {
         <Text style={styles.noteSummary}>
           {t('notes.noteCount', { count: visibleNotes.length })}
         </Text>
-      </SurfaceGradient>
+      </Card>
 
-      <SurfaceGradient
-        colors={[color.surfaceGradientStart, color.surfaceGradientEnd]}
-        style={[styles.section, styles.invoicesSection]}
-      >
+      <Card tone="surface" style={[styles.section, styles.invoicesSection]}>
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.invoices')}</Text>
           <Pressable
@@ -192,9 +187,10 @@ export default function ProjectDetailScreen() {
           <EmptyState icon={FileText} title={t('projects.noInvoices')} />
         ) : (
           <>
-            {invoicePreviews.map((invoice, index) => (
-              <View key={invoice.id}>
+            <View style={styles.invoicePreviewList}>
+              {invoicePreviews.map((invoice) => (
                 <InvoiceRow
+                  key={invoice.id}
                   invoice={invoice}
                   onPress={() =>
                     router.push(
@@ -205,20 +201,15 @@ export default function ProjectDetailScreen() {
                   }
                   preview
                 />
-                {index < invoicePreviews.length - 1 && (
-                  <View style={styles.previewDivider}>
-                    <Divider />
-                  </View>
-                )}
-              </View>
-            ))}
+              ))}
+            </View>
             <View style={styles.sectionFooterDivider} />
             <Text style={styles.invoiceSummary}>
               {t('projects.invoiceCount', { count: visibleInvoices.length })}
             </Text>
           </>
         )}
-      </SurfaceGradient>
+      </Card>
     </Screen>
   );
 }
@@ -232,22 +223,27 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginBottom: spacing.md,
   },
   name: {
-    fontFamily: fontFamily.semibold,
+    ...textShadow,
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
+    textAlign: 'center',
   },
   eyebrow: {
-    fontFamily: fontFamily.medium,
+    ...textShadow,
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.meta,
     color: color.accentText,
-    letterSpacing: 1.5,
+    letterSpacing: 1.8,
+    textAlign: 'center',
   },
   packageName: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.caption,
     color: color.textMuted,
-    marginTop: 2,
+    marginTop: spacing.xs,
+    textAlign: 'center',
   },
   titleDivider: {
     height: spacing.sm,
@@ -255,28 +251,27 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   statRow: {
     flexDirection: 'row',
-    gap: spacing.lg,
+    gap: spacing.xl,
     marginTop: spacing.xl,
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   stat: {
     flex: 1,
   },
   statValue: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 28,
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.hero,
     color: color.textPrimary,
   },
   statLabel: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
-    marginTop: 2,
+    marginTop: spacing.xs,
   },
   section: {
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
+    padding: spacing.xl,
+    marginTop: spacing.xl,
   },
   statusSection: {
     paddingBottom: spacing.lg,
@@ -285,14 +280,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingBottom: spacing.lg,
   },
   notesSection: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
   },
   invoicesSection: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     paddingBottom: spacing.lg,
   },
-  previewDivider: {
-    marginHorizontal: spacing.sm,
+  invoicePreviewList: {
+    gap: spacing.sm,
   },
   overviewLabel: {
     fontFamily: fontFamily.medium,

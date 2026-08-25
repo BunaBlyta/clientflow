@@ -8,7 +8,7 @@ import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
-const TAB_BAR_HEIGHT = 62;
+const TAB_BAR_HEIGHT = 68;
 const TAB_TRANSITION_DISTANCE = 24;
 const TAB_TRANSITION_DURATION = 180;
 
@@ -56,26 +56,27 @@ export default function AppTabsLayout() {
             easing: Easing.out(Easing.cubic),
           },
         },
-        sceneStyle: { backgroundColor: color.canvas },
-        tabBarActiveTintColor: color.accentText,
-        tabBarInactiveTintColor: color.textMuted,
+          sceneStyle: { backgroundColor: color.canvas },
+        tabBarActiveTintColor: color.navActive,
+        tabBarInactiveTintColor: color.navInactive,
         tabBarStyle: {
           height: TAB_BAR_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: spacing.xs,
-          backgroundColor: color.surfaceMuted,
-          borderTopWidth: 0,
+          backgroundColor: color.navBackground,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: color.border,
           shadowOpacity: 0,
           elevation: 0,
         },
         tabBarItemStyle: {
           paddingTop: 0,
-          paddingBottom: spacing.xs,
+          paddingBottom: 0,
         },
         tabBarLabelStyle: {
           fontFamily: fontFamily.medium,
-          fontSize: 11,
-          marginTop: spacing.xs,
+          fontSize: 12,
+          marginTop: 0,
         },
       }}
     >
@@ -107,7 +108,9 @@ export default function AppTabsLayout() {
           tabBarIcon: ({ focused }) => (
             <View>
               <TabIcon icon={Bell} focused={focused} color={color} />
-              {unread > 0 && <View style={[styles.unreadDot, { backgroundColor: color.danger }]} />}
+              {unread > 0 && (
+                <View style={[styles.unreadDot, { backgroundColor: color.danger, borderColor: color.navBackground }]} />
+              )}
             </View>
           ),
         }}
@@ -133,11 +136,17 @@ function TabIcon({
   color: ReturnType<typeof useTheme>['color'];
 }) {
   return (
-    <View style={styles.iconWrap}>
+    <View
+      style={[
+        styles.iconWrap,
+        { borderColor: focused ? color.navActiveBg : 'transparent' },
+        focused && { backgroundColor: color.navActiveBg },
+      ]}
+    >
       <Icon
-        size={19}
-        color={focused ? color.accentText : color.textMuted}
-        strokeWidth={focused ? 2.5 : 1.7}
+        size={26}
+        color={focused ? color.navActive : color.navInactive}
+        strokeWidth={focused ? 2.1 : 1.7}
       />
     </View>
   );
@@ -145,9 +154,10 @@ function TabIcon({
 
 const styles = StyleSheet.create({
   iconWrap: {
-    width: 30,
-    height: 26,
-    borderRadius: radius.sm,
+    width: 44,
+    height: 40,
+    borderRadius: radius.md,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -159,6 +169,6 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderColor: '#0B0F16',
   },
 });

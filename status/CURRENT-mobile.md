@@ -1,6 +1,25 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-24 15:10 by Codex — clean tab-owned detail navigation
+Last updated: 2026-08-25 13:45 by Codex — match Meridian visual design
+
+## What changed
+
+- Matched the mobile presentation to the proposed Meridian Client Portal PDF: warm off-white canvas, dark navy text, deep green accent, sage surfaces, rounded white cards, hairline borders, and a flat white tab bar with pale-green active states.
+- Restyled the home project summary, project cards, invoice cards, notification cards, account profile/settings surfaces, and project detail surfaces to follow the reference compositions.
+- Kept navigation, API calls, stores, payment behavior, and all existing feature behavior unchanged.
+
+## Verification
+
+- `npx tsc --noEmit`: passed.
+- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-web`: passed.
+- `git diff --check`: passed.
+- `npx eslint .`: the standalone Expo folder has no applicable ESLint configuration; ESLint reports that all files are ignored.
+
+## Current state
+
+- The mobile UI now uses the Meridian light visual system throughout shared surfaces and the client-facing tab screens.
+- No API contract changes were made.
+- Existing navigation/auth/payment work in other dirty files was left untouched.
 
 ## What changed
 

@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../../components/InvoiceRow';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
+import { Card } from '../../../components/ui/Card';
 import { formatCurrency } from '../../../lib/format';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
@@ -54,22 +55,22 @@ export default function InvoicesScreen() {
         <EmptyState icon={FileText} title={t('invoices.emptyTitle')} subtitle={t('invoices.emptySubtitle')} />
       ) : (
         <View>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>{formatCurrency(outstandingTotal)}</Text>
+          <View style={styles.summaryGrid}>
+            <Card tone="muted" style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>{t('projects.outstanding')}</Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>{formatCurrency(paidTotal)}</Text>
+              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(outstandingTotal)}</Text>
+              <Text style={styles.summaryHint}>{invoices.filter((invoice) => invoice.status !== 'PAID').length} invoices due</Text>
+            </Card>
+            <Card tone="muted" style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>{t('projects.paidToDate')}</Text>
-            </View>
+              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(paidTotal)}</Text>
+              <Text style={styles.summaryHint}>{invoices.filter((invoice) => invoice.status === 'PAID').length} invoices paid</Text>
+            </Card>
           </View>
           <View style={styles.listHeading}>
-            <Text style={styles.listHeadingText}>{t('projects.invoices')}</Text>
-            <Text style={styles.listHeadingCount}>{invoices.length}</Text>
+            <Text style={styles.listHeadingText}>All invoices</Text>
           </View>
-          <View style={styles.listGroup}>
+          <View style={styles.list}>
             {invoices.map((invoice) => (
               <InvoiceRow
                 key={invoice.id}
@@ -92,18 +93,17 @@ export default function InvoicesScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    title: { fontFamily: fontFamily.semibold, fontSize: fontSize.headingLg, color: color.textPrimary },
-    subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs, marginBottom: spacing.xl },
+    title: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary, ...textShadow },
+    subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs, marginBottom: spacing.xl, ...textShadow },
     error: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.warning, marginBottom: spacing.md },
     loading: { marginTop: spacing.xxl },
-    summaryRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.xl, paddingVertical: spacing.lg },
-    summaryItem: { flex: 1 },
-    summaryDivider: { width: spacing.xs, height: spacing.xs, borderRadius: spacing.xs / 2, backgroundColor: color.surfaceMuted },
-    summaryValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
-    summaryLabel: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textMuted, marginTop: spacing.xs },
-    listHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
-    listHeadingText: { fontFamily: fontFamily.medium, fontSize: fontSize.caption, color: color.textSecondary },
-    listHeadingCount: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.textMuted },
-    listGroup: { gap: spacing.xs },
+    summaryGrid: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xl, marginBottom: spacing.xxl },
+    summaryCard: { flex: 1, padding: spacing.lg, minHeight: 136 },
+    summaryValue: { fontFamily: fontFamily.bold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.md },
+    summaryLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.caption, color: color.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+    summaryHint: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs },
+    listHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+    listHeadingText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
+    list: { gap: spacing.md },
   });
 }

@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ProjectCard } from '../../../components/ProjectCard';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
@@ -36,7 +36,7 @@ export default function ProjectsListScreen() {
             subtitle={t('projects.emptySubtitle')}
           />
         ) : (
-          <View style={styles.listGroup}>
+          <View>
             {projects.map((project, index) => (
               <ProjectCard
                 key={project.id}
@@ -55,13 +55,14 @@ export default function ProjectsListScreen() {
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   title: {
-    fontFamily: fontFamily.semibold,
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
     marginBottom: spacing.xl,
+    ...textShadow,
   },
   list: {
-    marginTop: spacing.sm,
+    marginTop: 0,
   },
   listGroup: {
     gap: spacing.md,

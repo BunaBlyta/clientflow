@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { NotificationRow } from '../../../components/NotificationRow';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
@@ -36,6 +36,7 @@ export default function NotificationsScreen() {
     )
   );
   const unread = useDataStore((s) => s.unreadNotificationCount());
+  const groups = groupByRecency(notifications, t);
 
   useFocusEffect(
     useCallback(() => {
@@ -114,18 +115,47 @@ export default function NotificationsScreen() {
       {notifications.length === 0 ? (
         <EmptyState icon={Bell} title={t('notifications.caughtUp')} />
       ) : (
-      <View style={styles.listGroup}>
-          {notifications.map((notification) => (
-            <NotificationRow
-              key={notification.id}
-              notification={notification}
-              onPress={() => void handlePress(notification)}
-            />
-          ))}
-        </View>
+        groups.map((group) => (
+          <View key={group.label} style={styles.group}>
+            <Text style={styles.groupLabel}>{group.label}</Text>
+            <View>
+              {group.items.map((notification, index) => (
+                <NotificationRow
+                  key={notification.id}
+                  notification={notification}
+                  onPress={() => void handlePress(notification)}
+                  isLast={index === group.items.length - 1}
+                />
+              ))}
+            </View>
+          </View>
+        ))
       )}
     </Screen>
   );
+}
+
+function groupByRecency(notifications: Notification[], t: (key: 'notifications.today' | 'notifications.yesterday' | 'notifications.earlier') => string) {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+
+  const today: Notification[] = [];
+  const yesterday: Notification[] = [];
+  const earlier: Notification[] = [];
+
+  for (const notification of notifications) {
+    const createdAt = new Date(notification.createdAt).getTime();
+    if (createdAt >= startOfToday) today.push(notification);
+    else if (createdAt >= startOfYesterday) yesterday.push(notification);
+    else earlier.push(notification);
+  }
+
+  return [
+    { label: t('notifications.today'), items: today },
+    { label: t('notifications.yesterday'), items: yesterday },
+    { label: t('notifications.earlier'), items: earlier },
+  ].filter((group) => group.items.length > 0);
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
@@ -134,10 +164,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xl,
   },
   heading: {
-    fontFamily: fontFamily.semibold,
+      ...textShadow,
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
   },
@@ -184,8 +215,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.warning,
     marginBottom: spacing.md,
   },
-  listGroup: {
-    gap: spacing.xs,
+  group: {
+    marginBottom: spacing.xxl,
+  },
+  groupLabel: {
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.heading,
+    color: color.textPrimary,
+    marginBottom: spacing.lg,
   },
   });
 }

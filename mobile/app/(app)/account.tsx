@@ -1,10 +1,8 @@
-import { LogOut, Monitor, Moon, Sun } from 'lucide-react-native';
-import type { LucideIcon } from 'lucide-react-native';
+import { LogOut } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../lib/theme';
-import type { ThemeMode } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 
@@ -12,7 +10,7 @@ export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const { color, mode, setMode } = useTheme();
+  const { color } = useTheme();
   const { language, setLanguage, t } = useI18n();
   const styles = createStyles(color);
 
@@ -48,32 +46,6 @@ export default function AccountScreen() {
         <InfoRow label={t('account.email')} value={client?.email ?? ''} />
         <InfoRow label={t('account.company')} value={client?.companyName ?? ''} last />
       </View>
-
-      <PreferenceGroup label={t('account.theme')}>
-        <View style={styles.themeControl}>
-          <ThemeOption
-            icon={Monitor}
-            label={t('account.system')}
-            selected={mode === 'system'}
-            onPress={() => setMode('system')}
-            styles={styles}
-          />
-          <ThemeOption
-            icon={Sun}
-            label={t('account.light')}
-            selected={mode === 'light'}
-            onPress={() => setMode('light')}
-            styles={styles}
-          />
-          <ThemeOption
-            icon={Moon}
-            label={t('account.dark')}
-            selected={mode === 'dark'}
-            onPress={() => setMode('dark')}
-            styles={styles}
-          />
-        </View>
-      </PreferenceGroup>
 
       <PreferenceGroup label={t('account.language')}>
         <View style={styles.languageControl}>
@@ -166,39 +138,6 @@ function PreferenceGroup({ label, children }: { label: string; children: ReactNo
   );
 }
 
-function ThemeOption({
-  icon: Icon,
-  label,
-  selected,
-  onPress,
-  styles,
-}: {
-  icon: LucideIcon;
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  styles: ReturnType<typeof createStyles>;
-}) {
-  const { color } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.themeOption,
-        selected && styles.themeOptionSelected,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={[styles.themeIcon, selected && styles.themeIconSelected]}>
-        <Icon size={17} color={selected ? color.textPrimary : color.textMuted} strokeWidth={1.9} />
-      </View>
-      <Text style={[styles.themeOptionText, selected && styles.themeOptionTextSelected]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function LanguageOption({
   code,
   label,
@@ -236,67 +175,81 @@ function LanguageOption({
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
     heading: {
-      fontFamily: fontFamily.semibold,
+      ...textShadow,
+      fontFamily: fontFamily.bold,
       fontSize: fontSize.headingLg,
       color: color.textPrimary,
-      marginBottom: spacing.xl,
+      marginBottom: spacing.lg,
     },
     profileHeader: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       alignItems: 'center',
-      marginBottom: spacing.xl,
+      marginBottom: spacing.lg,
+      padding: spacing.xl,
+      backgroundColor: color.surface,
+      borderWidth: 1,
+      borderColor: color.border,
+      borderRadius: radius.xl,
     },
     avatarWrap: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+      width: 96,
+      height: 96,
+      borderRadius: 48,
       backgroundColor: color.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
     avatarInitial: {
-      fontFamily: fontFamily.semibold,
-      fontSize: fontSize.heading,
-      color: color.accentPressed,
+      fontFamily: fontFamily.bold,
+      fontSize: fontSize.headingLg,
+      color: color.accent,
     },
     profileCopy: {
       flex: 1,
-      marginLeft: spacing.md,
+      alignItems: 'center',
+      marginTop: spacing.lg,
     },
     name: {
-      fontFamily: fontFamily.semibold,
-      fontSize: fontSize.sectionTitle,
+      ...textShadow,
+      fontFamily: fontFamily.bold,
+      fontSize: fontSize.heading,
       color: color.textPrimary,
     },
     company: {
       fontFamily: fontFamily.regular,
-      fontSize: fontSize.caption,
+      fontSize: fontSize.body,
       color: color.textMuted,
-      marginTop: 2,
+      marginTop: spacing.xs,
     },
     infoSection: {
       backgroundColor: color.surface,
-      paddingHorizontal: spacing.md,
-      marginBottom: spacing.xl,
-      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: color.border,
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
+      borderRadius: radius.xl,
+      shadowOpacity: 0,
+      elevation: 0,
     },
     infoRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: spacing.md,
+      paddingVertical: spacing.lg,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: color.border,
     },
-    infoRowLast: {},
+    infoRowLast: { borderBottomWidth: 0 },
     infoTextCol: {
       flex: 1,
     },
     infoLabel: {
       fontFamily: fontFamily.regular,
-      fontSize: fontSize.meta,
+      fontSize: fontSize.caption,
       color: color.textMuted,
     },
     infoValue: {
       fontFamily: fontFamily.medium,
-      fontSize: fontSize.caption,
+      fontSize: fontSize.body,
       color: color.textPrimary,
       marginTop: 2,
     },
@@ -312,62 +265,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     preferenceOptions: {
       gap: spacing.xs,
     },
-    themeControl: {
-      flexDirection: 'row',
-      gap: spacing.xs,
-      padding: spacing.xs,
-      borderRadius: radius.lg,
-      backgroundColor: color.surfaceMuted,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.border,
-    },
-    themeOption: {
-      flex: 1,
-      minHeight: 66,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.xs,
-      borderRadius: radius.md,
-      backgroundColor: color.surface,
-    },
-    themeOptionSelected: {
-      backgroundColor: color.accentSoft,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.borderStrong,
-    },
-    themeIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: color.surfaceMuted,
-    },
-    themeIconSelected: {
-      backgroundColor: color.surface,
-    },
-    themeOptionText: {
-      fontFamily: fontFamily.medium,
-      fontSize: fontSize.meta,
-      color: color.textMuted,
-      textAlign: 'center',
-    },
-    themeOptionTextSelected: {
-      color: color.textPrimary,
-    },
     languageControl: {
       flexDirection: 'row',
       gap: spacing.sm,
     },
     languageOption: {
       flex: 1,
-      minHeight: 56,
+      minHeight: 52,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.xs,
+      gap: spacing.sm,
       paddingHorizontal: spacing.sm,
-      borderRadius: radius.lg,
-      backgroundColor: color.surface,
+      borderRadius: radius.md,
+      backgroundColor: color.surfaceMuted,
     },
     languageOptionSelected: {
       backgroundColor: color.accentSoft,
@@ -403,15 +313,15 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textPrimary,
     },
     logoutButton: {
-      height: 44,
+      height: 56,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.sm,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: color.dangerBorder,
-      borderRadius: radius.md,
+      borderRadius: radius.xl,
       backgroundColor: color.surface,
+      borderWidth: 1,
+      borderColor: color.border,
     },
     logoutSection: {
       gap: spacing.md,
@@ -422,18 +332,18 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     cancelButton: {
       flex: 1,
-      height: 44,
-      borderRadius: radius.md,
+      height: 48,
+      borderRadius: radius.pill,
       backgroundColor: color.surfaceMuted,
       alignItems: 'center',
       justifyContent: 'center',
     },
     confirmLogoutButton: {
       flex: 1,
-      height: 44,
+      height: 48,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: color.dangerBorder,
-      borderRadius: radius.md,
+      borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
     },
