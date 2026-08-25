@@ -1,6 +1,5 @@
-import { Check, CircleDot, Code2, Eye, PauseCircle, PencilRuler, Rocket, Search, XCircle } from 'lucide-react-native';
+import { CircleDot, Code2, Eye, PauseCircle, PencilRuler, Rocket, Search, XCircle } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, PROJECT_STAGES } from '../lib/status';
 import { useI18n } from '../lib/i18n';
@@ -11,18 +10,14 @@ interface ProjectStageTrackerProps {
   status: ProjectStatus;
 }
 
-const INDICATOR_SIZE = 32;
-const CIRCLE_SIZE = 24;
-const CHECK_SIZE = 12;
-const FUTURE_DOT_SIZE = 8;
-const LABEL_SLOT_HEIGHT = 40;
+const PHASES = PROJECT_STAGES.slice(1);
 const STAGE_ICONS: Record<string, LucideIcon> = {
-  PENDING: CircleDot,
   DISCOVERY: Search,
   DESIGN: PencilRuler,
   DEVELOPMENT: Code2,
   REVIEW: Eye,
   LAUNCHED: Rocket,
+  PENDING: CircleDot,
 };
 
 export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
@@ -47,51 +42,22 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
     );
   }
 
-  const currentIndex = PROJECT_STAGES.indexOf(status);
-  const progress = currentIndex / (PROJECT_STAGES.length - 1);
+  const currentIndex = status === 'PENDING' ? -1 : PHASES.indexOf(status);
 
   return (
-    <View style={styles.trackCard}>
-      <View style={styles.timeline}>
-        <View style={styles.lineTrack}>
-          <View style={[styles.lineFill, { width: `${progress * 100}%` }]} />
-        </View>
-        <View style={styles.stageRow}>
-          {PROJECT_STAGES.map((stage, index) => {
-            const completed = index < currentIndex;
-            const current = index === currentIndex;
-            const label = (
-              <View style={styles.labelSlot}>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                  style={[
-                    styles.label,
-                    current && styles.labelCurrent,
-                    !completed && !current && styles.labelFuture,
-                  ]}
-                >
-                  {getProjectStatusLabel(stage, t)}
-                </Text>
-              </View>
-            );
-
-            return (
-              <View key={stage} style={styles.stageItem}>
-                <StageIndicator
-                  stage={stage}
-                  completed={completed}
-                  current={current}
-                  colors={color}
-                  styles={styles}
-                />
-                {label}
-              </View>
-            );
-          })}
-        </View>
-      </View>
+    <View style={styles.phaseRow}>
+      {PHASES.map((stage, index) => {
+        const completed = index < currentIndex;
+        const current = index === currentIndex;
+        return (
+          <View key={stage} style={styles.phaseItem}>
+            <StageIndicator stage={stage} completed={completed} current={current} colors={color} styles={styles} />
+            <Text style={[styles.label, current && styles.labelCurrent, !completed && !current && styles.labelFuture]}>
+              {stage === 'LAUNCHED' ? 'Launch' : getProjectStatusLabel(stage, t)}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -109,11 +75,11 @@ function StageIndicator({
   colors: ReturnType<typeof useTheme>['color'];
   styles: ReturnType<typeof createStyles>;
 }) {
-  if (current) {
-    const Icon = STAGE_ICONS[stage] ?? CircleDot;
+  const Icon = STAGE_ICONS[stage] ?? CircleDot;
 
+  if (current) {
     return (
-      <View style={styles.circleWrap}>
+      <View style={styles.phaseDotCurrent}>
         <View style={styles.circleCurrent}>
           <Icon size={13} color={colors.accentText} strokeWidth={2.2} />
         </View>
@@ -123,103 +89,71 @@ function StageIndicator({
 
   if (!completed) {
     return (
-      <View style={styles.circleWrap}>
-        <View style={styles.circleFuture} />
+      <View style={styles.phaseDotUpcoming}>
+        <Icon size={13} color={colors.textMuted} strokeWidth={1.8} />
       </View>
     );
   }
 
   return (
-    <View style={styles.circleWrap}>
-      <Svg width={INDICATOR_SIZE} height={INDICATOR_SIZE} viewBox={`0 0 ${INDICATOR_SIZE} ${INDICATOR_SIZE}`}>
-        <Circle
-          cx={INDICATOR_SIZE / 2}
-          cy={INDICATOR_SIZE / 2}
-          r={CIRCLE_SIZE / 2}
-          fill={colors.accent}
-        />
-      </Svg>
-      <Check size={CHECK_SIZE} color={colors.textOnAccent} strokeWidth={3} style={styles.circleIcon} />
+    <View style={styles.phaseDotDone}>
+      <Icon size={13} color={colors.textOnAccent} strokeWidth={2} />
     </View>
   );
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    trackCard: {
-      paddingVertical: spacing.xs,
-      width: '100%',
-    },
-    timeline: {
-      position: 'relative',
-    },
-    stageRow: {
+    phaseRow: {
       flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      gap: spacing.xs,
     },
-    stageItem: {
+    phaseItem: {
       flex: 1,
       alignItems: 'center',
       minWidth: 0,
-      zIndex: 1,
     },
-    labelSlot: {
-      width: '100%',
-      height: LABEL_SLOT_HEIGHT,
-      position: 'relative',
+    phaseDotDone: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 2,
-      paddingVertical: 2,
+      backgroundColor: color.accent,
     },
-    circleWrap: {
-      width: INDICATOR_SIZE,
-      height: INDICATOR_SIZE,
+    phaseDotCurrent: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 2,
-    },
-    circleIcon: {
-      position: 'absolute',
-      left: (INDICATOR_SIZE - CHECK_SIZE) / 2,
-      top: (INDICATOR_SIZE - CHECK_SIZE) / 2,
-    },
-    circleFuture: {
-      width: FUTURE_DOT_SIZE,
-      height: FUTURE_DOT_SIZE,
-      borderRadius: FUTURE_DOT_SIZE / 2,
-      backgroundColor: color.darkGlass,
-      borderWidth: 1,
-      borderColor: color.borderStrong,
+      backgroundColor: color.surface,
     },
     circleCurrent: {
-      width: CIRCLE_SIZE,
-      height: CIRCLE_SIZE,
-      borderRadius: CIRCLE_SIZE / 2,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       borderWidth: 2,
       borderColor: color.accent,
-      backgroundColor: color.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    lineTrack: {
-      position: 'absolute',
-      top: INDICATOR_SIZE / 2 - 1,
-      left: INDICATOR_SIZE / 2,
-      right: INDICATOR_SIZE / 2,
-      height: 2,
-      borderRadius: 1,
-      backgroundColor: color.border,
-    },
-    lineFill: {
-      height: 2,
-      backgroundColor: color.accent,
+    phaseDotUpcoming: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.surfaceMuted,
     },
     label: {
       fontFamily: fontFamily.regular,
-      fontSize: fontSize.meta,
-      color: color.textSecondary,
+      fontSize: 9.5,
+      color: color.textMuted,
       textAlign: 'center',
-      lineHeight: 14,
+      marginTop: spacing.sm,
     },
     labelCurrent: {
       fontFamily: fontFamily.semibold,
@@ -227,14 +161,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     labelFuture: {
       color: color.textMuted,
-    },
-    currentMeta: {
-      fontFamily: fontFamily.medium,
-      fontSize: fontSize.caption,
-      color: color.accentText,
-      textAlign: 'center',
-      lineHeight: 17,
-      marginTop: 2,
     },
     banner: {
       flexDirection: 'row',

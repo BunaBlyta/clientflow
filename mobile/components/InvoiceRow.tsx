@@ -20,11 +20,6 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
     isPastDue(invoice.dueDate);
   const meta = overdue ? getOverdueMeta(color, t) : getInvoiceStatusMeta(invoice.status, color, t);
   const kindLabel = getInvoiceKindLabel(invoice.kind, t);
-  // Rows only pick up a tinted wash when something needs attention — an
-  // overdue balance or a payment still confirming. Everything else (sent,
-  // paid, voided) stays flat so those two states actually stand out.
-  const attention = overdue || invoice.status === 'PAYMENT_PENDING';
-
   return (
     <Pressable
       onPress={onPress}
@@ -34,9 +29,9 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
         style={[
           styles.row,
           preview && styles.previewRow,
-          attention && { backgroundColor: meta.bg, borderColor: meta.border },
         ]}
       >
+        <View style={[styles.rail, { backgroundColor: meta.text }]} />
         <View style={styles.left}>
           <Text style={styles.label} numberOfLines={1}>
             {invoice.label}
@@ -72,11 +67,10 @@ function createStyles(color: ThemeColors) {
       alignItems: 'stretch',
       minWidth: 0,
       paddingVertical: spacing.lg,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: color.border,
-      backgroundColor: color.surfaceMuted,
+      paddingRight: spacing.lg,
+      paddingLeft: spacing.sm,
+      borderRadius: radius.md,
+      backgroundColor: color.surfaceSage,
       gap: spacing.md,
   },
   previewRow: {
@@ -85,7 +79,7 @@ function createStyles(color: ThemeColors) {
   pressed: {
     opacity: 0.6,
   },
-    accentBar: {
+    rail: {
       width: 4,
       alignSelf: 'stretch',
       borderRadius: radius.pill,
@@ -108,10 +102,10 @@ function createStyles(color: ThemeColors) {
       marginTop: 2,
     },
     amount: {
-      fontFamily: fontFamily.bold,
-      fontSize: fontSize.heading,
+      fontFamily: fontFamily.serif,
+      fontSize: fontSize.heading + 1,
       color: color.textPrimary,
-      marginTop: spacing.lg,
+      marginTop: spacing.md,
     },
     date: {
       fontFamily: fontFamily.regular,
@@ -139,8 +133,8 @@ function createStyles(color: ThemeColors) {
       fontFamily: fontFamily.semibold,
       fontSize: fontSize.cardTitle,
     },
-    actionButton: { minWidth: 92, alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+    actionButton: { minWidth: 92, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
     actionButtonPrimary: { backgroundColor: color.accent },
-    actionButtonSecondary: { backgroundColor: color.surface, borderWidth: 1, borderColor: color.border },
+    actionButtonSecondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: color.border },
   });
 }

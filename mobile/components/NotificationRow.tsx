@@ -25,8 +25,8 @@ const ICONS: Record<Notification['type'], typeof Bell> = {
   EXTRA_CHARGE_CREATED: FileText,
 };
 
-// Each notification type gets a real hue, not a uniform muted icon — the
-// color is the fast-scan signal, the timeline dot and icon both carry it.
+// Grey is the resting state. Colour is reserved for outcomes that deserve
+// an immediate scan: successful or failed/payment-related activity.
 function typeColor(type: Notification['type'], color: ThemeColors) {
   switch (type) {
     case 'PAYMENT_SUCCEEDED':
@@ -36,11 +36,11 @@ function typeColor(type: Notification['type'], color: ThemeColors) {
     case 'REQUEST_REJECTED':
       return color.danger;
     case 'PROJECT_STAGE_CHANGED':
-      return color.violet;
+      return color.textSecondary;
     case 'INVOICE_ISSUED':
     case 'REQUEST_SUBMITTED':
     case 'EXTRA_CHARGE_CREATED':
-      return color.warning;
+      return color.textSecondary;
     case 'NEW_NOTE':
     default:
       return color.accent;
@@ -58,12 +58,15 @@ export function NotificationRow({ notification, onPress, isLast = false }: Notif
   const styles = createStyles(color);
   const Icon = ICONS[notification.type] ?? Bell;
   const tint = typeColor(notification.type, color);
+  const isDanger = notification.type === 'PAYMENT_FAILED' || notification.type === 'REQUEST_REJECTED';
+  const isSuccess = notification.type === 'PAYMENT_SUCCEEDED' || notification.type === 'REQUEST_APPROVED';
+  const iconBackground = isDanger ? color.dangerBg : isSuccess ? color.successBg : color.surfaceMuted;
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={[styles.rail, { backgroundColor: tint }]} />
-      <View style={[styles.iconWrap, { backgroundColor: notification.read ? color.accentSoft : tint + '18' }]}>
-        <Icon size={22} color={tint} strokeWidth={1.8} />
+      <View style={[styles.iconWrap, { backgroundColor: iconBackground }]}>
+        <Icon size={16} color={tint} strokeWidth={1.8} />
       </View>
       <View style={styles.textCol}>
         <View style={styles.titleRow}>
@@ -86,25 +89,25 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   row: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    padding: spacing.lg,
-    marginBottom: spacing.md,
+    paddingVertical: spacing.md,
+    paddingRight: spacing.md,
+    paddingLeft: spacing.sm,
+    marginBottom: spacing.sm,
     gap: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: color.border,
-    backgroundColor: color.surfaceMuted,
+    borderRadius: radius.md,
+    backgroundColor: color.surfaceSage,
   },
   pressed: {
     opacity: 0.6,
   },
   rail: {
-    width: 4,
+    width: 3,
     borderRadius: radius.pill,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.md,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -121,7 +124,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   title: {
     flex: 1,
     fontFamily: fontFamily.medium,
-    fontSize: fontSize.cardTitle,
+    fontSize: fontSize.body,
     color: color.textPrimary,
   },
   titleUnread: {
@@ -130,7 +133,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   body: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.body,
+    fontSize: 12.5,
     color: color.textSecondary,
     marginTop: spacing.xs,
     lineHeight: 20,

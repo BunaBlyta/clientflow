@@ -86,10 +86,10 @@ export default function NotificationsScreen() {
   return (
     <Screen scroll={notifications.length > 0}>
       <View style={styles.headerRow}>
-        <View style={styles.headingCopy}>
-          <Text style={styles.heading}>{t('notifications.title')}</Text>
-        </View>
-        {unread > 0 && (
+        <Text style={styles.heading}>{t('notifications.title')}</Text>
+      </View>
+      {unread > 0 && (
+        <View style={styles.markAllRow}>
           <Pressable
             onPress={() => void handleMarkAll()}
             disabled={markingAll || markingId !== null}
@@ -97,8 +97,8 @@ export default function NotificationsScreen() {
           >
             <Text style={styles.markAllText}>{markingAll ? t('notifications.marking') : t('notifications.markAll')}</Text>
           </Pressable>
-        )}
-      </View>
+        </View>
+      )}
       {unreachable && (
         <Text style={styles.error}>
           {t('notifications.unavailable')}
@@ -158,19 +158,15 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   heading: {
       ...textShadow,
-    fontFamily: fontFamily.bold,
+    fontFamily: fontFamily.serif,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
   },
-  headingCopy: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+  markAllRow: { alignItems: 'flex-end', marginTop: -spacing.sm, marginBottom: spacing.md },
   headingMeta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -213,12 +209,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginBottom: spacing.xxl,
   },
   groupLabel: {
-    fontFamily: fontFamily.bold,
-    fontSize: fontSize.sectionTitle,
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.meta,
     color: color.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   });
 }

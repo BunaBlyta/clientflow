@@ -122,6 +122,7 @@ export default function AppTabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon icon={UserRound} focused={focused} color={color} />,
         }}
       />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

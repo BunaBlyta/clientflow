@@ -1,16 +1,20 @@
-import { LogOut } from 'lucide-react-native';
+import { CircleHelp, ChevronRight, Globe2, LogOut, Moon, Sun } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
+import type { LucideIcon } from 'lucide-react-native';
 
 export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
+  const router = useRouter();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const { color } = useTheme();
+  const [languageOptionsVisible, setLanguageOptionsVisible] = useState(false);
+  const { color, mode, setMode } = useTheme();
   const { language, setLanguage, t } = useI18n();
   const styles = createStyles(color);
 
@@ -43,8 +47,16 @@ export default function AccountScreen() {
         </View>
       </View>
 
-      <PreferenceGroup label={t('account.language')}>
-        <View style={styles.languageControl}>
+      <PreferenceGroup label="Settings">
+        <SettingsRow
+          icon={Globe2}
+          label={t('account.language')}
+          value={language === 'en' ? t('account.english') : language === 'sq' ? t('account.albanian') : t('account.german')}
+          onPress={() => setLanguageOptionsVisible((visible) => !visible)}
+          styles={styles}
+        />
+        {languageOptionsVisible && (
+          <View style={styles.languageControl}>
           <LanguageOption
             code="EN"
             label={t('account.english')}
@@ -66,7 +78,22 @@ export default function AccountScreen() {
             onPress={() => setLanguage('de')}
             styles={styles}
           />
-        </View>
+          </View>
+        )}
+        <SettingsRow
+          icon={mode === 'dark' ? Moon : Sun}
+          label={t('account.theme')}
+          value={mode === 'dark' ? t('account.dark') : t('account.light')}
+          onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+          styles={styles}
+        />
+        <SettingsRow
+          icon={CircleHelp}
+          label="Help & Support"
+          onPress={() => router.push('/settings/help-support')}
+          styles={styles}
+          last
+        />
       </PreferenceGroup>
 
       {confirmingLogout ? (
@@ -113,6 +140,37 @@ function PreferenceGroup({ label, children }: { label: string; children: ReactNo
   );
 }
 
+function SettingsRow({
+  icon: Icon,
+  label,
+  value,
+  onPress,
+  styles,
+  last = false,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value?: string;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+  last?: boolean;
+}) {
+  const { color } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
+    >
+      <View style={styles.settingsIcon}>
+        <Icon size={16} color={color.textSecondary} strokeWidth={1.8} />
+      </View>
+      <Text style={styles.settingsLabel}>{label}</Text>
+      {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
+      <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+    </Pressable>
+  );
+}
+
 function LanguageOption({
   code,
   label,
@@ -151,54 +209,55 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
     heading: {
       ...textShadow,
-      fontFamily: fontFamily.bold,
-      fontSize: fontSize.headingLg,
+      fontFamily: fontFamily.serif,
+      fontSize: fontSize.heading,
       color: color.textPrimary,
-      marginBottom: spacing.lg,
+      marginBottom: spacing.xl,
     },
     profileHeader: {
       flexDirection: 'column',
       alignItems: 'center',
       marginBottom: spacing.lg,
-      padding: spacing.xl,
+      paddingVertical: spacing.xxl,
+      paddingHorizontal: spacing.xl,
       backgroundColor: color.surface,
       borderWidth: 1,
       borderColor: color.border,
-      borderRadius: radius.xl,
+      borderRadius: radius.lg,
     },
     avatarWrap: {
-      width: 96,
-      height: 96,
-      borderRadius: 48,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       backgroundColor: color.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
     avatarInitial: {
-      fontFamily: fontFamily.bold,
-      fontSize: fontSize.headingLg,
+      fontFamily: fontFamily.semibold,
+      fontSize: fontSize.heading,
       color: color.accent,
     },
     profileCopy: {
       flex: 1,
       alignItems: 'center',
-      marginTop: spacing.lg,
+      marginTop: spacing.md,
     },
     name: {
       ...textShadow,
-      fontFamily: fontFamily.bold,
+      fontFamily: fontFamily.serif,
       fontSize: fontSize.heading,
       color: color.textPrimary,
     },
     email: {
       fontFamily: fontFamily.regular,
-      fontSize: fontSize.body,
+      fontSize: 13,
       color: color.textSecondary,
       marginTop: spacing.xs,
     },
     company: {
       fontFamily: fontFamily.regular,
-      fontSize: fontSize.body,
+      fontSize: fontSize.caption,
       color: color.textMuted,
       marginTop: spacing.sm,
     },
@@ -207,7 +266,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     preferenceLabel: {
       fontFamily: fontFamily.medium,
-      fontSize: fontSize.caption,
+      fontSize: fontSize.meta,
       color: color.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
@@ -218,8 +277,39 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       backgroundColor: color.surface,
       borderWidth: 1,
       borderColor: color.border,
-      borderRadius: radius.xl,
+      borderRadius: radius.lg,
       overflow: 'hidden',
+    },
+    settingsRow: {
+      minHeight: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: color.border,
+    },
+    settingsRowLast: {
+      borderBottomWidth: 0,
+    },
+    settingsIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.surfaceMuted,
+    },
+    settingsLabel: {
+      flex: 1,
+      fontFamily: fontFamily.semibold,
+      fontSize: fontSize.body,
+      color: color.textPrimary,
+    },
+    settingsValue: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
     },
     languageControl: {
       gap: 0,
@@ -274,7 +364,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.sm,
-      borderRadius: radius.xl,
+      borderRadius: radius.lg,
       backgroundColor: color.surface,
       borderWidth: 1,
       borderColor: color.border,

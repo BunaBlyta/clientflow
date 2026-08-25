@@ -26,7 +26,7 @@ export function Card({ children, tone = 'surface', padding, radius: cornerRadius
           backgroundColor,
           borderColor: color.border,
           borderRadius: r,
-          padding: padding ?? 16,
+          padding: padding ?? 20,
           shadowColor: 'transparent',
         },
         style,

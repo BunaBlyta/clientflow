@@ -26,7 +26,9 @@ export default function ProjectsListScreen() {
 
   return (
     <Screen>
-      <Text style={styles.title}>{t('tabs.projects')}</Text>
+      <View style={styles.topbar}>
+        <Text style={styles.title}>{t('tabs.projects')}</Text>
+      </View>
 
       <View style={styles.list}>
         {projects.length === 0 ? (
@@ -54,11 +56,11 @@ export default function ProjectsListScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   title: {
-    fontFamily: fontFamily.bold,
+    fontFamily: fontFamily.serif,
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
-    marginBottom: spacing.xl,
     ...textShadow,
   },
   list: {

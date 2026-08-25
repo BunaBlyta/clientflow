@@ -30,6 +30,7 @@ export default function ProjectDetailScreen() {
   const { t } = useI18n();
   const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
+  const client = useAuthStore((s) => s.client);
   const project = useDataStore((s) => s.projectById(id));
   const refreshProject = useDataStore((s) => s.refreshProject);
   const refreshNotes = useDataStore((s) => s.refreshNotes);
@@ -76,30 +77,39 @@ export default function ProjectDetailScreen() {
 
   return (
     <Screen>
-      <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
+      <View style={styles.topbar}>
+        <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
+        <View style={styles.topbarTitle}>
+          <Text style={styles.topbarProjectName} numberOfLines={1}>{project.name}</Text>
+          <Text style={styles.topbarClientName} numberOfLines={1}>{client?.companyName ?? pkg?.name ?? ''}</Text>
+        </View>
+        <View style={styles.topbarSpacer} />
+      </View>
       {unreachable && (
         <Text style={styles.error}>
           {t('common.error')}
         </Text>
       )}
 
-      <Text style={styles.name}>{project.name}</Text>
-      {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
-      <Card style={[styles.section, styles.statusSection]}>
+      <Card padding={20} style={[styles.section, styles.statusSection]}>
         <View style={styles.overviewHeader}>
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>Project overview</Text>
           <View style={[styles.statusPill, { backgroundColor: getProjectStatusMeta(project.status, color, t).bg }]}>
             <Text style={[styles.statusPillText, { color: getProjectStatusMeta(project.status, color, t).text }]}>{getProjectStatusLabel(project.status, t)}</Text>
           </View>
         </View>
-        <RadialRing
-          ratio={Math.max(0, PROJECT_STAGES.indexOf(project.status)) / (PROJECT_STAGES.length - 1)}
-          size={164}
-          strokeWidth={14}
-          centerValue={`${Math.max(0, PROJECT_STAGES.indexOf(project.status))} / ${PROJECT_STAGES.length - 1}`}
-          centerLabel="PHASES ACTIVE"
-        />
-        <ProjectStageTracker status={project.status} />
+        <View style={styles.ringWrap}>
+          <RadialRing
+            ratio={Math.max(0, PROJECT_STAGES.indexOf(project.status)) / (PROJECT_STAGES.length - 1)}
+            size={128}
+            strokeWidth={10}
+            centerValue={`${Math.max(0, PROJECT_STAGES.indexOf(project.status))} / ${PROJECT_STAGES.length - 1}`}
+            centerLabel={['PHASES', 'ACTIVE']}
+          />
+        </View>
+        <View style={styles.phaseTracker}>
+          <ProjectStageTracker status={project.status} />
+        </View>
         <View style={styles.dateRow}>
           <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
           <Text style={styles.dateText}>{project.targetLaunchDate ? `Est. launch ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}</Text>
@@ -192,30 +202,25 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.warning,
     marginBottom: spacing.md,
   },
-  name: {
-    ...textShadow,
-    fontFamily: fontFamily.bold,
-    fontSize: fontSize.headingLg,
-    color: color.textPrimary,
-    marginTop: spacing.md,
-    textAlign: 'center',
-  },
-  packageName: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.caption,
-    color: color.textMuted,
-    marginTop: spacing.xs,
-    textAlign: 'center',
-  },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+  topbarTitle: { flex: 1, alignItems: 'center', minWidth: 0 },
+  topbarProjectName: { fontFamily: fontFamily.serif, fontSize: fontSize.cardTitle + 2, color: color.textPrimary },
+  topbarClientName: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textSecondary, marginTop: 2 },
+  topbarSpacer: { width: 44 },
+  name: { ...textShadow, fontFamily: fontFamily.serif, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.md, textAlign: 'center' },
+  packageName: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs, textAlign: 'center' },
   section: {
-    padding: spacing.xl,
+    padding: 20,
     marginTop: spacing.xl,
   },
   statusSection: {
-    padding: spacing.xl,
+    marginTop: 0,
+    padding: 20,
     paddingBottom: spacing.lg,
   },
-  overviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl },
+  overviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+  ringWrap: { alignItems: 'center', justifyContent: 'center', width: '100%' },
+  phaseTracker: { marginTop: spacing.md },
   statusPill: { borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
   statusPillText: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border, paddingTop: spacing.lg, marginTop: spacing.lg },
@@ -231,7 +236,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     gap: spacing.sm,
   },
   sectionTitle: {
-    fontFamily: fontFamily.semibold,
+    fontFamily: fontFamily.serif,
     fontSize: fontSize.sectionTitle,
     color: color.textPrimary,
     marginBottom: spacing.md,
@@ -243,10 +248,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: spacing.md,
+    paddingBottom: 0,
     marginBottom: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.border,
   },
   sectionFooterDivider: {
     height: StyleSheet.hairlineWidth,

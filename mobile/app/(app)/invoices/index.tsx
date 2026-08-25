@@ -46,7 +46,9 @@ export default function InvoicesScreen() {
 
   return (
     <Screen>
-      <Text style={styles.title}>{t('tabs.invoices')}</Text>
+      <View style={styles.topbar}>
+        <Text style={styles.title}>{t('tabs.invoices')}</Text>
+      </View>
       {invoices.length === 0 && <Text style={styles.subtitle}>{t('invoices.emptySubtitle')}</Text>}
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       {loading && invoices.length === 0 ? (
@@ -56,7 +58,7 @@ export default function InvoicesScreen() {
       ) : (
         <View>
           <View style={styles.summaryGrid}>
-            <Card tone="muted" style={styles.summaryCard}>
+            <Card tone="muted" padding={12} style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>{t('projects.outstanding')}</Text>
               <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(outstandingTotal)}</Text>
               <Text style={styles.summaryHint}>{invoices.filter((invoice) => invoice.status !== 'PAID').length} invoices due</Text>
@@ -93,17 +95,18 @@ export default function InvoicesScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    title: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary, ...textShadow },
+    topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+    title: { fontFamily: fontFamily.serif, fontSize: fontSize.headingLg, color: color.textPrimary, ...textShadow },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs, marginBottom: spacing.xl, ...textShadow },
     error: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.warning, marginBottom: spacing.md },
     loading: { marginTop: spacing.xxl },
-    summaryGrid: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xl, marginBottom: spacing.xxl },
-    summaryCard: { flex: 1, padding: spacing.lg, minHeight: 136 },
-    summaryValue: { fontFamily: fontFamily.bold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.md },
+    summaryGrid: { flexDirection: 'row', gap: spacing.md, marginTop: 0, marginBottom: spacing.xl },
+    summaryCard: { flex: 1, minHeight: 96 },
+    summaryValue: { fontFamily: fontFamily.serif, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm },
     summaryLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.caption, color: color.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
     summaryHint: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs },
     listHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
-    listHeadingText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
+    listHeadingText: { fontFamily: fontFamily.serif, fontSize: fontSize.sectionTitle, color: color.textPrimary },
     list: { gap: spacing.md },
   });
 }

@@ -7,12 +7,12 @@ interface RadialRingProps {
   size?: number;
   strokeWidth?: number;
   centerValue: string;
-  centerLabel: string;
+  centerLabel: string | string[];
 }
 
 // The "radial allocation" motif from the brief, put to real use here as a
 // paid-vs-outstanding ring instead of a decorative portfolio-allocation chart.
-export function RadialRing({ ratio, size = 132, strokeWidth = 14, centerValue, centerLabel }: RadialRingProps) {
+export function RadialRing({ ratio, size = 136, strokeWidth = 10, centerValue, centerLabel }: RadialRingProps) {
   const { color } = useTheme();
   const clamped = Math.min(1, Math.max(0, ratio));
   const radiusPx = (size - strokeWidth) / 2;
@@ -55,9 +55,11 @@ export function RadialRing({ ratio, size = 132, strokeWidth = 14, centerValue, c
         <Text style={[styles.value, { color: color.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
           {centerValue}
         </Text>
-        <Text style={[styles.label, { color: color.textMuted }]} numberOfLines={1}>
-          {centerLabel}
-        </Text>
+        {(Array.isArray(centerLabel) ? centerLabel : [centerLabel]).map((line) => (
+          <Text key={line} style={[styles.label, { color: color.textSecondary }]} numberOfLines={1}>
+            {line}
+          </Text>
+        ))}
       </View>
     </View>
   );
@@ -73,12 +75,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   value: {
-    fontFamily: fontFamily.bold,
-    fontSize: fontSize.headingLg,
+    fontFamily: fontFamily.serif,
+    fontSize: 30,
   },
   label: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.meta,
-    marginTop: 2,
+    fontFamily: fontFamily.semibold,
+    fontSize: 9.5,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    marginTop: 4,
   },
 });

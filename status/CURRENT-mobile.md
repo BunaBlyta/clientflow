@@ -1,61 +1,33 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-25 14:02 by Codex — remove duplicate home layout
+Last updated: 2026-08-25 14:58 by Codex — refine Meridian feedback
 
 ## What changed
 
-- Matched the mobile presentation to the proposed Meridian Client Portal PDF: warm off-white canvas, dark navy text, deep green accent, sage surfaces, rounded white cards, hairline borders, and a flat white tab bar with pale-green active states.
-- Completed the screen pass across home, projects, project detail, notes, invoices, checkout, notifications, account, and auth surfaces so old dark/glass-era card, composer, shadow, and progress treatments no longer remain in the active screens.
-- Added the reference-style home greeting/activity composition, project overview ring/tracker composition, proposal-style invoice actions, and profile card layout without changing navigation, API calls, stores, payment behavior, or feature behavior.
-- Removed the duplicate old home financial-stat row that was rendering alongside the proposal-style Next payment/Messages row, and made the phase ring render as five separated reference-style segments.
+- Matched the mobile client portal’s shared visual system to `mobile/assets/meridian-design-handoff`: warm off-white canvas, white cards, sage activity rows, exact Meridian teal accents, tighter 390px-style spacing, and restrained 12–24px typography.
+- Added a system-safe serif accent for page titles, project names, invoice amounts, and section headings to mirror the handoff’s Lora treatment without installing another package.
+- Updated Home to use the five phase-chip summary, compact payment/message stats, and handoff-style activity rows.
+- Updated Projects, Invoices, Notifications, Account, and Project Detail headers and layouts; added client avatars to the tab screens.
+- Replaced the project detail progress timeline with five phase icon states and resized the segmented ring to the handoff’s 136px treatment.
+- Updated invoice and notification rows to use the handoff’s sage capsules with left accent rails.
+- Changed default notification icons and rails to quiet grey, reserving soft red/green backgrounds and matching icon colours for danger/success states.
+- Centered and slightly reduced the project detail ring, shortened invoice KPI cards, moved invoice/notification rails closer to the card edge, enlarged invoice amounts, and removed the white fill from View actions.
+- Reshaped note bubbles so received messages use sage with a soft lower-left corner and sent messages use teal with a soft lower-right corner; sent messages now align to the right without a duplicate avatar.
+- Added an Account Settings section for Language, Light/Dark theme, and Help & Support, plus a simple Help & Support screen. Theme selection changes the app palette in place.
+- Dropped the project phase row slightly lower beneath the ring and explicitly hid Help & Support from the bottom tab bar; it remains reachable only from Account.
+- Restored the five-tab layout spacing by moving Help & Support under a hidden Settings route, removed avatars from Home/Projects/Invoices/Notifications, and increased the visible page titles slightly.
+- Gave Help & Support a horizontal icon/title header and separate description spacing.
 
 ## Verification
 
 - `npx tsc --noEmit`: passed.
-- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-web-v3`: passed.
+- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-meridian-check-v5`: passed.
 - `git diff --check`: passed.
-- `npx eslint .`: the standalone Expo folder has no applicable ESLint configuration; ESLint reports that all files are ignored.
+- `npx eslint .`: mobile has no applicable ESLint configuration; ESLint reports that all files are ignored.
+- Browser preview inspection was unavailable because no browser connection was available in this session.
 
-## Current state
+## Scope and handoff
 
-- The mobile UI now uses the Meridian light visual system throughout shared surfaces and the client-facing tab screens.
-- No API contract changes were made.
-- Existing unrelated mobile work in other dirty files was left untouched.
-
-## What changed
-
-- Replaced per-screen focus animations with one native-driven, 180ms tab transition owned by the tab navigator. All tab scenes are pre-mounted and kept attached so first visits and preserved nested screens switch consistently.
-- Restored native stack motion for drill-down navigation while preventing a second stack animation during cross-tab entries.
-- Gave Invoices its own nested stack. Opening an invoice, entering checkout, and returning from checkout now keep the Invoices tab active; the Projects tab is never used as an intermediate route.
-- Gave Notifications its own nested stack. Notification targets, Notes, invoice lists, invoice details, and checkout remain inside Notifications, and Back returns through the notification-origin flow.
-- Reused the existing project, notes, invoice, and checkout screens through thin route wrappers rather than duplicating business or payment logic.
-- Replaced native navigation headers across app detail and auth flows with one compact, borderless Lucide left-arrow control. It keeps a 44px touch target and localized accessibility label without reserving a full header.
-- Removed the fade layer from tab transitions so outgoing invoice/notification content cannot ghost through the incoming tab.
-- Kept the web tab fallback unanimated because the navigation issue being solved is native-only.
-
-## Verification
-
-- `cd mobile && npx tsc --noEmit`: passed.
-- `cd mobile && npx expo export --platform ios --output-dir /private/tmp/clientflow-mobile-ios-notifications-stack`: passed.
-- `git diff --check -- mobile`: passed.
-- A native iOS Simulator development build compiled and installed successfully earlier in this task.
-- `npm run verify` from the repository root reached lint and stopped on two unrelated web-lane errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`; mobile-owned files were not involved.
-- User verified the final Invoices and Notifications navigation behavior on device and approved it as “very good.”
-
-## Current state
-
-- Bottom-tab switching uses one consistent navigator-level transition.
-- Invoices and Notifications own their detail navigation stacks and keep their tab active throughout their flows.
-- Projects owns project-origin drill-down navigation with native push/back motion.
-- All visible back controls use the same app-owned icon-only treatment.
-- Auth, API calls, data stores, notification refresh/realtime behavior, and webhook-backed payment state remain unchanged.
-
-## Known limits
-
-- Route-tree changes require a full Metro restart with `npx expo start -c`; Fast Refresh can retain stale tab registrations.
-- Home shortcuts still open their canonical Project routes in the Projects tab.
-- Root verification remains blocked by unrelated web-lane lint errors; do not fix those from the mobile lane.
-
-## API seam
-
-- No API contract changes were made.
+- No API contracts, stores, navigation behavior, payment behavior, or authentication behavior were changed.
+- Existing unrelated auth/navigation work in the checkout was preserved and is not included in the design commit.
+- The untracked handoff reference files were used as source material and left untouched.

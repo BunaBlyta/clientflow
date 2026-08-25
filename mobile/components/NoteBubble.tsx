@@ -36,9 +36,11 @@ export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
 
   return (
     <View style={[styles.message, preview && styles.previewMessage, isClient && styles.clientMessage]}>
-      <View style={[styles.avatar, isClient ? styles.clientAvatar : styles.studioAvatar]}>
-        <Text style={[styles.avatarText, isClient && styles.clientAvatarText]}>{initials}</Text>
-      </View>
+      {!isClient && (
+        <View style={[styles.avatar, styles.studioAvatar]}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
+      )}
       <View style={[styles.messageContent, isClient && styles.clientMessageContent]}>
         <View style={[styles.metaRow, isClient && styles.clientMetaRow]}>
           <Text style={styles.author}>{note.authorName}</Text>
@@ -64,7 +66,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingVertical: spacing.sm,
   },
   clientMessage: {
-    flexDirection: 'row-reverse',
+    justifyContent: 'flex-end',
   },
   previewMessage: {
     paddingVertical: spacing.sm,
@@ -81,17 +83,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
   },
-  clientAvatar: {
-    backgroundColor: color.accent,
-  },
   avatarText: {
     fontFamily: fontFamily.medium,
     fontSize: 10,
     color: color.textSecondary,
     letterSpacing: 0.3,
-  },
-  clientAvatarText: {
-    color: color.textOnAccent,
   },
   metaRow: {
     flexDirection: 'row',
@@ -133,17 +129,17 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   bodyWrap: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: color.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
-    borderRadius: radius.lg,
+    backgroundColor: color.surfaceSage,
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
   },
   previewBodyWrap: {
-    backgroundColor: color.accentSoft,
+    backgroundColor: color.surfaceSage,
   },
   clientBodyWrap: {
-    backgroundColor: color.accentSoft,
-    borderColor: color.accentSoft,
+    backgroundColor: color.accent,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 4,
   },
   body: {
     fontFamily: fontFamily.regular,
@@ -152,7 +148,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     lineHeight: 20,
   },
   clientBody: {
-    color: color.textPrimary,
+    color: color.textOnAccent,
   },
   systemRow: {
     flexDirection: 'row',

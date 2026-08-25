@@ -38,6 +38,8 @@ export default function HomeScreen() {
   const project = projects[0];
   const payableInvoice = invoices.find((invoice) => invoice.status === 'SENT' || invoice.status === 'FAILED');
   const unreadMessages = notifications.filter((notification) => !notification.read).length;
+  const phaseCount = project ? Math.max(0, PROJECT_STAGES.indexOf(project.status)) : 0;
+  const phaseStatus = project?.status === 'PENDING' ? 'DISCOVERY' : project?.status;
 
   return (
     <Screen>
@@ -45,10 +47,6 @@ export default function HomeScreen() {
         <View style={styles.headingCopy}>
           <Text style={styles.greeting}>{t('home.goodAfternoon')}</Text>
           <Text style={styles.userName}>{client?.name?.split(' ')[0] ?? t('projects.greeting')}</Text>
-          <Text style={styles.subtitle}>{client?.companyName ?? t('projects.greeting')}</Text>
-        </View>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{client?.name?.charAt(0).toUpperCase() ?? '?'}</Text>
         </View>
       </View>
 
@@ -56,7 +54,7 @@ export default function HomeScreen() {
         <EmptyState icon={FolderKanban} title={t('projects.emptyTitle')} subtitle={t('projects.emptySubtitle')} />
       ) : (
         <>
-          <Card tone="glow" style={styles.statusSection}>
+          <Card tone="glow" padding={20} style={styles.statusSection}>
             <View style={styles.statusHeader}>
               <View style={styles.statusCopy}>
                 <Text style={styles.heroKicker}>{client?.companyName ?? t('projects.status')}</Text>
@@ -73,19 +71,12 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <View style={styles.phaseRow}>
-              <Text style={styles.phaseText}>{getProjectStatusLabel(project.status, t)} phase</Text>
-              <Text style={styles.phaseText}>{Math.round(Math.max(8, ((PROJECT_STAGES.indexOf(project.status) + 1) / PROJECT_STAGES.length) * 100))}%</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.max(8, ((PROJECT_STAGES.indexOf(project.status) + 1) / PROJECT_STAGES.length) * 100)}%`,
-                    backgroundColor: getProjectStatusMeta(project.status, color, t).text,
-                  },
-                ]}
-              />
+              <View style={styles.phaseChips}>
+                {PROJECT_STAGES.slice(1).map((stage, index) => (
+                  <View key={stage} style={[styles.phaseChip, index < phaseCount && styles.phaseChipActive]} />
+                ))}
+              </View>
+              <Text style={styles.phaseText}>{getProjectStatusLabel(phaseStatus ?? 'DISCOVERY', t)} phase</Text>
             </View>
             <View style={styles.dateRow}>
               <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
@@ -143,36 +134,35 @@ export default function HomeScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.lg },
+    headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     headingCopy: { flex: 1 },
-    greeting: { fontFamily: fontFamily.regular, fontSize: fontSize.sectionTitle, color: color.textSecondary, ...textShadow },
-    userName: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary, marginTop: spacing.xs },
+    greeting: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textSecondary, ...textShadow },
+    userName: { fontFamily: fontFamily.serif, fontSize: fontSize.headingLg, color: color.textPrimary, marginTop: spacing.xs },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.sm, ...textShadow },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md },
-    avatarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accentText },
-    statusSection: { marginTop: spacing.xxl },
+    statusSection: { marginTop: spacing.xl },
     statusHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
     statusCopy: { flex: 1 },
-    heroKicker: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.textPrimary },
+    heroKicker: { fontFamily: fontFamily.serif, fontSize: fontSize.cardTitle + 2, color: color.textPrimary },
     projectName: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textSecondary, marginTop: spacing.xs },
     statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: color.surfaceMuted },
     statusValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
-    phaseRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl },
-    phaseText: { fontFamily: fontFamily.medium, fontSize: fontSize.body, color: color.textSecondary },
-    progressTrack: { height: spacing.md, borderRadius: spacing.md / 2, backgroundColor: color.surfaceMuted, marginTop: spacing.sm, overflow: 'hidden' },
-    progressFill: { height: '100%', borderRadius: spacing.xs / 2 },
+    phaseRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg },
+    phaseChips: { flexDirection: 'row', gap: 5 },
+    phaseChip: { width: 20, height: 6, borderRadius: 3, backgroundColor: color.surfaceMuted },
+    phaseChipActive: { backgroundColor: color.accent },
+    phaseText: { flex: 1, fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textPrimary },
     dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.xl, paddingTop: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border },
     dateText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted },
     detailsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs, marginTop: spacing.lg },
     detailsText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
-    statsRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.lg, marginTop: spacing.lg },
-    statCard: { flex: 1, padding: spacing.lg, minHeight: 136, borderRadius: radius.lg, backgroundColor: color.surfaceMuted },
+    statsRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.md, marginTop: spacing.md },
+    statCard: { flex: 1, padding: spacing.lg, minHeight: 104, borderRadius: radius.md, backgroundColor: color.surfaceMuted },
     statLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textSecondary, textTransform: 'uppercase', letterSpacing: 0.7 },
-    statValue: { fontFamily: fontFamily.bold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.lg },
+    statValue: { fontFamily: fontFamily.serif, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm },
     statHint: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs },
-    activityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xxl, marginBottom: spacing.sm },
-    activityTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
-    activityLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
+    activityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl, marginBottom: spacing.sm },
+    activityTitle: { fontFamily: fontFamily.serif, fontSize: fontSize.sectionTitle, color: color.textPrimary },
+    activityLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.body, color: color.accent },
     activityList: { gap: spacing.xs },
     pressed: { opacity: 0.62 },
   });
