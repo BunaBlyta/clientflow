@@ -1,6 +1,5 @@
 import { Check, CircleDot, Code2, Eye, PauseCircle, PencilRuler, Rocket, Search, XCircle } from 'lucide-react-native';
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, PROJECT_STAGES } from '../lib/status';
@@ -80,7 +79,6 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
 
             return (
               <View key={stage} style={styles.stageItem}>
-                {index % 2 === 0 ? label : <View style={styles.labelSlot} />}
                 <StageIndicator
                   stage={stage}
                   completed={completed}
@@ -88,12 +86,11 @@ export function ProjectStageTracker({ status }: ProjectStageTrackerProps) {
                   colors={color}
                   styles={styles}
                 />
-                {index % 2 === 1 ? label : <View style={styles.labelSlot} />}
+                {label}
               </View>
             );
           })}
         </View>
-        <Text style={styles.currentMeta}>{t('status.inProgress')}</Text>
       </View>
     </View>
   );
@@ -112,37 +109,11 @@ function StageIndicator({
   colors: ReturnType<typeof useTheme>['color'];
   styles: ReturnType<typeof createStyles>;
 }) {
-  const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!current) return;
-    pulse.setValue(0);
-    const loop = Animated.loop(
-      Animated.timing(pulse, {
-        toValue: 1,
-        duration: 1600,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      })
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [current, pulse]);
-
   if (current) {
-    const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] });
-    const ringOpacity = pulse.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.5, 0.28, 0] });
     const Icon = STAGE_ICONS[stage] ?? CircleDot;
 
     return (
       <View style={styles.circleWrap}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.pulseRing,
-            { opacity: ringOpacity, transform: [{ scale: ringScale }] },
-          ]}
-        />
         <View style={styles.circleCurrent}>
           <Icon size={13} color={colors.accentText} strokeWidth={2.2} />
         </View>
@@ -216,16 +187,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       width: FUTURE_DOT_SIZE,
       height: FUTURE_DOT_SIZE,
       borderRadius: FUTURE_DOT_SIZE / 2,
-      backgroundColor: color.background,
-      borderWidth: StyleSheet.hairlineWidth,
+      backgroundColor: color.darkGlass,
+      borderWidth: 1,
       borderColor: color.borderStrong,
-    },
-    pulseRing: {
-      position: 'absolute',
-      width: INDICATOR_SIZE,
-      height: INDICATOR_SIZE,
-      borderRadius: INDICATOR_SIZE / 2,
-      backgroundColor: color.accent,
     },
     circleCurrent: {
       width: CIRCLE_SIZE,
@@ -239,7 +203,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     lineTrack: {
       position: 'absolute',
-      top: LABEL_SLOT_HEIGHT + INDICATOR_SIZE / 2 - 1,
+      top: INDICATOR_SIZE / 2 - 1,
       left: INDICATOR_SIZE / 2,
       right: INDICATOR_SIZE / 2,
       height: 2,

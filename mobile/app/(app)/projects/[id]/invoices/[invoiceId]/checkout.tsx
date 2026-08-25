@@ -186,7 +186,9 @@ export default function CheckoutScreen() {
         <>
           <View style={styles.card}>
             <Text style={styles.merchant}>{t('checkout.merchant')}</Text>
-            <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
+            <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit>
+              {formatCurrency(invoice.amountCents)}
+            </Text>
             <Text style={styles.label}>{invoice.label}</Text>
 
           </View>
@@ -263,7 +265,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   screenTitle: {
     fontFamily: fontFamily.semibold,
-    fontSize: fontSize.headingLg,
+    fontSize: fontSize.heading,
     color: color.textPrimary,
     marginBottom: spacing.lg,
   },
@@ -274,9 +276,13 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   card: {
     padding: spacing.lg,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     backgroundColor: color.surface,
+    borderWidth: 1,
+    borderColor: color.border,
     marginBottom: spacing.xl,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   merchant: {
     fontFamily: fontFamily.medium,
@@ -284,10 +290,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
   },
   amount: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 30,
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.hero,
     color: color.textPrimary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   label: {
     fontFamily: fontFamily.regular,
@@ -349,7 +355,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   backLink: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    color: color.accent,
+    color: color.accentText,
     textAlign: 'center',
   },
   message: {

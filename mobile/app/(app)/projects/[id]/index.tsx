@@ -6,7 +6,7 @@ import { ProjectStageTracker } from '../../../../components/ProjectStageTracker'
 import { InvoiceRow } from '../../../../components/InvoiceRow';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
-import { formatCurrency, formatDate } from '../../../../lib/format';
+import { formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
 import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
@@ -14,8 +14,9 @@ import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { SurfaceGradient } from '../../../../components/ui/SurfaceGradient';
 import { Card } from '../../../../components/ui/Card';
+import { RadialRing } from '../../../../components/ui/RadialRing';
+import { PROJECT_STAGES, getProjectStatusLabel, getProjectStatusMeta } from '../../../../lib/status';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 
 export default function ProjectDetailScreen() {
@@ -68,13 +69,6 @@ export default function ProjectDetailScreen() {
 
   const pkg = getPackageById(project.packageId);
   const visibleInvoices = invoices.filter((i) => i.status !== 'DRAFT');
-  const paidTotal = invoices
-    .filter((i) => i.status === 'PAID')
-    .reduce((sum, i) => sum + i.amountCents, 0);
-  const outstandingTotal = invoices
-    .filter((i) => i.status === 'SENT' || i.status === 'FAILED' || i.status === 'PAYMENT_PENDING')
-    .reduce((sum, i) => sum + i.amountCents, 0);
-
   // notesForProject sorts newest first, so the first note is the recent preview.
   const visibleNotes = notes.filter((note) => note.authorRole !== 'SYSTEM');
   const recentNotes = visibleNotes.slice(0, 1);
@@ -89,51 +83,27 @@ export default function ProjectDetailScreen() {
         </Text>
       )}
 
-      <Text style={styles.eyebrow}>PROJECT</Text>
       <Text style={styles.name}>{project.name}</Text>
       {pkg && <Text style={styles.packageName}>{pkg.name}</Text>}
-      <View style={styles.titleDivider} />
-
-      <View style={styles.statRow}>
-        <View style={styles.stat}>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-            {formatCurrency(paidTotal)}
-          </Text>
-          <Text style={styles.statLabel}>{t('projects.paidToDate')}</Text>
+      <Card style={[styles.section, styles.statusSection]}>
+        <View style={styles.overviewHeader}>
+          <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>Project overview</Text>
+          <View style={[styles.statusPill, { backgroundColor: getProjectStatusMeta(project.status, color, t).bg }]}>
+            <Text style={[styles.statusPillText, { color: getProjectStatusMeta(project.status, color, t).text }]}>{getProjectStatusLabel(project.status, t)}</Text>
+          </View>
         </View>
-        <View style={styles.stat}>
-          <Text
-            style={[
-              styles.statValue,
-              outstandingTotal > 0 && { color: color.warning },
-            ]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          >
-            {formatCurrency(outstandingTotal)}
-          </Text>
-          <Text style={styles.statLabel}>{t('projects.outstanding')}</Text>
-        </View>
-      </View>
-
-      <SurfaceGradient
-        colors={[color.surface, color.surface]}
-        style={[styles.section, styles.statusSection]}
-      >
-        <Text style={styles.sectionTitle}>{t('projects.status')}</Text>
+        <RadialRing
+          ratio={Math.max(0, PROJECT_STAGES.indexOf(project.status)) / (PROJECT_STAGES.length - 1)}
+          size={164}
+          strokeWidth={14}
+          centerValue={`${Math.max(0, PROJECT_STAGES.indexOf(project.status))} / ${PROJECT_STAGES.length - 1}`}
+          centerLabel="PHASES ACTIVE"
+        />
         <ProjectStageTracker status={project.status} />
-      </SurfaceGradient>
-
-      <Card tone="muted" style={[styles.section, styles.overviewSection]}>
-        <Text style={styles.overviewLabel}>{pkg?.name}</Text>
-        {pkg?.description && (
-          <Text style={styles.overviewDescription}>{pkg.description}</Text>
-        )}
-        {project.targetLaunchDate && (
-          <Text style={styles.overviewTarget}>
-            {t('common.target')}: {formatDate(project.targetLaunchDate)}
-          </Text>
-        )}
+        <View style={styles.dateRow}>
+          <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
+          <Text style={styles.dateText}>{project.targetLaunchDate ? `Est. launch ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}</Text>
+        </View>
       </Card>
 
       <Card tone="surface" style={[styles.section, styles.notesSection]}>
@@ -230,14 +200,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: spacing.md,
     textAlign: 'center',
   },
-  eyebrow: {
-    ...textShadow,
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.meta,
-    color: color.accentText,
-    letterSpacing: 1.8,
-    textAlign: 'center',
-  },
   packageName: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.caption,
@@ -245,40 +207,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: spacing.xs,
     textAlign: 'center',
   },
-  titleDivider: {
-    height: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  statRow: {
-    flexDirection: 'row',
-    gap: spacing.xl,
-    marginTop: spacing.xl,
-    marginBottom: spacing.xl,
-  },
-  stat: {
-    flex: 1,
-  },
-  statValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: fontSize.hero,
-    color: color.textPrimary,
-  },
-  statLabel: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-    marginTop: spacing.xs,
-  },
   section: {
     padding: spacing.xl,
     marginTop: spacing.xl,
   },
   statusSection: {
+    padding: spacing.xl,
     paddingBottom: spacing.lg,
   },
-  overviewSection: {
-    paddingBottom: spacing.lg,
-  },
+  overviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl },
+  statusPill: { borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  statusPillText: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
+  dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border, paddingTop: spacing.lg, marginTop: spacing.lg },
+  dateText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted },
   notesSection: {
     marginTop: spacing.xl,
   },
@@ -288,26 +229,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   invoicePreviewList: {
     gap: spacing.sm,
-  },
-  overviewLabel: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  overviewDescription: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.body,
-    color: color.textSecondary,
-    lineHeight: 21,
-    marginTop: spacing.sm,
-  },
-  overviewTarget: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.textMuted,
-    marginTop: spacing.lg,
   },
   sectionTitle: {
     fontFamily: fontFamily.semibold,

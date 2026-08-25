@@ -110,7 +110,9 @@ export default function InvoiceDetailScreen() {
       <Text style={styles.screenTitle}>{invoice.label}</Text>
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
-      <Text style={styles.amount}>{formatCurrency(invoice.amountCents)}</Text>
+      <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit>
+        {formatCurrency(invoice.amountCents)}
+      </Text>
       <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
 
       <View style={styles.detailsBlock}>
@@ -196,7 +198,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   screenTitle: {
     fontFamily: fontFamily.semibold,
-    fontSize: fontSize.headingLg,
+    fontSize: fontSize.heading,
     color: color.textPrimary,
     marginBottom: spacing.xs,
   },
@@ -207,20 +209,24 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: spacing.sm,
   },
   amount: {
-    fontFamily: fontFamily.semibold,
-    fontSize: 32,
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.headingLg,
     color: color.textPrimary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
   detailsBlock: {
     marginTop: spacing.xl,
     marginBottom: spacing.xl,
     backgroundColor: color.surface,
-    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: color.border,
+    borderRadius: radius.xl,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     gap: spacing.xs,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   row: {
     flexDirection: 'row',

@@ -38,13 +38,9 @@ export default function AccountScreen() {
         </View>
         <View style={styles.profileCopy}>
           <Text style={styles.name}>{client?.name}</Text>
+          <Text style={styles.email}>{client?.email}</Text>
           <Text style={styles.company}>{client?.companyName}</Text>
         </View>
-      </View>
-
-      <View style={styles.infoSection}>
-        <InfoRow label={t('account.email')} value={client?.email ?? ''} />
-        <InfoRow label={t('account.company')} value={client?.companyName ?? ''} last />
       </View>
 
       <PreferenceGroup label={t('account.language')}>
@@ -103,27 +99,6 @@ export default function AccountScreen() {
 
       <Text style={styles.footer}>{t('account.version')}</Text>
     </Screen>
-  );
-}
-
-function InfoRow({
-  label,
-  value,
-  last = false,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
-  const { color } = useTheme();
-  const styles = createStyles(color);
-  return (
-    <View style={[styles.infoRow, last && styles.infoRowLast]}>
-      <View style={styles.infoTextCol}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue} numberOfLines={1}>{value}</Text>
-      </View>
-    </View>
   );
 }
 
@@ -215,43 +190,17 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.heading,
       color: color.textPrimary,
     },
+    email: {
+      fontFamily: fontFamily.regular,
+      fontSize: fontSize.body,
+      color: color.textSecondary,
+      marginTop: spacing.xs,
+    },
     company: {
       fontFamily: fontFamily.regular,
       fontSize: fontSize.body,
       color: color.textMuted,
-      marginTop: spacing.xs,
-    },
-    infoSection: {
-      backgroundColor: color.surface,
-      borderWidth: 1,
-      borderColor: color.border,
-      paddingHorizontal: spacing.lg,
-      marginBottom: spacing.lg,
-      borderRadius: radius.xl,
-      shadowOpacity: 0,
-      elevation: 0,
-    },
-    infoRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: spacing.lg,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: color.border,
-    },
-    infoRowLast: { borderBottomWidth: 0 },
-    infoTextCol: {
-      flex: 1,
-    },
-    infoLabel: {
-      fontFamily: fontFamily.regular,
-      fontSize: fontSize.caption,
-      color: color.textMuted,
-    },
-    infoValue: {
-      fontFamily: fontFamily.medium,
-      fontSize: fontSize.body,
-      color: color.textPrimary,
-      marginTop: 2,
+      marginTop: spacing.sm,
     },
     preferenceGroup: {
       marginBottom: spacing.lg,
@@ -260,24 +209,31 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontFamily: fontFamily.medium,
       fontSize: fontSize.caption,
       color: color.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
       marginBottom: spacing.sm,
     },
     preferenceOptions: {
-      gap: spacing.xs,
+      gap: 0,
+      backgroundColor: color.surface,
+      borderWidth: 1,
+      borderColor: color.border,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
     },
     languageControl: {
-      flexDirection: 'row',
-      gap: spacing.sm,
+      gap: 0,
     },
     languageOption: {
-      flex: 1,
-      minHeight: 52,
+      minHeight: 56,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
       paddingHorizontal: spacing.sm,
-      borderRadius: radius.md,
-      backgroundColor: color.surfaceMuted,
+      borderRadius: 0,
+      backgroundColor: color.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: color.border,
     },
     languageOptionSelected: {
       backgroundColor: color.accentSoft,

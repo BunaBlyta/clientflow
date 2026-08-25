@@ -51,9 +51,11 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
           <View style={[styles.statusPill, { backgroundColor: meta.bg }]}>
             <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
           </View>
-          <Text style={[styles.actionText, { color: invoice.status === 'PAID' ? color.textSecondary : color.accent }]}>
-            {invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? t('common.viewAll') : t('invoices.payNow')}
-          </Text>
+          <View style={[styles.actionButton, invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? styles.actionButtonSecondary : styles.actionButtonPrimary]}>
+            <Text style={[styles.actionText, { color: invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? color.textSecondary : color.textOnAccent }]}>
+              {invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? t('common.viewAll') : t('invoices.payNow')}
+            </Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -137,5 +139,8 @@ function createStyles(color: ThemeColors) {
       fontFamily: fontFamily.semibold,
       fontSize: fontSize.cardTitle,
     },
+    actionButton: { minWidth: 92, alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
+    actionButtonPrimary: { backgroundColor: color.accent },
+    actionButtonSecondary: { backgroundColor: color.surface, borderWidth: 1, borderColor: color.border },
   });
 }

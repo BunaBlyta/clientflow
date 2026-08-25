@@ -17,6 +17,7 @@ import { NoteBubble } from '../../../../components/NoteBubble';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { formatDate } from '../../../../lib/format';
 import { Screen } from '../../../../components/ui/Screen';
+import { AtmosphereBackground } from '../../../../components/ui/AtmosphereBackground';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
@@ -98,6 +99,7 @@ export default function ProjectNotesScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
+      <AtmosphereBackground />
       <ScrollView
         ref={scrollRef}
         style={styles.flex}
@@ -210,10 +212,10 @@ export default function ProjectNotesScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-  flex: { flex: 1, backgroundColor: color.canvas },
+  flex: { flex: 1, backgroundColor: 'transparent' },
   content: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
   },
   loading: {
@@ -261,7 +263,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.lg,
-    backgroundColor: color.surfaceMuted,
+    backgroundColor: color.surface,
+    borderWidth: 1,
+    borderColor: color.border,
     borderRadius: radius.md,
   },
   intro: {
@@ -300,9 +304,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
     borderTopColor: color.border,
-    backgroundColor: color.canvas,
+    backgroundColor: color.surface,
   },
   composerRow: {
     flexDirection: 'row',
@@ -317,11 +321,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textPrimary,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     textAlignVertical: 'top',
-    backgroundColor: color.surface,
+    backgroundColor: color.surfaceMuted,
     maxHeight: 112,
   },
   inputFocused: {

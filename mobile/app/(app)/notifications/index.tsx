@@ -88,12 +88,6 @@ export default function NotificationsScreen() {
       <View style={styles.headerRow}>
         <View style={styles.headingCopy}>
           <Text style={styles.heading}>{t('notifications.title')}</Text>
-          <View style={styles.headingMeta}>
-            <View style={[styles.headingDot, unread > 0 && styles.headingDotUnread]} />
-            <Text style={styles.headingMetaText}>
-              {unread > 0 ? `${unread}` : '0'}
-            </Text>
-          </View>
         </View>
         {unread > 0 && (
           <Pressable
@@ -220,8 +214,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   groupLabel: {
     fontFamily: fontFamily.bold,
-    fontSize: fontSize.heading,
-    color: color.textPrimary,
+    fontSize: fontSize.sectionTitle,
+    color: color.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
     marginBottom: spacing.lg,
   },
   });

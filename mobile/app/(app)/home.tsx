@@ -13,6 +13,7 @@ import { useDataStore } from '../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { Card } from '../../components/ui/Card';
 import { useProjectTabNavigation } from '../../lib/project-tab-navigation';
+import { NotificationRow } from '../../components/NotificationRow';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function HomeScreen() {
   const token = useAuthStore((s) => s.token);
   const projects = useDataStore(useShallow((s) => s.projects));
   const invoices = useDataStore(useShallow((s) => s.invoices.filter((invoice) => invoice.status !== 'DRAFT')));
+  const notifications = useDataStore(useShallow((s) => [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 3)));
   const refreshProjects = useDataStore((s) => s.refreshProjects);
   const refreshInvoices = useDataStore((s) => s.refreshInvoices);
 
@@ -61,9 +63,8 @@ export default function HomeScreen() {
     <Screen>
       <View style={styles.headingRow}>
         <View style={styles.headingCopy}>
-          <Text style={styles.greeting}>
-            {client ? `${t('projects.hi')}, ${client.name.split(' ')[0]}` : t('projects.greeting')}
-          </Text>
+          <Text style={styles.greeting}>{t('home.goodAfternoon')}</Text>
+          <Text style={styles.userName}>{client?.name?.split(' ')[0] ?? t('projects.greeting')}</Text>
           <Text style={styles.subtitle}>{client?.companyName ?? t('projects.greeting')}</Text>
         </View>
         <View style={styles.avatar}>
@@ -171,6 +172,22 @@ export default function HomeScreen() {
               </Pressable>
             </Card>
           </View>
+
+          <View style={styles.activityHeader}>
+            <Text style={styles.activityTitle}>Recent activity</Text>
+            <Pressable onPress={() => router.push('/notifications')}>
+              <Text style={styles.activityLink}>See all</Text>
+            </Pressable>
+          </View>
+          <View style={styles.activityList}>
+            {notifications.map((notification) => (
+              <NotificationRow
+                key={notification.id}
+                notification={notification}
+                onPress={() => router.push('/notifications')}
+              />
+            ))}
+          </View>
         </>
       )}
     </Screen>
@@ -182,6 +199,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.lg },
     headingCopy: { flex: 1 },
     greeting: { fontFamily: fontFamily.regular, fontSize: fontSize.sectionTitle, color: color.textSecondary, ...textShadow },
+    userName: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary, marginTop: spacing.xs },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.sm, ...textShadow },
     avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: color.accentSoft, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md },
     avatarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accentText },
@@ -217,6 +235,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     summaryPressable: { flex: 1, gap: spacing.sm, justifyContent: 'space-between' },
     summaryText: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary },
     summaryStatus: { fontFamily: fontFamily.medium, fontSize: fontSize.meta },
+    activityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xxl, marginBottom: spacing.sm },
+    activityTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
+    activityLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
+    activityList: { gap: spacing.xs },
     pressed: { opacity: 0.62 },
   });
 }
