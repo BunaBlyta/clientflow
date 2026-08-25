@@ -1,17 +1,18 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-25 13:53 by Codex — complete Meridian screen pass
+Last updated: 2026-08-25 14:02 by Codex — remove duplicate home layout
 
 ## What changed
 
 - Matched the mobile presentation to the proposed Meridian Client Portal PDF: warm off-white canvas, dark navy text, deep green accent, sage surfaces, rounded white cards, hairline borders, and a flat white tab bar with pale-green active states.
 - Completed the screen pass across home, projects, project detail, notes, invoices, checkout, notifications, account, and auth surfaces so old dark/glass-era card, composer, shadow, and progress treatments no longer remain in the active screens.
 - Added the reference-style home greeting/activity composition, project overview ring/tracker composition, proposal-style invoice actions, and profile card layout without changing navigation, API calls, stores, payment behavior, or feature behavior.
+- Removed the duplicate old home financial-stat row that was rendering alongside the proposal-style Next payment/Messages row, and made the phase ring render as five separated reference-style segments.
 
 ## Verification
 
 - `npx tsc --noEmit`: passed.
-- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-web-v2`: passed.
+- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-web-v3`: passed.
 - `git diff --check`: passed.
 - `npx eslint .`: the standalone Expo folder has no applicable ESLint configuration; ESLint reports that all files are ignored.
 

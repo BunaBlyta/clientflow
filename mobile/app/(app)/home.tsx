@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ArrowUpRight, CircleDollarSign, FolderKanban, MessageSquare } from 'lucide-react-native';
+import { ArrowUpRight, FolderKanban } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect } from 'react';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
 import { formatCurrency, formatDate } from '../../lib/format';
-import { getInvoiceStatusMeta, getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
+import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
@@ -36,28 +36,8 @@ export default function HomeScreen() {
   }, [refreshInvoices, refreshProjects, token]);
 
   const project = projects[0];
-  const paidTotal = invoices
-    .filter((invoice) => invoice.status === 'PAID')
-    .reduce((sum, invoice) => sum + invoice.amountCents, 0);
-  const outstandingTotal = invoices
-    .filter((invoice) => invoice.status === 'SENT' || invoice.status === 'FAILED' || invoice.status === 'PAYMENT_PENDING')
-    .reduce((sum, invoice) => sum + invoice.amountCents, 0);
   const payableInvoice = invoices.find((invoice) => invoice.status === 'SENT' || invoice.status === 'FAILED');
-  const nextAction = payableInvoice
-    ? {
-        icon: CircleDollarSign,
-        label: payableInvoice.status === 'FAILED' ? t('invoices.retryPayment') : t('invoices.payNow'),
-        detail: `${payableInvoice.label} · ${formatCurrency(payableInvoice.amountCents)}`,
-        onPress: () => projectNavigation.openInvoice(payableInvoice.projectId, payableInvoice.id, 'home'),
-      }
-    : project
-      ? {
-          icon: MessageSquare,
-          label: t('projects.notes'),
-          detail: t('notes.writeNote'),
-          onPress: () => projectNavigation.openNotes(project.id, 'home'),
-        }
-      : null;
+  const unreadMessages = notifications.filter((notification) => !notification.read).length;
 
   return (
     <Screen>
@@ -118,59 +98,26 @@ export default function HomeScreen() {
           </Card>
 
           <View style={styles.statsRow}>
-            <View style={styles.stat}>
+            <Pressable
+              onPress={() => payableInvoice ? projectNavigation.openInvoice(payableInvoice.projectId, payableInvoice.id, 'home') : router.push('/invoices')}
+              style={({ pressed }) => [styles.statCard, pressed && styles.pressed]}
+            >
+              <Text style={styles.statLabel}>NEXT PAYMENT</Text>
               <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatCurrency(paidTotal)}
+                {payableInvoice ? formatCurrency(payableInvoice.amountCents) : '$0'}
               </Text>
-              <Text style={styles.statLabel}>{t('projects.paidToDate')}</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text
-                style={[styles.statValue, outstandingTotal > 0 && styles.statValueWarning]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {formatCurrency(outstandingTotal)}
+              <Text style={styles.statHint} numberOfLines={1}>
+                {payableInvoice?.dueDate ? `Due ${formatDate(payableInvoice.dueDate)}` : 'No payments due'}
               </Text>
-              <Text style={styles.statLabel}>{t('projects.outstanding')}</Text>
-            </View>
-          </View>
-
-          <View style={styles.bentoRow}>
-            {nextAction && (
-              <Card tone="accent" style={styles.actionCard} padding={14}>
-                <Pressable
-                  onPress={nextAction.onPress}
-                  style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
-                >
-                  <View style={styles.actionIcon}>
-                    <nextAction.icon size={18} color={color.accentText} />
-                  </View>
-                  <Text style={styles.actionLabel} numberOfLines={1}>{nextAction.label}</Text>
-                  <Text style={styles.actionDetail} numberOfLines={1}>{nextAction.detail}</Text>
-                  <View style={styles.actionArrow}>
-                    <ArrowUpRight size={15} color={color.accentText} />
-                  </View>
-                </Pressable>
-              </Card>
-            )}
-
-            <Card tone="dark" style={styles.summaryCard} padding={14}>
-              <Pressable
-                onPress={() => router.push('/invoices')}
-                style={({ pressed }) => [styles.summaryPressable, pressed && styles.pressed]}
-              >
-                <Text style={styles.sectionLabel}>{t('projects.invoices')}</Text>
-                <Text style={styles.summaryText} numberOfLines={1} adjustsFontSizeToFit>
-                  {t('projects.invoiceCount', { count: invoices.length })}
-                </Text>
-                {invoices[0] && (
-                  <Text style={[styles.summaryStatus, { color: getInvoiceStatusMeta(invoices[0].status, color, t).text }]}>
-                    {getInvoiceStatusMeta(invoices[0].status, color, t).label}
-                  </Text>
-                )}
-              </Pressable>
-            </Card>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/notifications')}
+              style={({ pressed }) => [styles.statCard, pressed && styles.pressed]}
+            >
+              <Text style={styles.statLabel}>MESSAGES</Text>
+              <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{unreadMessages} new</Text>
+              <Text style={styles.statHint} numberOfLines={1}>{notifications[0]?.title ?? 'You’re all caught up'}</Text>
+            </Pressable>
           </View>
 
           <View style={styles.activityHeader}>
@@ -219,22 +166,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     detailsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs, marginTop: spacing.lg },
     detailsText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
     statsRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.lg, marginTop: spacing.lg },
-    stat: { flex: 1, padding: spacing.lg, minHeight: 128, borderRadius: radius.lg, backgroundColor: color.surfaceMuted },
-    statValue: { fontFamily: fontFamily.bold, fontSize: fontSize.heading, color: color.textPrimary },
-    statValueWarning: { color: color.warning },
-    statLabel: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textSecondary, marginTop: spacing.sm },
-    bentoRow: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xl },
-    sectionLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textMuted, textTransform: 'uppercase', letterSpacing: 1.4 },
-    actionCard: { flex: 1 },
-    actionRow: { flex: 1, gap: spacing.sm },
-    actionIcon: { width: 34, height: 34, borderRadius: radius.md, backgroundColor: color.surface, alignItems: 'center', justifyContent: 'center' },
-    actionArrow: { position: 'absolute', top: 0, right: 0, width: 26, height: 26, borderRadius: radius.pill, backgroundColor: color.surface, alignItems: 'center', justifyContent: 'center' },
-    actionLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.textPrimary, marginTop: spacing.sm },
-    actionDetail: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.accentText },
-    summaryCard: { flex: 1 },
-    summaryPressable: { flex: 1, gap: spacing.sm, justifyContent: 'space-between' },
-    summaryText: { fontFamily: fontFamily.bold, fontSize: fontSize.headingLg, color: color.textPrimary },
-    summaryStatus: { fontFamily: fontFamily.medium, fontSize: fontSize.meta },
+    statCard: { flex: 1, padding: spacing.lg, minHeight: 136, borderRadius: radius.lg, backgroundColor: color.surfaceMuted },
+    statLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textSecondary, textTransform: 'uppercase', letterSpacing: 0.7 },
+    statValue: { fontFamily: fontFamily.bold, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.lg },
+    statHint: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs },
     activityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xxl, marginBottom: spacing.sm },
     activityTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.sectionTitle, color: color.textPrimary },
     activityLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
