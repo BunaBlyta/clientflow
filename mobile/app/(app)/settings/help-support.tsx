@@ -14,12 +14,12 @@ export default function HelpSupportScreen() {
       <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
         <ArrowLeft size={20} color={color.textPrimary} strokeWidth={1.9} />
       </Pressable>
-      <View style={styles.headingRow}>
+      <View style={styles.iconRow}>
         <View style={styles.iconWrap}>
           <CircleHelp size={22} color={color.accent} strokeWidth={1.8} />
         </View>
-        <Text style={styles.title}>Help &amp; Support</Text>
       </View>
+      <Text style={styles.title}>Help &amp; Support</Text>
       <View style={styles.description}>
         <Text style={styles.body}>
           Need a hand with a project, invoice, or payment? Send a note from the project screen and the studio team will get back to you.
@@ -42,7 +42,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       marginLeft: -spacing.sm,
       marginBottom: spacing.lg,
     },
-    headingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    iconRow: { marginTop: 30 },
     iconWrap: {
       width: 48,
       height: 48,
@@ -55,6 +55,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontFamily: fontFamily.serif,
       fontSize: fontSize.headingLg,
       color: color.textPrimary,
+      marginTop: spacing.xxl,
     },
     description: { marginTop: spacing.xl, gap: spacing.lg },
     body: {

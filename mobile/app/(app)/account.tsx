@@ -29,6 +29,7 @@ export default function AccountScreen() {
   return (
     <Screen
       contentContainerStyle={{
+        flexGrow: 1,
         paddingBottom: 64 + spacing.md,
       }}
     >
@@ -116,11 +117,11 @@ export default function AccountScreen() {
         </View>
       ) : (
         <Pressable
-          onPress={handleLogout}
-          style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
-        >
+            onPress={handleLogout}
+            style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
+          >
           <LogOut size={16} color={color.danger} />
-          <Text style={styles.logoutText}>{t('account.logOut')}</Text>
+          <Text style={styles.primaryLogoutText}>{t('account.logOut')}</Text>
         </Pressable>
       )}
 
@@ -210,14 +211,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     heading: {
       ...textShadow,
       fontFamily: fontFamily.serif,
-      fontSize: fontSize.heading,
+      fontSize: fontSize.headingLg,
       color: color.textPrimary,
       marginBottom: spacing.xl,
     },
     profileHeader: {
       flexDirection: 'column',
       alignItems: 'center',
-      marginBottom: spacing.lg,
+      marginBottom: spacing.md,
       paddingVertical: spacing.xxl,
       paddingHorizontal: spacing.xl,
       backgroundColor: color.surface,
@@ -262,7 +263,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       marginTop: spacing.sm,
     },
     preferenceGroup: {
-      marginBottom: spacing.lg,
+      marginBottom: spacing.md,
     },
     preferenceLabel: {
       fontFamily: fontFamily.medium,
@@ -270,7 +271,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
-      marginBottom: spacing.sm,
+      marginBottom: spacing.lg,
     },
     preferenceOptions: {
       gap: 0,
@@ -365,9 +366,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       justifyContent: 'center',
       gap: spacing.sm,
       borderRadius: radius.lg,
-      backgroundColor: color.surface,
-      borderWidth: 1,
-      borderColor: color.border,
+      backgroundColor: color.dangerBg,
     },
     logoutSection: {
       gap: spacing.md,
@@ -403,6 +402,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.caption,
       color: color.danger,
     },
+    primaryLogoutText: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.caption,
+      color: color.danger,
+    },
     confirmText: {
       fontFamily: fontFamily.regular,
       fontSize: fontSize.meta,
@@ -417,7 +421,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.meta,
       color: color.textMuted,
       textAlign: 'center',
-      marginTop: spacing.xxl,
+      marginTop: 'auto',
     },
   });
 }

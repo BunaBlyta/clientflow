@@ -43,9 +43,7 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
           </Text>
         </View>
         <View style={styles.right}>
-          <View style={[styles.statusPill, { backgroundColor: meta.bg }]}>
-            <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
-          </View>
+          <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
           <View style={[styles.actionButton, invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? styles.actionButtonSecondary : styles.actionButtonPrimary]}>
             <Text style={[styles.actionText, { color: invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? color.textSecondary : color.textOnAccent }]}>
               {invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? t('common.viewAll') : t('invoices.payNow')}
@@ -117,11 +115,6 @@ function createStyles(color: ThemeColors) {
       alignItems: 'flex-end',
       justifyContent: 'space-between',
       minWidth: 84,
-    },
-    statusPill: {
-      borderRadius: radius.pill,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
     },
     statusText: {
       fontFamily: fontFamily.medium,

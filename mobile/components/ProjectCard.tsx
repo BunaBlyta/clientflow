@@ -40,9 +40,14 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: statusMeta.text }]} />
       </View>
+      <View style={styles.progressDivider} />
       <View style={styles.dateRow}>
-        <Text style={styles.dateText}>Started {formatProjectDate(project.createdAt)}</Text>
-        <Text style={styles.dateText}>{project.targetLaunchDate ? `Est. launch ${formatProjectDate(project.targetLaunchDate)}` : 'Not scheduled'}</Text>
+        <Text style={styles.dateText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+          Started {formatProjectDate(project.createdAt)}
+        </Text>
+        <Text style={[styles.dateText, styles.dateTextRight]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+          {project.targetLaunchDate ? `${project.status === 'LAUNCHED' ? 'Launched' : 'Est. launch'} ${formatProjectDate(project.targetLaunchDate)}` : 'Not scheduled'}
+        </Text>
       </View>
       <View style={styles.detailsRow}>
         <Text style={styles.detailsText}>View details</Text>
@@ -69,8 +74,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     progressLabel: { fontFamily: fontFamily.medium, fontSize: fontSize.meta, color: color.textSecondary },
     progressTrack: { height: 7, borderRadius: 4, backgroundColor: color.surfaceMuted, overflow: 'hidden' },
     progressFill: { height: '100%', borderRadius: spacing.xs / 2 },
-    dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border },
-    dateText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textMuted },
+    progressDivider: { height: 1, backgroundColor: color.border, marginTop: spacing.md },
+    dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.sm },
+    dateText: { flex: 1, minWidth: 0, fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.textMuted },
+    dateTextRight: { textAlign: 'right' },
     detailsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs, marginTop: spacing.md },
     detailsText: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.accent },
   });

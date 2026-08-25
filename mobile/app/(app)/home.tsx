@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowUpRight, FolderKanban } from 'lucide-react-native';
+import { ChevronRight, FolderKanban } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect } from 'react';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -45,7 +45,7 @@ export default function HomeScreen() {
     <Screen>
       <View style={styles.headingRow}>
         <View style={styles.headingCopy}>
-          <Text style={styles.greeting}>{t('home.goodAfternoon')}</Text>
+          <Text style={styles.greeting}>{t('home.goodAfternoon')},</Text>
           <Text style={styles.userName}>{client?.name?.split(' ')[0] ?? t('projects.greeting')}</Text>
         </View>
       </View>
@@ -57,7 +57,6 @@ export default function HomeScreen() {
           <Card tone="glow" padding={20} style={styles.statusSection}>
             <View style={styles.statusHeader}>
               <View style={styles.statusCopy}>
-                <Text style={styles.heroKicker}>{client?.companyName ?? t('projects.status')}</Text>
                 <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
               </View>
               <Pressable
@@ -67,7 +66,6 @@ export default function HomeScreen() {
                 <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>
                   {getProjectStatusLabel(project.status, t)}
                 </Text>
-                <ArrowUpRight size={17} color={color.textMuted} />
               </Pressable>
             </View>
             <View style={styles.phaseRow}>
@@ -78,13 +76,16 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.phaseText}>{getProjectStatusLabel(phaseStatus ?? 'DISCOVERY', t)} phase</Text>
             </View>
+            <View style={styles.statusDivider} />
             <View style={styles.dateRow}>
               <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
-              <Text style={styles.dateText}>{project.targetLaunchDate ? `Est. launch ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}</Text>
+              <Text style={[styles.dateText, styles.dateTextRight]}>
+                {project.targetLaunchDate ? `${project.status === 'LAUNCHED' ? 'Launched' : 'Est. launch'} ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}
+              </Text>
             </View>
             <Pressable onPress={() => projectNavigation.openProject(project.id, 'home')} style={styles.detailsRow}>
               <Text style={styles.detailsText}>View details</Text>
-              <ArrowUpRight size={18} color={color.accent} />
+              <ChevronRight size={18} color={color.accent} />
             </Pressable>
           </Card>
 
@@ -140,10 +141,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     userName: { fontFamily: fontFamily.serif, fontSize: fontSize.headingLg, color: color.textPrimary, marginTop: spacing.xs },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textMuted, marginTop: spacing.sm, ...textShadow },
     statusSection: { marginTop: spacing.xl },
-    statusHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
+    statusHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md },
     statusCopy: { flex: 1 },
-    heroKicker: { fontFamily: fontFamily.serif, fontSize: fontSize.cardTitle + 2, color: color.textPrimary },
-    projectName: { fontFamily: fontFamily.regular, fontSize: fontSize.body, color: color.textSecondary, marginTop: spacing.xs },
+    projectName: { flex: 1, fontFamily: fontFamily.serif, fontSize: fontSize.cardTitle + 2, color: color.textPrimary },
     statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: color.surfaceMuted },
     statusValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
     phaseRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg },
@@ -151,8 +151,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     phaseChip: { width: 20, height: 6, borderRadius: 3, backgroundColor: color.surfaceMuted },
     phaseChipActive: { backgroundColor: color.accent },
     phaseText: { flex: 1, fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textPrimary },
-    dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.xl, paddingTop: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border },
+    statusDivider: { height: 1, backgroundColor: color.border, marginTop: spacing.md },
+    dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.sm },
     dateText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted },
+    dateTextRight: { textAlign: 'right' },
     detailsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs, marginTop: spacing.lg },
     detailsText: { fontFamily: fontFamily.semibold, fontSize: fontSize.cardTitle, color: color.accent },
     statsRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.md, marginTop: spacing.md },

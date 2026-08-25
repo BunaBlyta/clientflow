@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-25 14:58 by Codex — refine Meridian feedback
+Last updated: 2026-08-25 16:19 by Codex — final Meridian interaction polish
 
 ## What changed
 
@@ -17,12 +17,32 @@ Last updated: 2026-08-25 14:58 by Codex — refine Meridian feedback
 - Dropped the project phase row slightly lower beneath the ring and explicitly hid Help & Support from the bottom tab bar; it remains reachable only from Account.
 - Restored the five-tab layout spacing by moving Help & Support under a hidden Settings route, removed avatars from Home/Projects/Invoices/Notifications, and increased the visible page titles slightly.
 - Gave Help & Support a horizontal icon/title header and separate description spacing.
+- Matched Account’s title size to the other tab titles and added explicit 1px visible separators between the Home/Projects progress treatment and their date rows.
+- Constrained the Projects list’s Started and Est. launch metadata to one line, with slight font shrinking and right alignment for the launch date.
+- Removed the Home card’s client/company line, aligned its status pill to the project name, and changed completed project dates to “Launched”.
+- Put the Help & Support icon first with its title directly below it.
+- Right-aligned the Home launch-date metadata, inset chat author names slightly, and removed the top informational warning strip from Notes.
+- Right-aligned the Home launch-date metadata and removed the “You” label from sent chat messages while keeping names aligned to their bubbles.
+- Made chat bubbles size to their message content with a readable maximum width, and show a sender name only at the start of a consecutive run of messages from that sender.
+- Styled project status-change entries in the chat with a lighter, pastel success green text colour.
+- Removed the relative date from status-change entries so the label stays focused on the project transition.
+- Removed the decorative Notes icon from inside the chat screen header.
+- Replaced invoice status pills with plain semantic status text, preserving the matching status colours.
+- Removed the extra icon from the Home status badge and changed Home’s View details action to a Lucide chevron-right.
+- Simplified the bottom navigation by removing the rounded icon containers; active state now comes from the icon and label colour alone.
+- Restored a restrained background behind only the active navbar icon and moved tab labels slightly lower for clearer separation.
+- Enlarged the active navbar background cushion and reduced label size slightly so Notifications remains fully visible.
+- Added a small gap between the Account Settings heading and its preference rows.
+- Changed the primary Logout action to a filled semantic-red button with a light icon and label.
+- Softened the Logout fill to the theme’s pastel danger background while retaining red text and icon.
+- Anchored the Account version footer to the bottom of the available screen space.
 
 ## Verification
 
 - `npx tsc --noEmit`: passed.
-- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-meridian-check-v5`: passed.
+- `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-meridian-check-v7`: passed before the final chat-only refinements.
 - `git diff --check`: passed.
+- `npx tsc --noEmit`: passed after the final chat bubble refinement.
 - `npx eslint .`: mobile has no applicable ESLint configuration; ESLint reports that all files are ignored.
 - Browser preview inspection was unavailable because no browser connection was available in this session.
 

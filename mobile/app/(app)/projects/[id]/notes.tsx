@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Info, MessageSquare, Send } from 'lucide-react-native';
+import { MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -117,9 +117,6 @@ export default function ProjectNotesScreen() {
       >
         <AppBackButton source={source} accessibilityLabel={t('common.backToProject')} />
         <View style={styles.header}>
-          <View style={styles.headerIcon}>
-            <MessageSquare size={20} color={color.accentText} strokeWidth={1.8} />
-          </View>
           <View style={styles.headerCopy}>
             <Text style={styles.screenTitle}>{t('projects.notes')}</Text>
             {project?.name ? (
@@ -128,10 +125,6 @@ export default function ProjectNotesScreen() {
               </Text>
             ) : null}
           </View>
-        </View>
-        <View style={styles.infoRow}>
-          <Info size={15} color={color.textMuted} strokeWidth={1.8} />
-          <Text style={styles.intro}>{t('notes.intro')}</Text>
         </View>
         {unreachable && (
           <Text style={styles.error}>
@@ -162,7 +155,15 @@ export default function ProjectNotesScreen() {
                       <View style={styles.dateLine} />
                     </View>
                   )}
-                  <NoteBubble note={note} />
+                  <NoteBubble
+                    note={note}
+                    showAuthor={
+                      !previousNote ||
+                      previousNote.authorRole === 'SYSTEM' ||
+                      previousNote.authorRole !== note.authorRole ||
+                      previousNote.authorName !== note.authorName
+                    }
+                  />
                 </View>
               );
             })}
@@ -232,14 +233,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     gap: spacing.md,
     marginBottom: spacing.lg,
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    backgroundColor: color.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerCopy: {
     flex: 1,

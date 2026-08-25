@@ -7,18 +7,21 @@ import type { Note } from '../lib/types';
 interface NoteBubbleProps {
   note: Note;
   preview?: boolean;
+  showAuthor?: boolean;
 }
 
-export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
+export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBubbleProps) {
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
   if (note.authorRole === 'SYSTEM') {
+    const isStatusChange = note.body.toLowerCase().startsWith('project status changed');
+
     return (
       <View style={[styles.systemRow, preview && styles.previewSystemRow]}>
         <View style={styles.systemLine} />
-        <Text style={styles.systemText}>
-          {note.body} · {formatRelativeTime(note.createdAt)}
+        <Text style={[styles.systemText, isStatusChange && styles.statusChangeText]}>
+          {isStatusChange ? note.body : `${note.body} · ${formatRelativeTime(note.createdAt)}`}
         </Text>
         <View style={styles.systemLine} />
       </View>
@@ -42,10 +45,12 @@ export function NoteBubble({ note, preview = false }: NoteBubbleProps) {
         </View>
       )}
       <View style={[styles.messageContent, isClient && styles.clientMessageContent]}>
-        <View style={[styles.metaRow, isClient && styles.clientMetaRow]}>
-          <Text style={styles.author}>{note.authorName}</Text>
-          <Text style={styles.roleTag}>{isClient ? t('notes.you') : t('notes.studio')}</Text>
-        </View>
+        {showAuthor && (
+          <View style={[styles.metaRow, isClient && styles.clientMetaRow]}>
+            <Text style={styles.author}>{note.authorName}</Text>
+            {!isClient && <Text style={styles.roleTag}>{t('notes.studio')}</Text>}
+          </View>
+        )}
         <View style={[styles.bodyWrap, preview && !isClient && styles.previewBodyWrap, isClient && styles.clientBodyWrap]}>
           <Text style={[styles.body, isClient && styles.clientBody]}>{note.body}</Text>
           <Text style={[styles.time, isClient && styles.clientTime]}>
@@ -94,14 +99,16 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'baseline',
     gap: spacing.sm,
     marginBottom: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   clientMetaRow: {
     justifyContent: 'flex-end',
   },
   messageContent: {
-    flex: 1,
+    flexShrink: 1,
     maxWidth: '84%',
     minWidth: 0,
+    alignItems: 'flex-start',
   },
   clientMessageContent: {
     alignItems: 'flex-end',
@@ -127,6 +134,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
   },
   bodyWrap: {
+    alignSelf: 'flex-start',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: color.surfaceSage,
@@ -137,6 +145,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.surfaceSage,
   },
   clientBodyWrap: {
+    alignSelf: 'flex-end',
     backgroundColor: color.accent,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 4,
@@ -171,6 +180,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontStyle: 'italic',
     flexShrink: 1,
     textAlign: 'center',
+  },
+  statusChangeText: {
+    color: color.success,
+    fontFamily: fontFamily.regular,
+    opacity: 0.54,
   },
   systemTime: {
     fontFamily: fontFamily.medium,

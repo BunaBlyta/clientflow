@@ -75,8 +75,8 @@ export default function AppTabsLayout() {
         },
         tabBarLabelStyle: {
           fontFamily: fontFamily.medium,
-          fontSize: 12,
-          marginTop: 0,
+          fontSize: 11,
+          marginTop: spacing.sm,
         },
       }}
     >
@@ -137,15 +137,9 @@ function TabIcon({
   color: ReturnType<typeof useTheme>['color'];
 }) {
   return (
-    <View
-      style={[
-        styles.iconWrap,
-        { borderColor: focused ? color.navActiveBg : 'transparent' },
-        focused && { backgroundColor: color.navActiveBg },
-      ]}
-    >
+    <View style={[styles.iconWrap, focused && { backgroundColor: color.navActiveBg }]}>
       <Icon
-        size={26}
+        size={23}
         color={focused ? color.navActive : color.navInactive}
         strokeWidth={focused ? 2.1 : 1.7}
       />
@@ -156,9 +150,8 @@ function TabIcon({
 const styles = StyleSheet.create({
   iconWrap: {
     width: 44,
-    height: 40,
+    height: 34,
     borderRadius: radius.md,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
