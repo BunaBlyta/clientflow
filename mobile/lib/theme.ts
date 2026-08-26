@@ -209,12 +209,21 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     }).start(({ finished }) => {
       if (!finished) return;
       setCurrentMode(nextMode);
-      Animated.timing(dim, {
-        toValue: 1,
-        duration: 180,
-        easing: Easing.in(Easing.quad),
-        useNativeDriver: true,
-      }).start();
+      // setCurrentMode re-renders every screen (all tabs stay mounted), a
+      // genuinely heavy JS-thread commit. Starting the fade-back in the
+      // same tick raced that commit and showed up as a hitch right at the
+      // swap. Two frames of buffer gives the commit room to actually land
+      // before the next native animation command is issued.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          Animated.timing(dim, {
+            toValue: 1,
+            duration: 180,
+            easing: Easing.in(Easing.quad),
+            useNativeDriver: true,
+          }).start();
+        });
+      });
     });
   }, [mode, dim]);
   const value = useMemo<ThemeContextValue>(
