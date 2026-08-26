@@ -1,5 +1,5 @@
-import { createContext, createElement, PropsWithChildren, useContext, useMemo, useState } from 'react';
-import { Platform } from 'react-native';
+import { createContext, createElement, PropsWithChildren, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { Animated, Easing } from 'react-native';
 
 export interface ThemeColors {
   background: string;
@@ -59,35 +59,35 @@ export const colors: ThemeColors = {
   canvas: '#F5F6F3',
   surface: '#FFFFFF',
   surfaceMuted: '#E9ECE7',
-  surfaceSage: '#ECF0EA',
+  surfaceSage: '#DCEEE6',
   surfaceGradientStart: '#FFFFFF',
   surfaceGradientEnd: '#FFFFFF',
   accent: '#1D6F5B',
-  accentPressed: '#175A49',
+  accentPressed: '#1D6F5B',
   accentSoft: '#DCEEE6',
   accentText: '#1D6F5B',
   textPrimary: '#182524',
   textSecondary: '#58655F',
-  textMuted: '#93A19A',
+  textMuted: '#58655F',
   textOnAccent: '#FFFFFF',
   border: '#DCE3DB',
   borderStrong: '#C9D5CC',
   success: '#1D6F5B',
   successBg: '#DCEEE6',
-  successBorder: '#C6E3D9',
+  successBorder: '#DCEEE6',
   warning: '#93630F',
   warningBg: '#F2E8D3',
   warningBorder: '#E5D5B8',
   danger: '#9C3F35',
   dangerBg: '#F3E0DC',
   dangerBorder: '#E6C4BE',
-  neutral: '#5B665F',
+  neutral: '#58655F',
   neutralBg: '#E9ECE7',
   neutralBorder: '#DCE3DB',
-  shadow: '#93A19A',
+  shadow: '#58655F',
   navBackground: '#FFFFFF',
   navActive: '#1D6F5B',
-  navInactive: '#93A19A',
+  navInactive: '#58655F',
   navActiveBg: '#DCEEE6',
   glassBorder: '#DCE3DB',
   glassBorderStrong: '#C9D5CC',
@@ -106,34 +106,34 @@ const darkColors: ThemeColors = {
   canvas: '#12181A',
   surface: '#1A2224',
   surfaceMuted: '#212B2C',
-  surfaceSage: '#1E2C29',
+  surfaceSage: '#1B332D',
   surfaceGradientStart: '#1A2224',
   surfaceGradientEnd: '#1A2224',
   accent: '#2FBF9F',
-  accentPressed: '#29A88B',
+  accentPressed: '#2FBF9F',
   accentSoft: '#1B332D',
   accentText: '#2FBF9F',
   textPrimary: '#EDF2F0',
   textSecondary: '#9FB0AB',
-  textMuted: '#6C7C77',
+  textMuted: '#9FB0AB',
   border: '#2A3436',
   borderStrong: '#334042',
   success: '#2FBF9F',
   successBg: '#1B332D',
-  successBorder: '#285446',
+  successBorder: '#1B332D',
   warning: '#D6A94F',
   warningBg: '#3A301D',
   warningBorder: '#59491F',
   danger: '#E28277',
   dangerBg: '#3A211D',
   dangerBorder: '#61352F',
-  neutral: '#B9C4C0',
+  neutral: '#9FB0AB',
   neutralBg: '#212B2C',
   neutralBorder: '#2A3436',
-  shadow: '#0E1516',
+  shadow: '#9FB0AB',
   navBackground: '#1A2224',
   navActive: '#2FBF9F',
-  navInactive: '#6C7C77',
+  navInactive: '#9FB0AB',
   navActiveBg: '#1B332D',
   glassBorder: '#2A3436',
   glassBorderStrong: '#334042',
@@ -157,13 +157,11 @@ export const textShadow = {
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
 export const radius = { xs: 8, sm: 12, md: 14, lg: 18, xl: 18, pill: 999 } as const;
 export const fontFamily = {
-  regular: Platform.select({ ios: 'SFProText-Regular', default: 'Inter_400Regular' }) ?? 'Inter_400Regular',
-  medium: Platform.select({ ios: 'SFProText-Medium', default: 'Inter_500Medium' }) ?? 'Inter_500Medium',
-  semibold: Platform.select({ ios: 'SFProText-Semibold', default: 'Inter_600SemiBold' }) ?? 'Inter_600SemiBold',
-  bold: Platform.select({ ios: 'SFProText-Semibold', default: 'Inter_600SemiBold' }) ?? 'Inter_600SemiBold',
-  // The handoff uses Lora for deliberate statement text. Georgia is the
-  // closest system-safe serif fallback without adding another font package.
-  serif: Platform.select({ ios: 'Georgia', default: 'serif' }) ?? 'serif',
+  regular: 'Georgia',
+  medium: 'Georgia',
+  semibold: 'Georgia',
+  bold: 'Georgia',
+  serif: 'Georgia',
 } as const;
 // A wider spread than a typical scale on purpose: meta/caption stay small and
 // quiet so heading and hero sizes read as a real jump, not a nudge.
@@ -184,15 +182,30 @@ interface ThemeContextValue {
   color: ThemeColors;
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
+  // 0 = fully light, 1 = fully dark. Eases toward the current mode whenever
+  // it changes, so components that opt in (via useAnimatedThemeColor) can
+  // interpolate their own colors instead of snapping instantly.
+  progress: Animated.Value;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const [mode, setMode] = useState<ThemeMode>('light');
+  const [mode, setCurrentMode] = useState<ThemeMode>('light');
+  const progress = useRef(new Animated.Value(0)).current;
+  const setMode = useCallback((nextMode: ThemeMode) => {
+    if (nextMode === mode) return;
+    setCurrentMode(nextMode);
+    Animated.timing(progress, {
+      toValue: nextMode === 'dark' ? 1 : 0,
+      duration: 260,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: false, // color interpolation is JS-driven only
+    }).start();
+  }, [mode, progress]);
   const value = useMemo<ThemeContextValue>(
-    () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode }),
-    [mode],
+    () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode, progress }),
+    [mode, setMode, progress],
   );
   return createElement(ThemeContext.Provider, { value }, children);
 }
@@ -201,6 +214,18 @@ export function useTheme() {
   const value = useContext(ThemeContext);
   if (!value) throw new Error('useTheme must be used inside ThemeProvider');
   return value;
+}
+
+// Interpolates a single theme color smoothly between its light and dark
+// value as `progress` eases toward the current mode. Use on an Animated.View
+// / Animated.Text's style for surfaces that should crossfade rather than
+// snap, e.g. `style={{ backgroundColor: useAnimatedThemeColor('surface') }}`.
+export function useAnimatedThemeColor(key: keyof ThemeColors) {
+  const { progress } = useTheme();
+  return useMemo(
+    () => progress.interpolate({ inputRange: [0, 1], outputRange: [colors[key], darkColors[key]] }),
+    [progress, key],
+  );
 }
 
 // Kept as a compatibility export for non-rendering helpers that need colors

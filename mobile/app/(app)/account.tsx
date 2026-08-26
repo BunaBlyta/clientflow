@@ -1,9 +1,9 @@
 import { CircleHelp, ChevronRight, Globe2, LogOut, Moon, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useState, type ReactNode } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useAnimatedThemeColor, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import type { LucideIcon } from 'lucide-react-native';
@@ -12,11 +12,23 @@ export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
+  const { color, mode, setMode } = useTheme();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [languageOptionsVisible, setLanguageOptionsVisible] = useState(false);
-  const { color, mode, setMode } = useTheme();
+  const [themeToggleMode, setThemeToggleMode] = useState(mode);
   const { language, setLanguage, t } = useI18n();
   const styles = createStyles(color);
+  const headingColor = useAnimatedThemeColor('textPrimary');
+  const surfaceColor = useAnimatedThemeColor('surface');
+  const borderColor = useAnimatedThemeColor('border');
+  const accentSoftColor = useAnimatedThemeColor('accentSoft');
+  const accentColor = useAnimatedThemeColor('accent');
+  const textSecondaryColor = useAnimatedThemeColor('textSecondary');
+  const textMutedColor = useAnimatedThemeColor('textMuted');
+
+  useEffect(() => {
+    setThemeToggleMode(mode);
+  }, [mode]);
 
   function handleLogout() {
     if (confirmingLogout) {
@@ -26,28 +38,34 @@ export default function AccountScreen() {
     setConfirmingLogout(true);
   }
 
+  function handleThemeToggle() {
+    const nextMode = themeToggleMode === 'dark' ? 'light' : 'dark';
+    setThemeToggleMode(nextMode);
+    setMode(nextMode);
+  }
+
   return (
     <Screen
       contentContainerStyle={{
         paddingBottom: 64 + spacing.md,
       }}
     >
-      <Text style={styles.heading}>{t('account.title')}</Text>
+      <Animated.Text style={[styles.heading, { color: headingColor }]}>{t('account.title')}</Animated.Text>
 
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarWrap}>
-          <Text style={styles.avatarInitial}>
+      <Animated.View style={[styles.profileHeader, { backgroundColor: surfaceColor, borderColor }]}>
+        <Animated.View style={[styles.avatarWrap, { backgroundColor: accentSoftColor }]}>
+          <Animated.Text style={[styles.avatarInitial, { color: accentColor }]}>
             {client?.name?.charAt(0).toUpperCase() ?? '?'}
-          </Text>
-        </View>
+          </Animated.Text>
+        </Animated.View>
         <View style={styles.profileCopy}>
-          <Text style={styles.name}>{client?.name}</Text>
-          <Text style={styles.email}>{client?.email}</Text>
-          <Text style={styles.company}>{client?.companyName}</Text>
+          <Animated.Text style={[styles.name, { color: headingColor }]}>{client?.name}</Animated.Text>
+          <Animated.Text style={[styles.email, { color: textSecondaryColor }]}>{client?.email}</Animated.Text>
+          <Animated.Text style={[styles.company, { color: textMutedColor }]}>{client?.companyName}</Animated.Text>
         </View>
-      </View>
+      </Animated.View>
 
-      <PreferenceGroup label="Settings">
+      <PreferenceGroup label={t('ui.settings')}>
         <SettingsRow
           icon={Globe2}
           label={t('account.language')}
@@ -81,15 +99,17 @@ export default function AccountScreen() {
           </View>
         )}
         <SettingsRow
-          icon={mode === 'dark' ? Moon : Sun}
+          icon={themeToggleMode === 'dark' ? Moon : Sun}
           label={t('account.theme')}
-          value={mode === 'dark' ? t('account.dark') : t('account.light')}
-          onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+          onPress={handleThemeToggle}
           styles={styles}
+          trailing={
+            <ThemeToggle dark={themeToggleMode === 'dark'} styles={styles} />
+          }
         />
         <SettingsRow
           icon={CircleHelp}
-          label="Help & Support"
+          label={t('ui.helpSupport')}
           onPress={() => router.push('/settings/help-support')}
           styles={styles}
           last
@@ -124,7 +144,7 @@ export default function AccountScreen() {
         </Pressable>
       )}
 
-      <Text style={styles.footer}>{t('account.version')}</Text>
+      <Animated.Text style={[styles.footer, { color: textMutedColor }]}>{t('account.version')}</Animated.Text>
     </Screen>
   );
 }
@@ -132,10 +152,15 @@ export default function AccountScreen() {
 function PreferenceGroup({ label, children }: { label: string; children: ReactNode }) {
   const { color } = useTheme();
   const styles = createStyles(color);
+  const surfaceColor = useAnimatedThemeColor('surface');
+  const borderColor = useAnimatedThemeColor('border');
+  const textSecondaryColor = useAnimatedThemeColor('textSecondary');
   return (
     <View style={styles.preferenceGroup}>
-      <Text style={styles.preferenceLabel}>{label}</Text>
-      <View style={styles.preferenceOptions}>{children}</View>
+      <Animated.Text style={[styles.preferenceLabel, { color: textSecondaryColor }]}>{label}</Animated.Text>
+      <Animated.View style={[styles.preferenceOptions, { backgroundColor: surfaceColor, borderColor }]}>
+        {children}
+      </Animated.View>
     </View>
   );
 }
@@ -147,6 +172,7 @@ function SettingsRow({
   onPress,
   styles,
   last = false,
+  trailing,
 }: {
   icon: LucideIcon;
   label: string;
@@ -154,20 +180,81 @@ function SettingsRow({
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
   last?: boolean;
+  trailing?: ReactNode;
 }) {
   const { color } = useTheme();
+  const surfaceMutedColor = useAnimatedThemeColor('surfaceMuted');
+  const textPrimaryColor = useAnimatedThemeColor('textPrimary');
+  const textMutedColor = useAnimatedThemeColor('textMuted');
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
     >
-      <View style={styles.settingsIcon}>
+      <Animated.View style={[styles.settingsIcon, { backgroundColor: surfaceMutedColor }]}>
         <Icon size={16} color={color.textSecondary} strokeWidth={1.8} />
-      </View>
-      <Text style={styles.settingsLabel}>{label}</Text>
-      {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
-      <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+      </Animated.View>
+      <Animated.Text style={[styles.settingsLabel, { color: textPrimaryColor }]}>{label}</Animated.Text>
+      {trailing ? <View style={styles.trailingControl}>{trailing}</View> : (
+        <>
+          {value ? <Animated.Text style={[styles.settingsValue, { color: textMutedColor }]}>{value}</Animated.Text> : null}
+          <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+        </>
+      )}
     </Pressable>
+  );
+}
+
+function ThemeToggle({
+  dark,
+  styles,
+}: {
+  dark: boolean;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const { color } = useTheme();
+  const progress = useRef(new Animated.Value(dark ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(progress, {
+      toValue: dark ? 1 : 0,
+      damping: 18,
+      stiffness: 170,
+      mass: 0.8,
+      useNativeDriver: false,
+    }).start();
+  }, [dark, progress]);
+
+  const trackColor = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#E9ECE7', '#1B332D'],
+  });
+  const thumbOffset = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+  const sunOpacity = progress.interpolate({
+    inputRange: [0, 0.45, 1],
+    outputRange: [1, 0, 0],
+  });
+  const moonOpacity = progress.interpolate({
+    inputRange: [0, 0.55, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  return (
+    <View pointerEvents="none" style={styles.themeToggle}>
+      <Animated.View style={[styles.themeToggleTrack, { backgroundColor: trackColor }]}>
+        <Animated.View style={[styles.themeToggleThumb, { transform: [{ translateX: thumbOffset }] }]}>
+          <Animated.View style={[styles.themeToggleIcon, { opacity: sunOpacity }]}>
+            <Sun size={15} color={color.accent} strokeWidth={1.8} />
+          </Animated.View>
+          <Animated.View style={[styles.themeToggleIcon, { opacity: moonOpacity }]}>
+            <Moon size={15} color={color.accent} strokeWidth={1.8} />
+          </Animated.View>
+        </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -311,8 +398,45 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.meta,
       color: color.textMuted,
     },
+    trailingControl: {
+      width: 52,
+      height: 32,
+      marginRight: spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    themeToggle: {
+      width: 52,
+      height: 32,
+    },
+    themeToggleTrack: {
+      width: 52,
+      height: 32,
+      borderRadius: radius.pill,
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    themeToggleThumb: {
+      position: 'absolute',
+      left: 0,
+      width: 28,
+      height: 28,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.surface,
+    },
+    themeToggleIcon: {
+      position: 'absolute',
+      width: 28,
+      height: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     languageControl: {
       gap: 0,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: color.border,
     },
     languageOption: {
       minHeight: 56,
@@ -342,7 +466,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     languageCodeText: {
       fontFamily: fontFamily.semibold,
       fontSize: 10,
-      color: color.textMuted,
+      color: color.textPrimary,
       letterSpacing: 0.4,
     },
     languageCodeTextSelected: {
@@ -353,7 +477,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       minWidth: 0,
       fontFamily: fontFamily.medium,
       fontSize: fontSize.meta,
-      color: color.textMuted,
+      color: color.textPrimary,
     },
     languageOptionTextSelected: {
       color: color.textPrimary,
