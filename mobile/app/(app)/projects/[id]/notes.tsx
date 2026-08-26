@@ -111,7 +111,6 @@ export default function ProjectNotesScreen() {
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
     >
       <AtmosphereBackground />
       {notesHeader}
