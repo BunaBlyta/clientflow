@@ -1,8 +1,24 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 08:56 by Codex — allow registered users through delivery uncertainty
+Last updated: 2026-08-26 09:50 by Codex — make the notes header sticky
 
 ## What changed
+
+- Moved the Notes label and project name into a fixed header row beside the back button. The header stays visible while the note timeline scrolls, including when Notes is opened from Notifications.
+
+- Completed Albanian and German locale coverage across all 246 mobile translation keys. The audit now reports zero missing, extra, or duplicate keys in either locale, and every translation call in the mobile source resolves.
+
+- Made the remaining mobile UI respond to the selected language: dates, times, currency, relative timestamps, generated notification titles/bodies, home notification summaries, auth placeholders, and API error fallbacks now use the active locale. User-written note content remains unchanged.
+
+- Replaced the unavailable React Native `Intl.RelativeTimeFormat` constructor with a runtime-safe translated formatter, fixing the notifications render crash while preserving English, Albanian, and German relative timestamps.
+
+- Added translations for remaining notification descriptions, including live project-request details and project stage transitions; user-authored note descriptions still remain original.
+
+- Covered the backend’s exact system descriptions for confirmed/failed invoice payments, ready projects, approved/rejected requests, and sent invoices. Notification content written by a person is still preserved.
+
+- Note notification taps now use the Notifications stack's nested chat route, keeping the Notifications bottom tab active like invoice notification taps do.
+
+- Note notifications opened from the in-app Notifications list now go directly to the project chat instead of the project overview. Push notifications already used the chat target.
 
 - Registered reset requests now continue to the code-entry screen even when Resend reports an uncertain delivery; unregistered emails still stop with the localized warning.
 

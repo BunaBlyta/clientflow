@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { formatDate } from '../../../../lib/format';
-import { Screen } from '../../../../components/ui/Screen';
 import { AtmosphereBackground } from '../../../../components/ui/AtmosphereBackground';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
@@ -28,7 +27,7 @@ import { AppBackButton } from '../../../../components/OriginBackButton';
 export default function ProjectNotesScreen() {
   const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
@@ -65,6 +64,20 @@ export default function ProjectNotesScreen() {
     };
   }, [id, refreshNotes, token]);
 
+  const notesHeader = (
+    <View style={[styles.stickyHeader, { paddingTop: insets.top + spacing.sm }]}>
+      <AppBackButton source={source} accessibilityLabel={t('common.backToProject')} />
+      <View style={styles.headerCopy}>
+        <Text style={styles.screenTitle}>{t('projects.notes')}</Text>
+        {project?.name ? (
+          <Text style={styles.projectName} numberOfLines={1}>
+            {project.name}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+
   async function handleSend() {
     const body = draft.trim();
     if (!body || !id || !token || posting) return;
@@ -86,10 +99,11 @@ export default function ProjectNotesScreen() {
 
   if (loading && notes.length === 0) {
     return (
-      <Screen>
-        <AppBackButton source={source} accessibilityLabel={t('common.backToProject')} />
+      <View style={styles.flex}>
+        <AtmosphereBackground />
+        {notesHeader}
         <ActivityIndicator color={color.accent} style={styles.loading} />
-      </Screen>
+      </View>
     );
   }
 
@@ -100,13 +114,13 @@ export default function ProjectNotesScreen() {
       keyboardVerticalOffset={90}
     >
       <AtmosphereBackground />
+      {notesHeader}
       <ScrollView
         ref={scrollRef}
         style={styles.flex}
         contentContainerStyle={[
           styles.content,
           { flexGrow: 1 },
-          { paddingTop: insets.top + spacing.lg },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -115,17 +129,6 @@ export default function ProjectNotesScreen() {
           if (notes.length > 0) scrollRef.current?.scrollToEnd({ animated: false });
         }}
       >
-        <AppBackButton source={source} accessibilityLabel={t('common.backToProject')} />
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.screenTitle}>{t('projects.notes')}</Text>
-            {project?.name ? (
-              <Text style={styles.projectName} numberOfLines={1}>
-                {project.name}
-              </Text>
-            ) : null}
-          </View>
-        </View>
         {unreachable && (
           <Text style={styles.error}>
             {t('notes.unavailable')}
@@ -143,8 +146,8 @@ export default function ProjectNotesScreen() {
           <View style={styles.timeline}>
             {orderedNotes.map((note, index) => {
               const previousNote = orderedNotes[index - 1];
-              const noteDate = formatDate(note.createdAt);
-              const showDate = !previousNote || formatDate(previousNote.createdAt) !== noteDate;
+              const noteDate = formatDate(note.createdAt, language);
+              const showDate = !previousNote || formatDate(previousNote.createdAt, language) !== noteDate;
 
               return (
                 <View key={note.id}>
@@ -216,7 +219,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   flex: { flex: 1, backgroundColor: 'transparent' },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
   },
   loading: {
@@ -228,11 +230,17 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.warning,
     marginBottom: spacing.md,
   },
-  header: {
+  stickyHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: color.canvas,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.border,
+    zIndex: 1,
+    elevation: 1,
   },
   headerCopy: {
     flex: 1,
