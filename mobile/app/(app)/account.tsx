@@ -1,6 +1,6 @@
 import { CircleHelp, ChevronRight, Globe2, LogOut, Moon, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
@@ -12,7 +12,7 @@ export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
-  const { color, mode, setMode } = useTheme();
+  const { color, mode, setMode, isTransitioning } = useTheme();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [languageOptionsVisible, setLanguageOptionsVisible] = useState(false);
   const [themeToggleMode, setThemeToggleMode] = useState(mode);
@@ -22,6 +22,43 @@ export default function AccountScreen() {
   useEffect(() => {
     setThemeToggleMode(mode);
   }, [mode]);
+
+  // Owned here (not inside ThemeToggle) so it survives the floating
+  // Modal copy being unmounted/remounted by the transition — see the
+  // comment on ThemeToggle's progress prop for why that matters.
+  const toggleProgress = useRef(new Animated.Value(mode === 'dark' ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.spring(toggleProgress, {
+      toValue: themeToggleMode === 'dark' ? 1 : 0,
+      // Close to critically damped (ratio ~0.89): enough stiffness to
+      // still feel like a responsive spring, damped just enough to
+      // arrive cleanly with no snap or bounce.
+      damping: 20,
+      stiffness: 140,
+      mass: 0.9,
+      useNativeDriver: true,
+    }).start();
+  }, [themeToggleMode, toggleProgress]);
+
+  // The row icon and the real in-place switch below both react instantly
+  // via themeToggleMode, ahead of the (necessarily async) screenshot
+  // capture in setMode — which means the screenshot can catch the switch
+  // mid-animation, and the real switch underneath then keeps animating on
+  // its own schedule after the capture, out of step with the frozen copy
+  // baked into the overlay: two overlapping appearances of the same icon.
+  // A live copy of just the switch renders in a transparent Modal
+  // positioned exactly over the real one for the duration of the
+  // transition. Modal content is a separate native layer outside the view
+  // hierarchy captureRef walks, so it's never part of the frozen
+  // screenshot and always paints on top of it — whatever the real switch
+  // underneath is doing doesn't matter, it's fully covered the whole time.
+  const toggleRef = useRef<View>(null);
+  const [floatingToggleRect, setFloatingToggleRect] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   function handleLogout() {
     if (confirmingLogout) {
@@ -33,11 +70,15 @@ export default function AccountScreen() {
 
   function handleThemeToggle() {
     const nextMode = themeToggleMode === 'dark' ? 'light' : 'dark';
+    toggleRef.current?.measureInWindow((x, y, width, height) => {
+      setFloatingToggleRect({ x, y, width, height });
+    });
     setThemeToggleMode(nextMode);
     setMode(nextMode);
   }
 
   return (
+    <>
     <Screen
       contentContainerStyle={{
         paddingBottom: 64 + spacing.md,
@@ -97,7 +138,9 @@ export default function AccountScreen() {
           onPress={handleThemeToggle}
           styles={styles}
           trailing={
-            <ThemeToggle dark={themeToggleMode === 'dark'} styles={styles} />
+            <View ref={toggleRef} collapsable={false}>
+              <ThemeToggle progress={toggleProgress} styles={styles} />
+            </View>
           }
         />
         <SettingsRow
@@ -139,6 +182,23 @@ export default function AccountScreen() {
 
       <Text style={styles.footer}>{t('account.version')}</Text>
     </Screen>
+    {isTransitioning && floatingToggleRect ? (
+      <Modal transparent visible animationType="none" statusBarTranslucent>
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: floatingToggleRect.x,
+            top: floatingToggleRect.y,
+            width: floatingToggleRect.width,
+            height: floatingToggleRect.height,
+          }}
+        >
+          <ThemeToggle progress={toggleProgress} styles={styles} />
+        </View>
+      </Modal>
+    ) : null}
+    </>
   );
 }
 
@@ -193,28 +253,26 @@ function SettingsRow({
 }
 
 function ThemeToggle({
-  dark,
+  progress,
   styles,
 }: {
-  dark: boolean;
+  // Owned by the caller (AccountScreen), not created here. The floating
+  // Modal copy of this component gets fully unmounted and remounted by
+  // RN's Modal every time the transition starts and ends (Modal discards
+  // children when not visible), which would reset a locally-owned
+  // Animated.Value straight to its resting position with nothing left to
+  // animate — the switch would just pop instead of sliding. Sharing one
+  // value that lives above both render sites means a remount just picks
+  // up wherever the animation currently is, in sync with the persistent
+  // in-row instance, instead of restarting it.
+  progress: Animated.Value;
   styles: ReturnType<typeof createStyles>;
 }) {
   const { color } = useTheme();
-  const progress = useRef(new Animated.Value(dark ? 1 : 0)).current;
 
-  useEffect(() => {
-    Animated.spring(progress, {
-      toValue: dark ? 1 : 0,
-      damping: 18,
-      stiffness: 170,
-      mass: 0.8,
-      useNativeDriver: false,
-    }).start();
-  }, [dark, progress]);
-
-  const trackColor = progress.interpolate({
+  const lightTrackOpacity = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#E9ECE7', '#1B332D'],
+    outputRange: [1, 0],
   });
   const thumbOffset = progress.interpolate({
     inputRange: [0, 1],
@@ -231,7 +289,11 @@ function ThemeToggle({
 
   return (
     <View pointerEvents="none" style={styles.themeToggle}>
-      <Animated.View style={[styles.themeToggleTrack, { backgroundColor: trackColor }]}>
+      <View style={styles.themeToggleTrack}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1B332D' }]} />
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { backgroundColor: '#E9ECE7', opacity: lightTrackOpacity }]}
+        />
         <Animated.View style={[styles.themeToggleThumb, { transform: [{ translateX: thumbOffset }] }]}>
           <Animated.View style={[styles.themeToggleIcon, { opacity: sunOpacity }]}>
             <Sun size={15} color={color.accent} strokeWidth={1.8} />
@@ -240,7 +302,7 @@ function ThemeToggle({
             <Moon size={15} color={color.accent} strokeWidth={1.8} />
           </Animated.View>
         </Animated.View>
-      </Animated.View>
+      </View>
     </View>
   );
 }

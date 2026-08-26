@@ -1,5 +1,7 @@
-import { createContext, createElement, PropsWithChildren, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { Animated, Easing } from 'react-native';
+import { createContext, createElement, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Image, Platform, StyleSheet, View } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as SecureStore from 'expo-secure-store';
 
 export interface ThemeColors {
   background: string;
@@ -178,68 +180,150 @@ export const fontSize = {
 
 export type ThemeMode = 'light' | 'dark';
 
+// Same persistence pattern as lib/i18n.ts's language preference, so a
+// reload or relaunch doesn't silently drop the user's theme choice back
+// to the 'light' default.
+const THEME_KEY = 'clientflow.preferences.theme';
+
+function getWebStorage(): Storage | null {
+  if (Platform.OS !== 'web' || typeof globalThis === 'undefined' || !('localStorage' in globalThis)) return null;
+  return globalThis.localStorage;
+}
+
+async function readStoredMode(): Promise<ThemeMode | null> {
+  const value = Platform.OS === 'web' ? getWebStorage()?.getItem(THEME_KEY) : await SecureStore.getItemAsync(THEME_KEY);
+  return value === 'dark' || value === 'light' ? value : null;
+}
+
+async function writeStoredMode(mode: ThemeMode) {
+  if (Platform.OS === 'web') { getWebStorage()?.setItem(THEME_KEY, mode); return; }
+  await SecureStore.setItemAsync(THEME_KEY, mode);
+}
+
 interface ThemeContextValue {
   color: ThemeColors;
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
+  // True from the moment a theme toggle starts until its screenshot
+  // crossfade has fully finished. Lets a component that wants to stay
+  // visually live and unobstructed throughout (see ThemeToggle in
+  // account.tsx) know how long to keep its own always-on-top overlay
+  // mounted, since it can't itself see when the capture/fade is done.
+  isTransitioning: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [mode, setCurrentMode] = useState<ThemeMode>('light');
-  // A partial crossfade (only some elements animating their color while
-  // the rest snap) was tried and consistently looked mismatched, no matter
-  // which elements were chosen or when the snap landed — whatever animates
-  // is definitionally out of step with whatever doesn't, for the whole
-  // transition. Instead of animating any color, briefly dim the real
-  // content's opacity as a single unit (native-driven, so it's immune to
-  // whatever the JS thread is doing), swap the theme while it's dim, then
-  // fade back in. Nothing can desync because it's one Animated.View, and
-  // there's no synthetic overlay color to get wrong since it's the actual
-  // UI, just briefly translucent.
-  //
-  // This is one continuous native-driven curve (0 -> 1, interpolated to an
-  // opacity of 1 -> 0.4 -> 1), not two chained animations — chaining them
-  // via a completion callback left a seam (the gap between the first
-  // animation ending and the second one being issued) that read as a
-  // stall in the middle no matter how that gap was buffered. A single
-  // Animated.timing has no such seam: the native driver runs the whole
-  // curve itself, and the JS-side theme swap just piggybacks on a value
-  // listener partway through it.
-  const dim = useRef(new Animated.Value(0)).current;
+  // Loads whatever the user last picked, same as lib/i18n.ts's language
+  // preference. Applied directly (no screenshot crossfade) since this is
+  // the initial paint, not a user-initiated toggle — there's nothing
+  // visible yet to transition from.
+  useEffect(() => {
+    void readStoredMode().then((stored) => {
+      if (stored) setCurrentMode(stored);
+    });
+  }, []);
+  // Every earlier version of this transition tried to fake a crossfade by
+  // masking a live, instant recolor (dimming opacity, layering solid
+  // colors) — which always either exposed the mid-transition mismatch as
+  // a flash, or read as a filter rather than a real fade, because the
+  // content itself never actually changed color gradually. This version
+  // does the real thing apps like iOS/Twitter do: capture an actual
+  // screenshot of the current (old-theme) screen, hold it as a frozen
+  // overlay, swap the live theme underneath instantly while it's hidden
+  // behind that frozen image, then fade the frozen image away to reveal
+  // the already-correct new-theme content. Because the overlay is a real,
+  // static picture — not an approximation built from a handful of shared
+  // colors — there's nothing for the two states to mismatch on, and
+  // nothing can leak through mid-fade because the picture doesn't change.
+  const rootRef = useRef<View>(null);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const pendingModeRef = useRef<ThemeMode | null>(null);
+  // Bumped on every call so a stale capture (e.g. from a rapid double-tap)
+  // can recognize it's been superseded and skip applying itself.
+  const captureRequestRef = useRef(0);
+  const [overlayUri, setOverlayUri] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const setMode = useCallback((nextMode: ThemeMode) => {
     if (nextMode === mode) return;
-    dim.stopAnimation();
-    dim.removeAllListeners();
-    dim.setValue(0);
-    let swapped = false;
-    const listenerId = dim.addListener(({ value }) => {
-      if (!swapped && value >= 0.5) {
-        swapped = true;
-        dim.removeListener(listenerId);
+    setIsTransitioning(true);
+    const requestId = ++captureRequestRef.current;
+    const node = rootRef.current;
+    if (!node) {
+      // No mounted view to capture yet (shouldn't happen in practice) —
+      // still swap the theme rather than silently doing nothing.
+      setCurrentMode(nextMode);
+      void writeStoredMode(nextMode);
+      setIsTransitioning(false);
+      return;
+    }
+    // Nothing can appear until this resolves, so capture speed directly
+    // sets how long the tap feels like it takes to register. This image
+    // is only ever on screen for well under half a second while fading
+    // out, so full lossless (the default: png, quality 1) fidelity is
+    // wasted cost — png encoding is the slow part, and jpeg is much
+    // cheaper to encode with no visible difference at that duration.
+    captureRef(node, { format: 'jpg', quality: 0.8 })
+      .then((uri) => {
+        if (captureRequestRef.current !== requestId) return;
+        pendingModeRef.current = nextMode;
+        overlayOpacity.setValue(1);
+        setOverlayUri(uri);
+        // The heavy app-wide re-render this causes (~40 files read
+        // useTheme(), and every tab stays mounted) now happens entirely
+        // behind the frozen screenshot, which is a static image and
+        // can't itself judder — so there's no need to defer or gate this
+        // the way earlier versions had to.
         setCurrentMode(nextMode);
-      }
-    });
-    Animated.timing(dim, {
-      toValue: 1,
-      duration: 260,
-      easing: Easing.inOut(Easing.quad),
+        void writeStoredMode(nextMode);
+      })
+      .catch(() => {
+        // Capture can fail (e.g. an unusual simulator/permissions edge
+        // case) — fall back to an instant swap rather than leaving the
+        // toggle stuck doing nothing.
+        if (captureRequestRef.current === requestId) {
+          setCurrentMode(nextMode);
+          void writeStoredMode(nextMode);
+          setIsTransitioning(false);
+        }
+      });
+  }, [mode, overlayOpacity]);
+  useEffect(() => {
+    if (pendingModeRef.current !== mode) return;
+    pendingModeRef.current = null;
+    Animated.timing(overlayOpacity, {
+      toValue: 0,
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start();
-  }, [mode, dim]);
-  const dimOpacity = dim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1, 0.4, 1],
-  });
+    }).start(() => {
+      setOverlayUri(null);
+      setIsTransitioning(false);
+    });
+  }, [mode, overlayOpacity]);
   const value = useMemo<ThemeContextValue>(
-    () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode }),
-    [mode, setMode],
+    () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode, isTransitioning }),
+    [mode, setMode, isTransitioning],
   );
+  const background = mode === 'dark' ? darkColors.background : colors.background;
   return createElement(
     ThemeContext.Provider,
     { value },
-    createElement(Animated.View, { style: { flex: 1, opacity: dimOpacity } }, children),
+    createElement(
+      View,
+      // collapsable={false} keeps Android from optimizing this View out
+      // of the native tree, which would make it uncapturable.
+      { ref: rootRef, collapsable: false, style: { flex: 1, backgroundColor: background } },
+      children,
+      overlayUri
+        ? createElement(Animated.View, {
+            pointerEvents: 'none',
+            style: [StyleSheet.absoluteFill, { opacity: overlayOpacity }],
+          }, createElement(Image, { source: { uri: overlayUri }, style: StyleSheet.absoluteFill }))
+        : null,
+    ),
   );
 }
 
