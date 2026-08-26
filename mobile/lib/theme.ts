@@ -198,34 +198,40 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   // fade back in. Nothing can desync because it's one Animated.View, and
   // there's no synthetic overlay color to get wrong since it's the actual
   // UI, just briefly translucent.
-  const dim = useRef(new Animated.Value(1)).current;
+  //
+  // This is one continuous native-driven curve (0 -> 1, interpolated to an
+  // opacity of 1 -> 0.4 -> 1), not two chained animations — chaining them
+  // via a completion callback left a seam (the gap between the first
+  // animation ending and the second one being issued) that read as a
+  // stall in the middle no matter how that gap was buffered. A single
+  // Animated.timing has no such seam: the native driver runs the whole
+  // curve itself, and the JS-side theme swap just piggybacks on a value
+  // listener partway through it.
+  const dim = useRef(new Animated.Value(0)).current;
   const setMode = useCallback((nextMode: ThemeMode) => {
     if (nextMode === mode) return;
-    Animated.timing(dim, {
-      toValue: 0.4,
-      duration: 120,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (!finished) return;
-      setCurrentMode(nextMode);
-      // setCurrentMode re-renders every screen (all tabs stay mounted), a
-      // genuinely heavy JS-thread commit. Starting the fade-back in the
-      // same tick raced that commit and showed up as a hitch right at the
-      // swap. Two frames of buffer gives the commit room to actually land
-      // before the next native animation command is issued.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          Animated.timing(dim, {
-            toValue: 1,
-            duration: 180,
-            easing: Easing.in(Easing.quad),
-            useNativeDriver: true,
-          }).start();
-        });
-      });
+    dim.stopAnimation();
+    dim.removeAllListeners();
+    dim.setValue(0);
+    let swapped = false;
+    const listenerId = dim.addListener(({ value }) => {
+      if (!swapped && value >= 0.5) {
+        swapped = true;
+        dim.removeListener(listenerId);
+        setCurrentMode(nextMode);
+      }
     });
+    Animated.timing(dim, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: true,
+    }).start();
   }, [mode, dim]);
+  const dimOpacity = dim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.4, 1],
+  });
   const value = useMemo<ThemeContextValue>(
     () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode }),
     [mode, setMode],
@@ -233,7 +239,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   return createElement(
     ThemeContext.Provider,
     { value },
-    createElement(Animated.View, { style: { flex: 1, opacity: dim } }, children),
+    createElement(Animated.View, { style: { flex: 1, opacity: dimOpacity } }, children),
   );
 }
 
