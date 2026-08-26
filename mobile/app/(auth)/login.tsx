@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { MOCK_CLIENT } from '../../lib/mock-data';
+import { ApiError } from '../../lib/api';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
@@ -44,7 +45,17 @@ export default function LoginScreen() {
       const ok = await login(email, password);
       if (!ok) setError(t('auth.invalidCredentials'));
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : t('common.error'));
+      // Keep invalid credentials localized, but surface transport/server errors
+      // during development so a broken API origin is distinguishable from a
+      // rejected password on a physical iOS device.
+      if (caughtError instanceof ApiError && caughtError.status === 401) {
+        setError(t('auth.invalidCredentials'));
+      } else {
+        if (__DEV__ && caughtError instanceof Error) {
+          console.warn('[Clientflow] login request failed:', caughtError.message);
+        }
+        setError(t('common.error'));
+      }
     } finally {
       setLoading(false);
     }
@@ -65,7 +76,7 @@ export default function LoginScreen() {
               <Layers3 size={19} color={color.accentText} strokeWidth={1.8} />
             )}
           </View>
-          <Text style={styles.brand}>Clientflow</Text>
+          <Text style={styles.brand}>{t('auth.brand')}</Text>
         </View>
 
         <Text style={styles.heading}>{t('auth.welcome')}</Text>

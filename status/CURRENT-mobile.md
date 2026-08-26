@@ -1,8 +1,11 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 14:00 by Claude Code — fixed keyboard gap above notes composer
+Last updated: 2026-08-26 13:09 by Codex — diagnosed iOS login failure reporting
 
 ## What changed
+
+- Login now keeps invalid-credential errors localized while logging the actual transport/server failure in development. This distinguishes a rejected password from an unreachable API when testing the iOS build.
+- The Expo iOS bundle was exported successfully with `EXPO_PUBLIC_API_URL` loaded from `.env`. The local iOS runner could not launch because this machine's Simulator/Device Hub service is unavailable; the app still needs to be tested on Buna's configured physical device or a working Xcode simulator.
 
 - On a real device, the notes composer (text input + send button) floated well above the keyboard with a visible gap instead of sitting right on top of it. Cause: `KeyboardAvoidingView` had a hardcoded `keyboardVerticalOffset={90}`, which tells it to compensate for 90px of header space above the view — but this screen has no native header (`headerShown: false`) and its own sticky header is a child of the `KeyboardAvoidingView`, not external chrome, so the view genuinely starts at the top of the screen. Removed the offset (defaults to 0, the correct value here).
 
