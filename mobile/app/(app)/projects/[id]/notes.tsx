@@ -235,7 +235,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'flex-start',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
     backgroundColor: color.canvas,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.border,
@@ -335,7 +334,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   sendButton: {
     width: 46,
     height: 46,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: color.accent,
     alignItems: 'center',
     justifyContent: 'center',

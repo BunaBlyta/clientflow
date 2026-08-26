@@ -8,7 +8,7 @@ import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
-import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
@@ -27,7 +27,7 @@ export default function ProjectDetailScreen() {
   }>();
   const router = useRouter();
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const client = useAuthStore((s) => s.client);
@@ -93,7 +93,7 @@ export default function ProjectDetailScreen() {
 
       <Card padding={20} style={[styles.section, styles.statusSection]}>
         <View style={styles.overviewHeader}>
-          <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>Project overview</Text>
+          <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('ui.projectOverview')}</Text>
           <View style={[styles.statusPill, { backgroundColor: getProjectStatusMeta(project.status, color, t).bg }]}>
             <Text style={[styles.statusPillText, { color: getProjectStatusMeta(project.status, color, t).text }]}>{getProjectStatusLabel(project.status, t)}</Text>
           </View>
@@ -104,15 +104,15 @@ export default function ProjectDetailScreen() {
             size={128}
             strokeWidth={10}
             centerValue={`${Math.max(0, PROJECT_STAGES.indexOf(project.status))} / ${PROJECT_STAGES.length - 1}`}
-            centerLabel={['PHASES', 'ACTIVE']}
+            centerLabel={[t('ui.phases'), t('ui.active')]}
           />
         </View>
         <View style={styles.phaseTracker}>
           <ProjectStageTracker status={project.status} />
         </View>
         <View style={styles.dateRow}>
-          <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
-          <Text style={styles.dateText}>{project.targetLaunchDate ? `Est. launch ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}</Text>
+          <Text style={styles.dateText}>{t('ui.started', { date: formatDate(project.createdAt, language) })}</Text>
+          <Text style={styles.dateText}>{project.targetLaunchDate ? t('ui.estimatedLaunch', { date: formatDate(project.targetLaunchDate, language) }) : t('ui.notScheduled')}</Text>
         </View>
       </Card>
 
@@ -221,7 +221,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   overviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   ringWrap: { alignItems: 'center', justifyContent: 'center', width: '100%' },
   phaseTracker: { marginTop: spacing.md },
-  statusPill: { borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  statusPill: { borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
   statusPillText: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border, paddingTop: spacing.lg, marginTop: spacing.lg },
   dateText: { flex: 1, fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted },
