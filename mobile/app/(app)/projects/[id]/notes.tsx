@@ -120,10 +120,7 @@ export default function ProjectNotesScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.flex}>
       <AtmosphereBackground />
       {notesHeader}
       <ScrollView
@@ -182,43 +179,45 @@ export default function ProjectNotesScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.composer}>
-        {postError ? <Text style={styles.error}>{postError}</Text> : null}
-        <View style={styles.composerRow}>
-          <TextInput
-            value={draft}
-            onChangeText={(value) => {
-              setDraft(value);
-              if (postError) setPostError('');
-            }}
-            placeholder={t('notes.writeNote')}
-            placeholderTextColor={color.textMuted}
-            style={[styles.input, inputFocused && styles.inputFocused]}
-            multiline
-            editable={!posting}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-          />
-          <Pressable
-            onPress={() => void handleSend()}
-            disabled={!draft.trim() || posting}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.send')}
-            style={({ pressed }) => [
-              styles.sendButton,
-              (!draft.trim() || posting) && styles.sendButtonDisabled,
-              pressed && draft.trim().length > 0 && !posting && styles.sendButtonPressed,
-            ]}
-          >
-            {posting ? (
-              <ActivityIndicator size="small" color={color.textOnAccent} />
-            ) : (
-              <Send size={16} color={color.textOnAccent} />
-            )}
-          </Pressable>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.composer}>
+          {postError ? <Text style={styles.error}>{postError}</Text> : null}
+          <View style={styles.composerRow}>
+            <TextInput
+              value={draft}
+              onChangeText={(value) => {
+                setDraft(value);
+                if (postError) setPostError('');
+              }}
+              placeholder={t('notes.writeNote')}
+              placeholderTextColor={color.textMuted}
+              style={[styles.input, inputFocused && styles.inputFocused]}
+              multiline
+              editable={!posting}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+            />
+            <Pressable
+              onPress={() => void handleSend()}
+              disabled={!draft.trim() || posting}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.send')}
+              style={({ pressed }) => [
+                styles.sendButton,
+                (!draft.trim() || posting) && styles.sendButtonDisabled,
+                pressed && draft.trim().length > 0 && !posting && styles.sendButtonPressed,
+              ]}
+            >
+              {posting ? (
+                <ActivityIndicator size="small" color={color.textOnAccent} />
+              ) : (
+                <Send size={16} color={color.textOnAccent} />
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
