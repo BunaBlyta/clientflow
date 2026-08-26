@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 14:20 by Claude Code — scoped keyboard-avoiding padding to just the composer
+Last updated: 2026-08-26 14:25 by Claude Code — filled keyboard-avoiding gap under notes composer
 
 ## What changed
+
+- User reported the composer's text box appeared to rise faster than "the background behind it." Cause: the composer's `KeyboardAvoidingView` (from the previous fix) had no background color of its own, so as its padding grew to lift the composer above the keyboard, the widening gap between the composer bar and the keyboard showed the atmosphere canvas behind it instead of the composer's own surface color — reading as the input bar detaching from its background. Gave the wrapper the same `color.surface` background as the composer, so it now appears to extend continuously down to the keyboard. Not verified on a device this session.
 
 - User reported the notes composer still didn't animate smoothly with the keyboard after the scroll-jank fix. `KeyboardAvoidingView`'s `padding` behavior was wrapping the entire screen (header + full chat `ScrollView` + composer), so every frame of the keyboard animation forced Yoga to re-layout the whole message list's flex sizing alongside the composer's own growing padding. Rescoped the `KeyboardAvoidingView` to wrap only the composer bar (a small subtree — text input + send button), so the keyboard animation now only has to reflow that instead of the whole screen. Not verified on a device this session — ask the user to confirm before treating this as closed.
 

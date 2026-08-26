@@ -1,0 +1,7 @@
+# Mobile: filled keyboard-avoiding gap under notes composer
+
+- Third follow-up on the notes composer keyboard animation: after scoping `KeyboardAvoidingView` to just the composer, user reported "the textbox goes up faster than the bg behind it."
+- Cause: `KeyboardAvoidingView`'s `padding` behavior adds bottom padding to itself to lift its child (the composer) above the keyboard. That wrapper had no `backgroundColor`, so the growing padding area (between the composer's bottom edge and the actual keyboard) was transparent — showing whatever sat behind it (`AtmosphereBackground`'s canvas color) instead of extending the composer's own white/surface-colored bar. Visually this reads as the composer detaching and floating up ahead of its background, since the "floor" under it doesn't match its own color.
+- Fix: added `style={{ backgroundColor: color.surface }}` to the composer's `KeyboardAvoidingView`, matching `styles.composer`'s own background, so the padding area is the same color as the bar and the whole thing reads as one continuous panel extending to the keyboard rather than a floating box over a mismatched gap.
+- Verified with `npx tsc --noEmit` from `mobile/`. Not verified on a device this session — three iterations deep on this composer/keyboard interaction now without visual confirmation; flagged to the user that this should be checked on-device before considering it closed.
+- Committed `mobile/app/(app)/projects/[id]/notes.tsx` alone.
