@@ -21,7 +21,7 @@ export default function InvoicesScreen() {
     ) => void;
   };
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const refreshInvoices = useDataStore((s) => s.refreshInvoices);
@@ -60,17 +60,17 @@ export default function InvoicesScreen() {
           <View style={styles.summaryGrid}>
             <Card tone="muted" padding={12} style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>{t('projects.outstanding')}</Text>
-              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(outstandingTotal)}</Text>
-              <Text style={styles.summaryHint}>{invoices.filter((invoice) => invoice.status !== 'PAID').length} invoices due</Text>
+              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(outstandingTotal, language)}</Text>
+              <Text style={styles.summaryHint}>{t('ui.invoicesDue', { count: invoices.filter((invoice) => invoice.status !== 'PAID').length })}</Text>
             </Card>
             <Card tone="muted" style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>{t('projects.paidToDate')}</Text>
-              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(paidTotal)}</Text>
-              <Text style={styles.summaryHint}>{invoices.filter((invoice) => invoice.status === 'PAID').length} invoices paid</Text>
+              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(paidTotal, language)}</Text>
+              <Text style={styles.summaryHint}>{t('ui.invoicesPaid', { count: invoices.filter((invoice) => invoice.status === 'PAID').length })}</Text>
             </Card>
           </View>
           <View style={styles.listHeading}>
-            <Text style={styles.listHeadingText}>All invoices</Text>
+            <Text style={styles.listHeadingText}>{t('ui.allInvoices')}</Text>
           </View>
           <View style={styles.list}>
             {invoices.map((invoice) => (

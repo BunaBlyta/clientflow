@@ -50,8 +50,8 @@ export default function SetPasswordScreen() {
       router.replace('/projects');
     } catch (caught) {
       setError(
-        caught instanceof ApiError
-          ? caught.message
+        caught instanceof ApiError && caught.status === 400
+          ? t('auth.invalidCode')
           : t('auth.setPasswordFailed')
       );
     } finally {

@@ -126,7 +126,7 @@ export default function VerifyCodeScreen() {
         label={t('auth.verificationCode')}
         value={code}
         onChangeText={(t) => setCode(t.replace(/[^0-9]/g, '').slice(0, 6))}
-        placeholder="123456"
+        placeholder={t('auth.codePlaceholder')}
         keyboardType="number-pad"
         maxLength={6}
         helperText={!error ? t('auth.codeHelper') : undefined}

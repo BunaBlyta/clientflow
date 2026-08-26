@@ -32,7 +32,7 @@ export default function InvoiceDetailScreen() {
     ) => void;
   };
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const token = useAuthStore((s) => s.token);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
@@ -111,18 +111,18 @@ export default function InvoiceDetailScreen() {
       <Text style={styles.kind}>{getInvoiceKindLabel(invoice.kind, t)}</Text>
       {unreachable && <Text style={styles.error}>{t('invoices.liveUnavailable')}</Text>}
       <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit>
-        {formatCurrency(invoice.amountCents)}
+        {formatCurrency(invoice.amountCents, language)}
       </Text>
       <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
 
       <View style={styles.detailsBlock}>
         <DetailRow styles={styles} label={t('invoices.description')} value={invoice.label} />
-        <DetailRow styles={styles} label={t('invoices.issued')} value={formatDate(invoice.createdAt)} />
+        <DetailRow styles={styles} label={t('invoices.issued')} value={formatDate(invoice.createdAt, language)} />
         {invoice.dueDate && (
-          <DetailRow styles={styles} label={t('invoices.due')} value={formatDate(invoice.dueDate)} />
+          <DetailRow styles={styles} label={t('invoices.due')} value={formatDate(invoice.dueDate, language)} />
         )}
         {invoice.paidAt && (
-          <DetailRow styles={styles} label={t('invoices.paid')} value={formatDate(invoice.paidAt)} />
+          <DetailRow styles={styles} label={t('invoices.paid')} value={formatDate(invoice.paidAt, language)} />
         )}
       </View>
 
@@ -149,7 +149,7 @@ export default function InvoiceDetailScreen() {
         <View style={styles.paidBanner}>
           <CheckCircle2 size={16} color={color.success} />
           <Text style={styles.paidText}>
-            {t('invoices.paid')}{invoice.paidAt ? ` ${formatDate(invoice.paidAt)}` : ''}
+            {t('invoices.paid')}{invoice.paidAt ? ` ${formatDate(invoice.paidAt, language)}` : ''}
           </Text>
         </View>
       )}

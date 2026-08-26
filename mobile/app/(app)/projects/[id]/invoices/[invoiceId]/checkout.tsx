@@ -34,7 +34,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const invoice = useDataStore((s) => s.invoiceById(invoiceId));
   const token = useAuthStore((s) => s.token);
@@ -121,7 +121,7 @@ export default function CheckoutScreen() {
         setMessage(t('checkout.unavailable'));
         setStep('failed');
       } else {
-        setMessage(error instanceof Error ? error.message : t('checkout.unableToOpen'));
+        setMessage(t('checkout.paymentFailed'));
         setStep('failed');
       }
     }
@@ -187,7 +187,7 @@ export default function CheckoutScreen() {
           <View style={styles.card}>
             <Text style={styles.merchant}>{t('checkout.merchant')}</Text>
             <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit>
-              {formatCurrency(invoice.amountCents)}
+              {formatCurrency(invoice.amountCents, language)}
             </Text>
             <Text style={styles.label}>{invoice.label}</Text>
 

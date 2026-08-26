@@ -11,6 +11,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fontFamily, spacing, useTheme } from '../lib/theme';
 import type { Notification } from '../lib/types';
+import { useI18n } from '../lib/i18n';
+import { getLocalizedNotificationText } from '../lib/notification-text';
 
 interface InAppNotificationBannerProps {
   notification: Notification;
@@ -24,6 +26,8 @@ export function InAppNotificationBanner({
   onDismiss,
 }: InAppNotificationBannerProps) {
   const { color } = useTheme();
+  const { t } = useI18n();
+  const localized = getLocalizedNotificationText(notification, t);
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(-140)).current;
   const styles = createStyles(color);
@@ -59,7 +63,7 @@ export function InAppNotificationBanner({
     >
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${notification.title}. ${notification.body}`}
+        accessibilityLabel={`${localized.title}. ${localized.body}`}
         onPress={onPress}
         style={({ pressed }) => [styles.banner, pressed && styles.pressed]}
       >
@@ -67,12 +71,12 @@ export function InAppNotificationBanner({
           <Bell size={17} color={color.accentText} strokeWidth={2} />
         </View>
         <View style={styles.copy}>
-          <Text numberOfLines={1} style={styles.title}>{notification.title}</Text>
-          <Text numberOfLines={2} style={styles.body}>{notification.body}</Text>
+          <Text numberOfLines={1} style={styles.title}>{localized.title}</Text>
+          <Text numberOfLines={2} style={styles.body}>{localized.body}</Text>
         </View>
         <ChevronRight size={17} color={color.textMuted} strokeWidth={1.8} />
         <Pressable
-          accessibilityLabel="Dismiss notification"
+          accessibilityLabel={t('ui.dismissNotification')}
           hitSlop={8}
           onPress={(event) => {
             event.stopPropagation();
