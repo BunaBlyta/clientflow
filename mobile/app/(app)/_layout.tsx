@@ -43,10 +43,16 @@ export default function AppTabsLayout() {
 
   return (
     <Tabs
-      detachInactiveScreens={false}
+      detachInactiveScreens
       screenOptions={{
         headerShown: false,
         lazy: false,
+        // detachInactiveScreens + freezeOnBlur (react-native-screens' Freeze,
+        // via react-freeze) pauses re-rendering of tabs that aren't visible,
+        // without unmounting them. Without this, every tab re-renders on
+        // every theme change (all 5 stay mounted per lazy: false above),
+        // which was heavy enough to visibly hitch the theme toggle.
+        freezeOnBlur: true,
         animation: Platform.OS === 'web' ? 'none' : 'shift',
         sceneStyleInterpolator: tabSceneStyleInterpolator,
         transitionSpec: {
@@ -74,8 +80,9 @@ export default function AppTabsLayout() {
           paddingBottom: 0,
         },
         tabBarLabelStyle: {
-          fontFamily: fontFamily.medium,
+          fontFamily: fontFamily.regular,
           fontSize: 11,
+          fontWeight: '400',
           marginTop: spacing.sm,
         },
       }}
@@ -141,7 +148,7 @@ function TabIcon({
       <Icon
         size={23}
         color={focused ? color.navActive : color.navInactive}
-        strokeWidth={focused ? 2.1 : 1.7}
+        strokeWidth={focused ? 1.8 : 1.6}
       />
     </View>
   );
