@@ -26,9 +26,9 @@ import { AppBackButton } from '../../../../components/OriginBackButton';
 
 export default function ProjectNotesScreen() {
   const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
-  const { color } = useTheme();
+  const { color, mode } = useTheme();
   const { language, t } = useI18n();
-  const styles = createStyles(color);
+  const styles = createStyles(color, mode);
   const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
@@ -214,7 +214,11 @@ export default function ProjectNotesScreen() {
   );
 }
 
-function createStyles(color: ReturnType<typeof useTheme>['color']) {
+function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnType<typeof useTheme>['mode']) {
+  // A plain neutral gray, not the app's sage-tinted border tokens: this
+  // separator sits directly under the header title and reads as an
+  // off-color green tint at that size if it shares the tinted palette.
+  const separator = mode === 'dark' ? '#454545' : '#D8D8D8';
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: 'transparent' },
   content: {
@@ -237,7 +241,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingHorizontal: spacing.lg,
     backgroundColor: color.canvas,
     borderBottomWidth: 1,
-    borderBottomColor: color.borderStrong,
+    borderBottomColor: separator,
     zIndex: 1,
     elevation: 1,
   },
