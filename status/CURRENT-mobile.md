@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 14:25 by Claude Code — filled keyboard-avoiding gap under notes composer
+Last updated: 2026-08-26 14:30 by Claude Code — smoother theme toggle again
 
 ## What changed
+
+- User reported the theme toggle (light/dark, from earlier in the session) had regressed to feeling "harsh." Cause found in `lib/theme.ts`: only a few elements (the app background, a handful of Account cards) crossfade their color via `useAnimatedThemeColor`; everything else reads `mode` directly and changes instantly. `setCurrentMode` was firing the instant the toggle was pressed, so those static elements snapped to the new theme right as the animated ones started fading from the old one — a visible clash for the whole 260ms transition. Deferred the snap to the animation's completion callback, so it now lands once the animated elements have already arrived at the new color instead of fighting them throughout.
 
 - User reported the composer's text box appeared to rise faster than "the background behind it." Cause: the composer's `KeyboardAvoidingView` (from the previous fix) had no background color of its own, so as its padding grew to lift the composer above the keyboard, the widening gap between the composer bar and the keyboard showed the atmosphere canvas behind it instead of the composer's own surface color — reading as the input bar detaching from its background. Gave the wrapper the same `color.surface` background as the composer, so it now appears to extend continuously down to the keyboard. Not verified on a device this session.
 
