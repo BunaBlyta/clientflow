@@ -179,7 +179,10 @@ export default function ProjectNotesScreen() {
         )}
       </ScrollView>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ backgroundColor: color.surface }}
+      >
         <View style={styles.composer}>
           {postError ? <Text style={styles.error}>{postError}</Text> : null}
           <View style={styles.composerRow}>
