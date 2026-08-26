@@ -1,8 +1,13 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 15:05 by Claude Code — buffered the theme swap's re-render before fading back in
+Last updated: 2026-08-26 15:15 by Claude Code — froze inactive tabs to fix the actual theme toggle re-render cost
 
 ## What changed
+
+- User confirmed on-device that the rAF-buffering fix didn't help — the lag is real, sustained work, not a scheduling collision a couple of frames can absorb. Asked whether to attempt the bigger fix (reducing what re-renders); user said to test first, then confirmed the problem persists, so proceeded.
+- This time verified against the actual installed library source before changing anything (per this Expo version's "read the exact versioned docs" instruction) rather than guessing from prior React Navigation knowledge, which turned out not to directly apply here (this Expo Router version vendors its own navigation internals; there's no separate `@react-navigation/bottom-tabs` package in `node_modules`). Confirmed via `node_modules/expo-router/build/react-navigation/bottom-tabs/views/BottomTabView.js` and `node_modules/react-native-screens/src/components/Screen.tsx` that `detachInactiveScreens` + `freezeOnBlur` together enable `react-freeze`'s `<Freeze>` wrapper on inactive tab screens — and critically, `freezeOnBlur` only takes effect when `detachInactiveScreens` is also on (with it off, `Screen.tsx` takes a different code path that skips the Freeze wrapper entirely).
+- `app/(app)/_layout.tsx`: flipped `detachInactiveScreens` from `false` to `true`, added `freezeOnBlur: true` to `screenOptions`. `lazy: false` is unchanged (all tabs still mount immediately), but inactive tabs now pause re-rendering (state, scroll position, fetched data all preserved — this is a pause, not an unmount) instead of fully re-rendering on every context change. A theme toggle should now only re-render the currently visible tab, not all 5.
+- Not verified on a device this session. This is the real fix for the underlying cost the last several rounds were dancing around; recommend the user check it on-device.
 
 - User reported the content-dim theme toggle "kinda lags when toggle is in the middle" — i.e., a hitch right at the trough, where `setMode` swaps `mode` and immediately started the fade-back-in animation in the same tick. `setMode` swapping the theme triggers a real React re-render of every screen (all 5 tabs stay mounted per the `Tabs` navigator's `lazy: false`/`detachInactiveScreens={false}` config, not just the visible one) — a genuinely heavy synchronous JS-thread commit that was racing the fade-back-in's kickoff.
 - Fix: deferred starting the fade-back-in animation by two `requestAnimationFrame` calls after `setCurrentMode`, giving the re-render's commit room to actually land before the next native animation command is issued, instead of firing both in the same tick.
