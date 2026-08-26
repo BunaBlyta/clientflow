@@ -195,13 +195,20 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const progress = useRef(new Animated.Value(0)).current;
   const setMode = useCallback((nextMode: ThemeMode) => {
     if (nextMode === mode) return;
-    setCurrentMode(nextMode);
+    // Elements not wired up to useAnimatedThemeColor read `mode` directly
+    // and snap instantly rather than crossfading. Deferring the snap to
+    // when the fade finishes (instead of firing it at the start) means
+    // those elements change only once the animated ones have already
+    // arrived at the new color, instead of jumping the moment the fade
+    // begins and clashing with it for its whole duration.
     Animated.timing(progress, {
       toValue: nextMode === 'dark' ? 1 : 0,
       duration: 260,
       easing: Easing.inOut(Easing.cubic),
       useNativeDriver: false, // color interpolation is JS-driven only
-    }).start();
+    }).start(({ finished }) => {
+      if (finished) setCurrentMode(nextMode);
+    });
   }, [mode, progress]);
   const value = useMemo<ThemeContextValue>(
     () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode, progress }),
