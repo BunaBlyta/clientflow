@@ -47,6 +47,18 @@ export default function ProjectNotesScreen() {
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
 
+  // Scroll to the newest message only when the note count actually changes,
+  // not on every ScrollView content-size change — the keyboard opening also
+  // resizes the scrollable area (via KeyboardAvoidingView's padding), and an
+  // unconditional scrollToEnd on that fought the keyboard's own smooth
+  // animation with an instant, unanimated jump on every frame.
+  useEffect(() => {
+    if (notes.length === 0) return;
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: false });
+    });
+  }, [notes.length]);
+
   useEffect(() => {
     if (!token || !id) {
       setLoading(false);
@@ -124,9 +136,6 @@ export default function ProjectNotesScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => {
-          if (notes.length > 0) scrollRef.current?.scrollToEnd({ animated: false });
-        }}
       >
         {unreachable && (
           <Text style={styles.error}>
