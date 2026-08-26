@@ -441,7 +441,10 @@ the generic `Invalid or expired verification code` error.
 `{ "error": "No Clientflow account found for this email" }` for an unknown
 email, so the mobile client can tell a user that they are not registered. A
 registered email issues a fresh 30-minute verification code and returns
-`{ "sent": true }`.
+`{ "sent": true, "registered": true }`. If delivery reports an error after
+the reset code has been stored, the route still returns 200 with
+`{ "sent": false, "registered": true }` so the client can continue to code
+entry and retry delivery there.
 
 `POST /api/contact-leads` is public and accepts `{ "name": string, "email":
 string, "message": string }`. It creates a `ContactLead` and notifies every

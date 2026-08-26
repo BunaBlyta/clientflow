@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 08:50 by Codex — distinguish unregistered reset emails
+Last updated: 2026-08-26 08:56 by Codex — allow registered users through delivery uncertainty
 
 ## What changed
+
+- Registered reset requests now continue to the code-entry screen even when Resend reports an uncertain delivery; unregistered emails still stop with the localized warning.
 
 - Forgot-password now keeps unregistered emails on the email screen with a localized “not registered” warning. Registered emails continue to the six-digit code screen after the code is issued.
 

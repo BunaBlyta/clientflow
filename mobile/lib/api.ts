@@ -70,7 +70,7 @@ export function loginRequest(email: string, password: string) {
 }
 
 export function verificationSendRequest(email: string) {
-  return request<{ sent: true }>('/api/auth/verification/send', {
+  return request<{ sent: boolean; registered: true }>('/api/auth/verification/send', {
     method: 'POST',
     body: JSON.stringify({ email }),
   });

@@ -37,8 +37,12 @@ export async function POST(request: NextRequest) {
   try {
     await issueVerificationEmail(user);
   } catch {
-    return NextResponse.json({ error: 'Unable to send verification email' }, { status: 502 });
+    console.error('Verification email delivery failed after registering reset request', {
+      email,
+      userId: user.id,
+    });
+    return NextResponse.json({ sent: false, registered: true });
   }
 
-  return NextResponse.json({ sent: true });
+  return NextResponse.json({ sent: true, registered: true });
 }

@@ -43,7 +43,22 @@ describe('POST /api/auth/verification/send', () => {
     }) as unknown as NextRequest);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ sent: true });
+    expect(await response.json()).toEqual({ sent: true, registered: true });
     expect(mocks.issueVerificationEmail).toHaveBeenCalledWith(user);
+  });
+
+  it('still allows a registered user to continue when delivery reports an error', async () => {
+    const user = { id: 'user-2', name: 'Client User', email: 'client@example.com' };
+    mocks.findUnique.mockResolvedValue(user);
+    mocks.issueVerificationEmail.mockRejectedValue(new Error('Resend unavailable'));
+
+    const response = await POST(new Request('http://localhost/api/auth/verification/send', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    }) as unknown as NextRequest);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ sent: false, registered: true });
   });
 });
