@@ -31,18 +31,21 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     try {
       await verificationSendRequest(normalizedEmail);
-      router.push(
-        `/(auth)/verify-code?mode=reset&email=${encodeURIComponent(normalizedEmail)}`
-      );
     } catch (caught) {
       setError(
         caught instanceof ApiError
           ? caught.message
           : t('auth.sendResetFailed')
       );
+      return;
     } finally {
       setLoading(false);
     }
+
+    router.push({
+      pathname: '/(auth)/verify-code',
+      params: { mode: 'reset', email: normalizedEmail },
+    });
   }
 
   return (

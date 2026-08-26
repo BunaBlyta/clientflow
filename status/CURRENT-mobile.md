@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-25 16:19 by Codex — final Meridian interaction polish
+Last updated: 2026-08-26 08:43 by Codex — fix forgot-password navigation
 
 ## What changed
+
+- Fixed the forgot-password send step so a successful verification email moves to the six-digit code screen. The previous implementation grouped navigation inside the email request error handler, which could show an email failure even after delivery; navigation now uses Expo Router's explicit pathname-and-params form.
 
 - Matched the mobile client portal’s shared visual system to `mobile/assets/meridian-design-handoff`: warm off-white canvas, white cards, sage activity rows, exact Meridian teal accents, tighter 390px-style spacing, and restrained 12–24px typography.
 - Added a system-safe serif accent for page titles, project names, invoice amounts, and section headings to mirror the handoff’s Lora treatment without installing another package.
