@@ -12,7 +12,7 @@ interface NoteBubbleProps {
 
 export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBubbleProps) {
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   if (note.authorRole === 'SYSTEM') {
     const isStatusChange = note.body.toLowerCase().startsWith('project status changed');
@@ -21,7 +21,7 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
       <View style={[styles.systemRow, preview && styles.previewSystemRow]}>
         <View style={styles.systemLine} />
         <Text style={[styles.systemText, isStatusChange && styles.statusChangeText]}>
-          {isStatusChange ? note.body : `${note.body} · ${formatRelativeTime(note.createdAt)}`}
+          {isStatusChange ? note.body : `${note.body} · ${formatRelativeTime(note.createdAt, language)}`}
         </Text>
         <View style={styles.systemLine} />
       </View>
@@ -54,7 +54,7 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
         <View style={[styles.bodyWrap, preview && !isClient && styles.previewBodyWrap, isClient && styles.clientBodyWrap]}>
           <Text style={[styles.body, isClient && styles.clientBody]}>{note.body}</Text>
           <Text style={[styles.time, isClient && styles.clientTime]}>
-            {formatNoteTime(note.createdAt)}
+            {formatNoteTime(note.createdAt, language)}
           </Text>
         </View>
       </View>
@@ -131,7 +131,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginTop: spacing.xs,
   },
   clientTime: {
-    color: color.textMuted,
+    color: color.textOnAccent,
+    opacity: 0.75,
   },
   bodyWrap: {
     alignSelf: 'flex-start',
@@ -182,9 +183,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     textAlign: 'center',
   },
   statusChangeText: {
-    color: color.success,
+    color: color.textMuted,
     fontFamily: fontFamily.regular,
-    opacity: 0.54,
   },
   systemTime: {
     fontFamily: fontFamily.medium,
@@ -194,8 +194,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   });
 }
 
-function formatNoteTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], {
+function formatNoteTime(iso: string, language: 'en' | 'sq' | 'de') {
+  const locale = language === 'sq' ? 'sq-AL' : language === 'de' ? 'de-DE' : 'en-US';
+  return new Date(iso).toLocaleTimeString(locale, {
     hour: 'numeric',
     minute: '2-digit',
   });
