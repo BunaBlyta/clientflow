@@ -1,8 +1,14 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 12:40 by Claude Code — smooth theme transition, take two
+Last updated: 2026-08-26 13:05 by Claude Code — app-wide spacing consistency pass
 
 ## What changed
+
+- Put the Help & Support title next to its icon instead of stacked below it, and switched its back button to the shared `AppBackButton` component instead of a one-off Pressable with a different icon size and margins — that also removed a magic `marginTop: 30` that existed only to compensate for the mismatch.
+- Fixed a spacing bug on Home: the "Recent activity" list was adding its own gap on top of `NotificationRow`'s built-in bottom margin, so the same row component rendered with more space between items on Home than on the Notifications tab. Removed the double-applied gap so both tabs match.
+- Rounded one off-grid value (Home's phase-chip row gap, `5` → the 4px-grid `spacing.xs`).
+- Audited the rest of the app's screens and shared components for similar spacing inconsistencies (magic numbers off the 4px grid, components rendering with different effective spacing in different places). Nothing else rose to the level of a real bug — the remaining differences (project cards vs. invoice rows vs. notification rows using different gaps, Account's own bottom padding) are deliberate/previously-fixed, not accidents, so left alone.
+- `home.tsx` also carries this session's pending translation-string work (already uncommitted in that file before this pass); it rode along in the same commit since it's the same file.
 
 - Moved the Notes label and project name into a fixed header row beside the back button. The header stays visible while the note timeline scrolls, including when Notes is opened from Notifications.
 
@@ -77,6 +83,7 @@ Last updated: 2026-08-26 12:40 by Claude Code — smooth theme transition, take 
 - `npx expo export --platform ios`: passed after the theme animation fix.
 - `npx eslint .`: mobile has no applicable ESLint configuration; ESLint reports that all files are ignored.
 - `npx tsc --noEmit`: passed after the theme crossfade rework.
+- `npx tsc --noEmit`: passed after the spacing consistency pass.
 - Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
