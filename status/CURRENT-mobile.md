@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 13:05 by Claude Code — app-wide spacing consistency pass
+Last updated: 2026-08-26 13:20 by Claude Code — app-wide border radius consistency pass
 
 ## What changed
+
+- Audited every page for border-radius mismatches (user asked that elements on the same page match). Found the app already follows a consistent two-tier system app-wide — a larger radius for primary cards, a smaller one for nested rows/fields/buttons — with circles, pills, and the chat bubble's deliberate asymmetric "tail" corner correctly exempt from that. One real mismatch: the notes/chat composer's send button used a larger radius than the text input directly beside it (both 46px tall, same row) — fixed to match. Also swapped a literal `999` for the `radius.pill` token on the project detail status pill (same visual value, just consistent with how every other pill in the app is written).
 
 - Put the Help & Support title next to its icon instead of stacked below it, and switched its back button to the shared `AppBackButton` component instead of a one-off Pressable with a different icon size and margins — that also removed a magic `marginTop: 30` that existed only to compensate for the mismatch.
 - Fixed a spacing bug on Home: the "Recent activity" list was adding its own gap on top of `NotificationRow`'s built-in bottom margin, so the same row component rendered with more space between items on Home than on the Notifications tab. Removed the double-applied gap so both tabs match.
@@ -84,6 +86,7 @@ Last updated: 2026-08-26 13:05 by Claude Code — app-wide spacing consistency p
 - `npx eslint .`: mobile has no applicable ESLint configuration; ESLint reports that all files are ignored.
 - `npx tsc --noEmit`: passed after the theme crossfade rework.
 - `npx tsc --noEmit`: passed after the spacing consistency pass.
+- `npx tsc --noEmit`: passed after the border radius consistency pass.
 - Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
