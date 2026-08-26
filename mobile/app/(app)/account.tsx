@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, textShadow, useAnimatedThemeColor, useTheme } from '../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import type { LucideIcon } from 'lucide-react-native';
@@ -18,14 +18,6 @@ export default function AccountScreen() {
   const [themeToggleMode, setThemeToggleMode] = useState(mode);
   const { language, setLanguage, t } = useI18n();
   const styles = createStyles(color);
-  // Kept deliberately small: each of these is a separate JS-driven color
-  // interpolation (color can't use the native animation driver), and each
-  // one costs a bridge update on every animation frame. Animating every
-  // text/icon on the screen caused visible stutter on device — only the
-  // two large card surfaces crossfade now; everything else snaps once,
-  // timed to land when the fade finishes (see ThemeProvider.setMode).
-  const surfaceColor = useAnimatedThemeColor('surface');
-  const borderColor = useAnimatedThemeColor('border');
 
   useEffect(() => {
     setThemeToggleMode(mode);
@@ -53,7 +45,7 @@ export default function AccountScreen() {
     >
       <Text style={styles.heading}>{t('account.title')}</Text>
 
-      <Animated.View style={[styles.profileHeader, { backgroundColor: surfaceColor, borderColor }]}>
+      <View style={styles.profileHeader}>
         <View style={styles.avatarWrap}>
           <Text style={styles.avatarInitial}>
             {client?.name?.charAt(0).toUpperCase() ?? '?'}
@@ -64,7 +56,7 @@ export default function AccountScreen() {
           <Text style={styles.email}>{client?.email}</Text>
           <Text style={styles.company}>{client?.companyName}</Text>
         </View>
-      </Animated.View>
+      </View>
 
       <PreferenceGroup label={t('ui.settings')}>
         <SettingsRow
@@ -153,14 +145,12 @@ export default function AccountScreen() {
 function PreferenceGroup({ label, children }: { label: string; children: ReactNode }) {
   const { color } = useTheme();
   const styles = createStyles(color);
-  const surfaceColor = useAnimatedThemeColor('surface');
-  const borderColor = useAnimatedThemeColor('border');
   return (
     <View style={styles.preferenceGroup}>
       <Text style={styles.preferenceLabel}>{label}</Text>
-      <Animated.View style={[styles.preferenceOptions, { backgroundColor: surfaceColor, borderColor }]}>
+      <View style={styles.preferenceOptions}>
         {children}
-      </Animated.View>
+      </View>
     </View>
   );
 }
