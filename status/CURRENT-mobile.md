@@ -1,8 +1,13 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 15:00 by Claude Code — theme switch dims content instead of animating color
+Last updated: 2026-08-26 15:05 by Claude Code — buffered the theme swap's re-render before fading back in
 
 ## What changed
+
+- User reported the content-dim theme toggle "kinda lags when toggle is in the middle" — i.e., a hitch right at the trough, where `setMode` swaps `mode` and immediately started the fade-back-in animation in the same tick. `setMode` swapping the theme triggers a real React re-render of every screen (all 5 tabs stay mounted per the `Tabs` navigator's `lazy: false`/`detachInactiveScreens={false}` config, not just the visible one) — a genuinely heavy synchronous JS-thread commit that was racing the fade-back-in's kickoff.
+- Fix: deferred starting the fade-back-in animation by two `requestAnimationFrame` calls after `setCurrentMode`, giving the re-render's commit room to actually land before the next native animation command is issued, instead of firing both in the same tick.
+- This doesn't reduce the re-render's actual cost (all 5 tabs still re-render on every theme switch) — it only changes the timing so that cost doesn't collide with the fade-back-in's start. If the hitch persists, the next lever would be reducing what re-renders (e.g. `detachInactiveScreens` or memoizing inactive tab screens), a bigger, riskier change to navigation behavior not attempted yet.
+- Not verified on a device this session.
 
 - Long back-and-forth on the account tab's theme toggle continued: after removing crossfade animation entirely for a fully instant/synchronized switch (background led everything else before that), user reported the instant version felt "harsh" — confirming some animated transition is genuinely wanted, just not one where pieces desync from each other.
 - New approach, different in kind from everything else tried this session: instead of animating any color (which always requires either a partial split that desyncs, or enough concurrent JS-driven interpolations to stutter), `ThemeProvider` now wraps the app content in one `Animated.View` and briefly dims its opacity (native-driven — immune to JS-thread work, so no stutter risk), swaps the theme while dim, then fades back in. Since it's a single Animated.View around everything, nothing can be out of sync with anything else, and since it's the real content dimming (not a synthetic overlay rectangle), there's no color to pick wrong.
