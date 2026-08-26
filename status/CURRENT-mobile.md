@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 13:30 by Claude Code — fixed invisible timestamp on sent chat bubbles
+Last updated: 2026-08-26 13:35 by Claude Code — more visible notes header separator
 
 ## What changed
+
+- The Notes screen's sticky header (title + project name, pinned above the scrolling chat timeline) had only a hairline border in the app's lightest border color separating it from the scrolling content — too faint to read as a real boundary. Bumped it to a full 1px line in the stronger border token.
 
 - Sent (client) note bubbles have a solid accent-colored background; the message text correctly turns white for contrast, but the timestamp underneath was still using the muted gray meant for light surfaces, making it nearly invisible. Switched it to white at reduced opacity, so it's readable while still reading as secondary to the message text.
 
@@ -90,6 +92,7 @@ Last updated: 2026-08-26 13:30 by Claude Code — fixed invisible timestamp on s
 - `npx tsc --noEmit`: passed after the spacing consistency pass.
 - `npx tsc --noEmit`: passed after the border radius consistency pass.
 - `npx tsc --noEmit`: passed after the sent-bubble timestamp fix.
+- `npx tsc --noEmit`: passed after the notes header separator fix.
 - Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
