@@ -1,5 +1,12 @@
 # CURRENT — mobile lane (Agent C)
 
+Last updated: 2026-08-26 14:10 by Claude Code — smoother keyboard animation in notes
+
+## What changed
+
+- User reported the keyboard-open animation for the notes composer still didn't feel smooth after the earlier gap fix. Cause: the chat `ScrollView`'s `onContentSizeChange` called an unconditional, unanimated `scrollToEnd` on every content-size change — including the ones `KeyboardAvoidingView` causes by resizing the scrollable area as the keyboard animates open, so an instant scroll snap fired on every frame of what should have been one smooth slide. Replaced it with a `useEffect` keyed on `notes.length`, so the auto-scroll-to-newest-message behavior only fires when a message is actually added, not on keyboard-driven layout churn.
+- Note: `status/CURRENT-mobile.md` is being written concurrently by both Codex (assigned mobile lane) and this Claude Code session (user asked me to work mobile directly today) — the entry below this one is Codex's, from the same timeframe. Flagging in case that's not intentional; no content was lost, just two writers on one file.
+
 Last updated: 2026-08-26 13:09 by Codex — diagnosed iOS login failure reporting
 
 ## What changed
