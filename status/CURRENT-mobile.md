@@ -1,8 +1,12 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 14:30 by Claude Code — smoother theme toggle again
+Last updated: 2026-08-26 14:45 by Claude Code — stopped animating account cards independently of their text
 
 ## What changed
+
+- User reported the scope-reduced version was "better" but that colors visibly changed / contrast increased right before settling on the new theme. Cause: the profile card and preference card had their background/border crossfading smoothly while their own label text stayed a static (deferred-snap) color for the whole animation — so right as the card finished arriving at its new tone, its still-unchanged text suddenly flipped all at once, reading as a contrast jump exactly at the "settle" moment. Reverted both cards to plain static color, so the entire foreground (cards, text, icons, borders) now changes together as one synchronized unit — only the shared full-screen background still crossfades, since it has no adjacent static content to visibly mismatch against. Not verified on a device this session.
+
+- User reported the previous timing fix made no visible difference and asked for specifics — described the toggle as "fades, but choppy/stuttery," which pointed at a real performance problem rather than a sequencing one. Found the Account screen had 19 separate JS-driven color interpolations firing concurrently on every toggle (color can't use the native animation driver, so each is a bridge update every frame) — 7 on the screen itself, 3 in the preference card, 3 more per settings row across 3 rows. Cut this to 5: the shared background plus the profile card and preference card's background/border, the two highest-impact surfaces. Everything else (heading, avatar, body text, settings row icons/labels/values, footer) goes back to a plain static color that snaps once, timed to the fade's completion per the earlier deferred-snap fix. Not verified on a device this session — flagged clearly to the user given how many rounds this has already taken blind.
 
 - User reported the theme toggle (light/dark, from earlier in the session) had regressed to feeling "harsh." Cause found in `lib/theme.ts`: only a few elements (the app background, a handful of Account cards) crossfade their color via `useAnimatedThemeColor`; everything else reads `mode` directly and changes instantly. `setCurrentMode` was firing the instant the toggle was pressed, so those static elements snapped to the new theme right as the animated ones started fading from the old one — a visible clash for the whole 260ms transition. Deferred the snap to the animation's completion callback, so it now lands once the animated elements have already arrived at the new color instead of fighting them throughout.
 
