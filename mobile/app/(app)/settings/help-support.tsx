@@ -1,32 +1,27 @@
-import { useRouter } from 'expo-router';
-import { ArrowLeft, CircleHelp } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { CircleHelp } from 'lucide-react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppBackButton } from '../../../components/OriginBackButton';
 import { Screen } from '../../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
 
 export default function HelpSupportScreen() {
-  const router = useRouter();
   const { color } = useTheme();
+  const { t } = useI18n();
   const styles = createStyles(color);
 
   return (
     <Screen>
-      <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-        <ArrowLeft size={20} color={color.textPrimary} strokeWidth={1.9} />
-      </Pressable>
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.iconRow}>
         <View style={styles.iconWrap}>
           <CircleHelp size={22} color={color.accent} strokeWidth={1.8} />
         </View>
+        <Text style={styles.title}>{t('ui.helpSupport')}</Text>
       </View>
-      <Text style={styles.title}>Help &amp; Support</Text>
       <View style={styles.description}>
-        <Text style={styles.body}>
-          Need a hand with a project, invoice, or payment? Send a note from the project screen and the studio team will get back to you.
-        </Text>
-        <Text style={styles.body}>
-          For account or access questions, contact your studio directly. This space will include more support resources as the client portal grows.
-        </Text>
+        <Text style={styles.body}>{t('ui.helpProject')}</Text>
+        <Text style={styles.body}>{t('ui.helpAccount')} {t('ui.helpResources')}</Text>
       </View>
     </Screen>
   );
@@ -34,15 +29,11 @@ export default function HelpSupportScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    back: {
-      width: 44,
-      height: 44,
+    iconRow: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      marginLeft: -spacing.sm,
-      marginBottom: spacing.lg,
+      gap: spacing.md,
     },
-    iconRow: { marginTop: 30 },
     iconWrap: {
       width: 48,
       height: 48,
@@ -55,7 +46,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontFamily: fontFamily.serif,
       fontSize: fontSize.headingLg,
       color: color.textPrimary,
-      marginTop: spacing.xxl,
     },
     description: { marginTop: spacing.xl, gap: spacing.lg },
     body: {
@@ -64,6 +54,5 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       lineHeight: 21,
       color: color.textSecondary,
     },
-    pressed: { opacity: 0.55 },
   });
 }

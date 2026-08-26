@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '../../lib/format';
 import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { getLocalizedNotificationText } from '../../lib/notification-text';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
@@ -19,7 +20,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const projectNavigation = useProjectTabNavigation();
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const client = useAuthStore((s) => s.client);
   const token = useAuthStore((s) => s.token);
@@ -74,17 +75,19 @@ export default function HomeScreen() {
                   <View key={stage} style={[styles.phaseChip, index < phaseCount && styles.phaseChipActive]} />
                 ))}
               </View>
-              <Text style={styles.phaseText}>{getProjectStatusLabel(phaseStatus ?? 'DISCOVERY', t)} phase</Text>
+              <Text style={styles.phaseText}>{t('ui.phase', { status: getProjectStatusLabel(phaseStatus ?? 'DISCOVERY', t) })}</Text>
             </View>
             <View style={styles.statusDivider} />
             <View style={styles.dateRow}>
-              <Text style={styles.dateText}>Started {formatDate(project.createdAt)}</Text>
+              <Text style={styles.dateText}>{t('ui.started', { date: formatDate(project.createdAt, language) })}</Text>
               <Text style={[styles.dateText, styles.dateTextRight]}>
-                {project.targetLaunchDate ? `${project.status === 'LAUNCHED' ? 'Launched' : 'Est. launch'} ${formatDate(project.targetLaunchDate)}` : 'Not scheduled'}
+                {project.targetLaunchDate
+                  ? t(project.status === 'LAUNCHED' ? 'ui.launched' : 'ui.estimatedLaunch', { date: formatDate(project.targetLaunchDate, language) })
+                  : t('ui.notScheduled')}
               </Text>
             </View>
             <Pressable onPress={() => projectNavigation.openProject(project.id, 'home')} style={styles.detailsRow}>
-              <Text style={styles.detailsText}>View details</Text>
+              <Text style={styles.detailsText}>{t('ui.viewDetails')}</Text>
               <ChevronRight size={18} color={color.accent} />
             </Pressable>
           </Card>
@@ -94,31 +97,31 @@ export default function HomeScreen() {
               onPress={() => payableInvoice ? projectNavigation.openInvoice(payableInvoice.projectId, payableInvoice.id, 'home') : router.push('/invoices')}
               style={({ pressed }) => [styles.statCard, pressed && styles.pressed]}
             >
-              <Text style={styles.statLabel}>NEXT PAYMENT</Text>
+              <Text style={styles.statLabel}>{t('ui.nextPayment')}</Text>
               <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                {payableInvoice ? formatCurrency(payableInvoice.amountCents) : '$0'}
+              {payableInvoice ? formatCurrency(payableInvoice.amountCents, language) : formatCurrency(0, language)}
               </Text>
               <Text style={styles.statHint} numberOfLines={1}>
-                {payableInvoice?.dueDate ? `Due ${formatDate(payableInvoice.dueDate)}` : 'No payments due'}
+                {payableInvoice?.dueDate ? `${t('invoices.due')} ${formatDate(payableInvoice.dueDate, language)}` : t('ui.noPaymentsDue')}
               </Text>
             </Pressable>
             <Pressable
               onPress={() => router.push('/notifications')}
               style={({ pressed }) => [styles.statCard, pressed && styles.pressed]}
             >
-              <Text style={styles.statLabel}>MESSAGES</Text>
-              <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{unreadMessages} new</Text>
-              <Text style={styles.statHint} numberOfLines={1}>{notifications[0]?.title ?? 'You’re all caught up'}</Text>
+              <Text style={styles.statLabel}>{t('ui.messages')}</Text>
+              <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{t('ui.newMessages', { count: unreadMessages })}</Text>
+              <Text style={styles.statHint} numberOfLines={1}>{notifications[0] ? getLocalizedNotificationText(notifications[0], t).title : t('notifications.caughtUp')}</Text>
             </Pressable>
           </View>
 
           <View style={styles.activityHeader}>
-            <Text style={styles.activityTitle}>Recent activity</Text>
+            <Text style={styles.activityTitle}>{t('ui.recentActivity')}</Text>
             <Pressable onPress={() => router.push('/notifications')}>
-              <Text style={styles.activityLink}>See all</Text>
+              <Text style={styles.activityLink}>{t('ui.seeAll')}</Text>
             </Pressable>
           </View>
-          <View style={styles.activityList}>
+          <View>
             {notifications.map((notification) => (
               <NotificationRow
                 key={notification.id}
@@ -147,7 +150,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: color.surfaceMuted },
     statusValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
     phaseRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg },
-    phaseChips: { flexDirection: 'row', gap: 5 },
+    phaseChips: { flexDirection: 'row', gap: spacing.xs },
     phaseChip: { width: 20, height: 6, borderRadius: 3, backgroundColor: color.surfaceMuted },
     phaseChipActive: { backgroundColor: color.accent },
     phaseText: { flex: 1, fontFamily: fontFamily.semibold, fontSize: fontSize.meta, color: color.textPrimary },
@@ -165,7 +168,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     activityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl, marginBottom: spacing.sm },
     activityTitle: { fontFamily: fontFamily.serif, fontSize: fontSize.sectionTitle, color: color.textPrimary },
     activityLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.body, color: color.accent },
-    activityList: { gap: spacing.xs },
     pressed: { opacity: 0.62 },
   });
 }
