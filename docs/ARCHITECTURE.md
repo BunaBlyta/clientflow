@@ -437,9 +437,11 @@ password, activating the user, clearing the code, and returning the same
 `{ user, token }` session shape as login. Invalid or expired codes always return
 the generic `Invalid or expired verification code` error.
 
-`POST /api/auth/verification/send` still returns `{ "sent": true }` for unknown
-emails. That generic response is intentional and remains the account-
-enumeration protection for the endpoint.
+`POST /api/auth/verification/send` returns 404 with
+`{ "error": "No Clientflow account found for this email" }` for an unknown
+email, so the mobile client can tell a user that they are not registered. A
+registered email issues a fresh 30-minute verification code and returns
+`{ "sent": true }`.
 
 `POST /api/contact-leads` is public and accepts `{ "name": string, "email":
 string, "message": string }`. It creates a `ContactLead` and notifies every

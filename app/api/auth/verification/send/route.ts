@@ -27,9 +27,12 @@ export async function POST(request: NextRequest) {
     select: { id: true, name: true, email: true },
   });
 
-  // Keep this response deliberately generic so the endpoint cannot be used to
-  // enumerate accounts. The UI can always show the same "check your inbox" state.
-  if (!user) return NextResponse.json({ sent: true });
+  if (!user) {
+    return NextResponse.json(
+      { error: 'No Clientflow account found for this email' },
+      { status: 404 },
+    );
+  }
 
   try {
     await issueVerificationEmail(user);

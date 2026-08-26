@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 08:43 by Codex — fix forgot-password navigation
+Last updated: 2026-08-26 08:50 by Codex — distinguish unregistered reset emails
 
 ## What changed
+
+- Forgot-password now keeps unregistered emails on the email screen with a localized “not registered” warning. Registered emails continue to the six-digit code screen after the code is issued.
 
 - Fixed the forgot-password send step so a successful verification email moves to the six-digit code screen. The previous implementation grouped navigation inside the email request error handler, which could show an email failure even after delivery; navigation now uses Expo Router's explicit pathname-and-params form.
 

@@ -17,7 +17,7 @@ vi.mock('@/app/api/_lib/verification-email', () => ({
 import { POST } from './route';
 
 describe('POST /api/auth/verification/send', () => {
-  it('returns the generic success response for an unknown email', async () => {
+  it('rejects an unknown email so the client can explain that it is not registered', async () => {
     mocks.findUnique.mockResolvedValue(null);
 
     const response = await POST(new Request('http://localhost/api/auth/verification/send', {
@@ -26,8 +26,24 @@ describe('POST /api/auth/verification/send', () => {
       body: JSON.stringify({ email: 'unknown@example.com' }),
     }) as unknown as NextRequest);
 
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'No Clientflow account found for this email' });
+    expect(mocks.issueVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('sends a code for a registered email', async () => {
+    const user = { id: 'user-1', name: 'Client User', email: 'client@example.com' };
+    mocks.findUnique.mockResolvedValue(user);
+    mocks.issueVerificationEmail.mockResolvedValue(undefined);
+
+    const response = await POST(new Request('http://localhost/api/auth/verification/send', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    }) as unknown as NextRequest);
+
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ sent: true });
-    expect(mocks.issueVerificationEmail).not.toHaveBeenCalled();
+    expect(mocks.issueVerificationEmail).toHaveBeenCalledWith(user);
   });
 });

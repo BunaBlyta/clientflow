@@ -33,7 +33,9 @@ export default function ForgotPasswordScreen() {
       await verificationSendRequest(normalizedEmail);
     } catch (caught) {
       setError(
-        caught instanceof ApiError
+        caught instanceof ApiError && caught.status === 404
+          ? t('auth.notRegistered')
+          : caught instanceof ApiError
           ? caught.message
           : t('auth.sendResetFailed')
       );
