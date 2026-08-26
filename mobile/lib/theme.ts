@@ -1,5 +1,4 @@
-import { createContext, createElement, PropsWithChildren, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { Animated, Easing } from 'react-native';
+import { createContext, createElement, PropsWithChildren, useContext, useMemo, useState } from 'react';
 
 export interface ThemeColors {
   background: string;
@@ -182,37 +181,22 @@ interface ThemeContextValue {
   color: ThemeColors;
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
-  // 0 = fully light, 1 = fully dark. Eases toward the current mode whenever
-  // it changes, so components that opt in (via useAnimatedThemeColor) can
-  // interpolate their own colors instead of snapping instantly.
-  progress: Animated.Value;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const [mode, setCurrentMode] = useState<ThemeMode>('light');
-  const progress = useRef(new Animated.Value(0)).current;
-  const setMode = useCallback((nextMode: ThemeMode) => {
-    if (nextMode === mode) return;
-    // Elements not wired up to useAnimatedThemeColor read `mode` directly
-    // and snap instantly rather than crossfading. Deferring the snap to
-    // when the fade finishes (instead of firing it at the start) means
-    // those elements change only once the animated ones have already
-    // arrived at the new color, instead of jumping the moment the fade
-    // begins and clashing with it for its whole duration.
-    Animated.timing(progress, {
-      toValue: nextMode === 'dark' ? 1 : 0,
-      duration: 260,
-      easing: Easing.inOut(Easing.cubic),
-      useNativeDriver: false, // color interpolation is JS-driven only
-    }).start(({ finished }) => {
-      if (finished) setCurrentMode(nextMode);
-    });
-  }, [mode, progress]);
+  const [mode, setMode] = useState<ThemeMode>('light');
+  // A partial crossfade (only some elements animating their color while
+  // the rest snap) was tried and consistently looked mismatched no matter
+  // which elements were chosen or when the snap landed — the animated
+  // piece is always visibly out of step with whatever didn't animate.
+  // Switching every color in the same instant, synchronized render avoids
+  // that entirely: nothing can be caught mid-transition relative to
+  // anything else.
   const value = useMemo<ThemeContextValue>(
-    () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode, progress }),
-    [mode, setMode, progress],
+    () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode }),
+    [mode],
   );
   return createElement(ThemeContext.Provider, { value }, children);
 }
@@ -221,18 +205,6 @@ export function useTheme() {
   const value = useContext(ThemeContext);
   if (!value) throw new Error('useTheme must be used inside ThemeProvider');
   return value;
-}
-
-// Interpolates a single theme color smoothly between its light and dark
-// value as `progress` eases toward the current mode. Use on an Animated.View
-// / Animated.Text's style for surfaces that should crossfade rather than
-// snap, e.g. `style={{ backgroundColor: useAnimatedThemeColor('surface') }}`.
-export function useAnimatedThemeColor(key: keyof ThemeColors) {
-  const { progress } = useTheme();
-  return useMemo(
-    () => progress.interpolate({ inputRange: [0, 1], outputRange: [colors[key], darkColors[key]] }),
-    [progress, key],
-  );
 }
 
 // Kept as a compatibility export for non-rendering helpers that need colors
