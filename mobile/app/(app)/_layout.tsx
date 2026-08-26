@@ -43,16 +43,16 @@ export default function AppTabsLayout() {
 
   return (
     <Tabs
-      detachInactiveScreens
+      detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
         lazy: false,
-        // detachInactiveScreens + freezeOnBlur (react-native-screens' Freeze,
-        // via react-freeze) pauses re-rendering of tabs that aren't visible,
-        // without unmounting them. Without this, every tab re-renders on
-        // every theme change (all 5 stay mounted per lazy: false above),
-        // which was heavy enough to visibly hitch the theme toggle.
-        freezeOnBlur: true,
+        // Tried detachInactiveScreens + freezeOnBlur (react-freeze) here to
+        // stop inactive tabs re-rendering on theme change, but freezing and
+        // then un-freezing a tab on every switch made core tab navigation
+        // itself feel laggy — a worse trade than the theme toggle issue it
+        // was meant to fix. Reverted; the theme toggle's actual bug turned
+        // out to be a visual one (see lib/theme.ts), not this.
         animation: Platform.OS === 'web' ? 'none' : 'shift',
         sceneStyleInterpolator: tabSceneStyleInterpolator,
         transitionSpec: {

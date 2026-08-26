@@ -13,7 +13,7 @@ interface InvoiceRowProps {
 
 export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProps) {
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const overdue =
     (invoice.status === 'SENT' || invoice.status === 'FAILED') &&
@@ -37,16 +37,16 @@ export function InvoiceRow({ invoice, onPress, preview = false }: InvoiceRowProp
             {invoice.label}
           </Text>
           <Text style={styles.meta} numberOfLines={1}>{kindLabel}</Text>
-          <Text style={styles.amount} numberOfLines={1}>{formatCurrency(invoice.amountCents)}</Text>
+          <Text style={styles.amount} numberOfLines={1}>{formatCurrency(invoice.amountCents, language)}</Text>
           <Text style={styles.date} numberOfLines={1}>
-            {invoice.paidAt ? `${t('invoices.paid')} ${formatDate(invoice.paidAt)}` : invoice.dueDate ? `${t('invoices.due')} ${formatDate(invoice.dueDate)}` : ''}
+            {invoice.paidAt ? `${t('invoices.paid')} ${formatDate(invoice.paidAt, language)}` : invoice.dueDate ? `${t('invoices.due')} ${formatDate(invoice.dueDate, language)}` : ''}
           </Text>
         </View>
         <View style={styles.right}>
           <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
           <View style={[styles.actionButton, invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? styles.actionButtonSecondary : styles.actionButtonPrimary]}>
             <Text style={[styles.actionText, { color: invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? color.textSecondary : color.textOnAccent }]}>
-              {invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? t('common.viewAll') : t('invoices.payNow')}
+              {invoice.status === 'PAID' || invoice.status === 'VOIDED' || invoice.status === 'REFUNDED' ? t('ui.viewDetails') : t('invoices.payNow')}
             </Text>
           </View>
         </View>

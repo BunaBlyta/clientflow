@@ -15,7 +15,7 @@ import { useShallow } from 'zustand/react/shallow';
 export default function NotificationsScreen() {
   const navigation = useNavigation() as unknown as {
     navigate: (
-      screen: 'projects/[id]/index' | 'projects/[id]/invoices/[invoiceId]/index',
+      screen: 'projects/[id]/index' | 'projects/[id]/notes' | 'projects/[id]/invoices/[invoiceId]/index',
       params: { id: string; invoiceId?: string; tab: 'notifications' },
     ) => void;
   };
@@ -60,7 +60,12 @@ export default function NotificationsScreen() {
       setMarkingId(null);
       if (!ok) setActionError(t('notifications.markFailed'));
     }
-    if (notification.projectId && notification.invoiceId) {
+    if (notification.type === 'NEW_NOTE' && notification.projectId) {
+      navigation.navigate('projects/[id]/notes', {
+        id: notification.projectId,
+        tab: 'notifications',
+      });
+    } else if (notification.projectId && notification.invoiceId) {
       navigation.navigate('projects/[id]/invoices/[invoiceId]/index', {
         id: notification.projectId,
         invoiceId: notification.invoiceId,

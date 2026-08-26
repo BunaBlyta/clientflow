@@ -14,15 +14,15 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, onPress }: ProjectCardProps) {
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const styles = createStyles(color);
   const pkg = getPackageById(project.packageId);
   const statusMeta = getProjectStatusMeta(project.status, color, t);
   const stageIndex = PROJECT_STAGES.indexOf(project.status);
   const progress = Math.max(0, (stageIndex / (PROJECT_STAGES.length - 1)) * 100);
   const progressLabel = project.status === 'LAUNCHED'
-    ? 'Delivered'
-    : `${getProjectStatusLabel(project.status, t)} phase`;
+    ? t('ui.delivered')
+    : t('ui.phase', { status: getProjectStatusLabel(project.status, t) });
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
@@ -43,22 +43,24 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
       <View style={styles.progressDivider} />
       <View style={styles.dateRow}>
         <Text style={styles.dateText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-          Started {formatProjectDate(project.createdAt)}
+          {t('ui.started', { date: formatProjectDate(project.createdAt, language) })}
         </Text>
         <Text style={[styles.dateText, styles.dateTextRight]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-          {project.targetLaunchDate ? `${project.status === 'LAUNCHED' ? 'Launched' : 'Est. launch'} ${formatProjectDate(project.targetLaunchDate)}` : 'Not scheduled'}
+          {project.targetLaunchDate
+            ? t(project.status === 'LAUNCHED' ? 'ui.launched' : 'ui.estimatedLaunch', { date: formatProjectDate(project.targetLaunchDate, language) })
+            : t('ui.notScheduled')}
         </Text>
       </View>
       <View style={styles.detailsRow}>
-        <Text style={styles.detailsText}>View details</Text>
+        <Text style={styles.detailsText}>{t('ui.viewDetails')}</Text>
         <ChevronRight size={18} color={color.accent} />
       </View>
     </Pressable>
   );
 }
 
-function formatProjectDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function formatProjectDate(value: string, language: 'en' | 'sq' | 'de') {
+  return new Date(value).toLocaleDateString(language === 'sq' ? 'sq-AL' : language === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
