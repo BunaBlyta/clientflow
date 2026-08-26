@@ -18,13 +18,14 @@ export default function AccountScreen() {
   const [themeToggleMode, setThemeToggleMode] = useState(mode);
   const { language, setLanguage, t } = useI18n();
   const styles = createStyles(color);
-  const headingColor = useAnimatedThemeColor('textPrimary');
+  // Kept deliberately small: each of these is a separate JS-driven color
+  // interpolation (color can't use the native animation driver), and each
+  // one costs a bridge update on every animation frame. Animating every
+  // text/icon on the screen caused visible stutter on device — only the
+  // two large card surfaces crossfade now; everything else snaps once,
+  // timed to land when the fade finishes (see ThemeProvider.setMode).
   const surfaceColor = useAnimatedThemeColor('surface');
   const borderColor = useAnimatedThemeColor('border');
-  const accentSoftColor = useAnimatedThemeColor('accentSoft');
-  const accentColor = useAnimatedThemeColor('accent');
-  const textSecondaryColor = useAnimatedThemeColor('textSecondary');
-  const textMutedColor = useAnimatedThemeColor('textMuted');
 
   useEffect(() => {
     setThemeToggleMode(mode);
@@ -50,18 +51,18 @@ export default function AccountScreen() {
         paddingBottom: 64 + spacing.md,
       }}
     >
-      <Animated.Text style={[styles.heading, { color: headingColor }]}>{t('account.title')}</Animated.Text>
+      <Text style={styles.heading}>{t('account.title')}</Text>
 
       <Animated.View style={[styles.profileHeader, { backgroundColor: surfaceColor, borderColor }]}>
-        <Animated.View style={[styles.avatarWrap, { backgroundColor: accentSoftColor }]}>
-          <Animated.Text style={[styles.avatarInitial, { color: accentColor }]}>
+        <View style={styles.avatarWrap}>
+          <Text style={styles.avatarInitial}>
             {client?.name?.charAt(0).toUpperCase() ?? '?'}
-          </Animated.Text>
-        </Animated.View>
+          </Text>
+        </View>
         <View style={styles.profileCopy}>
-          <Animated.Text style={[styles.name, { color: headingColor }]}>{client?.name}</Animated.Text>
-          <Animated.Text style={[styles.email, { color: textSecondaryColor }]}>{client?.email}</Animated.Text>
-          <Animated.Text style={[styles.company, { color: textMutedColor }]}>{client?.companyName}</Animated.Text>
+          <Text style={styles.name}>{client?.name}</Text>
+          <Text style={styles.email}>{client?.email}</Text>
+          <Text style={styles.company}>{client?.companyName}</Text>
         </View>
       </Animated.View>
 
@@ -144,7 +145,7 @@ export default function AccountScreen() {
         </Pressable>
       )}
 
-      <Animated.Text style={[styles.footer, { color: textMutedColor }]}>{t('account.version')}</Animated.Text>
+      <Text style={styles.footer}>{t('account.version')}</Text>
     </Screen>
   );
 }
@@ -154,10 +155,9 @@ function PreferenceGroup({ label, children }: { label: string; children: ReactNo
   const styles = createStyles(color);
   const surfaceColor = useAnimatedThemeColor('surface');
   const borderColor = useAnimatedThemeColor('border');
-  const textSecondaryColor = useAnimatedThemeColor('textSecondary');
   return (
     <View style={styles.preferenceGroup}>
-      <Animated.Text style={[styles.preferenceLabel, { color: textSecondaryColor }]}>{label}</Animated.Text>
+      <Text style={styles.preferenceLabel}>{label}</Text>
       <Animated.View style={[styles.preferenceOptions, { backgroundColor: surfaceColor, borderColor }]}>
         {children}
       </Animated.View>
@@ -183,21 +183,18 @@ function SettingsRow({
   trailing?: ReactNode;
 }) {
   const { color } = useTheme();
-  const surfaceMutedColor = useAnimatedThemeColor('surfaceMuted');
-  const textPrimaryColor = useAnimatedThemeColor('textPrimary');
-  const textMutedColor = useAnimatedThemeColor('textMuted');
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
     >
-      <Animated.View style={[styles.settingsIcon, { backgroundColor: surfaceMutedColor }]}>
+      <View style={styles.settingsIcon}>
         <Icon size={16} color={color.textSecondary} strokeWidth={1.8} />
-      </Animated.View>
-      <Animated.Text style={[styles.settingsLabel, { color: textPrimaryColor }]}>{label}</Animated.Text>
+      </View>
+      <Text style={styles.settingsLabel}>{label}</Text>
       {trailing ? <View style={styles.trailingControl}>{trailing}</View> : (
         <>
-          {value ? <Animated.Text style={[styles.settingsValue, { color: textMutedColor }]}>{value}</Animated.Text> : null}
+          {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
           <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
         </>
       )}
