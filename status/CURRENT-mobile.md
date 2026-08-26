@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 09:50 by Codex — make the notes header sticky
+Last updated: 2026-08-26 12:40 by Claude Code — smooth theme transition, take two
 
 ## What changed
 
@@ -64,6 +64,8 @@ Last updated: 2026-08-26 09:50 by Codex — make the notes header sticky
 - Centered the Lucide brand icon within its background mark.
 - Removed the secondary Check a project request action from the login screen.
 - Changed shared textboxes to use the app’s light sage-green surface.
+- Fixed the theme transition animation so every theme animation stays JavaScript-driven, preventing React Native’s native/JS animated-node crash.
+- Replaced the overlay-flash approach to the theme toggle (fading in a fixed target-color layer to hide an instant swap, then fading it out) with a genuine crossfade: the app background and the account screen's header, profile card, preference card, and settings rows now interpolate their real colors smoothly between light and dark instead of hiding a snap behind a masking layer. The overlay technique kept reading as a visible pulse/flash no matter how it was tuned (transparent enough to mask the swap looked like a snap; opaque enough to hide it looked like a solid black/white flash), so it was dropped rather than tuned further. Other theme-driven surfaces across the app (other tabs, buttons, hairline borders) still snap instantly — only the account screen and the shared background were converted, since that was the reported scope.
 
 ## Verification
 
@@ -71,8 +73,11 @@ Last updated: 2026-08-26 09:50 by Codex — make the notes header sticky
 - `npx expo export --platform web --output-dir /private/tmp/clientflow-mobile-meridian-check-v7`: passed before the final chat-only refinements.
 - `git diff --check`: passed.
 - `npx tsc --noEmit`: passed after the final chat bubble refinement.
+- `npx tsc --noEmit`: passed after the theme animation fix.
+- `npx expo export --platform ios`: passed after the theme animation fix.
 - `npx eslint .`: mobile has no applicable ESLint configuration; ESLint reports that all files are ignored.
-- Browser preview inspection was unavailable because no browser connection was available in this session.
+- `npx tsc --noEmit`: passed after the theme crossfade rework.
+- Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
 
