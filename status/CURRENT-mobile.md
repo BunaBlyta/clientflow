@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 13:20 by Claude Code — app-wide border radius consistency pass
+Last updated: 2026-08-26 13:30 by Claude Code — fixed invisible timestamp on sent chat bubbles
 
 ## What changed
+
+- Sent (client) note bubbles have a solid accent-colored background; the message text correctly turns white for contrast, but the timestamp underneath was still using the muted gray meant for light surfaces, making it nearly invisible. Switched it to white at reduced opacity, so it's readable while still reading as secondary to the message text.
 
 - Audited every page for border-radius mismatches (user asked that elements on the same page match). Found the app already follows a consistent two-tier system app-wide — a larger radius for primary cards, a smaller one for nested rows/fields/buttons — with circles, pills, and the chat bubble's deliberate asymmetric "tail" corner correctly exempt from that. One real mismatch: the notes/chat composer's send button used a larger radius than the text input directly beside it (both 46px tall, same row) — fixed to match. Also swapped a literal `999` for the `radius.pill` token on the project detail status pill (same visual value, just consistent with how every other pill in the app is written).
 
@@ -87,6 +89,7 @@ Last updated: 2026-08-26 13:20 by Claude Code — app-wide border radius consist
 - `npx tsc --noEmit`: passed after the theme crossfade rework.
 - `npx tsc --noEmit`: passed after the spacing consistency pass.
 - `npx tsc --noEmit`: passed after the border radius consistency pass.
+- `npx tsc --noEmit`: passed after the sent-bubble timestamp fix.
 - Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
