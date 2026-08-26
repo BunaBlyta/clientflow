@@ -1,0 +1,7 @@
+# Mobile: fixed keyboard gap above notes composer
+
+- User tested the notes/chat screen on a real device (not a simulator) and reported the text input + send button row floated too far above the keyboard, leaving a visible gap.
+- Root cause: `app/(app)/projects/[id]/notes.tsx`'s `KeyboardAvoidingView` had `keyboardVerticalOffset={90}`. That prop tells RN to treat the keyboard as if it started 90px higher than it actually does, to compensate for a native header sitting above the `KeyboardAvoidingView` that isn't itself keyboard-avoiding. This screen has no native header (`headerShown: false` on the stack, confirmed in `app/(app)/projects/_layout.tsx`), and the screen's own sticky header (title + back button) is a child of the `KeyboardAvoidingView`, not external chrome — so the view genuinely starts at the top of the screen and needs no offset. The hardcoded 90 was pushing the composer that far above the real keyboard.
+- Fix: removed the `keyboardVerticalOffset` prop entirely, so it uses its correct default of 0.
+- Verified with `npx tsc --noEmit` from `mobile/`. Not tested on a device this session — the fix follows directly from how `KeyboardAvoidingView`'s offset math works and this screen's confirmed lack of a native header, but ask the user to confirm on their device before treating this as fully closed.
+- Committed `mobile/app/(app)/projects/[id]/notes.tsx` alone — one-line, isolated diff.

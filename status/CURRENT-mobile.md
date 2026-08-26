@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 13:50 by Claude Code — notes separator color, notification row redesign
+Last updated: 2026-08-26 14:00 by Claude Code — fixed keyboard gap above notes composer
 
 ## What changed
+
+- On a real device, the notes composer (text input + send button) floated well above the keyboard with a visible gap instead of sitting right on top of it. Cause: `KeyboardAvoidingView` had a hardcoded `keyboardVerticalOffset={90}`, which tells it to compensate for 90px of header space above the view — but this screen has no native header (`headerShown: false`) and its own sticky header is a child of the `KeyboardAvoidingView`, not external chrome, so the view genuinely starts at the top of the screen. Removed the offset (defaults to 0, the correct value here).
 
 - The notes header separator's color came from the app's border tokens, which all carry a deliberate sage-green tint — at that weight it read as green rather than gray. Switched to a one-off plain neutral gray (adjusted lighter after a first pass based on feedback), kept adaptive between light/dark.
 - Removed the thin colored rail on the left edge of `NotificationRow` (used on both Home's activity list and the Notifications tab), and rebalanced the row's padding now that it's symmetric without the rail.
@@ -98,6 +100,7 @@ Last updated: 2026-08-26 13:50 by Claude Code — notes separator color, notific
 - `npx tsc --noEmit`: passed after the sent-bubble timestamp fix.
 - `npx tsc --noEmit`: passed after the notes header separator fix.
 - `npx tsc --noEmit`: passed after the separator recolor and notification row redesign.
+- `npx tsc --noEmit`: passed after the keyboard gap fix.
 - Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
