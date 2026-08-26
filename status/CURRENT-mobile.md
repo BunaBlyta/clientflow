@@ -1,8 +1,12 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 13:35 by Claude Code — more visible notes header separator
+Last updated: 2026-08-26 13:50 by Claude Code — notes separator color, notification row redesign
 
 ## What changed
+
+- The notes header separator's color came from the app's border tokens, which all carry a deliberate sage-green tint — at that weight it read as green rather than gray. Switched to a one-off plain neutral gray (adjusted lighter after a first pass based on feedback), kept adaptive between light/dark.
+- Removed the thin colored rail on the left edge of `NotificationRow` (used on both Home's activity list and the Notifications tab), and rebalanced the row's padding now that it's symmetric without the rail.
+- Notification icons/backgrounds for "neutral" types (stage changes, invoices, requests) previously fell back to a flat grey, separate from new-note notifications which got the accent color. Unified them: everything now gets the accent treatment by default, with only success/danger states (payment succeeded/failed, request approved/rejected) breaking out as a special case — per feedback that the grey icons needed a real color.
 
 - The Notes screen's sticky header (title + project name, pinned above the scrolling chat timeline) had only a hairline border in the app's lightest border color separating it from the scrolling content — too faint to read as a real boundary. Bumped it to a full 1px line in the stronger border token.
 
@@ -93,6 +97,7 @@ Last updated: 2026-08-26 13:35 by Claude Code — more visible notes header sepa
 - `npx tsc --noEmit`: passed after the border radius consistency pass.
 - `npx tsc --noEmit`: passed after the sent-bubble timestamp fix.
 - `npx tsc --noEmit`: passed after the notes header separator fix.
+- `npx tsc --noEmit`: passed after the separator recolor and notification row redesign.
 - Browser preview inspection was unavailable because no browser connection was available in this session. The crossfade rework was reviewed by reading the code, not by running the app on a device/simulator.
 
 ## Scope and handoff
