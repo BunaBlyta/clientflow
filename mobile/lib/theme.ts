@@ -1,4 +1,5 @@
-import { createContext, createElement, PropsWithChildren, useContext, useMemo, useState } from 'react';
+import { createContext, createElement, PropsWithChildren, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { Animated, Easing } from 'react-native';
 
 export interface ThemeColors {
   background: string;
@@ -186,19 +187,45 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const [mode, setMode] = useState<ThemeMode>('light');
+  const [mode, setCurrentMode] = useState<ThemeMode>('light');
   // A partial crossfade (only some elements animating their color while
-  // the rest snap) was tried and consistently looked mismatched no matter
-  // which elements were chosen or when the snap landed — the animated
-  // piece is always visibly out of step with whatever didn't animate.
-  // Switching every color in the same instant, synchronized render avoids
-  // that entirely: nothing can be caught mid-transition relative to
-  // anything else.
+  // the rest snap) was tried and consistently looked mismatched, no matter
+  // which elements were chosen or when the snap landed — whatever animates
+  // is definitionally out of step with whatever doesn't, for the whole
+  // transition. Instead of animating any color, briefly dim the real
+  // content's opacity as a single unit (native-driven, so it's immune to
+  // whatever the JS thread is doing), swap the theme while it's dim, then
+  // fade back in. Nothing can desync because it's one Animated.View, and
+  // there's no synthetic overlay color to get wrong since it's the actual
+  // UI, just briefly translucent.
+  const dim = useRef(new Animated.Value(1)).current;
+  const setMode = useCallback((nextMode: ThemeMode) => {
+    if (nextMode === mode) return;
+    Animated.timing(dim, {
+      toValue: 0.4,
+      duration: 120,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (!finished) return;
+      setCurrentMode(nextMode);
+      Animated.timing(dim, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [mode, dim]);
   const value = useMemo<ThemeContextValue>(
     () => ({ color: mode === 'dark' ? darkColors : colors, mode, setMode }),
-    [mode],
+    [mode, setMode],
   );
-  return createElement(ThemeContext.Provider, { value }, children);
+  return createElement(
+    ThemeContext.Provider,
+    { value },
+    createElement(Animated.View, { style: { flex: 1, opacity: dim } }, children),
+  );
 }
 
 export function useTheme() {
