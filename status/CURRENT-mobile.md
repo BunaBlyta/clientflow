@@ -1,8 +1,10 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-26 14:10 by Claude Code — smoother keyboard animation in notes
+Last updated: 2026-08-26 14:20 by Claude Code — scoped keyboard-avoiding padding to just the composer
 
 ## What changed
+
+- User reported the notes composer still didn't animate smoothly with the keyboard after the scroll-jank fix. `KeyboardAvoidingView`'s `padding` behavior was wrapping the entire screen (header + full chat `ScrollView` + composer), so every frame of the keyboard animation forced Yoga to re-layout the whole message list's flex sizing alongside the composer's own growing padding. Rescoped the `KeyboardAvoidingView` to wrap only the composer bar (a small subtree — text input + send button), so the keyboard animation now only has to reflow that instead of the whole screen. Not verified on a device this session — ask the user to confirm before treating this as closed.
 
 - User reported the keyboard-open animation for the notes composer still didn't feel smooth after the earlier gap fix. Cause: the chat `ScrollView`'s `onContentSizeChange` called an unconditional, unanimated `scrollToEnd` on every content-size change — including the ones `KeyboardAvoidingView` causes by resizing the scrollable area as the keyboard animates open, so an instant scroll snap fired on every frame of what should have been one smooth slide. Replaced it with a `useEffect` keyed on `notes.length`, so the auto-scroll-to-newest-message behavior only fires when a message is actually added, not on keyboard-driven layout churn.
 - Note: `status/CURRENT-mobile.md` is being written concurrently by both Codex (assigned mobile lane) and this Claude Code session (user asked me to work mobile directly today) — the entry below this one is Codex's, from the same timeframe. Flagging in case that's not intentional; no content was lost, just two writers on one file.
