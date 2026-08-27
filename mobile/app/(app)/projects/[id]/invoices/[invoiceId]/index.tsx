@@ -194,7 +194,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   statusText: {
     fontFamily: fontFamily.medium,
     fontSize: fontSize.caption,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   screenTitle: {
     fontFamily: fontFamily.semibold,
@@ -213,7 +213,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontSize: fontSize.headingLg,
     color: color.textPrimary,
     marginTop: spacing.sm,
-    marginBottom: spacing.md,
   },
   detailsBlock: {
     marginTop: spacing.xl,
@@ -247,7 +246,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.warningBg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.warningBorder,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     padding: spacing.md,
     marginBottom: spacing.xl,
   },
@@ -274,7 +273,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.successBg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.successBorder,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     padding: spacing.md,
     marginBottom: spacing.xl,
   },

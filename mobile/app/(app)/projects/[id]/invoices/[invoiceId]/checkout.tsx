@@ -299,6 +299,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.caption,
     color: color.textSecondary,
+    marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
   fieldMock: {
