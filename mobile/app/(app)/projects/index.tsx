@@ -3,13 +3,14 @@ import { FolderKanban } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { ProjectCard } from '../../../components/ProjectCard';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { ProjectCardSkeleton } from '../../../components/ui/Skeleton';
 import { Screen } from '../../../components/ui/Screen';
 import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProjectsListScreen() {
   const router = useRouter();
@@ -19,9 +20,20 @@ export default function ProjectsListScreen() {
   const token = useAuthStore((s) => s.token);
   const projects = useDataStore(useShallow((s) => s.projects));
   const refreshProjects = useDataStore((s) => s.refreshProjects);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) void refreshProjects(token);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    void refreshProjects(token).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
   }, [refreshProjects, token]);
 
   return (
@@ -31,7 +43,13 @@ export default function ProjectsListScreen() {
       </View>
 
       <View style={styles.list}>
-        {projects.length === 0 ? (
+        {loading && projects.length === 0 ? (
+          <View>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <ProjectCardSkeleton key={index} />
+            ))}
+          </View>
+        ) : projects.length === 0 ? (
           <EmptyState
             icon={FolderKanban}
             title={t('projects.emptyTitle')}

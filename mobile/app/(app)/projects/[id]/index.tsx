@@ -5,6 +5,7 @@ import { NoteBubble } from '../../../../components/NoteBubble';
 import { ProjectStageTracker } from '../../../../components/ProjectStageTracker';
 import { InvoiceRow } from '../../../../components/InvoiceRow';
 import { EmptyState } from '../../../../components/ui/EmptyState';
+import { Skeleton } from '../../../../components/ui/Skeleton';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
@@ -38,20 +39,27 @@ export default function ProjectDetailScreen() {
   const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const [unreachable, setUnreachable] = useState(false);
+  const [loading, setLoading] = useState(!project);
   const projectRoute = tab === 'notifications'
     ? `/notifications/projects/${id}` as const
     : `/projects/${id}` as const;
 
   useEffect(() => {
-    if (!id || !token) return;
+    if (!id || !token) {
+      setLoading(false);
+      return;
+    }
 
-    void refreshProject(id, token);
     let active = true;
     void Promise.all([
+      refreshProject(id, token),
       refreshNotes(token, id),
       refreshInvoices(token, id),
-    ]).then(([notesReachable, invoicesReachable]) => {
-      if (active) setUnreachable(!notesReachable || !invoicesReachable);
+    ]).then(([, notesReachable, invoicesReachable]) => {
+      if (active) {
+        setUnreachable(!notesReachable || !invoicesReachable);
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -63,7 +71,11 @@ export default function ProjectDetailScreen() {
     return (
       <Screen>
         <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
-        <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
+        {loading ? (
+          <ProjectDetailSkeleton styles={styles} />
+        ) : (
+          <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
+        )}
       </Screen>
     );
   }
@@ -191,6 +203,52 @@ export default function ProjectDetailScreen() {
         )}
       </Card>
     </Screen>
+  );
+}
+
+function ProjectDetailSkeleton({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const { color } = useTheme();
+  const card: object = {
+    borderWidth: 1,
+    borderColor: color.border,
+    borderRadius: radius.xl,
+    backgroundColor: color.surface,
+    padding: 20,
+  };
+  return (
+    <View>
+      <View style={styles.topbar}>
+        <View style={{ flex: 1, alignItems: 'center', gap: spacing.xs }}>
+          <Skeleton width={140} height={16} />
+          <Skeleton width={90} height={11} />
+        </View>
+      </View>
+      <View style={card}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
+          <Skeleton width={110} height={14} />
+          <Skeleton width={72} height={22} radius={radius.pill} />
+        </View>
+        <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
+          <Skeleton width={128} height={128} radius={64} />
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.md }}>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} width="18%" height={6} radius={3} />
+          ))}
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.lg }}>
+          <Skeleton width="40%" height={11} />
+          <Skeleton width="40%" height={11} />
+        </View>
+      </View>
+      {Array.from({ length: 2 }).map((_, index) => (
+        <View key={index} style={[card, { marginTop: spacing.xl }]}>
+          <Skeleton width={120} height={14} style={{ marginBottom: spacing.md }} />
+          <Skeleton width="90%" height={12} />
+          <Skeleton width="65%" height={12} style={{ marginTop: spacing.sm }} />
+        </View>
+      ))}
+    </View>
   );
 }
 

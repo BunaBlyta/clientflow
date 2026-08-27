@@ -12,6 +12,7 @@ import {
 import { useCallback, useState } from 'react';
 import { NotificationRow } from '../../../components/NotificationRow';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { NotificationRowSkeleton, Skeleton } from '../../../components/ui/Skeleton';
 import { Screen } from '../../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
@@ -186,7 +187,14 @@ export default function NotificationsScreen() {
       )}
       {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
 
-      {visibleNotifications.length === 0 ? (
+      {notificationsLoading && visibleNotifications.length === 0 ? (
+        <View style={styles.group}>
+          <Skeleton width={64} height={11} style={{ marginBottom: spacing.sm }} />
+          {Array.from({ length: 6 }).map((_, index) => (
+            <NotificationRowSkeleton key={index} />
+          ))}
+        </View>
+      ) : visibleNotifications.length === 0 ? (
         <EmptyState
           icon={Bell}
           title={showArchived ? t('notifications.noArchived') : t('notifications.caughtUp')}

@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { CheckCircle2, FileText } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Button } from '../../../../../../components/ui/Button';
 import { EmptyState } from '../../../../../../components/ui/EmptyState';
+import { Skeleton } from '../../../../../../components/ui/Skeleton';
 import { Screen } from '../../../../../../components/ui/Screen';
 import { formatCurrency, formatDate, isPastDue } from '../../../../../../lib/format';
 import {
@@ -84,7 +85,19 @@ export default function InvoiceDetailScreen() {
     return (
       <Screen>
         <AppBackButton source={source} accessibilityLabel={t('common.backToInvoice')} />
-        <ActivityIndicator color={color.accent} />
+        <Skeleton width="55%" height={22} style={{ marginTop: spacing.sm }} />
+        <Skeleton width="30%" height={12} style={{ marginTop: spacing.md }} />
+        <Skeleton width="45%" height={30} style={{ marginTop: spacing.lg }} />
+        <Skeleton width={90} height={12} style={{ marginTop: spacing.md }} />
+        <View style={{ marginTop: spacing.xl, gap: spacing.md }}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Skeleton width="30%" height={12} />
+              <Skeleton width="35%" height={12} />
+            </View>
+          ))}
+        </View>
+        <Skeleton height={52} radius={radius.md} style={{ marginTop: spacing.xl }} />
       </Screen>
     );
   }

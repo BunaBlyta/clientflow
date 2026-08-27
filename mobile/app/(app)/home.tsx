@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { ChevronRight, FolderKanban } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { NotificationRowSkeleton, Skeleton } from '../../components/ui/Skeleton';
 import { Screen } from '../../components/ui/Screen';
 import { formatCurrency, formatDate } from '../../lib/format';
 import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
@@ -29,11 +30,20 @@ export default function HomeScreen() {
   const notifications = useDataStore(useShallow((s) => [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 3)));
   const refreshProjects = useDataStore((s) => s.refreshProjects);
   const refreshInvoices = useDataStore((s) => s.refreshInvoices);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
-    void refreshProjects(token);
-    void refreshInvoices(token);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    void Promise.all([refreshProjects(token), refreshInvoices(token)]).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
   }, [refreshInvoices, refreshProjects, token]);
 
   const project = projects[0];
@@ -51,7 +61,9 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {!project ? (
+      {loading && !project ? (
+        <HomeSkeleton styles={styles} />
+      ) : !project ? (
         <EmptyState icon={FolderKanban} title={t('projects.emptyTitle')} subtitle={t('projects.emptySubtitle')} />
       ) : (
         <>
@@ -133,6 +145,47 @@ export default function HomeScreen() {
         </>
       )}
     </Screen>
+  );
+}
+
+function HomeSkeleton({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const { color } = useTheme();
+  return (
+    <View>
+      <View style={[styles.statusSection, { borderWidth: 1, borderColor: color.border, borderRadius: 18, padding: spacing.lg, backgroundColor: color.surface }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}>
+          <Skeleton width="55%" height={16} />
+          <Skeleton width={80} height={22} radius={999} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.lg }}>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} width={20} height={6} radius={3} />
+          ))}
+        </View>
+        <Skeleton height={1} radius={0} style={{ marginTop: spacing.md }} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md }}>
+          <Skeleton width="40%" height={11} />
+          <Skeleton width="40%" height={11} />
+        </View>
+      </View>
+      <View style={styles.statsRow}>
+        {Array.from({ length: 2 }).map((_, index) => (
+          <View key={index} style={styles.statCard}>
+            <Skeleton width="70%" height={10} />
+            <Skeleton width="80%" height={18} style={{ marginTop: spacing.sm }} />
+            <Skeleton width="55%" height={10} style={{ marginTop: spacing.xs }} />
+          </View>
+        ))}
+      </View>
+      <View style={styles.activityHeader}>
+        <Skeleton width={120} height={16} />
+      </View>
+      <View>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <NotificationRowSkeleton key={index} />
+        ))}
+      </View>
+    </View>
   );
 }
 

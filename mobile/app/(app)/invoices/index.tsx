@@ -1,9 +1,10 @@
 import { useNavigation } from 'expo-router';
 import { FileText } from 'lucide-react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../../components/InvoiceRow';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { InvoiceRowSkeleton, KpiCardSkeleton, Skeleton } from '../../../components/ui/Skeleton';
 import { Screen } from '../../../components/ui/Screen';
 import { Card } from '../../../components/ui/Card';
 import { formatCurrency } from '../../../lib/format';
@@ -49,10 +50,23 @@ export default function InvoicesScreen() {
       <View style={styles.topbar}>
         <Text style={styles.title}>{t('tabs.invoices')}</Text>
       </View>
-      {invoices.length === 0 && <Text style={styles.subtitle}>{t('invoices.emptySubtitle')}</Text>}
+      {!loading && invoices.length === 0 && <Text style={styles.subtitle}>{t('invoices.emptySubtitle')}</Text>}
       {unreachable && <Text style={styles.error}>{t('invoices.unavailable')}</Text>}
       {loading && invoices.length === 0 ? (
-        <ActivityIndicator color={color.accentText} style={styles.loading} />
+        <View>
+          <View style={styles.summaryGrid}>
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+          </View>
+          <View style={styles.listHeading}>
+            <Skeleton width={90} height={12} />
+          </View>
+          <View style={styles.list}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <InvoiceRowSkeleton key={index} />
+            ))}
+          </View>
+        </View>
       ) : invoices.length === 0 ? (
         <EmptyState icon={FileText} title={t('invoices.emptyTitle')} subtitle={t('invoices.emptySubtitle')} />
       ) : (

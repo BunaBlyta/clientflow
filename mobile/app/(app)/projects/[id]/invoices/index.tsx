@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FileText } from 'lucide-react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { InvoiceRow } from '../../../../../components/InvoiceRow';
 import { EmptyState } from '../../../../../components/ui/EmptyState';
+import { InvoiceRowSkeleton } from '../../../../../components/ui/Skeleton';
 import { Screen } from '../../../../../components/ui/Screen';
 import { fontFamily, fontSize, spacing, textShadow, useTheme } from '../../../../../lib/theme';
 import { useI18n } from '../../../../../lib/i18n';
@@ -48,7 +49,11 @@ export default function ProjectInvoicesScreen() {
       <Screen>
         <AppBackButton accessibilityLabel={t('common.backToProject')} />
         <Text style={styles.title}>{t('projects.invoices')}</Text>
-        <ActivityIndicator color={color.accent} />
+        <View style={styles.listGroup}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <InvoiceRowSkeleton key={index} />
+          ))}
+        </View>
       </Screen>
     );
   }

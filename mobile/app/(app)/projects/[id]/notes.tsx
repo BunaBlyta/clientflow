@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { EmptyState } from '../../../../components/ui/EmptyState';
+import { NoteBubbleSkeleton } from '../../../../components/ui/Skeleton';
 import { formatDate } from '../../../../lib/format';
 import { AtmosphereBackground } from '../../../../components/ui/AtmosphereBackground';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../lib/theme';
@@ -225,7 +226,12 @@ export default function ProjectNotesScreen() {
       <View style={styles.flex}>
         <AtmosphereBackground />
         {notesHeader}
-        <ActivityIndicator color={color.accent} style={styles.loading} />
+        <View style={styles.content}>
+          <NoteBubbleSkeleton />
+          <NoteBubbleSkeleton mine />
+          <NoteBubbleSkeleton />
+          <NoteBubbleSkeleton mine />
+        </View>
       </View>
     );
   }
