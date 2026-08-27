@@ -4,12 +4,15 @@ import { useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { spacing, useTheme } from '../lib/theme';
 
-type Origin = 'home' | 'invoices' | 'notifications';
+type Origin = 'home' | 'invoices' | 'notifications' | 'account';
 
 export function useOriginBack(source?: string) {
   const router = useRouter();
   const navigation = useNavigation();
-  const origin: Origin | null = source === 'home' || source === 'invoices' || source === 'notifications' ? source : null;
+  const origin: Origin | null =
+    source === 'home' || source === 'invoices' || source === 'notifications' || source === 'account'
+      ? source
+      : null;
   const target = origin ? `/${origin}` as const : null;
 
   const goBack = useCallback(() => {

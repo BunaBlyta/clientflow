@@ -133,7 +133,7 @@ export default function AccountScreen() {
           </View>
         )}
         <SettingsRow
-          icon={themeToggleMode === 'dark' ? Moon : Sun}
+          iconNode={<ThemeRowIcon progress={toggleProgress} color={color} />}
           label={t('account.theme')}
           onPress={handleThemeToggle}
           styles={styles}
@@ -146,7 +146,7 @@ export default function AccountScreen() {
         <SettingsRow
           icon={CircleHelp}
           label={t('ui.helpSupport')}
-          onPress={() => router.push('/settings/help-support')}
+          onPress={() => router.push({ pathname: '/settings/help-support', params: { source: 'account' } })}
           styles={styles}
           last
         />
@@ -217,6 +217,7 @@ function PreferenceGroup({ label, children }: { label: string; children: ReactNo
 
 function SettingsRow({
   icon: Icon,
+  iconNode,
   label,
   value,
   onPress,
@@ -224,7 +225,8 @@ function SettingsRow({
   last = false,
   trailing,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  iconNode?: ReactNode;
   label: string;
   value?: string;
   onPress: () => void;
@@ -239,7 +241,7 @@ function SettingsRow({
       style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
     >
       <View style={styles.settingsIcon}>
-        <Icon size={16} color={color.textSecondary} strokeWidth={1.8} />
+        {iconNode ?? (Icon ? <Icon size={16} color={color.textSecondary} strokeWidth={1.8} /> : null)}
       </View>
       <Text style={styles.settingsLabel}>{label}</Text>
       {trailing ? <View style={styles.trailingControl}>{trailing}</View> : (
@@ -249,6 +251,42 @@ function SettingsRow({
         </>
       )}
     </Pressable>
+  );
+}
+
+// The settings row's leading icon used to be `themeToggleMode === 'dark' ?
+// Moon : Sun` — a plain ternary, so it hard-snapped the instant you tapped,
+// well before the screenshot crossfade even starts capturing (setMode's
+// capture is necessarily async). Unlike the switch thumb, which gets a
+// floating live copy to cover exactly this gap (see toggleRef above), this
+// icon had no such cover, so the snap was fully visible for a beat — likely
+// what read as "glitchy". Cross-fading it on the same shared `progress`
+// value as the switch's own sun/moon icons turns that into one continuous
+// motion instead of an instant flash.
+function ThemeRowIcon({
+  progress,
+  color,
+}: {
+  progress: Animated.Value;
+  color: ReturnType<typeof useTheme>['color'];
+}) {
+  const sunOpacity = progress.interpolate({
+    inputRange: [0, 0.45, 1],
+    outputRange: [1, 0, 0],
+  });
+  const moonOpacity = progress.interpolate({
+    inputRange: [0, 0.55, 1],
+    outputRange: [0, 0, 1],
+  });
+  return (
+    <View style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={{ position: 'absolute', opacity: sunOpacity }}>
+        <Sun size={16} color={color.textSecondary} strokeWidth={1.8} />
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', opacity: moonOpacity }}>
+        <Moon size={16} color={color.textSecondary} strokeWidth={1.8} />
+      </Animated.View>
+    </View>
   );
 }
 
