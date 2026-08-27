@@ -10,7 +10,7 @@ vi.mock('@/app/api/_lib/auth', () => ({
   getAuthenticatedUser: mocks.authenticate,
 }));
 
-import { DEEPL_REQUEST_TIMEOUT_MS, POST } from './route';
+import { GOOGLE_TRANSLATE_REQUEST_TIMEOUT_MS, POST } from './route';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@/app/api/_lib/text-limits';
 
 function request(body: unknown) {
@@ -21,7 +21,7 @@ function request(body: unknown) {
   }) as unknown as NextRequest;
 }
 
-function deepLResponse(payload: unknown, status = 200) {
+function googleResponse(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: { 'content-type': 'application/json' },
@@ -31,7 +31,7 @@ function deepLResponse(payload: unknown, status = 200) {
 describe('POST /api/translate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('DEEPL_API_KEY', 'test-deepl-key');
+    vi.stubEnv('GOOGLE_TRANSLATE_API_KEY', 'test-google-key');
     vi.stubGlobal('fetch', mocks.fetch);
     mocks.authenticate.mockResolvedValue({ id: 'client-1', role: 'CLIENT' });
   });
@@ -91,7 +91,7 @@ describe('POST /api/translate', () => {
   it('accepts the complete shared limit without changing the original text', async () => {
     const text = 'x'.repeat(MAX_TRANSLATION_TEXT_LENGTH);
     mocks.fetch.mockResolvedValue(
-      deepLResponse({ translations: [{ text: 'übersetzt' }] }),
+      googleResponse({ data: { translations: [{ translatedText: 'übersetzt' }] } }),
     );
 
     const response = await POST(request({ text, targetLanguage: 'de' }));
@@ -104,8 +104,8 @@ describe('POST /api/translate', () => {
     });
   });
 
-  it('reports missing server-side DeepL configuration without calling the provider', async () => {
-    vi.stubEnv('DEEPL_API_KEY', '');
+  it('reports missing server-side Google configuration without calling the provider', async () => {
+    vi.stubEnv('GOOGLE_TRANSLATE_API_KEY', '');
 
     const response = await POST(
       request({ text: 'Hello', targetLanguage: 'de' }),
@@ -113,17 +113,18 @@ describe('POST /api/translate', () => {
 
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({
-      error: 'Translation service is not configured. Add DEEPL_API_KEY on the server.',
+      error: 'Translation service is not configured. Add GOOGLE_TRANSLATE_API_KEY on the server.',
     });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('maps supported languages to DeepL codes and preserves the source text', async () => {
+  it('maps supported languages to Google codes and preserves the source text', async () => {
     const originalText = 'Hello, studio.\nPlease keep this line.';
     mocks.fetch.mockResolvedValue(
-      deepLResponse({ translations: [{ text: 'Përshëndetje, studio.' }] }),
+      googleResponse({
+        data: { translations: [{ translatedText: 'Përshëndetje, studio.' }] },
+      }),
     );
-    vi.stubEnv('DEEPL_API_KEY', 'test-deepl-key:fx');
 
     const response = await POST(
       request({
@@ -142,21 +143,21 @@ describe('POST /api/translate', () => {
     });
 
     const [url, init] = mocks.fetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://api-free.deepl.com/v2/translate');
+    expect(url).toBe('https://translation.googleapis.com/language/translate/v2');
     expect(init.headers).toMatchObject({
-      Authorization: 'DeepL-Auth-Key test-deepl-key:fx',
+      'x-goog-api-key': 'test-google-key',
     });
     expect(JSON.parse(String(init.body))).toEqual({
-      text: [originalText],
-      target_lang: 'SQ',
-      source_lang: 'EN',
-      preserve_formatting: true,
+      q: [originalText],
+      target: 'sq',
+      source: 'en',
+      format: 'text',
     });
   });
 
-  it('lets DeepL auto-detect the source language when requested', async () => {
+  it('lets Google auto-detect the source language when requested', async () => {
     mocks.fetch.mockResolvedValue(
-      deepLResponse({ translations: [{ text: 'Hallo' }] }),
+      googleResponse({ data: { translations: [{ translatedText: 'Hallo' }] } }),
     );
 
     const response = await POST(
@@ -166,12 +167,12 @@ describe('POST /api/translate', () => {
     expect(response.status).toBe(200);
     const [, init] = mocks.fetch.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-    expect(body.target_lang).toBe('DE');
-    expect(body).not.toHaveProperty('source_lang');
+    expect(body.target).toBe('de');
+    expect(body).not.toHaveProperty('source');
   });
 
-  it('returns a safe non-500 response when DeepL rejects the request', async () => {
-    mocks.fetch.mockResolvedValue(deepLResponse({ message: 'bad key' }, 403));
+  it('returns a safe non-500 response when Google rejects the request', async () => {
+    mocks.fetch.mockResolvedValue(googleResponse({ error: { message: 'bad key' } }, 403));
 
     const response = await POST(
       request({ text: 'Hello', targetLanguage: 'de' }),
@@ -183,7 +184,7 @@ describe('POST /api/translate', () => {
     });
   });
 
-  it('returns a timeout response when DeepL does not answer in time', async () => {
+  it('returns a timeout response when Google does not answer in time', async () => {
     vi.useFakeTimers();
     mocks.fetch.mockImplementation(
       (_input: string, init: RequestInit) =>
@@ -201,7 +202,7 @@ describe('POST /api/translate', () => {
     );
     await Promise.resolve();
     await Promise.resolve();
-    await vi.advanceTimersByTimeAsync(DEEPL_REQUEST_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(GOOGLE_TRANSLATE_REQUEST_TIMEOUT_MS);
     const response = await responsePromise;
 
     expect(response.status).toBe(504);

@@ -4,18 +4,18 @@ import { MAX_TRANSLATION_TEXT_LENGTH } from '@/app/api/_lib/text-limits';
 
 export const runtime = 'nodejs';
 
-export const DEEPL_REQUEST_TIMEOUT_MS = 10_000;
+export const GOOGLE_TRANSLATE_REQUEST_TIMEOUT_MS = 10_000;
 
-const DEEPL_FREE_API_BASE_URL = 'https://api-free.deepl.com';
-const DEEPL_PRO_API_BASE_URL = 'https://api.deepl.com';
+const GOOGLE_TRANSLATE_ENDPOINT =
+  'https://translation.googleapis.com/language/translate/v2';
 
-const DEEPL_LANGUAGE_CODES = {
-  en: 'EN',
-  sq: 'SQ',
-  de: 'DE',
+const GOOGLE_LANGUAGE_CODES = {
+  en: 'en',
+  sq: 'sq',
+  de: 'de',
 } as const;
 
-type SupportedLanguage = keyof typeof DEEPL_LANGUAGE_CODES;
+type SupportedLanguage = keyof typeof GOOGLE_LANGUAGE_CODES;
 type SourceLanguage = SupportedLanguage | 'auto';
 
 const INTERNAL_TRANSLATION_KEY =
@@ -31,7 +31,7 @@ function translationError(message: string, status: number) {
 function isSupportedLanguage(value: unknown): value is SupportedLanguage {
   return (
     typeof value === 'string' &&
-    Object.prototype.hasOwnProperty.call(DEEPL_LANGUAGE_CODES, value)
+    Object.prototype.hasOwnProperty.call(GOOGLE_LANGUAGE_CODES, value)
   );
 }
 
@@ -43,19 +43,15 @@ function isTranslationKey(value: string) {
   return INTERNAL_TRANSLATION_KEY.test(value.trim());
 }
 
-function deepLTranslateEndpoint(apiKey: string) {
-  const baseUrl = apiKey.endsWith(':fx')
-    ? DEEPL_FREE_API_BASE_URL
-    : DEEPL_PRO_API_BASE_URL;
-  return `${baseUrl}/v2/translate`;
-}
-
 function translatedTextFromResponse(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return null;
   }
 
-  const translations = (payload as { translations?: unknown }).translations;
+  const data = (payload as { data?: unknown }).data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+
+  const translations = (data as { translations?: unknown }).translations;
   if (!Array.isArray(translations)) return null;
 
   const firstTranslation = translations[0];
@@ -67,7 +63,7 @@ function translatedTextFromResponse(payload: unknown): string | null {
     return null;
   }
 
-  const text = (firstTranslation as { text?: unknown }).text;
+  const text = (firstTranslation as { translatedText?: unknown }).translatedText;
   if (typeof text !== 'string' || !text.trim()) return null;
   return text.trim();
 }
@@ -118,10 +114,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.DEEPL_API_KEY?.trim();
+  const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY?.trim();
   if (!apiKey) {
     return translationError(
-      'Translation service is not configured. Add DEEPL_API_KEY on the server.',
+      'Translation service is not configured. Add GOOGLE_TRANSLATE_API_KEY on the server.',
       503,
     );
   }
@@ -131,23 +127,23 @@ export async function POST(request: NextRequest) {
   const timeout = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, DEEPL_REQUEST_TIMEOUT_MS);
+  }, GOOGLE_TRANSLATE_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(deepLTranslateEndpoint(apiKey), {
+    const response = await fetch(GOOGLE_TRANSLATE_ENDPOINT, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `DeepL-Auth-Key ${apiKey}`,
+        'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
-        text: [text],
-        target_lang: DEEPL_LANGUAGE_CODES[targetLanguage],
+        q: [text],
+        target: GOOGLE_LANGUAGE_CODES[targetLanguage],
         ...(sourceLanguage && sourceLanguage !== 'auto'
-          ? { source_lang: DEEPL_LANGUAGE_CODES[sourceLanguage] }
+          ? { source: GOOGLE_LANGUAGE_CODES[sourceLanguage] }
           : {}),
-        preserve_formatting: true,
+        format: 'text',
       }),
       signal: controller.signal,
     });
