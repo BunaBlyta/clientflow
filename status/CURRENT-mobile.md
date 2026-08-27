@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-27 10:08 by Codex — notifications, long notes, and server translation client
+Last updated: 2026-08-27 11:01 by Codex — diagnose unreachable login API
 
 ## Current state
 
@@ -16,3 +16,8 @@ Last updated: 2026-08-27 10:08 by Codex — notifications, long notes, and serve
 - The API lane has prepared notification archive persistence, but its Prisma migration is not applied to Neon. After reviewing the migration, Buna must run npx prisma migrate deploy once from the repository root; do not run it concurrently with another migration.
 - A concurrent API-lane `/api/translate` implementation is now visible in the checkout but is still untracked and outside this mobile commit. It must be committed/deployed as an authenticated route using the server-side DEEPL_API_KEY; the mobile client sends { text, targetLanguage, sourceLanguage: 'auto' } and safely keeps the original when the route is unavailable.
 - The current paginated notification envelope does not include a global unread total. Mobile unread state is kept consistent for loaded and realtime notifications, but an exact unread badge when unread records exist beyond the loaded pages requires an API-provided unread count (or equivalent endpoint).
+
+## Login reachability finding
+
+- The login request is correctly formed as `POST /api/auth/login`; the displayed message is only used when `fetch` receives no HTTP response (`ApiError.status === 0`).
+- The mobile `.env` currently points to `https://clientflow-ijdn.vercel.app`, but that host timed out from this machine while `vercel.com` responded. No alternate deployment URL is present in the repository, so the user must replace `EXPO_PUBLIC_API_URL` with the current Vercel production URL and restart/rebuild Expo so the value is embedded in the app.
