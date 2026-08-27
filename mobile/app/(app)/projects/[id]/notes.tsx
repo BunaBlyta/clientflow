@@ -109,83 +109,57 @@ export default function ProjectNotesScreen() {
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
 
-  // Drives the composer (background + input + button, as one native view)
-  // up above the keyboard via transform rather than KeyboardAvoidingView's
-  // padding. KeyboardAvoidingView recomputes an async accessibility check
-  // before it calls LayoutAnimation, so its animation can start a beat after
-  // the real keyboard does, and LayoutAnimation doesn't reliably animate a
-  // TextInput's native frame on its own — both show up as the input
-  // reaching its final position before its background catches up. A single
-  // native-driven transform on one view removes that race entirely.
-  const composerOffset = useRef(new Animated.Value(0)).current;
-  // The composer floats up over the ScrollView via transform (composerOffset),
-  // so on its own it would sit ON TOP of the last messages once the keyboard
-  // is open. contentPush is the matching bottom room for the scroll content.
-  // It has to be a separate, JS-driven value — composerOffset is native-driven
-  // and the two can't be mixed on one node — animated in parallel.
-  // `automaticallyAdjustKeyboardInsets` already scrolls the content clear of
-  // the keyboard; this adds the extra room so it also clears the composer,
-  // which floats just above the keyboard. Animates 0 -> composer height.
-  const contentPush = useRef(new Animated.Value(0)).current;
+  // Lifts the composer above the keyboard by shrinking the whole screen from
+  // the bottom (animated paddingBottom on the root), NOT by transforming the
+  // composer over the list. The composer stays a normal flex sibling below the
+  // ScrollView, so it can never draw on top of a message — the ScrollView
+  // physically ends where the composer begins. Driven straight off the
+  // keyboard event (its own duration + curve), so there's none of the
+  // KeyboardAvoidingView animation-start lag. `paddingBottom` is a layout
+  // prop, so this runs on the JS driver.
+  const keyboardPad = useRef(new Animated.Value(0)).current;
   // This screen sits inside the bottom tab navigator, which keeps the tab
   // bar mounted underneath it — so the composer's resting position is above
-  // the tab bar, not flush with the real screen edge. Translating up by the
-  // full reported keyboard height overshoots by the tab bar's height. We
-  // measure the composer's actual on-screen frame and only close the real
-  // gap to the keyboard, same as KeyboardAvoidingView itself computes it.
+  // the tab bar, not flush with the real screen edge. We measure the
+  // composer's actual on-screen frame and only close the real gap to the
+  // keyboard, the same amount KeyboardAvoidingView itself would.
   const composerFrame = useRef<{ y: number; height: number } | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
-    const animateTo = (event: KeyboardEvent, offsetTo: number, pushTo: number) => {
-      const duration = event.duration > 10 ? event.duration : 250;
-      const easing = keyboardEasing(event.easing);
-      Animated.parallel([
-        Animated.timing(composerOffset, {
-          toValue: offsetTo,
-          duration,
-          easing,
-          useNativeDriver: true,
-        }),
-        Animated.timing(contentPush, {
-          toValue: pushTo,
-          duration,
-          easing,
-          useNativeDriver: false,
-        }),
-      ]).start();
+    const animateTo = (event: KeyboardEvent, toValue: number) => {
+      Animated.timing(keyboardPad, {
+        toValue,
+        duration: event.duration > 10 ? event.duration : 250,
+        easing: keyboardEasing(event.easing),
+        useNativeDriver: false,
+      }).start();
     };
 
     const showSub = Keyboard.addListener('keyboardWillShow', (event) => {
       const frame = composerFrame.current;
       if (!frame) return;
       const overlap = Math.max(frame.y + frame.height - event.endCoordinates.screenY, 0);
-      animateTo(event, -overlap, frame.height);
+      animateTo(event, overlap);
+      // Follow the newest message up with the keyboard, animated in step.
+      requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
     });
     const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
-      animateTo(event, 0, 0);
+      animateTo(event, 0);
     });
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, [composerOffset, contentPush]);
+  }, [keyboardPad]);
 
-  // Scroll to the newest message only when the note count actually changes,
-  // not on every ScrollView content-size change — the keyboard opening also
-  // resizes the scrollable area (via automaticallyAdjustKeyboardInsets), and
-  // an unconditional scrollToEnd on that fought the keyboard's own smooth
-  // animation with an instant, unanimated jump on every frame.
-  //
-  // This is also the single, sole place that scrolls to the newest message —
-  // it used to be duplicated (a local call in handleSend, plus a
-  // resize-triggered one), and having several uncoordinated scrollToEnd
-  // calls land on different frames was itself producing a stale scroll
-  // position (a gap below the last message until a manual scroll forced a
-  // recompute). One rAF wasn't consistently enough time for the composer's
-  // post-send shrink to land in a completed layout pass, so this waits two.
+  // Scroll to the newest message when the message count changes. The keyboard
+  // opening scrolls separately (in the keyboardWillShow handler, animated in
+  // step), so this stays off resize events. One rAF wasn't consistently
+  // enough time for the composer's post-send shrink to land in a completed
+  // layout pass, so this waits two.
   useEffect(() => {
     if (notes.length === 0 && outbox.length === 0) return;
     let secondFrame = 0;
@@ -319,7 +293,7 @@ export default function ProjectNotesScreen() {
   }
 
   return (
-    <View style={styles.flex}>
+    <Animated.View style={[styles.flex, { paddingBottom: keyboardPad }]}>
       <AtmosphereBackground />
       {notesHeader}
       <ScrollView
@@ -331,7 +305,6 @@ export default function ProjectNotesScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {unreachable && (
@@ -403,20 +376,14 @@ export default function ProjectNotesScreen() {
             })}
           </View>
         )}
-        {/* Keeps the newest message clear of the composer once it floats up
-            over the list with the keyboard (iOS). */}
-        <Animated.View style={{ height: contentPush }} />
       </ScrollView>
 
-      <Animated.View
+      <View
         onLayout={(event) => {
           const { y, height } = event.nativeEvent.layout;
           composerFrame.current = { y, height };
         }}
-        style={{
-          backgroundColor: color.surface,
-          transform: [{ translateY: composerOffset }],
-        }}
+        style={{ backgroundColor: color.surface }}
       >
         <Pressable
           style={styles.composer}
@@ -462,8 +429,8 @@ export default function ProjectNotesScreen() {
             </Pressable>
           </View>
         </Pressable>
-      </Animated.View>
-    </View>
+      </View>
+    </Animated.View>
   );
 }
 
