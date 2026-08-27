@@ -43,3 +43,9 @@ rest, composer height when the keyboard is up. `automaticallyAdjustKeyboardInset
 still clears the keyboard; the spacer adds the extra room to also clear the
 floated composer. Android path (adjustResize, composer is a flex sibling)
 unchanged.
+
+## 2026-08-27 18:58 — follow-up: composer tap target
+
+Only a direct tap on the `TextInput` raised the keyboard. Wrapped the composer
+strip in a `Pressable` (`onPress` -> `inputRef.focus()`) so tapping its padding
+or the gap next to the field also brings it (and the keyboard) up.
