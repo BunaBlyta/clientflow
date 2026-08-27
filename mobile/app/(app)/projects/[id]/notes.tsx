@@ -104,6 +104,7 @@ export default function ProjectNotesScreen() {
   // then drop the override on the next keystroke so auto-grow resumes.
   const [forceCompact, setForceCompact] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
@@ -417,10 +418,17 @@ export default function ProjectNotesScreen() {
           transform: [{ translateY: composerOffset }],
         }}
       >
-        <View style={styles.composer}>
+        <Pressable
+          style={styles.composer}
+          // Tapping anywhere on the strip (its padding, the gap beside the
+          // field) focuses the field, so the keyboard and composer come up.
+          onPress={() => inputRef.current?.focus()}
+          accessibilityRole="none"
+        >
           {postError ? <Text style={styles.error}>{postError}</Text> : null}
           <View style={styles.composerRow}>
             <TextInput
+              ref={inputRef}
               value={draft}
               onChangeText={(value) => {
                 setDraft(value);
@@ -453,7 +461,7 @@ export default function ProjectNotesScreen() {
               <Send size={16} color={color.textOnAccent} />
             </Pressable>
           </View>
-        </View>
+        </Pressable>
       </Animated.View>
     </View>
   );
