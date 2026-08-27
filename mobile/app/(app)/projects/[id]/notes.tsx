@@ -346,11 +346,6 @@ export default function ProjectNotesScreen() {
               )}
             </Pressable>
           </View>
-          {draft.length > 0 ? (
-            <Text style={[styles.characterCount, draft.length > MAX_NOTE_BODY_LENGTH && styles.error]}>
-              {t('notes.characterCount', { count: draft.length })}
-            </Text>
-          ) : null}
         </View>
       </Animated.View>
     </View>
@@ -459,13 +454,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-  },
-  characterCount: {
-    alignSelf: 'flex-end',
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.meta,
-    color: color.textMuted,
-    marginTop: spacing.xs,
   },
   input: {
     flex: 1,

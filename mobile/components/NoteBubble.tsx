@@ -1,5 +1,15 @@
-import { Clipboard, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import {
+  Clipboard,
+  Dimensions,
+  type GestureResponderEvent,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Copy } from 'lucide-react-native';
+import { useState } from 'react';
 import { formatRelativeTime } from '../lib/format';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
@@ -24,17 +34,16 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
     token,
     note.authorRole !== 'SYSTEM',
   );
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-  }, []);
+  const [menuAnchor, setMenuAnchor] = useState<{ x: number; y: number } | null>(null);
+
+  function handleLongPress(event: GestureResponderEvent) {
+    const { pageX, pageY } = event.nativeEvent;
+    setMenuAnchor({ x: pageX, y: pageY });
+  }
 
   function handleCopy() {
     Clipboard.setString(displayedBody);
-    setCopied(true);
-    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    copyTimeoutRef.current = setTimeout(() => setCopied(false), 1500);
+    setMenuAnchor(null);
   }
 
   if (note.authorRole === 'SYSTEM') {
@@ -75,10 +84,8 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
           </View>
         )}
         <Pressable
-          onLongPress={preview ? undefined : handleCopy}
+          onLongPress={preview ? undefined : handleLongPress}
           disabled={preview}
-          accessibilityRole="button"
-          accessibilityLabel={t('notes.copyMessage')}
           style={({ pressed }) => [
             styles.bodyWrap,
             preview && !isClient && styles.previewBodyWrap,
@@ -88,13 +95,42 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
         >
           <Text style={[styles.body, isClient && styles.clientBody]}>{displayedBody}</Text>
           <Text style={[styles.time, isClient && styles.clientTime]}>
-            {copied ? t('notes.copied') : formatNoteTime(note.createdAt, language)}
+            {formatNoteTime(note.createdAt, language)}
           </Text>
         </Pressable>
       </View>
+      {menuAnchor && (
+        <Modal transparent visible animationType="fade" onRequestClose={() => setMenuAnchor(null)}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuAnchor(null)} />
+          <View
+            style={[
+              styles.copyMenu,
+              {
+                left: Math.min(
+                  Math.max(menuAnchor.x - COPY_MENU_WIDTH / 2, spacing.md),
+                  Dimensions.get('window').width - COPY_MENU_WIDTH - spacing.md,
+                ),
+                top: Math.max(menuAnchor.y - 64, spacing.xxl),
+              },
+            ]}
+          >
+            <Pressable
+              onPress={handleCopy}
+              accessibilityRole="button"
+              accessibilityLabel={t('notes.copyMessage')}
+              style={({ pressed }) => [styles.copyMenuItem, pressed && styles.copyMenuItemPressed]}
+            >
+              <Copy size={15} color={color.textPrimary} strokeWidth={1.8} />
+              <Text style={styles.copyMenuLabel}>{t('notes.copyMessage')}</Text>
+            </Pressable>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
+
+const COPY_MENU_WIDTH = 148;
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
@@ -178,6 +214,30 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   bodyWrapPressed: {
     opacity: 0.85,
+  },
+  copyMenu: {
+    position: 'absolute',
+    width: COPY_MENU_WIDTH,
+    borderRadius: radius.md,
+    backgroundColor: color.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    overflow: 'hidden',
+  },
+  copyMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  copyMenuItemPressed: {
+    backgroundColor: color.surfaceMuted,
+  },
+  copyMenuLabel: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.textPrimary,
   },
   previewBodyWrap: {
     backgroundColor: color.surfaceSage,
