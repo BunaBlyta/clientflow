@@ -12,7 +12,7 @@ import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { NoteComposer } from "@/components/dashboard/note-composer";
 import type { Client, Invoice, Note, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
@@ -345,13 +345,11 @@ export default function ProjectDetailPage() {
           )}
 
           <form onSubmit={handleNoteSubmit} className="flex flex-col gap-2 border-t border-border pt-4">
-            <Textarea
+            <NoteComposer
               placeholder={t("project.notePlaceholder")}
-              rows={2}
-              className="resize-none px-6 py-4"
               value={noteBody}
-              onChange={(event) => {
-                setNoteBody(event.target.value);
+              onChange={(next) => {
+                setNoteBody(next);
                 setNoteSuccess(null);
               }}
               disabled={isPostingNote}
