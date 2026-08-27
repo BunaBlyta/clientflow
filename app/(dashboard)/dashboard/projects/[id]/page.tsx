@@ -348,7 +348,7 @@ export default function ProjectDetailPage() {
             <Textarea
               placeholder={t("project.notePlaceholder")}
               rows={2}
-              className="resize-none p-3"
+              className="resize-none p-4"
               value={noteBody}
               onChange={(event) => {
                 setNoteBody(event.target.value);
