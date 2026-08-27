@@ -83,14 +83,6 @@ export default function ProjectNotesScreen() {
   // override for exactly that moment: force compact immediately on send,
   // then drop the override on the next keystroke so auto-grow resumes.
   const [forceCompact, setForceCompact] = useState(false);
-  // The composer shrinking back down after a send changes how much vertical
-  // space the ScrollView above it actually has, but that resize lands on a
-  // different frame than the scrollToEnd() fired right after send — so the
-  // scroll position gets computed against the composer's still-expanded
-  // size, leaving a gap below the last message until something (e.g. a
-  // manual scroll) forces the ScrollView to recompute. Re-run scrollToEnd
-  // from the composer's own onLayout once, exactly when its resize lands.
-  const scrollToEndAfterResize = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
@@ -146,11 +138,26 @@ export default function ProjectNotesScreen() {
   // resizes the scrollable area (via automaticallyAdjustKeyboardInsets), and
   // an unconditional scrollToEnd on that fought the keyboard's own smooth
   // animation with an instant, unanimated jump on every frame.
+  //
+  // This is also the single, sole place that scrolls to the newest message —
+  // it used to be duplicated (a local call in handleSend, plus a
+  // resize-triggered one), and having several uncoordinated scrollToEnd
+  // calls land on different frames was itself producing a stale scroll
+  // position (a gap below the last message until a manual scroll forced a
+  // recompute). One rAF wasn't consistently enough time for the composer's
+  // post-send shrink to land in a completed layout pass, so this waits two.
   useEffect(() => {
     if (notes.length === 0) return;
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollToEnd({ animated: false });
+    let secondFrame = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: false });
+      });
     });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      if (secondFrame) cancelAnimationFrame(secondFrame);
+    };
   }, [notes.length]);
 
   useEffect(() => {
@@ -211,10 +218,6 @@ export default function ProjectNotesScreen() {
 
     setDraft('');
     setForceCompact(true);
-    scrollToEndAfterResize.current = true;
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    });
   }
 
   if (loading && notes.length === 0) {
@@ -292,10 +295,6 @@ export default function ProjectNotesScreen() {
         onLayout={(event) => {
           const { y, height } = event.nativeEvent.layout;
           composerFrame.current = { y, height };
-          if (scrollToEndAfterResize.current) {
-            scrollToEndAfterResize.current = false;
-            scrollRef.current?.scrollToEnd({ animated: false });
-          }
         }}
         style={{
           backgroundColor: color.surface,
