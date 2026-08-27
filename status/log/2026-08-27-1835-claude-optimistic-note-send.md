@@ -63,3 +63,13 @@ overlap is structurally impossible. Driven straight off `keyboardWillShow/Hide`
 `automaticallyAdjustKeyboardInsets` and the `contentPush` spacer. `keyboardWillShow`
 also animates a `scrollToEnd`. Android (`adjustResize`, composer already a flex
 sibling) unchanged.
+
+## 2026-08-27 19:35 — bottom gap fix
+
+The lift amount is now measured via `composerRef.measureInWindow` (true window
+coords) instead of `onLayout` y (root-relative) — the latter under-shot if the
+screen root was not at window y=0, leaving a strip of background below the
+composer. The lift is now a `color.surface` spacer rendered *below* the
+composer (grows -> pushes composer + shrinks ScrollView), not root padding, so
+any sub-pixel measurement error shows as the composer extending down rather
+than a coloured gap. Resting layout is byte-identical (spacer height 0).
