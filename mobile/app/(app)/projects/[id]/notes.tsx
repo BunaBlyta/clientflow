@@ -472,8 +472,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     backgroundColor: color.surface,
   },
   sendButton: {
-    width: 46,
-    height: 46,
+    // Square, sized to the composer input's resting height and sharing its
+    // corner radius so the button reads as the same control as the field
+    // beside it rather than a smaller pill floating next to it.
+    width: NOTE_INPUT_MIN_HEIGHT,
+    height: NOTE_INPUT_MIN_HEIGHT,
     borderRadius: radius.md,
     backgroundColor: color.accent,
     alignItems: 'center',
