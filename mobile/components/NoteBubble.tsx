@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Clipboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime } from '../lib/format';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
@@ -23,6 +24,19 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
     token,
     note.authorRole !== 'SYSTEM',
   );
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+  }, []);
+
+  function handleCopy() {
+    Clipboard.setString(displayedBody);
+    setCopied(true);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 1500);
+  }
+
   if (note.authorRole === 'SYSTEM') {
     const isStatusChange = note.body.toLowerCase().startsWith('project status changed');
 
@@ -60,12 +74,23 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
             {!isClient && <Text style={styles.roleTag}>{t('notes.studio')}</Text>}
           </View>
         )}
-        <View style={[styles.bodyWrap, preview && !isClient && styles.previewBodyWrap, isClient && styles.clientBodyWrap]}>
+        <Pressable
+          onLongPress={preview ? undefined : handleCopy}
+          disabled={preview}
+          accessibilityRole="button"
+          accessibilityLabel={t('notes.copyMessage')}
+          style={({ pressed }) => [
+            styles.bodyWrap,
+            preview && !isClient && styles.previewBodyWrap,
+            isClient && styles.clientBodyWrap,
+            pressed && !preview && styles.bodyWrapPressed,
+          ]}
+        >
           <Text style={[styles.body, isClient && styles.clientBody]}>{displayedBody}</Text>
           <Text style={[styles.time, isClient && styles.clientTime]}>
-            {formatNoteTime(note.createdAt, language)}
+            {copied ? t('notes.copied') : formatNoteTime(note.createdAt, language)}
           </Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
@@ -150,6 +175,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.surfaceSage,
     borderRadius: 16,
     borderBottomLeftRadius: 4,
+  },
+  bodyWrapPressed: {
+    opacity: 0.85,
   },
   previewBodyWrap: {
     backgroundColor: color.surfaceSage,

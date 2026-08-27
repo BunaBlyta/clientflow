@@ -75,6 +75,16 @@ export default function ProjectNotesScreen() {
   const [postError, setPostError] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [inputHeight, setInputHeight] = useState(NOTE_INPUT_MIN_HEIGHT);
+  // After a send resets the input to its compact height, the native
+  // multiline view can still fire a stray `onContentSizeChange` for the
+  // pre-clear (large) content shortly after — a genuine race between the
+  // native content measurement pass and our reset, not a stale JS closure.
+  // That straggler would otherwise grow the box right back and, since
+  // nothing re-triggers a measurement afterwards, it stayed expanded until
+  // the user tapped in and re-focused it. Suppress content-size reports
+  // after a send until the user actually types again, which is the only
+  // point a report is guaranteed to reflect real, current content.
+  const suppressContentSize = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
@@ -198,6 +208,7 @@ export default function ProjectNotesScreen() {
     // draft. Keeping focus avoids dismissing the keyboard, while the input
     // immediately returns to its compact state for the next note.
     setInputHeight(NOTE_INPUT_MIN_HEIGHT);
+    suppressContentSize.current = true;
     requestAnimationFrame(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     });
@@ -291,9 +302,11 @@ export default function ProjectNotesScreen() {
               value={draft}
               onChangeText={(value) => {
                 setDraft(value);
+                suppressContentSize.current = false;
                 if (postError) setPostError('');
               }}
               onContentSizeChange={({ nativeEvent }) => {
+                if (suppressContentSize.current) return;
                 if (draft.length === 0) {
                   setInputHeight(NOTE_INPUT_MIN_HEIGHT);
                   return;
