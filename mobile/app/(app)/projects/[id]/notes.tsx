@@ -117,6 +117,15 @@ export default function ProjectNotesScreen() {
   // reaching its final position before its background catches up. A single
   // native-driven transform on one view removes that race entirely.
   const composerOffset = useRef(new Animated.Value(0)).current;
+  // The composer floats up over the ScrollView via transform (composerOffset),
+  // so on its own it would sit ON TOP of the last messages once the keyboard
+  // is open. contentPush is the matching bottom room for the scroll content.
+  // It has to be a separate, JS-driven value — composerOffset is native-driven
+  // and the two can't be mixed on one node — animated in parallel.
+  // `automaticallyAdjustKeyboardInsets` already scrolls the content clear of
+  // the keyboard; this adds the extra room so it also clears the composer,
+  // which floats just above the keyboard. Animates 0 -> composer height.
+  const contentPush = useRef(new Animated.Value(0)).current;
   // This screen sits inside the bottom tab navigator, which keeps the tab
   // bar mounted underneath it — so the composer's resting position is above
   // the tab bar, not flush with the real screen edge. Translating up by the
@@ -128,30 +137,40 @@ export default function ProjectNotesScreen() {
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
-    const animateTo = (event: KeyboardEvent, toValue: number) => {
-      Animated.timing(composerOffset, {
-        toValue,
-        duration: event.duration > 10 ? event.duration : 250,
-        easing: keyboardEasing(event.easing),
-        useNativeDriver: true,
-      }).start();
+    const animateTo = (event: KeyboardEvent, offsetTo: number, pushTo: number) => {
+      const duration = event.duration > 10 ? event.duration : 250;
+      const easing = keyboardEasing(event.easing);
+      Animated.parallel([
+        Animated.timing(composerOffset, {
+          toValue: offsetTo,
+          duration,
+          easing,
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentPush, {
+          toValue: pushTo,
+          duration,
+          easing,
+          useNativeDriver: false,
+        }),
+      ]).start();
     };
 
     const showSub = Keyboard.addListener('keyboardWillShow', (event) => {
       const frame = composerFrame.current;
       if (!frame) return;
       const overlap = Math.max(frame.y + frame.height - event.endCoordinates.screenY, 0);
-      animateTo(event, -overlap);
+      animateTo(event, -overlap, frame.height);
     });
     const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
-      animateTo(event, 0);
+      animateTo(event, 0, 0);
     });
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, [composerOffset]);
+  }, [composerOffset, contentPush]);
 
   // Scroll to the newest message only when the note count actually changes,
   // not on every ScrollView content-size change — the keyboard opening also
@@ -383,6 +402,9 @@ export default function ProjectNotesScreen() {
             })}
           </View>
         )}
+        {/* Keeps the newest message clear of the composer once it floats up
+            over the list with the keyboard (iOS). */}
+        <Animated.View style={{ height: contentPush }} />
       </ScrollView>
 
       <Animated.View
