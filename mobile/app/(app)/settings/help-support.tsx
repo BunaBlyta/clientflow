@@ -3,7 +3,7 @@ import { CircleHelp } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppBackButton } from '../../../components/OriginBackButton';
 import { Screen } from '../../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 
 export default function HelpSupportScreen() {
@@ -14,11 +14,9 @@ export default function HelpSupportScreen() {
 
   return (
     <Screen>
-      <View style={styles.headerRow}>
-        <AppBackButton source={source} accessibilityLabel={t('common.back')} />
-        <View style={styles.iconWrap}>
-          <CircleHelp size={22} color={color.accent} strokeWidth={1.8} />
-        </View>
+      <AppBackButton source={source} accessibilityLabel={t('common.back')} />
+      <View style={styles.titleRow}>
+        <CircleHelp size={fontSize.headingLg} color={color.accent} strokeWidth={1.8} />
         <Text style={styles.title}>{t('ui.helpSupport')}</Text>
       </View>
       <View style={styles.description}>
@@ -31,18 +29,11 @@ export default function HelpSupportScreen() {
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
-    headerRow: {
+    titleRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.md,
-    },
-    iconWrap: {
-      width: 48,
-      height: 48,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: color.accentSoft,
+      gap: spacing.sm,
+      marginTop: spacing.sm,
     },
     title: {
       fontFamily: fontFamily.serif,
