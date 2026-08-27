@@ -105,9 +105,9 @@ export function NotificationRow({
               numberOfLines={2}
             >
               {localized.title}
+              <Text style={styles.time}> · {formatRelativeTime(notification.createdAt, language)}</Text>
             </Text>
           </View>
-          <Text style={styles.time}>{formatRelativeTime(notification.createdAt, language)}</Text>
           {displayedBody ? <Text style={styles.body} numberOfLines={2}>{displayedBody}</Text> : null}
         </View>
       </Pressable>
@@ -194,11 +194,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     lineHeight: 20,
   },
   time: {
-    alignSelf: 'flex-end',
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
     color: color.textMuted,
-    marginTop: spacing.xs,
   },
   archiveButton: {
     alignItems: 'center',

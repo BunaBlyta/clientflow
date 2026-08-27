@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-27 11:29 by Codex — align notification timestamps as quiet metadata
+Last updated: 2026-08-27 11:30 by Codex — inline notification timestamps
 
 ## Current state
 
@@ -8,7 +8,7 @@ Last updated: 2026-08-27 11:29 by Codex — align notification timestamps as qui
 - Notifications have Active and Archived views. Archive and restore send { "archived": boolean } to the authenticated notification endpoint and preserve the notification's read state locally.
 - Notification localization now maps the exact `INVOICE_ISSUED` / `Invoice issued` server variant to the existing localized invoice-sent title and dynamic invoice-description body template.
 - Dynamic descriptions in `Invoice issued`, `Invoice sent`, and `Additional invoice sent` notifications now translate asynchronously through the server endpoint while the fixed wrapper remains deterministically localized.
-- Notification timestamps now sit on their own right-aligned metadata line below the full-width title and above the body, keeping two-line titles from competing with time text.
+- Notification timestamps now appear inline after the title with a small `·` separator and muted metadata styling, sharing the title's responsive wrapping flow instead of occupying a separate column.
 - The notification client accepts the documented paginated envelope and the older array response while the API rollout settles. The client uses archived=all so unarchive can work from the mobile app.
 - Long notes use the API's 10,000-character limit. The composer scrolls for long drafts, shows a localized character count/error, keeps the complete draft on a failed send, and only clears it after the server accepts the note.
 - Human-authored note bodies and NEW_NOTE notification bodies translate asynchronously through the authenticated /api/translate route. Results are deduplicated and cached in memory; provider errors, missing routes, missing tokens, and internal i18n-looking keys fall back to the original content without blocking the feed. System note text and localized notification templates stay on the existing deterministic i18n path.
