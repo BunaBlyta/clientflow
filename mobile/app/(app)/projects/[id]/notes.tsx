@@ -74,6 +74,15 @@ export default function ProjectNotesScreen() {
   const [unreachable, setUnreachable] = useState(false);
   const [postError, setPostError] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
+  // The input otherwise sizes itself to content natively (no JS height
+  // state — see the commit that removed the onContentSizeChange-driven
+  // version). That's fine for growing, but a native multiline view doesn't
+  // reliably re-measure itself back down the instant its content is
+  // cleared programmatically, so right after a send it can sit expanded
+  // for a beat with nothing left in it. This is a one-shot explicit
+  // override for exactly that moment: force compact immediately on send,
+  // then drop the override on the next keystroke so auto-grow resumes.
+  const [forceCompact, setForceCompact] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
@@ -193,6 +202,7 @@ export default function ProjectNotesScreen() {
     }
 
     setDraft('');
+    setForceCompact(true);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     });
@@ -286,11 +296,16 @@ export default function ProjectNotesScreen() {
               value={draft}
               onChangeText={(value) => {
                 setDraft(value);
+                if (forceCompact) setForceCompact(false);
                 if (postError) setPostError('');
               }}
               placeholder={t('notes.writeNote')}
               placeholderTextColor={color.textMuted}
-              style={[styles.input, inputFocused && styles.inputFocused]}
+              style={[
+                styles.input,
+                inputFocused && styles.inputFocused,
+                forceCompact && { height: NOTE_INPUT_MIN_HEIGHT },
+              ]}
               multiline
               editable={!posting}
               onFocus={() => setInputFocused(true)}
