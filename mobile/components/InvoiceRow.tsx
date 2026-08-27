@@ -104,6 +104,7 @@ function createStyles(color: ThemeColors) {
       fontSize: fontSize.heading + 1,
       color: color.textPrimary,
       marginTop: spacing.md,
+      fontVariant: ['lining-nums', 'tabular-nums'],
     },
     date: {
       fontFamily: fontFamily.regular,

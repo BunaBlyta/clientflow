@@ -102,7 +102,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     loading: { marginTop: spacing.xxl },
     summaryGrid: { flexDirection: 'row', gap: spacing.md, marginTop: 0, marginBottom: spacing.xl },
     summaryCard: { flex: 1, minHeight: 96 },
-    summaryValue: { fontFamily: fontFamily.serif, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm },
+    summaryValue: { fontFamily: fontFamily.serif, fontSize: fontSize.heading, color: color.textPrimary, marginTop: spacing.sm, fontVariant: ['lining-nums', 'tabular-nums'] },
     summaryLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.caption, color: color.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
     summaryHint: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs },
     listHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
