@@ -51,11 +51,11 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
 
     return (
       <View style={[styles.systemRow, preview && styles.previewSystemRow]}>
-        <View style={styles.systemLine} />
+        {!isStatusChange && <View style={styles.systemLine} />}
         <Text style={[styles.systemText, isStatusChange && styles.statusChangeText]}>
           {isStatusChange ? note.body : `${note.body} · ${formatRelativeTime(note.createdAt, language)}`}
         </Text>
-        <View style={styles.systemLine} />
+        {!isStatusChange && <View style={styles.systemLine} />}
       </View>
     );
   }
@@ -260,6 +260,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   systemRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
     marginVertical: spacing.md,
   },
