@@ -51,7 +51,6 @@ export function TextField({
         style={[
           styles.inputRow,
           focused && styles.inputRowFocused,
-          !!error && styles.inputRowError,
           !editable && styles.inputRowDisabled,
         ]}
       >
@@ -105,22 +104,15 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     flexDirection: 'row',
     alignItems: 'center',
     height: 52,
-    borderWidth: 1,
-    borderColor: color.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
-    backgroundColor: color.accentSoft,
+    backgroundColor: color.surfaceMuted,
   },
   inputRowFocused: {
-    backgroundColor: color.accentSoft,
-    borderColor: color.accent,
-  },
-  inputRowError: {
-    borderColor: color.danger,
+    backgroundColor: color.surface,
   },
   inputRowDisabled: {
     backgroundColor: color.surfaceMuted,
-    borderColor: color.border,
   },
   input: {
     flex: 1,
