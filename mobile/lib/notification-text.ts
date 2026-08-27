@@ -72,7 +72,10 @@ export function getLocalizedNotificationText(notification: Notification, t: Tran
       } else if (notification.title === 'Invoice ready') {
         title = t('notifications.invoiceReadyTitle');
         if (notification.body === 'A new invoice is ready to review.') body = t('notifications.invoiceReadyBody');
-      } else if (notification.title === 'Invoice sent') {
+      } else if (notification.title === 'Invoice sent' || notification.title === 'Invoice issued') {
+        // Custom invoices created from a converted inquiry use the legacy
+        // "Invoice issued" title even though the notification is the same
+        // sent-for-payment event as the existing "Invoice sent" variant.
         title = t('notifications.invoiceSentTitle');
         const descriptionMatch = notification.body.match(/^(.+) is ready to review and pay\.$/);
         body = descriptionMatch
