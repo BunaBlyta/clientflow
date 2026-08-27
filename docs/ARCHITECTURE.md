@@ -18,6 +18,36 @@ model responses return a JSON error so the dashboard can keep its inline failure
 state. Groq was chosen for its free tier, no-card setup, and generous limits for
 this low-volume, read-only summary.
 
+### User-entered content translation
+
+`POST /api/translate` requires an authenticated staff or client session and
+translates user-entered note or message content through DeepL. It accepts
+`{ "text": string, "targetLanguage": "en" | "sq" | "de", "sourceLanguage"?: "en" | "sq" | "de" | "auto" }`.
+The shared 10,000-character limit applies to `text`; empty, oversized, and
+invalid requests return 400. Translation-key-shaped content and explicit key
+fields are rejected so the endpoint cannot replace the app's i18n-key flow.
+
+The response is `{ "originalText": string, "translatedText": string,
+"targetLanguage": string, "sourceLanguage"?: string }`. The original is
+returned unchanged and is never written to the database or overwritten. The
+mobile app sends `sourceLanguage: "auto"` when it wants DeepL to detect the
+source language; that value is omitted from the provider request. A concrete
+source language is mapped to DeepL's uppercase code (`EN`, `SQ`, or `DE`), as
+is the target language.
+
+`SQ` is forwarded when Albanian is requested as required by the app contract;
+if the DeepL account or current DeepL text API does not support that target,
+the provider failure is returned as 502 and no substitute language is used.
+
+DeepL is called only from the server with the unprefixed `DEEPL_API_KEY`; the
+key is never returned to a client. Free keys (which end in `:fx`) use
+`api-free.deepl.com`, while other keys use `api.deepl.com`. Missing
+configuration returns 503, provider failures return 502, and a 10-second
+provider timeout returns 504. No translation result is persisted. See
+[DeepL authentication](https://developers.deepl.com/docs/getting-started/auth)
+and the [DeepL translation request](https://developers.deepl.com/api-reference/translate/request-translation)
+for the provider contract.
+
 ## Key decisions log
 
 | Decision | Why | Date |
