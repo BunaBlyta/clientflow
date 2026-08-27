@@ -1814,7 +1814,6 @@ html:not(.dark) .crm-shell .analytics-page {
     linear-gradient(var(--crm-kpi-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--crm-kpi-grid-line) 1px, transparent 1px);
   background-size: 24px 24px, 24px 24px;
-  border: 1px solid var(--border);
 }
 
 .crm-shell .analytics-page .crm-kpi-strip .crm-kpi-tile {
