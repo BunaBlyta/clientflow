@@ -10,7 +10,7 @@ vi.mock('@/app/api/_lib/auth', () => ({
   getAuthenticatedUser: mocks.authenticate,
 }));
 
-import { GOOGLE_TRANSLATE_REQUEST_TIMEOUT_MS, POST } from './route';
+import { MYMEMORY_REQUEST_TIMEOUT_MS, POST } from './route';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@/app/api/_lib/text-limits';
 
 function request(body: unknown) {
@@ -21,17 +21,24 @@ function request(body: unknown) {
   }) as unknown as NextRequest;
 }
 
-function googleResponse(payload: unknown, status = 200) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
+function myMemoryResponse(
+  translatedText: string | undefined,
+  status = 200,
+  responseStatus = 200,
+) {
+  return new Response(
+    JSON.stringify({
+      responseStatus,
+      responseData: translatedText === undefined ? {} : { translatedText },
+    }),
+    { status, headers: { 'content-type': 'application/json' } },
+  );
 }
 
 describe('POST /api/translate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('GOOGLE_TRANSLATE_API_KEY', 'test-google-key');
+    vi.stubEnv('MYMEMORY_EMAIL', '');
     vi.stubGlobal('fetch', mocks.fetch);
     mocks.authenticate.mockResolvedValue({ id: 'client-1', role: 'CLIENT' });
   });
@@ -52,7 +59,7 @@ describe('POST /api/translate', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('validates required fields, supported languages, and the shared text limit', async () => {
+  it('validates fields, language codes, i18n keys, and the shared text limit', async () => {
     const cases = [
       {
         body: { text: '   ', targetLanguage: 'de' },
@@ -88,94 +95,164 @@ describe('POST /api/translate', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('accepts the complete shared limit without changing the original text', async () => {
-    const text = 'x'.repeat(MAX_TRANSLATION_TEXT_LENGTH);
-    mocks.fetch.mockResolvedValue(
-      googleResponse({ data: { translations: [{ translatedText: 'übersetzt' }] } }),
-    );
+  it('translates an Albanian message with explicit source and target codes', async () => {
+    mocks.fetch.mockResolvedValue(myMemoryResponse('Hello, how are you?'));
 
-    const response = await POST(request({ text, targetLanguage: 'de' }));
+    const response = await POST(
+      request({
+        text: 'Përshëndetje, si jeni?',
+        targetLanguage: 'en',
+        sourceLanguage: 'sq',
+      }),
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      originalText: text,
-      translatedText: 'übersetzt',
-      targetLanguage: 'de',
+      originalText: 'Përshëndetje, si jeni?',
+      translatedText: 'Hello, how are you?',
+      targetLanguage: 'en',
+      sourceLanguage: 'sq',
     });
+
+    const [input] = mocks.fetch.mock.calls[0] as [string | URL];
+    const url = new URL(String(input));
+    expect(url.origin + url.pathname).toBe('https://api.mymemory.translated.net/get');
+    expect(url.searchParams.get('langpair')).toBe('sq|en');
+    expect(url.searchParams.get('mt')).toBe('1');
   });
 
-  it('reports missing server-side Google configuration without calling the provider', async () => {
-    vi.stubEnv('GOOGLE_TRANSLATE_API_KEY', '');
+  it('best-effort detects German for the mobile auto source contract', async () => {
+    mocks.fetch.mockResolvedValue(myMemoryResponse('Projekti është gati.'));
 
     const response = await POST(
-      request({ text: 'Hello', targetLanguage: 'de' }),
+      request({
+        text: 'Hallo, das Projekt ist fertig.',
+        targetLanguage: 'sq',
+        sourceLanguage: 'auto',
+      }),
     );
 
-    expect(response.status).toBe(503);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      originalText: 'Hallo, das Projekt ist fertig.',
+      translatedText: 'Projekti është gati.',
+      targetLanguage: 'sq',
+    });
+    const [input] = mocks.fetch.mock.calls[0] as [string | URL];
+    expect(new URL(String(input)).searchParams.get('langpair')).toBe('de|sq');
+  });
+
+  it('best-effort detects English rather than relying on a provider autodetect mode', async () => {
+    mocks.fetch.mockResolvedValue(myMemoryResponse('Das Projekt ist bereit.'));
+
+    const response = await POST(
+      request({
+        text: 'Hello, the project is ready.',
+        targetLanguage: 'de',
+        sourceLanguage: 'auto',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const [input] = mocks.fetch.mock.calls[0] as [string | URL];
+    expect(new URL(String(input)).searchParams.get('langpair')).toBe('en|de');
+  });
+
+  it('does not block ambiguous auto input by pretending it is English', async () => {
+    const response = await POST(
+      request({ text: '12345 !!!', targetLanguage: 'de', sourceLanguage: 'auto' }),
+    );
+
+    expect(response.status).toBe(422);
     expect(await response.json()).toEqual({
-      error: 'Translation service is not configured. Add GOOGLE_TRANSLATE_API_KEY on the server.',
+      error: 'Could not determine the source language. Send sourceLanguage as en, sq, or de.',
     });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('maps supported languages to Google codes and preserves the source text', async () => {
-    const originalText = 'Hello, studio.\nPlease keep this line.';
-    mocks.fetch.mockResolvedValue(
-      googleResponse({
-        data: { translations: [{ translatedText: 'Përshëndetje, studio.' }] },
-      }),
-    );
+  it('works without a provider key and passes the optional email only when configured', async () => {
+    mocks.fetch.mockResolvedValue(myMemoryResponse('Hallo'));
+    vi.stubEnv('MYMEMORY_EMAIL', 'translator@example.com');
 
     const response = await POST(
-      request({
-        text: originalText,
-        targetLanguage: 'sq',
-        sourceLanguage: 'en',
-      }),
+      request({ text: 'Hello', targetLanguage: 'de', sourceLanguage: 'en' }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      originalText: 'Hello',
+      translatedText: 'Hallo',
+      targetLanguage: 'de',
+      sourceLanguage: 'en',
+    });
+    const [input] = mocks.fetch.mock.calls[0] as [string | URL];
+    const url = new URL(String(input));
+    expect(url.searchParams.get('de')).toBe('translator@example.com');
+    expect(url.searchParams.has('key')).toBe(false);
+  });
+
+  it('splits the exact 10,000-character boundary into safe chunks without dropping text', async () => {
+    const text = 'x'.repeat(MAX_TRANSLATION_TEXT_LENGTH);
+    mocks.fetch.mockImplementation(async (input: string | URL) => {
+      const url = new URL(String(input));
+      return myMemoryResponse(url.searchParams.get('q') ?? '');
+    });
+
+    const response = await POST(
+      request({ text, targetLanguage: 'de', sourceLanguage: 'en' }),
     );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      originalText,
-      translatedText: 'Përshëndetje, studio.',
-      targetLanguage: 'sq',
+      originalText: text,
+      translatedText: text,
+      targetLanguage: 'de',
       sourceLanguage: 'en',
     });
-
-    const [url, init] = mocks.fetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://translation.googleapis.com/language/translate/v2');
-    expect(init.headers).toMatchObject({
-      'x-goog-api-key': 'test-google-key',
-    });
-    expect(JSON.parse(String(init.body))).toEqual({
-      q: [originalText],
-      target: 'sq',
-      source: 'en',
-      format: 'text',
-    });
+    expect(mocks.fetch.mock.calls.length).toBeGreaterThan(1);
+    for (const [input] of mocks.fetch.mock.calls as [string | URL][]) {
+      const url = new URL(String(input));
+      expect(new TextEncoder().encode(url.searchParams.get('q') ?? '').byteLength).toBeLessThanOrEqual(450);
+      expect(url.searchParams.get('mt')).toBe('1');
+    }
   });
 
-  it('lets Google auto-detect the source language when requested', async () => {
-    mocks.fetch.mockResolvedValue(
-      googleResponse({ data: { translations: [{ translatedText: 'Hallo' }] } }),
-    );
+  it('reassembles sentence and word chunks in order', async () => {
+    const text = 'Hello world. '.repeat(100);
+    mocks.fetch.mockImplementation(async (input: string | URL) => {
+      const url = new URL(String(input));
+      return myMemoryResponse(url.searchParams.get('q') ?? '');
+    });
 
     const response = await POST(
-      request({ text: 'Hello', targetLanguage: 'de', sourceLanguage: 'auto' }),
+      request({ text, targetLanguage: 'de', sourceLanguage: 'en' }),
     );
 
     expect(response.status).toBe(200);
-    const [, init] = mocks.fetch.mock.calls[0] as [string, RequestInit];
-    const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-    expect(body.target).toBe('de');
-    expect(body).not.toHaveProperty('source');
+    expect((await response.json()).translatedText).toBe(text);
+    expect(mocks.fetch.mock.calls.length).toBeGreaterThan(1);
   });
 
-  it('returns a safe non-500 response when Google rejects the request', async () => {
-    mocks.fetch.mockResolvedValue(googleResponse({ error: { message: 'bad key' } }, 403));
+  it('returns a safe response when MyMemory has no translated text', async () => {
+    mocks.fetch.mockResolvedValue(myMemoryResponse(undefined));
 
     const response = await POST(
-      request({ text: 'Hello', targetLanguage: 'de' }),
+      request({ text: 'Hello', targetLanguage: 'de', sourceLanguage: 'en' }),
+    );
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      error: 'Translation service returned no text. Please try again.',
+    });
+  });
+
+  it('returns a safe response when MyMemory fails', async () => {
+    mocks.fetch.mockResolvedValue(
+      myMemoryResponse(undefined, 503, 429),
+    );
+
+    const response = await POST(
+      request({ text: 'Hello', targetLanguage: 'de', sourceLanguage: 'en' }),
     );
 
     expect(response.status).toBe(502);
@@ -184,10 +261,10 @@ describe('POST /api/translate', () => {
     });
   });
 
-  it('returns a timeout response when Google does not answer in time', async () => {
+  it('returns a timeout response when MyMemory does not answer in time', async () => {
     vi.useFakeTimers();
     mocks.fetch.mockImplementation(
-      (_input: string, init: RequestInit) =>
+      (_input: string | URL, init: RequestInit) =>
         new Promise((_, reject) => {
           init.signal?.addEventListener(
             'abort',
@@ -198,11 +275,11 @@ describe('POST /api/translate', () => {
     );
 
     const responsePromise = POST(
-      request({ text: 'Hello', targetLanguage: 'de' }),
+      request({ text: 'Hello', targetLanguage: 'de', sourceLanguage: 'en' }),
     );
     await Promise.resolve();
     await Promise.resolve();
-    await vi.advanceTimersByTimeAsync(GOOGLE_TRANSLATE_REQUEST_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(MYMEMORY_REQUEST_TIMEOUT_MS);
     const response = await responsePromise;
 
     expect(response.status).toBe(504);

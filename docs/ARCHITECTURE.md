@@ -21,8 +21,8 @@ this low-volume, read-only summary.
 ### User-entered content translation
 
 `POST /api/translate` requires an authenticated staff or client session and
-translates user-entered note or message content through Google Cloud Translation
-Basic (v2). It accepts
+translates user-entered note or message content through MyMemory's public
+translation endpoint. It accepts
 `{ "text": string, "targetLanguage": "en" | "sq" | "de", "sourceLanguage"?: "en" | "sq" | "de" | "auto" }`.
 The shared 10,000-character limit applies to `text`; empty, oversized, and
 invalid requests return 400. Translation-key-shaped content and explicit key
@@ -31,32 +31,26 @@ fields are rejected so the endpoint cannot replace the app's i18n-key flow.
 The response is `{ "originalText": string, "translatedText": string,
 "targetLanguage": string, "sourceLanguage"?: string }`. The original is
 returned unchanged and is never written to the database or overwritten. The
-mobile app sends `sourceLanguage: "auto"` when it wants Google to detect the
-source language; that value is omitted from the provider request. A concrete
-source language is mapped to Google's lowercase ISO-639 code (`en`, `sq`, or
-`de`), as is the target language.
+The mobile app's `sourceLanguage: "auto"` value is handled by a small
+best-effort en/sq/de detector in the server; MyMemory does not receive an
+autodetection sentinel. Distinctive words and characters select a source
+language, while genuinely ambiguous text returns a clear 422 asking for a
+concrete source language instead of silently assuming English.
 
-The server sends the plain-text request to
-`POST https://translation.googleapis.com/language/translate/v2` with `q` as a
-one-item array, `target`, optional `source`, and `format: "text"`. Google
-returns the translation in `data.translations[0].translatedText`; the
-endpoint returns that value as `translatedText` without storing it.
+MyMemory is called with `GET https://api.mymemory.translated.net/get`, `q`,
+`langpair`, and `mt=1`. MyMemory limits `q` to 500 UTF-8 bytes, so the server
+sends chunks no larger than 450 bytes, preferring sentence and word boundaries
+and preserving source separators while reassembling `translatedText`. A
+request is capped at 80 provider calls with limited concurrency; a failed
+chunk returns a safe 502 and a timed-out chunk returns 504. No partial result
+is returned.
 
-Google is called only from the server with the unprefixed
-`GOOGLE_TRANSLATE_API_KEY` in the `x-goog-api-key` header; the key is never
-returned to a client or placed in the URL. Missing configuration returns 503,
-provider failures return 502, and a 10-second provider timeout returns 504. No
-translation result is persisted. See the [Google Cloud Translation v2 REST
-reference](https://cloud.google.com/translate/docs/reference/rest/v2/translate),
-[language support](https://cloud.google.com/translate/docs/languages), and
-[API key authentication guidance](https://cloud.google.com/docs/authentication/api-keys)
-for the provider contract.
-
-To configure the server, create or select a Google Cloud project, enable the
-Cloud Translation API, create an API key restricted to the Translation API, and
-add it as `GOOGLE_TRANSLATE_API_KEY` in the server environment (including
-Vercel). The key must not be prefixed with `NEXT_PUBLIC_` or added to mobile
-configuration.
+MyMemory requires no API key or billing setup. If `MYMEMORY_EMAIL` is present
+on the server, it is passed as the optional `de` parameter for the higher free
+daily quota; it is never sent by mobile, logged, or stored. No translation
+result or user text is persisted. See the [MyMemory API technical
+specifications](https://mymemory.translated.net/doc/spec.php) for the provider
+contract.
 
 ## Key decisions log
 
