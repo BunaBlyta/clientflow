@@ -134,12 +134,13 @@ export function InvoiceRowSkeleton() {
 }
 
 export function NotificationRowSkeleton() {
+  const { color } = useTheme();
   return (
-    <View style={styles.notificationRow}>
-      <Skeleton width={34} height={34} radius={radius.md} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Skeleton width="65%" height={13} />
-        <Skeleton width="90%" height={11} style={{ marginTop: spacing.sm }} />
+    <View style={[styles.notificationRow, { backgroundColor: color.surfaceMuted }]}>
+      <Skeleton width={32} height={32} radius={10} />
+      <View style={{ flex: 1, minWidth: 0, justifyContent: 'center', gap: spacing.sm }}>
+        <Skeleton width="70%" height={12} />
+        <Skeleton width="45%" height={11} />
       </View>
     </View>
   );
@@ -198,8 +199,11 @@ const styles = StyleSheet.create({
   notificationRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: radius.md,
   },
   noteRow: {
     marginBottom: spacing.md,
