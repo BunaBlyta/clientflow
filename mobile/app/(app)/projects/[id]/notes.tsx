@@ -3,7 +3,11 @@ import { MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Animated,
+  Easing,
+  Keyboard,
+  type KeyboardEvent,
+  type KeyboardEventEasing,
   Platform,
   Pressable,
   ScrollView,
@@ -23,6 +27,30 @@ import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
+
+// Maps iOS's reported keyboard animation curve to an Easing function so our
+// manual composer animation matches the system keyboard's curve, not just
+// its duration.
+function keyboardEasing(easing: KeyboardEventEasing): (value: number) => number {
+  switch (easing) {
+    case 'easeIn':
+      return Easing.in(Easing.ease);
+    case 'easeOut':
+      return Easing.out(Easing.ease);
+    case 'linear':
+      return Easing.linear;
+    case 'easeInEaseOut':
+    case 'keyboard':
+    default:
+      // iOS reports the system keyboard's motion as 'keyboard' (its private
+      // UIViewAnimationCurve 7) or 'easeInEaseOut'. Neither is a symmetric
+      // ease-in-out — that has near-zero velocity at the start, which reads
+      // as a stall before the composer moves. The keyboard itself starts
+      // at full speed and decelerates smoothly into place, like something
+      // being shoved and settling — a plain ease-out cubic.
+      return Easing.out(Easing.cubic);
+  }
+}
 
 export default function ProjectNotesScreen() {
   const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
@@ -47,10 +75,55 @@ export default function ProjectNotesScreen() {
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
 
+  // Drives the composer (background + input + button, as one native view)
+  // up above the keyboard via transform rather than KeyboardAvoidingView's
+  // padding. KeyboardAvoidingView recomputes an async accessibility check
+  // before it calls LayoutAnimation, so its animation can start a beat after
+  // the real keyboard does, and LayoutAnimation doesn't reliably animate a
+  // TextInput's native frame on its own — both show up as the input
+  // reaching its final position before its background catches up. A single
+  // native-driven transform on one view removes that race entirely.
+  const composerOffset = useRef(new Animated.Value(0)).current;
+  // This screen sits inside the bottom tab navigator, which keeps the tab
+  // bar mounted underneath it — so the composer's resting position is above
+  // the tab bar, not flush with the real screen edge. Translating up by the
+  // full reported keyboard height overshoots by the tab bar's height. We
+  // measure the composer's actual on-screen frame and only close the real
+  // gap to the keyboard, same as KeyboardAvoidingView itself computes it.
+  const composerFrame = useRef<{ y: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const animateTo = (event: KeyboardEvent, toValue: number) => {
+      Animated.timing(composerOffset, {
+        toValue,
+        duration: event.duration > 10 ? event.duration : 250,
+        easing: keyboardEasing(event.easing),
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const showSub = Keyboard.addListener('keyboardWillShow', (event) => {
+      const frame = composerFrame.current;
+      if (!frame) return;
+      const overlap = Math.max(frame.y + frame.height - event.endCoordinates.screenY, 0);
+      animateTo(event, -overlap);
+    });
+    const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
+      animateTo(event, 0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [composerOffset]);
+
   // Scroll to the newest message only when the note count actually changes,
   // not on every ScrollView content-size change — the keyboard opening also
-  // resizes the scrollable area (via KeyboardAvoidingView's padding), and an
-  // unconditional scrollToEnd on that fought the keyboard's own smooth
+  // resizes the scrollable area (via automaticallyAdjustKeyboardInsets), and
+  // an unconditional scrollToEnd on that fought the keyboard's own smooth
   // animation with an instant, unanimated jump on every frame.
   useEffect(() => {
     if (notes.length === 0) return;
@@ -132,6 +205,7 @@ export default function ProjectNotesScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
         {unreachable && (
@@ -179,9 +253,15 @@ export default function ProjectNotesScreen() {
         )}
       </ScrollView>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ backgroundColor: color.surface }}
+      <Animated.View
+        onLayout={(event) => {
+          const { y, height } = event.nativeEvent.layout;
+          composerFrame.current = { y, height };
+        }}
+        style={{
+          backgroundColor: color.surface,
+          transform: [{ translateY: composerOffset }],
+        }}
       >
         <View style={styles.composer}>
           {postError ? <Text style={styles.error}>{postError}</Text> : null}
@@ -219,7 +299,7 @@ export default function ProjectNotesScreen() {
             </Pressable>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </Animated.View>
     </View>
   );
 }
