@@ -117,18 +117,24 @@ export default function ProjectNotesScreen() {
   // keyboard event (its own duration + curve), so there's none of the
   // KeyboardAvoidingView animation-start lag. `paddingBottom` is a layout
   // prop, so this runs on the JS driver.
+  // A spacer rendered *below* the composer. Growing it pushes the composer
+  // (and shrinks the ScrollView) up above the keyboard, so the composer is
+  // never transformed over the list — the ScrollView physically ends where
+  // the composer begins and can't be covered. The spacer is the composer's
+  // own surface colour, so if the measured lift is a hair off it reads as
+  // the composer extending down rather than a coloured gap.
   const keyboardPad = useRef(new Animated.Value(0)).current;
-  // This screen sits inside the bottom tab navigator, which keeps the tab
-  // bar mounted underneath it — so the composer's resting position is above
-  // the tab bar, not flush with the real screen edge. We measure the
-  // composer's actual on-screen frame and only close the real gap to the
-  // keyboard, the same amount KeyboardAvoidingView itself would.
-  const composerFrame = useRef<{ y: number; height: number } | null>(null);
+  // This screen sits inside the bottom tab navigator, so the composer's
+  // resting position is above the tab bar, not flush with the screen edge.
+  // We measure the composer's true window position when the keyboard opens
+  // and lift it by exactly the amount the keyboard would otherwise cover —
+  // no assumption about where this screen's root sits.
+  const composerRef = useRef<View>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
-    const animateTo = (event: KeyboardEvent, toValue: number) => {
+    const animate = (event: KeyboardEvent, toValue: number) => {
       Animated.timing(keyboardPad, {
         toValue,
         duration: event.duration > 10 ? event.duration : 250,
@@ -138,15 +144,17 @@ export default function ProjectNotesScreen() {
     };
 
     const showSub = Keyboard.addListener('keyboardWillShow', (event) => {
-      const frame = composerFrame.current;
-      if (!frame) return;
-      const overlap = Math.max(frame.y + frame.height - event.endCoordinates.screenY, 0);
-      animateTo(event, overlap);
-      // Follow the newest message up with the keyboard, animated in step.
-      requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      const node = composerRef.current;
+      if (!node) return;
+      node.measureInWindow((_x, y, _width, height) => {
+        const overlap = Math.max(y + height - event.endCoordinates.screenY, 0);
+        animate(event, overlap);
+        // Follow the newest message up with the keyboard, animated in step.
+        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      });
     });
     const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
-      animateTo(event, 0);
+      animate(event, 0);
     });
 
     return () => {
@@ -293,7 +301,7 @@ export default function ProjectNotesScreen() {
   }
 
   return (
-    <Animated.View style={[styles.flex, { paddingBottom: keyboardPad }]}>
+    <View style={styles.flex}>
       <AtmosphereBackground />
       {notesHeader}
       <ScrollView
@@ -378,13 +386,7 @@ export default function ProjectNotesScreen() {
         )}
       </ScrollView>
 
-      <View
-        onLayout={(event) => {
-          const { y, height } = event.nativeEvent.layout;
-          composerFrame.current = { y, height };
-        }}
-        style={{ backgroundColor: color.surface }}
-      >
+      <View ref={composerRef} style={{ backgroundColor: color.surface }}>
         <Pressable
           style={styles.composer}
           // Tapping anywhere on the strip (its padding, the gap beside the
@@ -430,7 +432,8 @@ export default function ProjectNotesScreen() {
           </View>
         </Pressable>
       </View>
-    </Animated.View>
+      <Animated.View style={{ height: keyboardPad, backgroundColor: color.surface }} />
+    </View>
   );
 }
 
