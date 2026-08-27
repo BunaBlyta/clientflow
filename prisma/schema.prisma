@@ -227,6 +227,7 @@ model Notification {
   title     String
   message   String
   readAt    DateTime?
+  archivedAt DateTime?
   createdAt DateTime         @default(now())
   projectId String?
   invoiceId String?
@@ -239,6 +240,7 @@ model Notification {
   pushDeliveries PushDelivery[]
 
   @@index([userId, readAt])
+  @@index([userId, archivedAt, createdAt])
   @@index([createdAt])
   @@index([projectId])
   @@index([invoiceId])

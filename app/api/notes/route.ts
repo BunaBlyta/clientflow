@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
+import { MAX_NOTE_BODY_LENGTH } from '@/app/api/_lib/text-limits';
 
 export const runtime = 'nodejs';
 
@@ -69,8 +70,8 @@ export async function POST(request: NextRequest) {
   const noteBody = typeof values.body === 'string' ? values.body.trim() : '';
 
   if (!projectId) return invalidRequest('Project is required');
-  if (!noteBody || noteBody.length > 5_000) {
-    return invalidRequest('Note body is required and must be 5,000 characters or fewer');
+  if (!noteBody || noteBody.length > MAX_NOTE_BODY_LENGTH) {
+    return invalidRequest(`Note body is required and must be ${MAX_NOTE_BODY_LENGTH.toLocaleString()} characters or fewer`);
   }
 
   const createdNote = await prisma.$transaction(async (transaction) => {

@@ -21,6 +21,7 @@ vi.mock('@/app/api/_lib/prisma', () => ({
 }));
 
 import { POST } from './route';
+import { MAX_NOTE_BODY_LENGTH } from '@/app/api/_lib/text-limits';
 
 function request(body: unknown) {
   return new Request('http://localhost/api/notes', {
@@ -151,5 +152,48 @@ describe('POST /api/notes', () => {
       },
     });
     expect(mocks.staffFindMany).not.toHaveBeenCalled();
+  });
+
+  it('accepts the complete note body at the explicit limit without truncating it', async () => {
+    const longBody = 'x'.repeat(MAX_NOTE_BODY_LENGTH);
+    mocks.authenticate.mockResolvedValue({ id: 'user-client-1', role: 'CLIENT' });
+    mocks.projectFindUnique.mockResolvedValue({
+      id: 'proj-1',
+      clientId: 'client-1',
+      client: { userId: 'user-client-1' },
+    });
+    mocks.noteCreate.mockResolvedValue({
+      id: 'note-long',
+      projectId: 'proj-1',
+      authorId: 'user-client-1',
+      content: longBody,
+      createdAt: new Date('2026-08-12T10:30:00.000Z'),
+      author: { name: 'Jordan Ellis', role: 'CLIENT' },
+    });
+    mocks.staffFindMany.mockResolvedValue([]);
+    setupTransaction();
+
+    const response = await POST(request({ projectId: 'proj-1', body: longBody }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.noteCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ content: longBody }),
+    }));
+  });
+
+  it('rejects a note body over the explicit limit instead of truncating it', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'user-client-1', role: 'CLIENT' });
+    setupTransaction();
+
+    const response = await POST(request({
+      projectId: 'proj-1',
+      body: 'x'.repeat(MAX_NOTE_BODY_LENGTH + 1),
+    }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: `Note body is required and must be ${MAX_NOTE_BODY_LENGTH.toLocaleString()} characters or fewer`,
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
   });
 });

@@ -154,7 +154,9 @@ the staff `PATCH` that moves an invoice to `SENT` creates exactly one
 
 `POST /api/notes` accepts `{ "projectId": string, "body": string }` for both
 staff and client sessions and returns 201 with the same shape as a note from
-`GET /api/notes`:
+`GET /api/notes`. The body is stored in full (the existing outer-whitespace
+normalization remains), with an explicit 10,000-character limit. A body over
+that limit is rejected with 400; it is never silently truncated:
 
 ```json
 {
@@ -176,12 +178,35 @@ staff users, while a staff note creates one for the project client. The author
 is never notified about their own note, and notes have no update or delete
 endpoint.
 
-`PATCH /api/notifications/:id` marks the authenticated user's notification as
-read and returns the same object shape as `GET /api/notifications`, with
-`body` mapped from the database `message` and `read: true`. The lookup includes
-both the notification ID and session user ID, so another user's notification is
-reported as 404. Repeating the request for an already-read notification returns
-200 without writing again.
+`GET /api/notifications` requires a session and returns active (not archived)
+notifications newest first. The legacy request with no pagination parameters
+still returns an array, bounded to 200 records; `X-Notifications-Has-More` is
+`true` when another record exists. `?page=1&limit=20` opts into the paginated
+envelope:
+
+```json
+{
+  "notifications": [/* the same notification objects */],
+  "page": 1,
+  "pageSize": 20,
+  "hasMore": true
+}
+```
+
+`limit` is bounded to 50. `archived=active` is the default,
+`archived=archived` returns only archived records, and `archived=all` returns
+both. `since` remains available for realtime catch-up and keeps the legacy
+array shape; it cannot be combined with `page` or `limit`.
+
+`PATCH /api/notifications/:id` with no body keeps the existing behavior: it
+marks the authenticated user's notification as read. Sending
+`{ "archived": true }` archives it, while `{ "archived": false }` restores it.
+Archiving is independent from read state: an unread notification stays unread
+when archived and an already-read notification stays read when restored. Both
+operations return the notification shape below. The lookup includes both the
+notification ID and session user ID, so another user's notification is
+reported as 404. Repeating an archive, restore, or read request is idempotent
+and returns 200 without another database write.
 
 Both notification endpoints include nullable navigation targets directly from
 the database; clients must use these IDs rather than parsing notification text
@@ -198,6 +223,7 @@ or inferring a target from the notification type:
   "invoiceId": "inv-1",
   "requestId": null,
   "read": false,
+  "archived": false,
   "createdAt": "2026-08-12T10:00:00.000Z"
 }
 ```

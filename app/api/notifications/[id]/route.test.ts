@@ -29,15 +29,20 @@ const notification = {
   title: 'New note',
   message: 'A note was posted.',
   readAt: null,
+  archivedAt: null,
   createdAt: new Date('2026-08-12T10:00:00.000Z'),
   projectId: 'proj-1',
   invoiceId: 'inv-1',
   requestId: null,
 };
 
-function request() {
+function request(body?: unknown) {
   return new Request('http://localhost/api/notifications/notif-1', {
     method: 'PATCH',
+    ...(body === undefined ? {} : {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
   }) as unknown as NextRequest;
 }
 
@@ -83,6 +88,7 @@ describe('PATCH /api/notifications/:id', () => {
       invoiceId: 'inv-1',
       requestId: null,
       read: true,
+      archived: false,
       createdAt: '2026-08-12T10:00:00.000Z',
     });
     expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
@@ -92,6 +98,7 @@ describe('PATCH /api/notifications/:id', () => {
         projectId: true,
         invoiceId: true,
         requestId: true,
+        archivedAt: true,
       }),
     }));
     expect(mocks.findFirst).toHaveBeenCalledWith(expect.objectContaining({
@@ -117,7 +124,64 @@ describe('PATCH /api/notifications/:id', () => {
     expect(await response.json()).toMatchObject({
       id: 'notif-1',
       read: true,
+      archived: false,
     });
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it('archives an owned notification without marking it read', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+    mocks.findFirst.mockResolvedValue(notification);
+    mocks.update.mockResolvedValue({
+      ...notification,
+      archivedAt: new Date('2026-08-12T10:05:00.000Z'),
+    });
+
+    const response = await PATCH(request({ archived: true }), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: 'notif-1',
+      read: false,
+      archived: true,
+    });
+    expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'notif-1' },
+      data: { archivedAt: expect.any(Date) },
+      select: expect.objectContaining({ archivedAt: true }),
+    }));
+  });
+
+  it('unarchives an owned notification and preserves its read state', async () => {
+    const archivedNotification = {
+      ...notification,
+      readAt: new Date('2026-08-12T10:03:00.000Z'),
+      archivedAt: new Date('2026-08-12T10:04:00.000Z'),
+    };
+    mocks.authenticate.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+    mocks.findFirst.mockResolvedValue(archivedNotification);
+    mocks.update.mockResolvedValue({ ...archivedNotification, archivedAt: null });
+
+    const response = await PATCH(request({ archived: false }), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: 'notif-1',
+      read: true,
+      archived: false,
+    });
+    expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { archivedAt: null },
+    }));
+  });
+
+  it('rejects a non-boolean archive value before checking the record', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+
+    const response = await PATCH(request({ archived: 'true' }), params());
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'archived must be a boolean' });
+    expect(mocks.findFirst).not.toHaveBeenCalled();
   });
 });
