@@ -175,14 +175,13 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   unreadDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: color.accent,
-    marginTop: 7,
     marginRight: spacing.xs,
   },
   title: {
