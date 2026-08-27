@@ -32,3 +32,14 @@ immediately, then get a separate "delivered" indicator.
 - Not run on device. Check: send with network on (bubble appears, "Sending…"
   → "Sent" → settles), send with the API unreachable (bubble goes red,
   tap retries), send several fast in a row.
+
+## 2026-08-27 18:50 — follow-up: composer overlap
+
+The composer floats up over the ScrollView via transform when the keyboard
+opens, so the newest messages sat behind the composer strip (very visible now
+that a sent message lands there instantly). Added a parallel JS-driven
+animated spacer (`contentPush`) as the last child of the scroll content: 0 at
+rest, composer height when the keyboard is up. `automaticallyAdjustKeyboardInsets`
+still clears the keyboard; the spacer adds the extra room to also clear the
+floated composer. Android path (adjustResize, composer is a flex sibling)
+unchanged.
