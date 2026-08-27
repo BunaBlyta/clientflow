@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { formatDate } from '../lib/format';
 import { getPackageById } from '../lib/mock-data';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../lib/status';
@@ -43,11 +44,11 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
       <View style={styles.progressDivider} />
       <View style={styles.dateRow}>
         <Text style={styles.dateText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-          {t('ui.started', { date: formatProjectDate(project.createdAt, language) })}
+          {t('ui.started', { date: formatDate(project.createdAt, language) })}
         </Text>
         <Text style={[styles.dateText, styles.dateTextRight]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
           {project.targetLaunchDate
-            ? t(project.status === 'LAUNCHED' ? 'ui.launched' : 'ui.estimatedLaunch', { date: formatProjectDate(project.targetLaunchDate, language) })
+            ? t(project.status === 'LAUNCHED' ? 'ui.launched' : 'ui.estimatedLaunch', { date: formatDate(project.targetLaunchDate, language) })
             : t('ui.notScheduled')}
         </Text>
       </View>
@@ -57,10 +58,6 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
       </View>
     </Pressable>
   );
-}
-
-function formatProjectDate(value: string, language: 'en' | 'sq' | 'de') {
-  return new Date(value).toLocaleDateString(language === 'sq' ? 'sq-AL' : language === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {

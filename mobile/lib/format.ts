@@ -6,6 +6,41 @@ function localeFor(language: Language): string {
   return 'en-US';
 }
 
+// Hermes's bundled ICU data doesn't reliably support month names for every
+// locale — Intl.DateTimeFormat's 'short' (and sometimes 'long') month for
+// Albanian came back as a naive character truncation ("Gusht" -> "Gush")
+// rather than a real abbreviation, the same class of gap already hit with
+// Intl.RelativeTimeFormat elsewhere in this file. Hardcode full month names
+// per language instead of trusting the engine's locale data for them.
+const MONTH_NAMES: Record<Language, string[]> = {
+  en: [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ],
+  sq: [
+    'Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor',
+    'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor',
+  ],
+  de: [
+    'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+    'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+  ],
+};
+
+// Keeps the locale-correct day/month/year order and punctuation from Intl
+// (which Hermes handles fine for numeric parts and literals) while
+// substituting our own guaranteed-correct month name for the 'month' part.
+function formatWithFullMonth(
+  d: Date,
+  language: Language,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  const parts = new Intl.DateTimeFormat(localeFor(language), { ...options, month: 'long' }).formatToParts(d);
+  return parts
+    .map((part) => (part.type === 'month' ? MONTH_NAMES[language][d.getMonth()] : part.value))
+    .join('');
+}
+
 export function formatCurrency(cents: number, language: Language = 'en'): string {
   return (cents / 100).toLocaleString(localeFor(language), {
     style: 'currency',
@@ -16,19 +51,12 @@ export function formatCurrency(cents: number, language: Language = 'en'): string
 
 export function formatDate(iso: string, language: Language = 'en'): string {
   const d = new Date(iso);
-  return d.toLocaleDateString(localeFor(language), {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatWithFullMonth(d, language, { day: 'numeric', year: 'numeric' });
 }
 
 export function formatDateTime(iso: string, language: Language = 'en'): string {
   const d = new Date(iso);
-  return `${d.toLocaleDateString(localeFor(language), {
-    month: 'short',
-    day: 'numeric',
-  })} · ${d.toLocaleTimeString(localeFor(language), {
+  return `${formatWithFullMonth(d, language, { day: 'numeric' })} · ${d.toLocaleTimeString(localeFor(language), {
     hour: 'numeric',
     minute: '2-digit',
   })}`;
