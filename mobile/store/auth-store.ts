@@ -13,6 +13,7 @@ interface AuthState {
   restoreSession: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   startSession: (response: LoginResponse) => Promise<void>;
+  updateClient: (partial: Partial<Client>) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -41,6 +42,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const response = await loginRequest(email.trim().toLowerCase(), password);
     await get().startSession(response);
     return true;
+  },
+  updateClient: async (partial) => {
+    const { client, token } = get();
+    if (!client) return;
+    const next = { ...client, ...partial };
+    set({ client: next });
+    if (token) await writeSession(token, next);
   },
   logout: async () => {
     const token = get().token;

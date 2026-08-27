@@ -488,6 +488,40 @@ export function checkoutRequest(invoiceId: string, token: string) {
   }, token);
 }
 
+export interface ClientProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  clientId?: string;
+  companyName?: string | null;
+  phone?: string | null;
+}
+
+export interface ProfileUpdateInput {
+  name?: string;
+  companyName?: string | null;
+  phone?: string | null;
+}
+
+export function updateProfileRequest(input: ProfileUpdateInput, token: string) {
+  return request<ClientProfileResponse>('/api/auth/me', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  }, token);
+}
+
+export function changePasswordRequest(
+  currentPassword: string,
+  newPassword: string,
+  token: string,
+) {
+  return request<{ success: boolean }>('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  }, token);
+}
+
 export function clientFromUser(user: LoginResponse['user']): Client {
   return {
     id: user.id,

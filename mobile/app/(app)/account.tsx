@@ -1,4 +1,4 @@
-import { CalendarDays, CircleHelp, ChevronRight, Globe2, LogOut, Mail, Moon, Phone, Sun } from 'lucide-react-native';
+import { CalendarDays, CircleHelp, ChevronRight, Globe2, KeyRound, LogOut, Mail, Moon, Phone, SquarePen, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { formatMonthYear } from '../../lib/format';
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -122,6 +122,22 @@ export default function AccountScreen() {
           ) : null}
         </View>
       </View>
+
+      <PreferenceGroup label={t('account.profile')}>
+        <SettingsRow
+          icon={SquarePen}
+          label={t('account.editProfile')}
+          onPress={() => router.push({ pathname: '/settings/edit-profile', params: { source: 'account' } })}
+          styles={styles}
+        />
+        <SettingsRow
+          icon={KeyRound}
+          label={t('account.changePassword')}
+          onPress={() => router.push({ pathname: '/settings/change-password', params: { source: 'account' } })}
+          styles={styles}
+          last
+        />
+      </PreferenceGroup>
 
       <PreferenceGroup label={t('ui.settings')}>
         <SettingsRow

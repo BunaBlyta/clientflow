@@ -22,6 +22,7 @@ interface TextFieldProps {
   autoComplete?: 'email' | 'password' | 'off';
   maxLength?: number;
   helperText?: string;
+  editable?: boolean;
 }
 
 export function TextField({
@@ -36,6 +37,7 @@ export function TextField({
   autoComplete,
   maxLength,
   helperText,
+  editable = true,
 }: TextFieldProps) {
   const { color } = useTheme();
   const styles = createStyles(color);
@@ -50,6 +52,7 @@ export function TextField({
           styles.inputRow,
           focused && styles.inputRowFocused,
           !!error && styles.inputRowError,
+          !editable && styles.inputRowDisabled,
         ]}
       >
         <TextInput
@@ -63,9 +66,10 @@ export function TextField({
           autoComplete={autoComplete}
           autoCorrect={false}
           maxLength={maxLength}
+          editable={editable}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={styles.input}
+          style={[styles.input, !editable && styles.inputDisabled]}
         />
         {secureTextEntry && (
           <Pressable onPress={() => setHidden((h) => !h)} hitSlop={8}>
@@ -114,12 +118,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   inputRowError: {
     borderColor: color.danger,
   },
+  inputRowDisabled: {
+    backgroundColor: color.surfaceMuted,
+    borderColor: color.border,
+  },
   input: {
     flex: 1,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textPrimary,
     height: '100%',
+  },
+  inputDisabled: {
+    color: color.textMuted,
   },
   errorText: {
     fontFamily: fontFamily.regular,
