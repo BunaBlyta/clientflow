@@ -59,12 +59,12 @@ export default function InvoicesScreen() {
         <View>
           <View style={styles.summaryGrid}>
             <Card tone="muted" padding={12} style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>{t('projects.outstanding')}</Text>
+              <Text style={styles.summaryLabel} numberOfLines={1}>{t('projects.outstanding')}</Text>
               <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(outstandingTotal, language)}</Text>
               <Text style={styles.summaryHint}>{t('ui.invoicesDue', { count: invoices.filter((invoice) => invoice.status !== 'PAID').length })}</Text>
             </Card>
             <Card tone="muted" padding={12} style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>{t('projects.paidToDate')}</Text>
+              <Text style={styles.summaryLabel} numberOfLines={1}>{t('projects.paidToDate')}</Text>
               <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(paidTotal, language)}</Text>
               <Text style={styles.summaryHint}>{t('ui.invoicesPaid', { count: invoices.filter((invoice) => invoice.status === 'PAID').length })}</Text>
             </Card>
