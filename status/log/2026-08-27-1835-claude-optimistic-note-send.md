@@ -49,3 +49,17 @@ unchanged.
 Only a direct tap on the `TextInput` raised the keyboard. Wrapped the composer
 strip in a `Pressable` (`onPress` -> `inputRef.focus()`) so tapping its padding
 or the gap next to the field also brings it (and the keyboard) up.
+
+## 2026-08-27 19:15 — composer never overlaps (rework)
+
+The spacer approach still let the composer draw over messages in edge timings
+because the composer was `translateY`-transformed over the ScrollView. Reworked:
+the composer is a plain flex sibling again (no transform), and the keyboard is
+cleared by animating `paddingBottom` on the screen root — the whole screen
+shrinks from the bottom, the ScrollView shrinks with it, and the composer sits
+at the new bottom edge. The list physically ends where the composer starts, so
+overlap is structurally impossible. Driven straight off `keyboardWillShow/Hide`
+(event duration + curve) so there is no KeyboardAvoidingView start-lag. Removed
+`automaticallyAdjustKeyboardInsets` and the `contentPush` spacer. `keyboardWillShow`
+also animates a `scrollToEnd`. Android (`adjustResize`, composer already a flex
+sibling) unchanged.
