@@ -40,3 +40,13 @@ states while those fetches were still running. Now `loading` starts true
 regardless of project cache and each section shows a skeleton when it has no
 data yet (`loading && section.length === 0`) — a cached list still renders
 instantly. Notes count footer hidden during the section skeleton.
+
+## 2026-08-27 19:50 — notifications loading layout
+
+The notifications screen used `scroll={visibleNotifications.length > 0 || hasMore}`,
+so while loading (list empty) it hit `Screen`s non-scroll branch, which has no
+content padding — heading / filter tabs / the loading skeleton were flush to
+the screen edges. Removed the conditional; it always uses the scrolling
+(padded) layout now, like every other list screen. The genuine empty state
+("caught up") is no longer vertically centered — it sits in-flow under the
+filters, consistent with projects/invoices.
