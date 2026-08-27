@@ -133,11 +133,7 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <Screen
-      scroll={visibleNotifications.length > 0 || notificationsHasMore}
-      onScroll={handleScroll}
-      scrollEventThrottle={160}
-    >
+    <Screen onScroll={handleScroll} scrollEventThrottle={160}>
       <View style={styles.headerRow}>
         <Text style={styles.heading}>{t('notifications.title')}</Text>
       </View>
