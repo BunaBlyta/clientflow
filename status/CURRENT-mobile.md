@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-27 11:30 by Codex — inline notification timestamps
+Last updated: 2026-08-27 11:34 by Codex — reset notes composer height after send
 
 ## Current state
 
@@ -11,6 +11,7 @@ Last updated: 2026-08-27 11:30 by Codex — inline notification timestamps
 - Notification timestamps now appear inline after the title with a small `·` separator and muted metadata styling, sharing the title's responsive wrapping flow instead of occupying a separate column.
 - The notification client accepts the documented paginated envelope and the older array response while the API rollout settles. The client uses archived=all so unarchive can work from the mobile app.
 - Long notes use the API's 10,000-character limit. The composer scrolls for long drafts, shows a localized character count/error, keeps the complete draft on a failed send, and only clears it after the server accepts the note.
+- The notes composer now controls its native height from content size and immediately resets to the compact height after a successful send, without remounting or dismissing the keyboard; active long drafts remain capped and internally scrollable.
 - Human-authored note bodies and NEW_NOTE notification bodies translate asynchronously through the authenticated /api/translate route. Results are deduplicated and cached in memory; provider errors, missing routes, missing tokens, and internal i18n-looking keys fall back to the original content without blocking the feed. System note text and localized notification templates stay on the existing deterministic i18n path.
 - Verification: npx tsc --noEmit passes from mobile/; git diff --check passes. No package installation or API files were changed. This lane was not verified on a physical device or simulator.
 

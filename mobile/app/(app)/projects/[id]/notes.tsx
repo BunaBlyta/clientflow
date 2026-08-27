@@ -29,6 +29,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
 
+const NOTE_INPUT_MIN_HEIGHT = 46;
+const NOTE_INPUT_MAX_HEIGHT = 112;
+
 // Maps iOS's reported keyboard animation curve to an Easing function so our
 // manual composer animation matches the system keyboard's curve, not just
 // its duration.
@@ -71,6 +74,7 @@ export default function ProjectNotesScreen() {
   const [unreachable, setUnreachable] = useState(false);
   const [postError, setPostError] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
+  const [inputHeight, setInputHeight] = useState(NOTE_INPUT_MIN_HEIGHT);
   const scrollRef = useRef<ScrollView>(null);
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
@@ -190,6 +194,10 @@ export default function ProjectNotesScreen() {
     }
 
     setDraft('');
+    // Reset the controlled native height in the same success path as the
+    // draft. Keeping focus avoids dismissing the keyboard, while the input
+    // immediately returns to its compact state for the next note.
+    setInputHeight(NOTE_INPUT_MIN_HEIGHT);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     });
@@ -285,9 +293,22 @@ export default function ProjectNotesScreen() {
                 setDraft(value);
                 if (postError) setPostError('');
               }}
+              onContentSizeChange={({ nativeEvent }) => {
+                if (draft.length === 0) {
+                  setInputHeight(NOTE_INPUT_MIN_HEIGHT);
+                  return;
+                }
+                const nextHeight = Math.max(
+                  NOTE_INPUT_MIN_HEIGHT,
+                  Math.min(NOTE_INPUT_MAX_HEIGHT, nativeEvent.contentSize.height),
+                );
+                setInputHeight((currentHeight) =>
+                  currentHeight === nextHeight ? currentHeight : nextHeight,
+                );
+              }}
               placeholder={t('notes.writeNote')}
               placeholderTextColor={color.textMuted}
-              style={[styles.input, inputFocused && styles.inputFocused]}
+              style={[styles.input, { height: inputHeight }, inputFocused && styles.inputFocused]}
               multiline
               editable={!posting}
               onFocus={() => setInputFocused(true)}
@@ -446,7 +467,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     paddingVertical: spacing.md,
     textAlignVertical: 'top',
     backgroundColor: color.surfaceMuted,
-    maxHeight: 112,
+    maxHeight: NOTE_INPUT_MAX_HEIGHT,
   },
   inputFocused: {
     borderColor: color.accent,
