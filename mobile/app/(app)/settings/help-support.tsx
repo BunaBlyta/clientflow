@@ -3,7 +3,7 @@ import { CircleHelp } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppBackButton } from '../../../components/OriginBackButton';
 import { Screen } from '../../../components/ui/Screen';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 
 export default function HelpSupportScreen() {
@@ -16,7 +16,9 @@ export default function HelpSupportScreen() {
     <Screen>
       <AppBackButton source={source} accessibilityLabel={t('common.back')} />
       <View style={styles.titleRow}>
-        <CircleHelp size={fontSize.headingLg} color={color.accent} strokeWidth={1.8} />
+        <View style={styles.iconWrap}>
+          <CircleHelp size={fontSize.headingLg} color={color.accent} strokeWidth={1.8} />
+        </View>
         <Text style={styles.title}>{t('ui.helpSupport')}</Text>
       </View>
       <View style={styles.description}>
@@ -34,6 +36,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       alignItems: 'center',
       gap: spacing.sm,
       marginTop: spacing.sm,
+    },
+    iconWrap: {
+      padding: spacing.xs,
+      borderRadius: radius.sm,
+      backgroundColor: color.accentSoft,
     },
     title: {
       fontFamily: fontFamily.serif,
