@@ -31,3 +31,12 @@ skeleton. Auth screens and the checkout flow keep their spinners (button
 spinners / a genuine "waiting on Stripe" state — not content loading).
 
 `npx tsc --noEmit` from `mobile/` — clean. Not run on device.
+
+## 2026-08-27 18:25 — follow-up
+
+Project detail: the `loading` flag only gated the whole-screen fallback, so a
+cached project rendered the Notes and Invoices **sections** with their empty
+states while those fetches were still running. Now `loading` starts true
+regardless of project cache and each section shows a skeleton when it has no
+data yet (`loading && section.length === 0`) — a cached list still renders
+instantly. Notes count footer hidden during the section skeleton.
