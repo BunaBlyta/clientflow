@@ -2,7 +2,6 @@ import { useLocalSearchParams } from 'expo-router';
 import { MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Easing,
   Keyboard,
@@ -29,9 +28,24 @@ import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
+import type { Note as NoteType } from '../../../../lib/types';
 
 const NOTE_INPUT_MIN_HEIGHT = 52;
 const NOTE_INPUT_MAX_HEIGHT = 168;
+
+// How long a delivered message keeps showing its "Sent" tick before the
+// confirmed store note quietly takes its place.
+const SENT_INDICATOR_MS = 2600;
+
+type OutboxItem = {
+  tempId: string;
+  body: string;
+  createdAt: string;
+  state: 'sending' | 'sent' | 'failed';
+  // The real note id once the server confirms — used to hide the duplicate
+  // store note while the "Sent" tick is still showing.
+  noteId?: string;
+};
 
 // Maps iOS's reported keyboard animation curve to an Easing function so our
 // manual composer animation matches the system keyboard's curve, not just
@@ -69,9 +83,14 @@ export default function ProjectNotesScreen() {
   const postNote = useDataStore((s) => s.postNote);
   const refreshNotes = useDataStore((s) => s.refreshNotes);
 
+  const client = useAuthStore((s) => s.client);
+
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
-  const [posting, setPosting] = useState(false);
+  // Messages the user has sent that aren't confirmed by the server yet. They
+  // render in the timeline immediately with a delivery indicator, so sending
+  // feels instant instead of showing a spinner on the button.
+  const [outbox, setOutbox] = useState<OutboxItem[]>([]);
   const [unreachable, setUnreachable] = useState(false);
   const [postError, setPostError] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -148,7 +167,7 @@ export default function ProjectNotesScreen() {
   // recompute). One rAF wasn't consistently enough time for the composer's
   // post-send shrink to land in a completed layout pass, so this waits two.
   useEffect(() => {
-    if (notes.length === 0) return;
+    if (notes.length === 0 && outbox.length === 0) return;
     let secondFrame = 0;
     const firstFrame = requestAnimationFrame(() => {
       secondFrame = requestAnimationFrame(() => {
@@ -159,7 +178,7 @@ export default function ProjectNotesScreen() {
       cancelAnimationFrame(firstFrame);
       if (secondFrame) cancelAnimationFrame(secondFrame);
     };
-  }, [notes.length]);
+  }, [notes.length, outbox.length]);
 
   useEffect(() => {
     if (!token || !id) {
@@ -192,36 +211,79 @@ export default function ProjectNotesScreen() {
     </View>
   );
 
-  async function handleSend() {
-    const body = draft.trim();
-    if (!body || !id || !token || posting) return;
-    if (draft.length > MAX_NOTE_BODY_LENGTH) {
+  async function deliver(tempId: string, bodyText: string) {
+    if (!id || !token) return;
+    setOutbox((list) =>
+      list.map((item) => (item.tempId === tempId ? { ...item, state: 'sending' } : item)),
+    );
+    const result = await postNote(id, bodyText, token);
+    if (!result.ok) {
+      const serverRejectedLength =
+        result.status === 400 &&
+        (bodyText.length > MAX_NOTE_BODY_LENGTH || /10[,.]?000|10000/.test(result.message));
+      setOutbox((list) =>
+        list.map((item) => (item.tempId === tempId ? { ...item, state: 'failed' } : item)),
+      );
+      // The failed bubble itself carries a retry affordance; only the
+      // length rejection needs the explainer banner.
+      if (serverRejectedLength) setPostError(t('notes.tooLong'));
+      return;
+    }
+    const noteId = result.note.id;
+    setOutbox((list) =>
+      list.map((item) =>
+        item.tempId === tempId ? { ...item, state: 'sent', noteId } : item,
+      ),
+    );
+    // Once the "Sent" tick has shown for a moment, drop the optimistic copy;
+    // the confirmed store note is already in the timeline underneath it.
+    setTimeout(() => {
+      setOutbox((list) => list.filter((item) => item.tempId !== tempId));
+    }, SENT_INDICATOR_MS);
+  }
+
+  function handleSend() {
+    const bodyText = draft;
+    if (!bodyText.trim() || !id || !token) return;
+    if (bodyText.length > MAX_NOTE_BODY_LENGTH) {
       setPostError(t('notes.tooLong'));
       return;
     }
-
     setPostError('');
-    setPosting(true);
-    // Keep the untrimmed draft in the input. The server normalizes the value,
-    // but a failed request must never make the user's composed text disappear.
-    const result = await postNote(id, draft, token);
-    setPosting(false);
-    if (!result.ok) {
-      const serverRejectedLength = result.status === 400 &&
-        (draft.length > MAX_NOTE_BODY_LENGTH || /10[,.]?000|10000/.test(result.message));
-      if (serverRejectedLength) {
-        setPostError(t('notes.tooLong'));
-        return;
-      }
-      setPostError(t('notes.postFailed'));
-      return;
-    }
-
+    const tempId = `outbox-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setOutbox((list) => [
+      ...list,
+      { tempId, body: bodyText, createdAt: new Date().toISOString(), state: 'sending' },
+    ]);
     setDraft('');
     setForceCompact(true);
+    void deliver(tempId, bodyText);
   }
 
-  if (loading && notes.length === 0) {
+  function handleRetry(item: OutboxItem) {
+    setPostError('');
+    void deliver(item.tempId, item.body);
+  }
+
+  function outboxNote(item: OutboxItem): NoteType {
+    return {
+      id: item.tempId,
+      projectId: id ?? '',
+      authorId: client?.id ?? null,
+      authorName: client?.name ?? t('notes.you'),
+      authorRole: 'CLIENT',
+      body: item.body,
+      createdAt: item.createdAt,
+    };
+  }
+
+  const settledNoteIds = new Set(
+    outbox.map((item) => item.noteId).filter((value): value is string => Boolean(value)),
+  );
+  const timelineNotes = orderedNotes.filter((note) => !settledNoteIds.has(note.id));
+  const hasContent = timelineNotes.length > 0 || outbox.length > 0;
+
+  if (loading && notes.length === 0 && outbox.length === 0) {
     return (
       <View style={styles.flex}>
         <AtmosphereBackground />
@@ -257,7 +319,7 @@ export default function ProjectNotesScreen() {
             {t('notes.unavailable')}
           </Text>
         )}
-        {notes.length === 0 ? (
+        {!hasContent ? (
           <View style={styles.emptyState}>
             <EmptyState
               icon={MessageSquare}
@@ -267,8 +329,8 @@ export default function ProjectNotesScreen() {
           </View>
         ) : (
           <View style={styles.timeline}>
-            {orderedNotes.map((note, index) => {
-              const previousNote = orderedNotes[index - 1];
+            {timelineNotes.map((note, index) => {
+              const previousNote = timelineNotes[index - 1];
               const noteDate = formatDate(note.createdAt, language);
               const showDate = !previousNote || formatDate(previousNote.createdAt, language) !== noteDate;
 
@@ -289,6 +351,32 @@ export default function ProjectNotesScreen() {
                       previousNote.authorRole !== note.authorRole ||
                       previousNote.authorName !== note.authorName
                     }
+                  />
+                </View>
+              );
+            })}
+            {outbox.map((item, index) => {
+              const previous = index === 0
+                ? timelineNotes[timelineNotes.length - 1]
+                : undefined;
+              const itemDate = formatDate(item.createdAt, language);
+              const showDate =
+                index === 0 &&
+                (!previous || formatDate(previous.createdAt, language) !== itemDate);
+              return (
+                <View key={item.tempId}>
+                  {showDate && (
+                    <View style={styles.dateSeparator}>
+                      <View style={styles.dateLine} />
+                      <Text style={styles.dateLabel}>{itemDate}</Text>
+                      <View style={styles.dateLine} />
+                    </View>
+                  )}
+                  <NoteBubble
+                    note={outboxNote(item)}
+                    showAuthor={false}
+                    status={item.state}
+                    onRetry={() => handleRetry(item)}
                   />
                 </View>
               );
@@ -325,27 +413,22 @@ export default function ProjectNotesScreen() {
                 forceCompact && { height: NOTE_INPUT_MIN_HEIGHT },
               ]}
               multiline
-              editable={!posting}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               scrollEnabled
             />
             <Pressable
-              onPress={() => void handleSend()}
-              disabled={!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH || posting}
+              onPress={handleSend}
+              disabled={!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH}
               accessibilityRole="button"
               accessibilityLabel={t('common.send')}
               style={({ pressed }) => [
                 styles.sendButton,
-                (!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH || posting) && styles.sendButtonDisabled,
-                pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && !posting && styles.sendButtonPressed,
+                (!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH) && styles.sendButtonDisabled,
+                pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && styles.sendButtonPressed,
               ]}
             >
-              {posting ? (
-                <ActivityIndicator size="small" color={color.textOnAccent} />
-              ) : (
-                <Send size={16} color={color.textOnAccent} />
-              )}
+              <Send size={16} color={color.textOnAccent} />
             </Pressable>
           </View>
         </View>

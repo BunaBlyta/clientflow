@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Copy } from 'lucide-react-native';
+import { Check, Copy, RotateCcw } from 'lucide-react-native';
 import { useState } from 'react';
 import { formatRelativeTime } from '../lib/format';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
@@ -17,13 +17,19 @@ import { useTranslatedUserContent } from '../lib/content-translation';
 import { useAuthStore } from '../store/auth-store';
 import type { Note } from '../lib/types';
 
+export type NoteDeliveryStatus = 'sending' | 'sent' | 'failed';
+
 interface NoteBubbleProps {
   note: Note;
   preview?: boolean;
   showAuthor?: boolean;
+  // Set for the sender's own optimistic messages: swaps the timestamp for a
+  // delivery indicator. 'failed' makes the bubble tappable to retry.
+  status?: NoteDeliveryStatus;
+  onRetry?: () => void;
 }
 
-export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBubbleProps) {
+export function NoteBubble({ note, preview = false, showAuthor = true, status, onRetry }: NoteBubbleProps) {
   const { color } = useTheme();
   const { language, t } = useI18n();
   const token = useAuthStore((state) => state.token);
@@ -85,18 +91,34 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
         )}
         <Pressable
           onLongPress={preview ? undefined : handleLongPress}
+          onPress={status === 'failed' ? onRetry : undefined}
           disabled={preview}
           style={({ pressed }) => [
             styles.bodyWrap,
             preview && !isClient && styles.previewBodyWrap,
             isClient && styles.clientBodyWrap,
+            status === 'failed' && styles.failedBodyWrap,
             pressed && !preview && styles.bodyWrapPressed,
           ]}
         >
           <Text style={[styles.body, isClient && styles.clientBody]}>{displayedBody}</Text>
-          <Text style={[styles.time, isClient && styles.clientTime]}>
-            {formatNoteTime(note.createdAt, language)}
-          </Text>
+          {status ? (
+            <View style={styles.statusRow}>
+              {status === 'sent' && <Check size={11} color={color.textOnAccent} strokeWidth={2.4} />}
+              {status === 'failed' && <RotateCcw size={11} color={color.textOnAccent} strokeWidth={2.2} />}
+              <Text style={[styles.time, styles.clientTime, styles.statusText, status === 'failed' && styles.statusFailed]}>
+                {status === 'sending'
+                  ? t('notes.sending')
+                  : status === 'sent'
+                    ? t('notes.sent')
+                    : t('notes.sendRetry')}
+              </Text>
+            </View>
+          ) : (
+            <Text style={[styles.time, isClient && styles.clientTime]}>
+              {formatNoteTime(note.createdAt, language)}
+            </Text>
+          )}
         </Pressable>
       </View>
       {menuAnchor && (
@@ -204,6 +226,20 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textOnAccent,
     opacity: 0.75,
   },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    gap: 3,
+    marginTop: spacing.xs,
+  },
+  statusText: {
+    marginTop: 0,
+  },
+  statusFailed: {
+    opacity: 1,
+    fontFamily: fontFamily.medium,
+  },
   bodyWrap: {
     alignSelf: 'flex-start',
     paddingHorizontal: spacing.md,
@@ -247,6 +283,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     backgroundColor: color.accent,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 4,
+  },
+  failedBodyWrap: {
+    backgroundColor: color.danger,
   },
   body: {
     fontFamily: fontFamily.regular,
