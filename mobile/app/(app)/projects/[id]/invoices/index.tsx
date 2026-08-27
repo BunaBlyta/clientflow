@@ -112,7 +112,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     paddingTop: spacing.md,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
-    color: color.warning,
+    color: color.danger,
   },
   });
 }

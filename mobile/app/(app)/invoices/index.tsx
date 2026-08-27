@@ -98,7 +98,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
     title: { fontFamily: fontFamily.serif, fontSize: fontSize.headingLg, color: color.textPrimary, ...textShadow },
     subtitle: { fontFamily: fontFamily.regular, fontSize: fontSize.caption, color: color.textMuted, marginTop: spacing.xs, marginBottom: spacing.xl, ...textShadow },
-    error: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.warning, marginBottom: spacing.md },
+    error: { fontFamily: fontFamily.regular, fontSize: fontSize.meta, color: color.danger, marginBottom: spacing.md },
     loading: { marginTop: spacing.xxl },
     summaryGrid: { flexDirection: 'row', gap: spacing.md, marginTop: 0, marginBottom: spacing.xl },
     summaryCard: { flex: 1, minHeight: 96 },

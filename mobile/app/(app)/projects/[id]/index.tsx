@@ -199,7 +199,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   error: {
     fontFamily: fontFamily.regular,
     fontSize: fontSize.meta,
-    color: color.warning,
+    color: color.danger,
     marginBottom: spacing.md,
   },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
