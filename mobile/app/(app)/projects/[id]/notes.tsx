@@ -27,6 +27,7 @@ import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
+import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
 
 // Maps iOS's reported keyboard animation curve to an Easing function so our
 // manual composer animation matches the system keyboard's curve, not just
@@ -166,12 +167,24 @@ export default function ProjectNotesScreen() {
   async function handleSend() {
     const body = draft.trim();
     if (!body || !id || !token || posting) return;
+    if (draft.length > MAX_NOTE_BODY_LENGTH) {
+      setPostError(t('notes.tooLong'));
+      return;
+    }
 
     setPostError('');
     setPosting(true);
-    const ok = await postNote(id, body, token);
+    // Keep the untrimmed draft in the input. The server normalizes the value,
+    // but a failed request must never make the user's composed text disappear.
+    const result = await postNote(id, draft, token);
     setPosting(false);
-    if (!ok) {
+    if (!result.ok) {
+      const serverRejectedLength = result.status === 400 &&
+        (draft.length > MAX_NOTE_BODY_LENGTH || /10[,.]?000|10000/.test(result.message));
+      if (serverRejectedLength) {
+        setPostError(t('notes.tooLong'));
+        return;
+      }
       setPostError(t('notes.postFailed'));
       return;
     }
@@ -279,16 +292,17 @@ export default function ProjectNotesScreen() {
               editable={!posting}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
+              scrollEnabled
             />
             <Pressable
               onPress={() => void handleSend()}
-              disabled={!draft.trim() || posting}
+              disabled={!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH || posting}
               accessibilityRole="button"
               accessibilityLabel={t('common.send')}
               style={({ pressed }) => [
                 styles.sendButton,
-                (!draft.trim() || posting) && styles.sendButtonDisabled,
-                pressed && draft.trim().length > 0 && !posting && styles.sendButtonPressed,
+                (!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH || posting) && styles.sendButtonDisabled,
+                pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && !posting && styles.sendButtonPressed,
               ]}
             >
               {posting ? (
@@ -298,6 +312,11 @@ export default function ProjectNotesScreen() {
               )}
             </Pressable>
           </View>
+          {draft.length > 0 ? (
+            <Text style={[styles.characterCount, draft.length > MAX_NOTE_BODY_LENGTH && styles.error]}>
+              {t('notes.characterCount', { count: draft.length })}
+            </Text>
+          ) : null}
         </View>
       </Animated.View>
     </View>
@@ -406,6 +425,13 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  characterCount: {
+    alignSelf: 'flex-end',
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.meta,
+    color: color.textMuted,
+    marginTop: spacing.xs,
   },
   input: {
     flex: 1,

@@ -8,7 +8,7 @@ import { InAppNotificationBanner } from '../components/InAppNotificationBanner';
 import { useAuthStore } from '../store/auth-store';
 import { useDataStore } from '../store/data-store';
 import { registerPushDevice } from './push-device';
-import { realtimeTokenRequest } from './api';
+import { normalizeNotificationPayload, realtimeTokenRequest } from './api';
 import type { Notification as AppNotification } from './types';
 
 if (Platform.OS !== 'web') {
@@ -71,37 +71,11 @@ export function parsePushNotificationData(value: unknown): PushNotificationData 
 }
 
 function parseRealtimeNotification(value: unknown): AppNotification | null {
-  if (!value || typeof value !== 'object') return null;
-  const data = value as Record<string, unknown>;
-  if (
-    !safeId(data.id) ||
-    !notificationTypes.includes(data.type as AppNotification['type']) ||
-    typeof data.title !== 'string' ||
-    typeof data.body !== 'string' ||
-    typeof data.read !== 'boolean' ||
-    typeof data.createdAt !== 'string'
-  ) return null;
-
-  const notification: AppNotification = {
-    id: data.id,
-    type: data.type as AppNotification['type'],
-    title: data.title,
-    body: data.body,
-    read: data.read,
-    createdAt: data.createdAt,
-  };
-  if (data.projectId !== null && data.projectId !== undefined) {
-    if (!safeId(data.projectId)) return null;
-    notification.projectId = data.projectId;
-  }
-  if (data.invoiceId !== null && data.invoiceId !== undefined) {
-    if (!safeId(data.invoiceId)) return null;
-    notification.invoiceId = data.invoiceId;
-  }
-  if (data.requestId !== null && data.requestId !== undefined) {
-    if (!safeId(data.requestId)) return null;
-    notification.requestId = data.requestId;
-  }
+  const notification = normalizeNotificationPayload(value);
+  if (!notification || !safeId(notification.id)) return null;
+  if (notification.projectId && !safeId(notification.projectId)) return null;
+  if (notification.invoiceId && !safeId(notification.invoiceId)) return null;
+  if (notification.requestId && !safeId(notification.requestId)) return null;
   return notification;
 }
 

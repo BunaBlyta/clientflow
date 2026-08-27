@@ -12,7 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fontFamily, spacing, useTheme } from '../lib/theme';
 import type { Notification } from '../lib/types';
 import { useI18n } from '../lib/i18n';
-import { getLocalizedNotificationText } from '../lib/notification-text';
+import { getLocalizedNotificationText, getUserAuthoredNotificationBody } from '../lib/notification-text';
+import { useTranslatedUserContent } from '../lib/content-translation';
+import { useAuthStore } from '../store/auth-store';
 
 interface InAppNotificationBannerProps {
   notification: Notification;
@@ -26,8 +28,17 @@ export function InAppNotificationBanner({
   onDismiss,
 }: InAppNotificationBannerProps) {
   const { color } = useTheme();
-  const { t } = useI18n();
+  const { language, t } = useI18n();
+  const token = useAuthStore((state) => state.token);
   const localized = getLocalizedNotificationText(notification, t);
+  const authoredBody = getUserAuthoredNotificationBody(notification);
+  const translatedBody = useTranslatedUserContent(
+    authoredBody ?? '',
+    language,
+    token,
+    authoredBody !== null,
+  );
+  const displayedBody = authoredBody === null ? localized.body : translatedBody;
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(-140)).current;
   const styles = createStyles(color);
@@ -63,7 +74,7 @@ export function InAppNotificationBanner({
     >
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${localized.title}. ${localized.body}`}
+        accessibilityLabel={`${localized.title}. ${displayedBody}`}
         onPress={onPress}
         style={({ pressed }) => [styles.banner, pressed && styles.pressed]}
       >
@@ -72,7 +83,7 @@ export function InAppNotificationBanner({
         </View>
         <View style={styles.copy}>
           <Text numberOfLines={1} style={styles.title}>{localized.title}</Text>
-          <Text numberOfLines={2} style={styles.body}>{localized.body}</Text>
+          <Text numberOfLines={2} style={styles.body}>{displayedBody}</Text>
         </View>
         <ChevronRight size={17} color={color.textMuted} strokeWidth={1.8} />
         <Pressable

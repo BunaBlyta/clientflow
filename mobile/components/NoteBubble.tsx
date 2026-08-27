@@ -2,6 +2,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { formatRelativeTime } from '../lib/format';
 import { fontFamily, fontSize, radius, spacing, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useTranslatedUserContent } from '../lib/content-translation';
+import { useAuthStore } from '../store/auth-store';
 import type { Note } from '../lib/types';
 
 interface NoteBubbleProps {
@@ -13,7 +15,14 @@ interface NoteBubbleProps {
 export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBubbleProps) {
   const { color } = useTheme();
   const { language, t } = useI18n();
+  const token = useAuthStore((state) => state.token);
   const styles = createStyles(color);
+  const displayedBody = useTranslatedUserContent(
+    note.body,
+    language,
+    token,
+    note.authorRole !== 'SYSTEM',
+  );
   if (note.authorRole === 'SYSTEM') {
     const isStatusChange = note.body.toLowerCase().startsWith('project status changed');
 
@@ -52,7 +61,7 @@ export function NoteBubble({ note, preview = false, showAuthor = true }: NoteBub
           </View>
         )}
         <View style={[styles.bodyWrap, preview && !isClient && styles.previewBodyWrap, isClient && styles.clientBodyWrap]}>
-          <Text style={[styles.body, isClient && styles.clientBody]}>{note.body}</Text>
+          <Text style={[styles.body, isClient && styles.clientBody]}>{displayedBody}</Text>
           <Text style={[styles.time, isClient && styles.clientTime]}>
             {formatNoteTime(note.createdAt, language)}
           </Text>

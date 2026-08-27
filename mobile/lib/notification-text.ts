@@ -2,6 +2,18 @@ import type { Translate } from './i18n';
 import { getProjectStatusLabel } from './status';
 import type { Notification } from './types';
 
+const SYSTEM_NEW_NOTE_BODY = 'A new note was posted to your project.';
+
+/**
+ * New-note notifications carry the note body itself. Other notification
+ * bodies are server-authored templates (even when they contain names or
+ * invoice descriptions) and must stay on the deterministic i18n path.
+ */
+export function getUserAuthoredNotificationBody(notification: Notification): string | null {
+  if (notification.type !== 'NEW_NOTE' || notification.body === SYSTEM_NEW_NOTE_BODY) return null;
+  return notification.body;
+}
+
 const statusByEnglishLabel: Record<string, Parameters<typeof getProjectStatusLabel>[0]> = {
   Pending: 'PENDING',
   Discovery: 'DISCOVERY',
@@ -114,7 +126,7 @@ export function getLocalizedNotificationText(notification: Notification, t: Tran
       const titleMatch = notification.title.match(/^New note from (.+)$/);
       if (titleMatch) title = t('notifications.newNoteTitle', { author: titleMatch[1] });
       else if (notification.title === 'New project note') title = t('notifications.newProjectNoteTitle');
-      if (notification.body === 'A new note was posted to your project.') body = t('notifications.newProjectNoteBody');
+      if (notification.body === SYSTEM_NEW_NOTE_BODY) body = t('notifications.newProjectNoteBody');
       break;
     }
   }

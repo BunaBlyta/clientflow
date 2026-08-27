@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import {
+  archiveNotificationRequest,
   invoiceRequest,
   invoicesRequest,
   createNoteRequest,
   markNotificationReadRequest,
+  NOTIFICATION_PAGE_SIZE,
   notesRequest,
   notificationsRequest,
   projectRequest,
@@ -17,11 +19,23 @@ import {
 } from '../lib/mock-data';
 import type { Invoice, Note, Notification, Project } from '../lib/types';
 
+export type NotePostResult =
+  | { ok: true; note: Note }
+  | { ok: false; status: number; message: string };
+
 interface DataState {
   projects: Project[];
   invoices: Invoice[];
   notes: Note[];
   notifications: Notification[];
+  notificationPage: number;
+  notificationsHasMore: boolean;
+  notificationsNextCursor?: string | null;
+  notificationsLoading: boolean;
+  notificationsLoadingMore: boolean;
+  notificationsUnreadCount: number | null;
+  notificationsUnreadCountFromServer: boolean;
+  notificationsHydrated: boolean;
 
   projectsForClient: (clientId: string) => Project[];
   invoicesForProject: (projectId: string) => Invoice[];
@@ -33,11 +47,13 @@ interface DataState {
   refreshInvoices: (token: string, projectId?: string) => Promise<boolean>;
   refreshInvoice: (invoiceId: string, token: string, reconcilePayment?: boolean) => Promise<boolean>;
   refreshNotes: (token: string, projectId?: string) => Promise<boolean>;
-  refreshNotifications: (token: string) => Promise<boolean>;
+  refreshNotifications: (token: string, options?: { reset?: boolean }) => Promise<boolean>;
+  loadMoreNotifications: (token: string) => Promise<boolean>;
   mergeNotification: (notification: Notification) => boolean;
-  postNote: (projectId: string, body: string, token: string) => Promise<boolean>;
+  postNote: (projectId: string, body: string, token: string) => Promise<NotePostResult>;
   markNotificationRead: (id: string, token: string) => Promise<boolean>;
   markAllNotificationsRead: (token: string) => Promise<boolean>;
+  archiveNotification: (id: string, archived: boolean, token: string) => Promise<boolean>;
   unreadNotificationCount: () => number;
   resetData: () => void;
 }
@@ -48,11 +64,38 @@ const projectsRequestIds = new Map<string, number>();
 const invoicesRequestIds = new Map<string, number>();
 const notesRequestIds = new Map<string, number>();
 let notificationsRequestId = 0;
+const realtimeNotificationIds = new Set<string>();
 
 function nextRequestId(requests: Map<string, number>, key: string) {
   const requestId = (requests.get(key) ?? 0) + 1;
   requests.set(key, requestId);
   return requestId;
+}
+
+function sortNotifications(notifications: Notification[]) {
+  return [...notifications].sort((a, b) => {
+    if (a.createdAt === b.createdAt) return a.id < b.id ? 1 : -1;
+    return a.createdAt < b.createdAt ? 1 : -1;
+  });
+}
+
+function mergeNotificationList(current: Notification[], incoming: Notification[]) {
+  const byId = new Map(current.map((notification) => [notification.id, notification]));
+  for (const notification of incoming) {
+    const existing = byId.get(notification.id);
+    byId.set(notification.id, {
+      ...existing,
+      ...notification,
+      ...(existing && notification.archived === undefined
+        ? { archived: existing.archived }
+        : {}),
+    });
+  }
+  return sortNotifications([...byId.values()]);
+}
+
+function countUnread(notifications: Notification[]) {
+  return notifications.reduce((count, notification) => count + (notification.read ? 0 : 1), 0);
 }
 
 export const useDataStore = create<DataState>((set, get) => ({
@@ -63,6 +106,14 @@ export const useDataStore = create<DataState>((set, get) => ({
   invoices: developmentFixtures ? MOCK_INVOICES : [],
   notes: developmentFixtures ? MOCK_NOTES : [],
   notifications: developmentFixtures ? MOCK_NOTIFICATIONS : [],
+  notificationPage: 1,
+  notificationsHasMore: false,
+  notificationsNextCursor: undefined,
+  notificationsLoading: false,
+  notificationsLoadingMore: false,
+  notificationsUnreadCount: null,
+  notificationsUnreadCountFromServer: false,
+  notificationsHydrated: false,
 
   projectsForClient: (clientId) =>
     get().projects.filter((p) => p.clientId === clientId),
@@ -183,27 +234,116 @@ export const useDataStore = create<DataState>((set, get) => ({
       return false;
     }
   },
-  refreshNotifications: async (token) => {
+  refreshNotifications: async (token, options = {}) => {
     const generation = sessionGeneration;
     const requestId = ++notificationsRequestId;
+    const reset = options.reset === true;
+    set({ notificationsLoading: true, notificationsLoadingMore: false });
     try {
-      const notifications = await notificationsRequest(token);
+      const page = await notificationsRequest(token, {
+        page: 1,
+        limit: NOTIFICATION_PAGE_SIZE,
+        archived: 'all',
+      });
       if (generation === sessionGeneration && requestId === notificationsRequestId) {
-        set({ notifications });
+        set((state) => {
+          // The first successful API response replaces development fixtures.
+          // A focus refresh can explicitly reset to the bounded first page;
+          // realtime items received while it was loading are retained.
+          const preserveLoadedPages = state.notificationsHydrated && !reset;
+          const base = preserveLoadedPages
+            ? state.notifications
+            : state.notifications.filter((notification) => realtimeNotificationIds.has(notification.id));
+          const notifications = mergeNotificationList(base, page.notifications);
+          const unreadCountFromServer = page.unreadCount !== undefined
+            ? true
+            : preserveLoadedPages && state.notificationsUnreadCountFromServer;
+          return {
+            notifications,
+            notificationPage: preserveLoadedPages
+              ? Math.max(state.notificationPage, page.page)
+              : page.page,
+            notificationsHasMore: preserveLoadedPages
+              ? state.notificationsHasMore || page.hasMore
+              : page.hasMore,
+            notificationsNextCursor: preserveLoadedPages
+              ? state.notificationsNextCursor
+              : page.nextCursor,
+            notificationsUnreadCount: page.unreadCount
+              ?? (unreadCountFromServer
+                ? state.notificationsUnreadCount
+                : countUnread(notifications)),
+            notificationsUnreadCountFromServer: unreadCountFromServer,
+            notificationsHydrated: true,
+          };
+        });
       }
       return true;
     } catch {
       // Keep the fixtures visible when the local API is unavailable.
       return false;
+    } finally {
+      if (generation === sessionGeneration && requestId === notificationsRequestId) {
+        set({ notificationsLoading: false });
+      }
+    }
+  },
+  loadMoreNotifications: async (token) => {
+    const state = get();
+    if (state.notificationsLoading || state.notificationsLoadingMore || !state.notificationsHasMore) {
+      return true;
+    }
+
+    const generation = sessionGeneration;
+    const requestId = ++notificationsRequestId;
+    const pageNumber = state.notificationPage + 1;
+    set({ notificationsLoadingMore: true });
+    try {
+      const page = await notificationsRequest(token, {
+        page: pageNumber,
+        limit: NOTIFICATION_PAGE_SIZE,
+        cursor: state.notificationsNextCursor,
+        archived: 'all',
+      });
+      if (generation === sessionGeneration && requestId === notificationsRequestId) {
+        set((current) => {
+          const notifications = mergeNotificationList(current.notifications, page.notifications);
+          const unreadCountFromServer = page.unreadCount !== undefined || current.notificationsUnreadCountFromServer;
+          return {
+            notifications,
+            notificationPage: Math.max(current.notificationPage, page.page),
+            notificationsHasMore: page.hasMore,
+            notificationsNextCursor: page.nextCursor,
+            notificationsUnreadCount: page.unreadCount
+              ?? (unreadCountFromServer
+                ? current.notificationsUnreadCount
+                : countUnread(notifications)),
+            notificationsUnreadCountFromServer: unreadCountFromServer,
+            notificationsHydrated: true,
+          };
+        });
+      }
+      return true;
+    } catch {
+      return false;
+    } finally {
+      if (generation === sessionGeneration && requestId === notificationsRequestId) {
+        set({ notificationsLoadingMore: false });
+      }
     }
   },
   mergeNotification: (notification) => {
+    realtimeNotificationIds.add(notification.id);
     const exists = get().notifications.some((item) => item.id === notification.id);
-    set((state) => ({
-      notifications: exists
-        ? state.notifications.map((item) => item.id === notification.id ? notification : item)
-        : [notification, ...state.notifications],
-    }));
+    set((state) => {
+      const existing = state.notifications.find((item) => item.id === notification.id);
+      const notifications = mergeNotificationList(state.notifications, [notification]);
+      let unreadCount = state.notificationsUnreadCount;
+      if (unreadCount !== null && !existing && !notification.read) unreadCount += 1;
+      else if (unreadCount !== null && existing && existing.read && !notification.read) unreadCount += 1;
+      else if (unreadCount !== null && existing && !existing.read && notification.read) unreadCount = Math.max(0, unreadCount - 1);
+      return { notifications, notificationsUnreadCount: unreadCount };
+    });
     return !exists;
   },
   postNote: async (projectId, body, token) => {
@@ -217,9 +357,15 @@ export const useDataStore = create<DataState>((set, get) => ({
             : [...state.notes, note],
         }));
       }
-      return true;
-    } catch {
-      return false;
+      return { ok: true, note };
+    } catch (error) {
+      return {
+        ok: false,
+        status: typeof error === 'object' && error !== null && 'status' in error && typeof error.status === 'number'
+          ? error.status
+          : 0,
+        message: error instanceof Error ? error.message : '',
+      };
     }
   },
   markNotificationRead: async (id, token) => {
@@ -227,11 +373,20 @@ export const useDataStore = create<DataState>((set, get) => ({
     try {
       const notification = await markNotificationReadRequest(id, token);
       if (generation === sessionGeneration) {
-        set((state) => ({
-          notifications: state.notifications.map((item) =>
-            item.id === notification.id ? notification : item,
-          ),
-        }));
+        set((state) => {
+          const current = state.notifications.find((item) => item.id === notification.id);
+          const notifications = mergeNotificationList(state.notifications, [notification]);
+          const becameRead = current && !current.read && notification.read;
+          const unreadCount = state.notificationsUnreadCount === null
+            ? null
+            : becameRead
+              ? Math.max(0, state.notificationsUnreadCount - 1)
+              : state.notificationsUnreadCount;
+          return {
+            notifications,
+            notificationsUnreadCount: unreadCount ?? countUnread(notifications),
+          };
+        });
       }
       return true;
     } catch {
@@ -245,15 +400,59 @@ export const useDataStore = create<DataState>((set, get) => ({
       .map((notification) => notification.id);
 
     try {
-      const notifications = await Promise.all(
+      const results = await Promise.allSettled(
         unreadIds.map((id) => markNotificationReadRequest(id, token)),
       );
+      const notifications = results
+        .filter((result): result is PromiseFulfilledResult<Notification> => result.status === 'fulfilled')
+        .map((result) => result.value);
       if (generation === sessionGeneration) {
-        set((state) => ({
-          notifications: state.notifications.map((item) =>
-            notifications.find((notification) => notification.id === item.id) ?? item,
-          ),
-        }));
+        set((state) => {
+          const merged = mergeNotificationList(state.notifications, notifications);
+          const newlyRead = notifications.filter((notification) => {
+            const previous = state.notifications.find((item) => item.id === notification.id);
+            return previous && !previous.read && notification.read;
+          }).length;
+          return {
+            notifications: merged,
+            notificationsUnreadCount: state.notificationsUnreadCount === null
+              ? countUnread(merged)
+              : Math.max(0, state.notificationsUnreadCount - newlyRead),
+          };
+        });
+      }
+      return results.every((result) => result.status === 'fulfilled');
+    } catch {
+      return false;
+    }
+  },
+  archiveNotification: async (id, archived, token) => {
+    const generation = sessionGeneration;
+    try {
+      const result = await archiveNotificationRequest(id, archived, token);
+      if (generation === sessionGeneration) {
+        set((state) => {
+          const current = state.notifications.find((item) => item.id === id);
+          if (!current && !result.notification) return state;
+          const serverNotification = result.notification;
+          const next = serverNotification
+            ? {
+                ...(current ?? serverNotification),
+                ...serverNotification,
+                // Archiving is deliberately independent from read state. A
+                // server response from an older endpoint must not make the
+                // local unread badge disappear as a side effect.
+                ...(current ? { read: current.read } : {}),
+                archived: result.archived ?? serverNotification.archived ?? archived,
+              }
+            : { ...current!, archived };
+          return {
+            notifications: mergeNotificationList(
+              state.notifications.filter((item) => item.id !== id),
+              [next],
+            ),
+          };
+        });
       }
       return true;
     } catch {
@@ -261,13 +460,27 @@ export const useDataStore = create<DataState>((set, get) => ({
     }
   },
   unreadNotificationCount: () =>
-    get().notifications.filter((n) => !n.read).length,
+    get().notificationsUnreadCount ?? countUnread(get().notifications),
   resetData: () => {
     sessionGeneration += 1;
     projectsRequestIds.clear();
     invoicesRequestIds.clear();
     notesRequestIds.clear();
     notificationsRequestId += 1;
-    set({ projects: [], invoices: [], notes: [], notifications: [] });
+    realtimeNotificationIds.clear();
+    set({
+      projects: [],
+      invoices: [],
+      notes: [],
+      notifications: [],
+      notificationPage: 1,
+      notificationsHasMore: false,
+      notificationsNextCursor: undefined,
+      notificationsLoading: false,
+      notificationsLoadingMore: false,
+      notificationsUnreadCount: null,
+      notificationsUnreadCountFromServer: false,
+      notificationsHydrated: false,
+    });
   },
 }));

@@ -101,6 +101,10 @@ export interface Notification {
   title: string;
   body: string;
   read: boolean;
+  // Older API responses do not include archive state. Treating this as
+  // optional keeps the Expo demo fixtures and the pre-archive API readable;
+  // normalized live responses always populate it when the server provides it.
+  archived?: boolean;
   createdAt: string;
   projectId?: string;
   invoiceId?: string;

@@ -1,15 +1,18 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-27 09:27 by Claude Code — PM feedback pass (5 notes), all committed and typechecked
+Last updated: 2026-08-27 10:08 by Codex — notifications, long notes, and server translation client
 
 ## Current state
 
-- Working tree clean, `npx tsc --noEmit` passes from `mobile/`.
-- Today's session fixed five PM review notes: the notes-screen composer's keyboard-follow animation, warning-vs-error text colors across five screens, border-radius/row-spacing consistency on the invoice detail and checkout screens, a theme-toggle icon flash, and the Help & Support back button navigating to Home instead of Account. Full detail in `status/log/2026-08-27-0927-claude-pm-notes-fixes.md`.
-- The theme toggle (dark/light crossfade) has a long history of iteration in this project's log (many rounds fighting desync/flash/stutter across earlier sessions — see older log entries for that saga). As of today it's a real screenshot-crossfade (`lib/theme.ts`'s `ThemeProvider`: capture the old-theme screen, swap the live theme underneath while hidden behind the frozen capture, fade the capture away) plus a synced floating-Modal copy of the Account screen's theme switch and its leading icon so neither desyncs from the frozen screenshot. Considered stable; today's fix was a narrow icon-flash bug, not a rearchitecture.
-- Not verified on a physical device/simulator this session (none was available) — flagging for the user to spot-check, especially the notes composer's keyboard animation, which was iterated by feel over several rounds this session without on-device confirmation of the final version.
+- Notifications now request one bounded 20-item page, load the next page near the end of the list, merge realtime/push refreshes by notification ID, and preserve the newest server data without duplicates.
+- Notifications have Active and Archived views. Archive and restore send { "archived": boolean } to the authenticated notification endpoint and preserve the notification's read state locally.
+- The notification client accepts the documented paginated envelope and the older array response while the API rollout settles. The client uses archived=all so unarchive can work from the mobile app.
+- Long notes use the API's 10,000-character limit. The composer scrolls for long drafts, shows a localized character count/error, keeps the complete draft on a failed send, and only clears it after the server accepts the note.
+- Human-authored note bodies and NEW_NOTE notification bodies translate asynchronously through the authenticated /api/translate route. Results are deduplicated and cached in memory; provider errors, missing routes, missing tokens, and internal i18n-looking keys fall back to the original content without blocking the feed. System note text and localized notification templates stay on the existing deterministic i18n path.
+- Verification: npx tsc --noEmit passes from mobile/; git diff --check passes. No package installation or API files were changed. This lane was not verified on a physical device or simulator.
 
-## Known open items / not attempted this session
+## API dependencies / next actions
 
-- On-device verification of everything above.
-- Nothing else flagged as broken as of this update; next session should read `STATUS.md` and check with Buna for new PM notes before assuming this list is complete.
+- The API lane has prepared notification archive persistence, but its Prisma migration is not applied to Neon. After reviewing the migration, Buna must run npx prisma migrate deploy once from the repository root; do not run it concurrently with another migration.
+- A concurrent API-lane `/api/translate` implementation is now visible in the checkout but is still untracked and outside this mobile commit. It must be committed/deployed as an authenticated route using the server-side DEEPL_API_KEY; the mobile client sends { text, targetLanguage, sourceLanguage: 'auto' } and safely keeps the original when the route is unavailable.
+- The current paginated notification envelope does not include a global unread total. Mobile unread state is kept consistent for loaded and realtime notifications, but an exact unread badge when unread records exist beyond the loaded pages requires an API-provided unread count (or equivalent endpoint).

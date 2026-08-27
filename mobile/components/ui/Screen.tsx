@@ -1,5 +1,11 @@
 import type { PropsWithChildren } from 'react';
-import { ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import {
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+  type ScrollViewProps,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, useTheme } from '../../lib/theme';
 import { AtmosphereBackground } from './AtmosphereBackground';
@@ -8,6 +14,8 @@ interface ScreenProps extends PropsWithChildren {
   scroll?: boolean;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: ViewStyle;
+  onScroll?: ScrollViewProps['onScroll'];
+  scrollEventThrottle?: number;
 }
 
 export function Screen({
@@ -15,6 +23,8 @@ export function Screen({
   scroll = true,
   style,
   contentContainerStyle,
+  onScroll,
+  scrollEventThrottle,
 }: ScreenProps) {
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
@@ -38,6 +48,8 @@ export function Screen({
           contentContainerStyle,
         ]}
         keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={scrollEventThrottle}
         showsVerticalScrollIndicator={false}
       >
         {children}
