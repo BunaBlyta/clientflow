@@ -452,7 +452,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
   },
   composerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: spacing.sm,
   },
   input: {
