@@ -100,6 +100,7 @@ export function NotificationRow({
         </View>
         <View style={styles.textCol}>
           <View style={styles.titleRow}>
+            {!notification.read && <View style={styles.unreadDot} />}
             <Text
               style={[styles.title, !notification.read && styles.titleUnread]}
               numberOfLines={2}
@@ -175,6 +176,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   titleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+  },
+  unreadDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: color.accent,
+    marginTop: 7,
+    marginRight: spacing.xs,
   },
   title: {
     flex: 1,
