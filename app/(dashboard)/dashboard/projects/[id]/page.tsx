@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle, Mail, Phone, RefreshCw } from "lucide-react";
 import { fetchJson } from "@/lib/fetch-json";
-import { formatCurrency, formatDate, formatMajorCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { formatCurrency, formatDate, formatMajorCurrency, initials } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { invoiceDisplayLabelKey, invoiceDisplayTone } from "@/lib/status";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
@@ -317,30 +318,60 @@ export default function ProjectDetailPage() {
             <p className="text-[13px] text-muted-foreground">{t("project.noActivity")}</p>
           ) : (
             <div className="flex flex-col gap-4">
-              {sortedNotes.map((note) => (
-                <div key={note.id} className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-                    <span
-                      className={
-                        note.authorRole === "SYSTEM" ? "text-muted-foreground" : "font-medium text-foreground"
-                      }
-                    >
-                      {note.authorName}
-                    </span>
-                    <span>·</span>
-                    <span>{formatRelativeTime(note.createdAt)}</span>
+              {sortedNotes.map((note, index) => {
+                const previous = sortedNotes[index - 1];
+                const startsNewDay =
+                  !previous || formatDate(previous.createdAt) !== formatDate(note.createdAt);
+
+                return (
+                  <div key={note.id} className="flex flex-col gap-4">
+                    {startsNewDay && (
+                      <div className="flex items-center gap-3">
+                        <span className="h-px flex-1 bg-border" />
+                        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {formatDate(note.createdAt)}
+                        </span>
+                        <span className="h-px flex-1 bg-border" />
+                      </div>
+                    )}
+
+                    {note.authorRole === "SYSTEM" ? (
+                      <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+                        <span className="flex size-7 shrink-0 items-center justify-center">
+                          <ArrowRight className="size-3.5" />
+                        </span>
+                        <span className="italic">
+                          {note.body}
+                          <span className="not-italic"> · {formatRelativeTime(note.createdAt)}</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex gap-3">
+                        <span
+                          className={cn(
+                            "mt-px flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-medium",
+                            note.authorRole === "CLIENT"
+                              ? "bg-brand-accent/15 text-brand-accent"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {initials(note.authorName)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2 text-[12px] text-muted-foreground">
+                            <span className="font-medium text-foreground">{note.authorName}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{formatRelativeTime(note.createdAt)}</span>
+                          </div>
+                          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground/90">
+                            {note.body}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p
-                    className={
-                      note.authorRole === "SYSTEM"
-                        ? "text-[13px] text-muted-foreground italic"
-                        : "text-[13px]"
-                    }
-                  >
-                    {note.body}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

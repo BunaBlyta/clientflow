@@ -18,36 +18,41 @@ interface NoteComposerProps {
   className?: string;
 }
 
-// Resting height of the empty field — one line of text plus its vertical
-// padding. The pill's corner radius is always half its height, so at rest
-// the caps have a 22px radius and grow from there as the note gets longer.
+// Resting height of the empty field. The visible 999px corner always curves
+// to half the field's height, so at rest the caps are 22px semicircles.
 const MIN_HEIGHT = 44;
-// Gap held between the curve of each cap and the text that wraps against it.
-const SHAPE_MARGIN = 14;
-// Straight segments used to approximate each semicircular cap in the
-// shape-outside polygon. 16 is smooth at every height this field reaches.
+// Baseline inset of every line of text from the field's edge. The caret and
+// the placeholder both sit here too, so an empty field reads as one point
+// rather than a caret on the far left and placeholder text further in.
+const EDGE_INSET = 14;
+// Straight segments used to approximate each semicircular cap.
 const ARC_STEPS = 16;
 
-// Builds the shape-outside polygon for one rounded end of the pill: the
-// crescent between the field's straight vertical edge and the inner curve
-// of the cap. Text flowing around this crescent follows the pill's real
-// contour — full width through the middle, tucked in near the caps — and
-// re-wraps whenever `height` changes, so the text block reads as a smaller
-// pill nested inside the field.
-function capPolygon(side: "left" | "right", height: number): string {
-  const r = height / 2;
-  const points: string[] = [];
-  const outerX = side === "left" ? 0 : r;
+// Builds the shape-outside polygon for one rounded end: the slice of the
+// cap's inner curve that reaches past EDGE_INSET, in the float's own
+// coordinates. The text block is centred in the field, so a float of height
+// `contentHeight` sits `offset` below the top of a `pillHeight`-tall pill —
+// map local y through that offset before measuring the curve, and measure it
+// against the pill's real radius so the text edge tracks the visible curve.
+function capPolygon(
+  side: "left" | "right",
+  contentHeight: number,
+  pillHeight: number,
+): string {
+  const radius = pillHeight / 2;
+  const offset = (pillHeight - contentHeight) / 2;
+  const outerX = side === "left" ? 0 : radius;
+  const points: string[] = [`${outerX}px 0px`];
 
-  points.push(`${outerX}px 0px`);
   for (let step = 0; step <= ARC_STEPS; step += 1) {
-    const y = (height * step) / ARC_STEPS;
-    const inset = Math.sqrt(Math.max(r * r - (y - r) * (y - r), 0));
-    const x = side === "left" ? r - inset : inset;
-    points.push(`${x.toFixed(2)}px ${y.toFixed(2)}px`);
+    const localY = (contentHeight * step) / ARC_STEPS;
+    const centreGap = localY + offset - radius;
+    const capInset = radius - Math.sqrt(Math.max(radius * radius - centreGap * centreGap, 0));
+    const x = side === "left" ? capInset : radius - capInset;
+    points.push(`${x.toFixed(2)}px ${localY.toFixed(2)}px`);
   }
-  points.push(`${outerX}px ${height.toFixed(2)}px`);
 
+  points.push(`${outerX}px ${contentHeight.toFixed(2)}px`);
   return `polygon(${points.join(", ")})`;
 }
 
@@ -59,10 +64,11 @@ export function NoteComposer({
   className,
 }: NoteComposerProps) {
   const editableRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(MIN_HEIGHT);
+  const [contentHeight, setContentHeight] = useState(0);
+  const pillHeight = Math.max(MIN_HEIGHT, contentHeight);
 
-  // Keep the pill (and its caps) sized to the text. The caps' geometry
-  // depends on the height and the height depends on how the text wraps
+  // Keep the caps sized to the text block as the note grows. The caps'
+  // geometry follows the height and the height follows how the text wraps
   // around the caps, so this settles over a frame or two — the 0.5px guard
   // stops it oscillating once it has.
   useEffect(() => {
@@ -70,8 +76,8 @@ export function NoteComposer({
     if (!element || typeof ResizeObserver === "undefined") return;
 
     const observer = new ResizeObserver(() => {
-      const next = Math.max(MIN_HEIGHT, Math.ceil(element.scrollHeight));
-      setHeight((current) => (Math.abs(current - next) > 0.5 ? next : current));
+      const next = Math.ceil(element.scrollHeight);
+      setContentHeight((current) => (Math.abs(current - next) > 0.5 ? next : current));
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -84,7 +90,6 @@ export function NoteComposer({
     const element = editableRef.current;
     if (element && value === "" && element.textContent !== "") {
       element.textContent = "";
-      setHeight(MIN_HEIGHT);
     }
   }, [value]);
 
@@ -109,16 +114,16 @@ export function NoteComposer({
 
   const capStyle = (side: "left" | "right"): CSSProperties => ({
     float: side,
-    width: height / 2,
-    height,
-    shapeOutside: capPolygon(side, height),
-    shapeMargin: SHAPE_MARGIN,
+    width: pillHeight / 2,
+    height: contentHeight,
+    shapeOutside: capPolygon(side, contentHeight, pillHeight),
+    shapeMargin: 0,
   });
 
   return (
     <div
       className={cn(
-        "note-composer relative block w-full overflow-hidden rounded-full border border-input bg-transparent px-1 text-xs transition-colors",
+        "note-composer relative flex w-full items-center overflow-hidden rounded-full border border-input bg-transparent px-1 text-xs transition-colors",
         "focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50",
         disabled && "cursor-not-allowed opacity-50",
         className,
@@ -140,25 +145,28 @@ export function NoteComposer({
         selection?.addRange(range);
       }}
     >
-      <div aria-hidden="true" style={capStyle("left")} />
-      <div aria-hidden="true" style={capStyle("right")} />
-      <div
-        ref={editableRef}
-        role="textbox"
-        aria-multiline="true"
-        aria-label={placeholder}
-        aria-disabled={disabled || undefined}
-        data-placeholder={placeholder}
-        contentEditable={disabled ? false : "plaintext-only"}
-        suppressContentEditableWarning
-        spellCheck
-        onInput={emitChange}
-        onPaste={handlePaste}
-        className={cn(
-          "note-composer-field min-h-[inherit] whitespace-pre-wrap break-words py-3 leading-[1.5] outline-none",
-          "empty:before:pointer-events-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground",
-        )}
-      />
+      <div className="w-full" style={{ display: "flow-root" }}>
+        <div aria-hidden="true" style={capStyle("left")} />
+        <div aria-hidden="true" style={capStyle("right")} />
+        <div
+          ref={editableRef}
+          role="textbox"
+          aria-multiline="true"
+          aria-label={placeholder}
+          aria-disabled={disabled || undefined}
+          data-placeholder={placeholder}
+          contentEditable={disabled ? false : "plaintext-only"}
+          suppressContentEditableWarning
+          spellCheck
+          onInput={emitChange}
+          onPaste={handlePaste}
+          style={{ paddingInline: EDGE_INSET }}
+          className={cn(
+            "note-composer-field whitespace-pre-wrap break-words leading-[1.5] outline-none",
+            "empty:before:pointer-events-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground",
+          )}
+        />
+      </div>
     </div>
   );
 }
