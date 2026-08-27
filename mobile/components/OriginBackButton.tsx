@@ -1,6 +1,6 @@
 import { useNavigation, useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { spacing, useTheme } from '../lib/theme';
 
@@ -33,6 +33,24 @@ export function useOriginBack(source?: string) {
     }
     router.back();
   }, [navigation, origin, router, target]);
+
+  // When a screen was opened from a tab (source is that tab), the swipe-back
+  // gesture, the hardware back button, and any native header back must do the
+  // same thing the in-app back button does — return to that tab. Left to its
+  // default, the gesture just pops this screen's own stack, which can land the
+  // user on a list they never opened (e.g. swiping back from a project they
+  // reached from Home dumps them on the Projects list). Intercept the pop and
+  // route it through goBack(). Only one AppBackButton is mounted per screen at
+  // a time, so this listener is never registered twice.
+  useEffect(() => {
+    if (!origin) return;
+    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      if (event.data.action.type !== 'GO_BACK') return;
+      event.preventDefault();
+      goBack();
+    });
+    return unsubscribe;
+  }, [navigation, origin, goBack]);
 
   return { goBack };
 }
