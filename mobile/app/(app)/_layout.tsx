@@ -170,6 +170,5 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     borderWidth: 1,
-    borderColor: '#0B0F16',
   },
 });
