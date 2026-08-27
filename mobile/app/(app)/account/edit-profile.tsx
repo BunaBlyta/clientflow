@@ -1,4 +1,3 @@
-import { useLocalSearchParams } from 'expo-router';
 import { SquarePen } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -12,11 +11,12 @@ import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useAuthStore } from '../../../store/auth-store';
 
 export default function EditProfileScreen() {
-  const { source } = useLocalSearchParams<{ source?: string }>();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  const { goBack } = useOriginBack(source);
+  // This screen lives in the Account stack, so a plain pop returns to the
+  // Account list — no origin routing needed.
+  const { goBack } = useOriginBack();
 
   const client = useAuthStore((s) => s.client);
   const token = useAuthStore((s) => s.token);
@@ -70,7 +70,7 @@ export default function EditProfileScreen() {
 
   return (
     <Screen>
-      <AppBackButton source={source} accessibilityLabel={t('common.back')} />
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.titleRow}>
         <View style={styles.iconWrap}>
           <SquarePen size={16} color={color.textSecondary} strokeWidth={1.8} />

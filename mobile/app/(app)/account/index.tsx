@@ -1,12 +1,12 @@
 import { CalendarDays, CircleHelp, ChevronRight, Globe2, KeyRound, LogOut, Mail, Moon, Phone, SquarePen, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { formatMonthYear } from '../../lib/format';
+import { formatMonthYear } from '../../../lib/format';
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Screen } from '../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
-import { useAuthStore } from '../../store/auth-store';
+import { Screen } from '../../../components/ui/Screen';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
+import { useAuthStore } from '../../../store/auth-store';
 import type { LucideIcon } from 'lucide-react-native';
 
 export default function AccountScreen() {
@@ -127,13 +127,13 @@ export default function AccountScreen() {
         <SettingsRow
           icon={SquarePen}
           label={t('account.editProfile')}
-          onPress={() => router.push({ pathname: '/settings/edit-profile', params: { source: 'account' } })}
+          onPress={() => router.push('/account/edit-profile')}
           styles={styles}
         />
         <SettingsRow
           icon={KeyRound}
           label={t('account.changePassword')}
-          onPress={() => router.push({ pathname: '/settings/change-password', params: { source: 'account' } })}
+          onPress={() => router.push('/account/change-password')}
           styles={styles}
           last
         />
@@ -186,7 +186,7 @@ export default function AccountScreen() {
         <SettingsRow
           icon={CircleHelp}
           label={t('ui.helpSupport')}
-          onPress={() => router.push({ pathname: '/settings/help-support', params: { source: 'account' } })}
+          onPress={() => router.push('/account/help-support')}
           styles={styles}
           last
         />

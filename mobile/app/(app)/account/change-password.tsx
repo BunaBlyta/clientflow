@@ -1,4 +1,3 @@
-import { useLocalSearchParams } from 'expo-router';
 import { KeyRound } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -14,11 +13,11 @@ import { useAuthStore } from '../../../store/auth-store';
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function ChangePasswordScreen() {
-  const { source } = useLocalSearchParams<{ source?: string }>();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
-  const { goBack } = useOriginBack(source);
+  // In the Account stack — a plain pop returns to the Account list.
+  const { goBack } = useOriginBack();
   const token = useAuthStore((s) => s.token);
 
   const [current, setCurrent] = useState('');
@@ -65,7 +64,7 @@ export default function ChangePasswordScreen() {
 
   return (
     <Screen>
-      <AppBackButton source={source} accessibilityLabel={t('common.back')} />
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.titleRow}>
         <View style={styles.iconWrap}>
           <KeyRound size={16} color={color.textSecondary} strokeWidth={1.8} />

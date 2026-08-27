@@ -1,4 +1,3 @@
-import { useLocalSearchParams } from 'expo-router';
 import { CircleHelp } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppBackButton } from '../../../components/OriginBackButton';
@@ -7,14 +6,13 @@ import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useI18n } from '../../../lib/i18n';
 
 export default function HelpSupportScreen() {
-  const { source } = useLocalSearchParams<{ source?: string }>();
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
 
   return (
     <Screen>
-      <AppBackButton source={source} accessibilityLabel={t('common.back')} />
+      <AppBackButton accessibilityLabel={t('common.back')} />
       <View style={styles.titleRow}>
         <View style={styles.iconWrap}>
           <CircleHelp size={16} color={color.textSecondary} strokeWidth={1.8} />
