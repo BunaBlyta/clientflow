@@ -29,7 +29,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
 
-const NOTE_INPUT_MIN_HEIGHT = 50;
+const NOTE_INPUT_MIN_HEIGHT = 52;
 const NOTE_INPUT_MAX_HEIGHT = 168;
 
 // Maps iOS's reported keyboard animation curve to an Easing function so our
@@ -458,8 +458,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     fontSize: fontSize.body,
     color: color.textPrimary,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    // Horizontal and vertical padding both stay >= borderRadius so a long,
+    // scrolled message never slides under the rounded corners — at the very
+    // top and bottom edges the corner curve eats into anything inside the
+    // radius, which was clipping the first and last visible lines of text.
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     textAlignVertical: 'top',
     backgroundColor: color.surfaceMuted,
     maxHeight: NOTE_INPUT_MAX_HEIGHT,
