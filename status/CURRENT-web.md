@@ -1,15 +1,14 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-25 16:59 by Codex — lighten dark Most Popular package accents
+Last updated: 2026-08-27 17:25 by Claude Code — analytics KPI grid pattern in dark mode
 
 ## Current task
 
-- Updated only the landing page’s dark-mode Most Popular package treatment: its circular stamp, price number, radial gradient, and matching shadow now use the light cyan `#CAF4FF` instead of the deeper blue accent.
+- Restored the graph-paper square grid pattern on the Analytics KPI strip in dark mode. The dark rule used the `background` shorthand, which cleared the `background-image` gradients the light rule draws; it now sets `background-color` and re-declares the same crossing linear-gradients, with the dark grid-line colour bumped to `rgb(255 255 255 / 0.05)` so it is visible against the card.
 
 ## Verification
 
-- `git diff --check`: passed.
-- `npm run verify`: blocked at the existing web-lane ESLint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`; the changed `app/globals.css` is not implicated. Existing `mobile-app-section.tsx` image warnings remain.
+- `npm run verify`: blocked at pre-existing web-lane ESLint errors in `components/dashboard/settings-content.tsx` and `components/dashboard/stat-tile.tsx` (present on `main` before this change; confirmed via `git stash`). The CSS-only `app/globals.css` change is not implicated.
 
 ## Current state
 
