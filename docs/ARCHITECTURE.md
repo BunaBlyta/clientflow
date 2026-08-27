@@ -334,9 +334,34 @@ existing projects and invoices retain their historical values and are not
 retroactively repriced.
 
 `GET /api/auth/me` requires a valid session and returns the signed-in user's
-`id`, `name`, `email`, and `role`. Client sessions also receive `clientId`, the
-linked `Client` record ID; staff responses omit that field. An invalid or
-missing session returns 401 with an empty response body.
+`id`, `name`, `email`, and `role`. Client sessions also receive `clientId` (the
+linked `Client` record ID) plus `companyName` and `phone` (either may be
+`null`); staff responses omit all three. An invalid or missing session returns
+401 with an empty response body.
+
+`PATCH /api/auth/me` requires a valid session and edits the signed-in user's
+own profile. Body accepts any subset of `{ "name"?: string, "companyName"?:
+string | null, "phone"?: string | null }`. `name` must be non-empty when
+present and updates both `User.name` and (for clients) `Client.name` so the
+two never drift. `companyName` and `phone` apply only to client accounts —
+sending either from a staff session returns 400 — and an empty string clears
+the field to `null`. A body with none of the three recognised keys returns
+400. The response is the same shape as `GET /api/auth/me`. Email is
+deliberately not editable here (it is the login identity).
+
+`POST /api/auth/change-password` requires a valid session and accepts
+`{ "currentPassword": string, "newPassword": string }`. It verifies the
+current password against the stored hash, requires the new password to be at
+least 8 characters and different from the current one, then rehashes and
+stores it. A wrong current password, a too-short new password, or an
+unchanged password all return 400; success returns `{ "success": true }`.
+This is the only self-serve password path for a signed-in user — it is
+separate from the code-driven `POST /api/auth/set-password` used for invite
+activation and reset.
+
+The mobile `POST /api/auth/login` and `POST /api/auth/set-password` responses
+also include `companyName` and `phone` inside `user` for client accounts, so
+the app's Account screen is populated without a follow-up `GET /api/auth/me`.
 
 `POST /api/clients/:id/resend-invitation` is staff-only. It looks up the known
 client by Client ID, issues a fresh verification code through the same

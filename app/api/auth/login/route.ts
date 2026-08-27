@@ -44,6 +44,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   }
 
+  const client = user.role === 'CLIENT'
+    ? await prisma.client.findUnique({
+        where: { userId: user.id },
+        select: { companyName: true, phone: true },
+      })
+    : null;
+
   const token = createSessionToken(user.id);
   const response = NextResponse.json({
     user: {
@@ -52,6 +59,7 @@ export async function POST(request: NextRequest) {
       name: user.name,
       role: user.role,
       createdAt: user.createdAt.toISOString(),
+      ...(client ? { companyName: client.companyName, phone: client.phone } : {}),
     },
     token,
   });

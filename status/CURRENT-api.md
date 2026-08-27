@@ -2,6 +2,20 @@
 
 Last updated: 2026-08-27 10:46 by Codex — MyMemory content translation
 
+> **2026-08-27 ~16:50 — added by Claude Code (out-of-lane, with Buna's go-ahead).**
+> New self-serve account endpoints, no schema change (uses existing
+> `Client.companyName` / `Client.phone`):
+> - `GET /api/auth/me` — client responses now also return `companyName` + `phone`.
+> - `PATCH /api/auth/me` (new) — edits own `{ name?, companyName?, phone? }`;
+>   `name` syncs `User.name` + `Client.name`; company/phone client-only; empty
+>   string clears to null; returns the `GET /me` shape. Email not editable.
+> - `POST /api/auth/change-password` (new) — `{ currentPassword, newPassword }`,
+>   verifies current hash, new ≥ 8 chars and must differ, rehashes → `{ success: true }`.
+> - `login` + `set-password` responses now include `companyName`/`phone` in `user`.
+> Tests: `app/api/auth/me/route.test.ts` (extended), `app/api/auth/change-password/route.test.ts` (new).
+> `npx vitest run` → 204 pass, 1 pre-existing unrelated failure. Full detail:
+> `status/log/2026-08-27-1650-claude-account-edit-profile-password.md`.
+
 ## What changed
 
 - Notifications now have an independent `archivedAt` timestamp. A user's archive and restore actions are ownership-checked and never change `readAt`; an unread notification can therefore be archived and later restored as unread.

@@ -74,7 +74,14 @@ export async function POST(request: NextRequest) {
       verificationCodeHash: null,
       verificationCodeExpiresAt: null,
     },
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      client: { select: { companyName: true, phone: true } },
+    },
   });
 
   const token = createSessionToken(updatedUser.id);
@@ -85,6 +92,9 @@ export async function POST(request: NextRequest) {
       name: updatedUser.name,
       role: updatedUser.role,
       createdAt: updatedUser.createdAt.toISOString(),
+      ...(updatedUser.client
+        ? { companyName: updatedUser.client.companyName, phone: updatedUser.client.phone }
+        : {}),
     },
     token,
   });
