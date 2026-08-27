@@ -12,7 +12,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fontFamily, spacing, useTheme } from '../lib/theme';
 import type { Notification } from '../lib/types';
 import { useI18n } from '../lib/i18n';
-import { getLocalizedNotificationText, getUserAuthoredNotificationBody } from '../lib/notification-text';
+import {
+  getLocalizedNotificationText,
+  getUserAuthoredInvoiceDescription,
+  getUserAuthoredNotificationBody,
+} from '../lib/notification-text';
 import { useTranslatedUserContent } from '../lib/content-translation';
 import { useAuthStore } from '../store/auth-store';
 
@@ -32,13 +36,19 @@ export function InAppNotificationBanner({
   const token = useAuthStore((state) => state.token);
   const localized = getLocalizedNotificationText(notification, t);
   const authoredBody = getUserAuthoredNotificationBody(notification);
-  const translatedBody = useTranslatedUserContent(
-    authoredBody ?? '',
+  const invoiceDescription = getUserAuthoredInvoiceDescription(notification);
+  const contentToTranslate = authoredBody ?? invoiceDescription;
+  const translatedContent = useTranslatedUserContent(
+    contentToTranslate ?? '',
     language,
     token,
-    authoredBody !== null,
+    contentToTranslate !== null,
   );
-  const displayedBody = authoredBody === null ? localized.body : translatedBody;
+  const displayedBody = authoredBody !== null
+    ? translatedContent
+    : invoiceDescription !== null
+      ? getLocalizedNotificationText(notification, t, { invoiceDescription: translatedContent }).body
+      : localized.body;
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(-140)).current;
   const styles = createStyles(color);

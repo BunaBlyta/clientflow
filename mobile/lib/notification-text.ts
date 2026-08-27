@@ -3,6 +3,27 @@ import { getProjectStatusLabel } from './status';
 import type { Notification } from './types';
 
 const SYSTEM_NEW_NOTE_BODY = 'A new note was posted to your project.';
+const INVOICE_DESCRIPTION_BODY = /^(.+) is ready to review and pay\.$/;
+
+function isDynamicInvoiceNotification(notification: Notification) {
+  if (notification.type === 'INVOICE_ISSUED') {
+    return notification.title === 'Invoice issued' || notification.title === 'Invoice sent';
+  }
+  if (notification.type === 'EXTRA_CHARGE_CREATED') {
+    return notification.title === 'Additional invoice sent' || notification.title === 'Invoice sent';
+  }
+  return false;
+}
+
+/**
+ * Invoice descriptions are user-entered content inside a fixed notification
+ * sentence. Return only that content so callers can translate it without
+ * sending the deterministic wrapper to the translation provider.
+ */
+export function getUserAuthoredInvoiceDescription(notification: Notification): string | null {
+  if (!isDynamicInvoiceNotification(notification)) return null;
+  return notification.body.match(INVOICE_DESCRIPTION_BODY)?.[1] ?? null;
+}
 
 /**
  * New-note notifications carry the note body itself. Other notification
@@ -30,7 +51,11 @@ function localizedStatus(value: string, t: Translate): string {
   return status ? getProjectStatusLabel(status, t) : value;
 }
 
-export function getLocalizedNotificationText(notification: Notification, t: Translate) {
+export function getLocalizedNotificationText(
+  notification: Notification,
+  t: Translate,
+  options: { invoiceDescription?: string } = {},
+) {
   let title = notification.title;
   let body = notification.body;
 
@@ -65,9 +90,11 @@ export function getLocalizedNotificationText(notification: Notification, t: Tran
         if (notification.body === 'An additional invoice is ready to review.') body = t('notifications.additionalInvoiceBody');
       } else if (notification.type === 'EXTRA_CHARGE_CREATED' && notification.title === 'Additional invoice sent') {
         title = t('notifications.additionalInvoiceSentTitle');
-        const descriptionMatch = notification.body.match(/^(.+) is ready to review and pay\.$/);
-        body = descriptionMatch
-          ? t('notifications.invoiceDescriptionBody', { description: descriptionMatch[1] })
+        const description = getUserAuthoredInvoiceDescription(notification);
+        body = description
+          ? t('notifications.invoiceDescriptionBody', {
+              description: options.invoiceDescription ?? description,
+            })
           : t('notifications.invoiceReadyToPayBody');
       } else if (notification.title === 'Invoice ready') {
         title = t('notifications.invoiceReadyTitle');
@@ -77,9 +104,11 @@ export function getLocalizedNotificationText(notification: Notification, t: Tran
         // "Invoice issued" title even though the notification is the same
         // sent-for-payment event as the existing "Invoice sent" variant.
         title = t('notifications.invoiceSentTitle');
-        const descriptionMatch = notification.body.match(/^(.+) is ready to review and pay\.$/);
-        body = descriptionMatch
-          ? t('notifications.invoiceDescriptionBody', { description: descriptionMatch[1] })
+        const description = getUserAuthoredInvoiceDescription(notification);
+        body = description
+          ? t('notifications.invoiceDescriptionBody', {
+              description: options.invoiceDescription ?? description,
+            })
           : t('notifications.invoiceReadyToPayBody');
       }
       break;

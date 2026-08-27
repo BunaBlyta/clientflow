@@ -15,7 +15,11 @@ import { useAuthStore } from '../store/auth-store';
 import { useTranslatedUserContent } from '../lib/content-translation';
 import { formatRelativeTime } from '../lib/format';
 import { useI18n } from '../lib/i18n';
-import { getLocalizedNotificationText, getUserAuthoredNotificationBody } from '../lib/notification-text';
+import {
+  getLocalizedNotificationText,
+  getUserAuthoredInvoiceDescription,
+  getUserAuthoredNotificationBody,
+} from '../lib/notification-text';
 import { fontFamily, fontSize, radius, spacing, useTheme, type ThemeColors } from '../lib/theme';
 import type { Notification } from '../lib/types';
 
@@ -73,13 +77,19 @@ export function NotificationRow({
   const iconBackground = isDanger ? color.dangerBg : isSuccess ? color.successBg : color.accentSoft;
   const localized = getLocalizedNotificationText(notification, t);
   const authoredBody = getUserAuthoredNotificationBody(notification);
-  const translatedBody = useTranslatedUserContent(
-    authoredBody ?? '',
+  const invoiceDescription = getUserAuthoredInvoiceDescription(notification);
+  const contentToTranslate = authoredBody ?? invoiceDescription;
+  const translatedContent = useTranslatedUserContent(
+    contentToTranslate ?? '',
     language,
     token,
-    authoredBody !== null,
+    contentToTranslate !== null,
   );
-  const displayedBody = authoredBody === null ? localized.body : translatedBody;
+  const displayedBody = authoredBody !== null
+    ? translatedContent
+    : invoiceDescription !== null
+      ? getLocalizedNotificationText(notification, t, { invoiceDescription: translatedContent }).body
+      : localized.body;
   const ArchiveIcon = notification.archived ? ArchiveRestore : Archive;
 
   return (
