@@ -112,14 +112,9 @@ export default function AppTabsLayout() {
         name="notifications"
         options={{
           title: t('tabs.notifications'),
-          tabBarIcon: ({ focused }) => (
-            <View>
-              <TabIcon icon={Bell} focused={focused} color={color} />
-              {unread > 0 && (
-                <View style={[styles.unreadDot, { backgroundColor: color.danger, borderColor: color.navBackground }]} />
-              )}
-            </View>
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon icon={Bell} focused={focused} color={color} />,
+          tabBarBadge: unread > 0 ? unread : undefined,
+          tabBarBadgeStyle: { backgroundColor: color.danger },
         }}
       />
       <Tabs.Screen
@@ -161,14 +156,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: 1,
-    right: 3,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    borderWidth: 1,
   },
 });
