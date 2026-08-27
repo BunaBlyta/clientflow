@@ -1,5 +1,6 @@
-import { CircleHelp, ChevronRight, Globe2, LogOut, Moon, Sun } from 'lucide-react-native';
+import { CalendarDays, CircleHelp, ChevronRight, Globe2, LogOut, Mail, Moon, Phone, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { formatMonthYear } from '../../lib/format';
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Screen } from '../../components/ui/Screen';
@@ -87,15 +88,38 @@ export default function AccountScreen() {
       <Text style={styles.heading}>{t('account.title')}</Text>
 
       <View style={styles.profileHeader}>
-        <View style={styles.avatarWrap}>
-          <Text style={styles.avatarInitial}>
-            {client?.name?.charAt(0).toUpperCase() ?? '?'}
-          </Text>
+        <View style={styles.profileTop}>
+          <View style={styles.avatarWrap}>
+            <Text style={styles.avatarInitial}>
+              {client?.name?.charAt(0).toUpperCase() ?? '?'}
+            </Text>
+          </View>
+          <View style={styles.profileCopy}>
+            <Text style={styles.name} numberOfLines={1}>{client?.name}</Text>
+            {client?.companyName ? (
+              <Text style={styles.company} numberOfLines={1}>{client.companyName}</Text>
+            ) : null}
+          </View>
         </View>
-        <View style={styles.profileCopy}>
-          <Text style={styles.name}>{client?.name}</Text>
-          <Text style={styles.email}>{client?.email}</Text>
-          <Text style={styles.company}>{client?.companyName}</Text>
+        <View style={styles.profileDetails}>
+          <View style={styles.detailRow}>
+            <Mail size={14} color={color.textMuted} strokeWidth={1.8} />
+            <Text style={styles.detailText} numberOfLines={1}>{client?.email}</Text>
+          </View>
+          {client?.phone ? (
+            <View style={styles.detailRow}>
+              <Phone size={14} color={color.textMuted} strokeWidth={1.8} />
+              <Text style={styles.detailText} numberOfLines={1}>{client.phone}</Text>
+            </View>
+          ) : null}
+          {client?.memberSince ? (
+            <View style={styles.detailRow}>
+              <CalendarDays size={14} color={color.textMuted} strokeWidth={1.8} />
+              <Text style={styles.detailText} numberOfLines={1}>
+                {t('account.memberSince', { date: formatMonthYear(client.memberSince, language) })}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -389,20 +413,22 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       marginBottom: spacing.xl,
     },
     profileHeader: {
-      flexDirection: 'column',
-      alignItems: 'center',
       marginBottom: spacing.md,
-      paddingVertical: spacing.xxl,
-      paddingHorizontal: spacing.xl,
+      padding: spacing.lg,
       backgroundColor: color.surface,
       borderWidth: 1,
       borderColor: color.border,
       borderRadius: radius.lg,
     },
+    profileTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.lg,
+    },
     avatarWrap: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
       backgroundColor: color.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
@@ -414,8 +440,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     profileCopy: {
       flex: 1,
-      alignItems: 'center',
-      marginTop: spacing.md,
+      minWidth: 0,
     },
     name: {
       ...textShadow,
@@ -423,17 +448,30 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.heading,
       color: color.textPrimary,
     },
-    email: {
-      fontFamily: fontFamily.regular,
-      fontSize: 13,
-      color: color.textSecondary,
-      marginTop: spacing.xs,
-    },
     company: {
       fontFamily: fontFamily.regular,
       fontSize: fontSize.caption,
       color: color.textMuted,
-      marginTop: spacing.sm,
+      marginTop: spacing.xs,
+    },
+    profileDetails: {
+      marginTop: spacing.lg,
+      paddingTop: spacing.lg,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: color.border,
+      gap: spacing.sm,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    detailText: {
+      flex: 1,
+      minWidth: 0,
+      fontFamily: fontFamily.regular,
+      fontSize: 13,
+      color: color.textSecondary,
     },
     preferenceGroup: {
       marginBottom: spacing.md,

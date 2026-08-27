@@ -289,6 +289,10 @@ export interface AuthUser {
   name: string;
   role: string;
   createdAt: string;
+  // Present once the API includes the client profile in the auth payload;
+  // absent until then, so both are optional.
+  companyName?: string | null;
+  phone?: string | null;
 }
 
 export function loginRequest(email: string, password: string) {
@@ -488,7 +492,9 @@ export function clientFromUser(user: LoginResponse['user']): Client {
   return {
     id: user.id,
     name: user.name,
-    companyName: user.name,
+    companyName: user.companyName ?? undefined,
+    phone: user.phone ?? undefined,
     email: user.email,
+    memberSince: user.createdAt,
   };
 }

@@ -39,8 +39,15 @@ export interface Package {
 export interface Client {
   id: string;
   name: string;
-  companyName: string;
+  // companyName and phone come from the client's profile record. The auth
+  // payload does not always carry them (the API's profile endpoint fills
+  // them in), so treat both as optional and hide the row when absent.
+  companyName?: string;
+  phone?: string;
   email: string;
+  // ISO timestamp of when the account was created — shown as "Client since …"
+  // on the Account screen.
+  memberSince?: string;
 }
 
 export interface Project {

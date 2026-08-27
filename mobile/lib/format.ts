@@ -54,6 +54,11 @@ export function formatDate(iso: string, language: Language = 'en'): string {
   return formatWithFullMonth(d, language, { day: 'numeric', year: 'numeric' });
 }
 
+export function formatMonthYear(iso: string, language: Language = 'en'): string {
+  const d = new Date(iso);
+  return formatWithFullMonth(d, language, { year: 'numeric' });
+}
+
 export function formatDateTime(iso: string, language: Language = 'en'): string {
   const d = new Date(iso);
   return `${formatWithFullMonth(d, language, { day: 'numeric' })} · ${d.toLocaleTimeString(localeFor(language), {
