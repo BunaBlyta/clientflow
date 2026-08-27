@@ -5,7 +5,7 @@ import { NoteBubble } from '../../../../components/NoteBubble';
 import { ProjectStageTracker } from '../../../../components/ProjectStageTracker';
 import { InvoiceRow } from '../../../../components/InvoiceRow';
 import { EmptyState } from '../../../../components/ui/EmptyState';
-import { Skeleton } from '../../../../components/ui/Skeleton';
+import { InvoiceRowSkeleton, NoteBubbleSkeleton, Skeleton } from '../../../../components/ui/Skeleton';
 import { Screen } from '../../../../components/ui/Screen';
 import { formatDate } from '../../../../lib/format';
 import { getPackageById } from '../../../../lib/mock-data';
@@ -39,7 +39,12 @@ export default function ProjectDetailScreen() {
   const invoices = useDataStore(useShallow((s) => s.invoicesForProject(id)));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
   const [unreachable, setUnreachable] = useState(false);
-  const [loading, setLoading] = useState(!project);
+  // Starts true even when the project itself is cached, so the notes and
+  // invoices sections show skeletons (not their "nothing here yet" empty
+  // states) while their own fetches are still in flight. Sections only fall
+  // back to the skeleton when they have no data yet, so a cached list still
+  // renders immediately with no flash.
+  const [loading, setLoading] = useState(true);
   const projectRoute = tab === 'notifications'
     ? `/notifications/projects/${id}` as const
     : `/projects/${id}` as const;
@@ -145,17 +150,23 @@ export default function ProjectDetailScreen() {
             <ChevronRight size={14} color={color.accent} />
           </Pressable>
         </View>
-        {recentNotes.length === 0 ? (
+        {loading && recentNotes.length === 0 ? (
+          <NoteBubbleSkeleton />
+        ) : recentNotes.length === 0 ? (
           <EmptyState icon={MessageSquare} title={t('projects.noNotes')} />
         ) : (
             recentNotes.map((note) => (
               <NoteBubble key={note.id} note={note} preview />
             ))
         )}
-        <View style={styles.sectionFooterDivider} />
-        <Text style={styles.noteSummary}>
-          {t('notes.noteCount', { count: visibleNotes.length })}
-        </Text>
+        {!(loading && recentNotes.length === 0) && (
+          <>
+            <View style={styles.sectionFooterDivider} />
+            <Text style={styles.noteSummary}>
+              {t('notes.noteCount', { count: visibleNotes.length })}
+            </Text>
+          </>
+        )}
       </Card>
 
       <Card tone="surface" style={[styles.section, styles.invoicesSection]}>
@@ -175,7 +186,12 @@ export default function ProjectDetailScreen() {
             <ChevronRight size={14} color={color.accent} />
           </Pressable>
         </View>
-        {visibleInvoices.length === 0 ? (
+        {loading && visibleInvoices.length === 0 ? (
+          <View style={styles.invoicePreviewList}>
+            <InvoiceRowSkeleton />
+            <InvoiceRowSkeleton />
+          </View>
+        ) : visibleInvoices.length === 0 ? (
           <EmptyState icon={FileText} title={t('projects.noInvoices')} />
         ) : (
           <>
