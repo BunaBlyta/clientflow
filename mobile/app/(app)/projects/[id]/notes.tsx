@@ -29,8 +29,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
 
-const NOTE_INPUT_MIN_HEIGHT = 46;
-const NOTE_INPUT_MAX_HEIGHT = 112;
+const NOTE_INPUT_MIN_HEIGHT = 50;
+const NOTE_INPUT_MAX_HEIGHT = 168;
 
 // Maps iOS's reported keyboard animation curve to an Easing function so our
 // manual composer animation matches the system keyboard's curve, not just
@@ -457,12 +457,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
   },
   input: {
     flex: 1,
-    minHeight: 46,
+    minHeight: NOTE_INPUT_MIN_HEIGHT,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textPrimary,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
@@ -471,7 +469,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     maxHeight: NOTE_INPUT_MAX_HEIGHT,
   },
   inputFocused: {
-    borderColor: color.accent,
+    backgroundColor: color.surface,
   },
   sendButton: {
     width: 46,
