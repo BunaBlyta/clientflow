@@ -10,13 +10,15 @@ import { useI18n } from '../../../lib/i18n';
 import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useAuthStore } from '../../../store/auth-store';
 
-const PHONE_CHARS = /^\+?[0-9\s().-]+$/;
+// Requires a leading "+" so the number always carries its country code —
+// a bare national number is ambiguous without knowing which country it's
+// local to.
+const PHONE_CHARS = /^\+[0-9\s().-]+$/;
 
 function isValidPhone(value: string) {
   if (!PHONE_CHARS.test(value)) return false;
-  // 10-15 matches a full national number up through E.164's max length
-  // (country code + subscriber number) — short local-only numbers without
-  // an area/country code are rejected as too ambiguous to be useful.
+  // 10-15 digits (country code + subscriber number) matches E.164's max
+  // length and rules out anything too short to be a real number.
   const digitCount = value.replace(/\D/g, '').length;
   return digitCount >= 10 && digitCount <= 15;
 }
@@ -115,6 +117,7 @@ export default function EditProfileScreen() {
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
+          placeholder="+1 555 123 4567"
           maxLength={40}
         />
         <TextField
