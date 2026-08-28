@@ -197,7 +197,11 @@ export default function NotificationsScreen() {
       {notificationsLoading && visibleNotifications.length === 0 ? (
         <View style={styles.group}>
           <Skeleton width={64} height={11} style={{ marginBottom: spacing.sm }} />
-          {Array.from({ length: 6 }).map((_, index) => (
+          {/* 10, not 6 — this list has no card/summary content above it
+              eating into the screen the way other skeletons' surrounding
+              layout does, so a shorter count left visible empty space
+              below the last skeleton row instead of filling the screen. */}
+          {Array.from({ length: 10 }).map((_, index) => (
             <NotificationRowSkeleton key={index} />
           ))}
         </View>
