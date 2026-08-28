@@ -1,12 +1,13 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-28 by Codex — logout confirmation actions now share the same 56px height and large radius as the original logout control
+Last updated: 2026-08-28 by Codex — notification date groups now use the same compact 12px spacing already used between Home cards, invoice KPI cards, and invoice rows
 
 Note: this lane is being worked by both Codex and Claude Code concurrently this week (Buna's call). Each session overwrites this file per the working agreement, so treat it as a merge point, not a single author's log — read `status/log/` for the full narrative if something here looks incomplete.
 
 ## Current state
 
 - Working tree clean, `npx tsc --noEmit` passes from `mobile/`.
+- Cross-screen spacing audit: Home already uses `spacing.md` (12px) both between Next payment/Messages and between that pair and the main project card. Invoices already uses the same 12px between Outstanding/Paid to date and between invoice rows. Notifications was the outlier at 32px between date groups; it now uses 12px, removing the oversized break before headings such as Earlier. Mobile typecheck passes. Root `npm run verify` still stops on the two existing web-lane lint errors in `date-picker.tsx` and `settings-content.tsx`.
 - Logout confirmation: Cancel and Log out use one shared button base, so their height and corner radius cannot drift apart. Both are 56px tall with `radius.lg`, matching the original full-width logout control they replace; their distinct neutral/error colors and behavior are unchanged. Mobile typecheck passes. Root `npm run verify` still stops on the two existing web-lane lint errors in `date-picker.tsx` and `settings-content.tsx`.
 - Semantic feedback colors: existing success badges/messages/icons now use standard green, warnings use orange, and errors use red in both themes. Only the shared `success*`, `warning*`, and `danger*` theme values changed; no badge, message, indicator, or decorative/brand color was added or repurposed. Mobile typecheck passes. Root `npm run verify` still stops on the two existing web-lane lint errors in `date-picker.tsx` and `settings-content.tsx`.
 - Checkout handoff: pressing “Continue to secure checkout” immediately enters the loading screen. Missing sessions, API/Stripe errors, polling timeouts, and `FAILED` or other non-paid invoice states all remain on that neutral screen; only a confirmed `PAID` invoice advances to success. The user can still leave through the existing back button. Mobile typecheck passes. Root `npm run verify` reaches lint and stops on the two existing web-lane errors in `date-picker.tsx` and `settings-content.tsx`.

@@ -324,7 +324,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     marginBottom: spacing.md,
   },
   group: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
   },
   groupLabel: {
     fontFamily: fontFamily.semibold,
