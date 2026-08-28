@@ -74,7 +74,10 @@ export default function AppTabsLayout() {
         tabBarStyle: {
           height: TAB_BAR_HEIGHT,
           marginHorizontal: TAB_BAR_SIDE_MARGIN,
-          marginBottom: insets.bottom > 0 ? insets.bottom : spacing.sm,
+          // Full insets.bottom (the home-indicator clearance) left too much
+          // air below the pill — it only needs enough of that clearance to
+          // keep clear of the gesture area, not all of it.
+          marginBottom: insets.bottom > 0 ? Math.max(insets.bottom - spacing.sm, spacing.xs) : spacing.xs,
           borderRadius: radius.pill,
           backgroundColor: color.navBackground,
           borderTopWidth: 0,
@@ -87,9 +90,18 @@ export default function AppTabsLayout() {
           elevation: 12,
         },
         tabBarItemStyle: {
+          height: TAB_BAR_HEIGHT,
           paddingTop: 0,
           paddingBottom: 0,
-          height: TAB_BAR_HEIGHT,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        // Zeroes out bottom-tabs' built-in icon margin, which is sized to
+        // leave room for a label underneath — with tabBarShowLabel false
+        // that margin has nothing to balance against and pushes the icon
+        // off-center inside the pill.
+        tabBarIconStyle: {
+          margin: 0,
         },
       }}
     >
