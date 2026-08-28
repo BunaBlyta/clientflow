@@ -17,6 +17,9 @@ import { Card } from '../../components/ui/Card';
 import { useProjectTabNavigation } from '../../lib/project-tab-navigation';
 import { NotificationRow } from '../../components/NotificationRow';
 
+const NOTIFICATIONS_PREVIEW_COUNT = 3;
+const NOTIFICATIONS_PREVIEW_MAX = 8;
+
 export default function HomeScreen() {
   const router = useRouter();
   const projectNavigation = useProjectTabNavigation();
@@ -27,10 +30,11 @@ export default function HomeScreen() {
   const token = useAuthStore((s) => s.token);
   const projects = useDataStore(useShallow((s) => s.projects));
   const invoices = useDataStore(useShallow((s) => s.invoices.filter((invoice) => invoice.status !== 'DRAFT')));
-  const notifications = useDataStore(useShallow((s) => [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 3)));
+  const allNotifications = useDataStore(useShallow((s) => [...s.notifications].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))));
   const refreshProjects = useDataStore((s) => s.refreshProjects);
   const refreshInvoices = useDataStore((s) => s.refreshInvoices);
   const [loading, setLoading] = useState(true);
+  const [notificationsExpanded, setNotificationsExpanded] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -48,7 +52,14 @@ export default function HomeScreen() {
 
   const project = projects[0];
   const payableInvoice = invoices.find((invoice) => invoice.status === 'SENT' || invoice.status === 'FAILED');
-  const unreadMessages = notifications.filter((notification) => !notification.read).length;
+  const unreadMessages = allNotifications.filter((notification) => !notification.read).length;
+  const visibleNotifications = notificationsExpanded
+    ? allNotifications.slice(0, NOTIFICATIONS_PREVIEW_MAX)
+    : allNotifications.slice(0, NOTIFICATIONS_PREVIEW_COUNT);
+  const hiddenNotificationsCount = Math.min(
+    allNotifications.length,
+    NOTIFICATIONS_PREVIEW_MAX,
+  ) - NOTIFICATIONS_PREVIEW_COUNT;
   const phaseCount = project ? Math.max(0, PROJECT_STAGES.indexOf(project.status)) : 0;
   const phaseStatus = project?.status === 'PENDING' ? 'DISCOVERY' : project?.status;
 
@@ -123,7 +134,7 @@ export default function HomeScreen() {
             >
               <Text style={styles.statLabel}>{t('ui.messages')}</Text>
               <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{t('ui.newMessages', { count: unreadMessages })}</Text>
-              <Text style={styles.statHint} numberOfLines={1}>{notifications[0] ? getLocalizedNotificationText(notifications[0], t).title : t('notifications.caughtUp')}</Text>
+              <Text style={styles.statHint} numberOfLines={1}>{allNotifications[0] ? getLocalizedNotificationText(allNotifications[0], t).title : t('notifications.caughtUp')}</Text>
             </Pressable>
           </View>
 
@@ -134,7 +145,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <View>
-            {notifications.map((notification) => (
+            {visibleNotifications.map((notification) => (
               <NotificationRow
                 key={notification.id}
                 notification={notification}
@@ -142,6 +153,21 @@ export default function HomeScreen() {
               />
             ))}
           </View>
+          {hiddenNotificationsCount > 0 && !notificationsExpanded ? (
+            <Pressable
+              onPress={() => setNotificationsExpanded(true)}
+              style={({ pressed }) => [styles.showMoreButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.showMoreText}>{t('ui.showMore', { count: hiddenNotificationsCount })}</Text>
+            </Pressable>
+          ) : notificationsExpanded && allNotifications.length > NOTIFICATIONS_PREVIEW_COUNT ? (
+            <Pressable
+              onPress={() => setNotificationsExpanded(false)}
+              style={({ pressed }) => [styles.showMoreButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.showMoreText}>{t('ui.showLess')}</Text>
+            </Pressable>
+          ) : null}
         </>
       )}
     </Screen>
@@ -221,6 +247,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     activityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xl, marginBottom: spacing.sm },
     activityTitle: { fontFamily: fontFamily.serif, fontSize: fontSize.sectionTitle, color: color.textPrimary },
     activityLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.body, color: color.accent },
+    showMoreButton: { alignItems: 'center', paddingVertical: spacing.sm, marginTop: spacing.xs },
+    showMoreText: { fontFamily: fontFamily.medium, fontSize: fontSize.caption, color: color.accent },
     pressed: { opacity: 0.62 },
   });
 }

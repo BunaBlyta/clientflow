@@ -3,13 +3,14 @@ import { Bell } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { NotificationRow } from '../../../components/NotificationRow';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { NotificationRowSkeleton, Skeleton } from '../../../components/ui/Skeleton';
@@ -56,9 +57,21 @@ export default function NotificationsScreen() {
     showArchived ? notification.archived === true : notification.archived !== true,
   );
   const groups = groupByRecency(visibleNotifications, t);
+  const scrollRef = useRef<ScrollView>(null);
+  // Set right before navigating away to open a notification, so the
+  // useFocusEffect below can tell "came back via swipe-back from a
+  // notification" apart from any other way of landing on this tab (tapping
+  // the tab bar, cold start) and only skip the scroll-to-top reset for that
+  // one case.
+  const returningFromNotificationRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
+      if (returningFromNotificationRef.current) {
+        returningFromNotificationRef.current = false;
+      } else {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+      }
       if (!token) return undefined;
       let active = true;
       void refreshNotifications(token, { reset: true }).then((ok) => {
@@ -91,17 +104,20 @@ export default function NotificationsScreen() {
       if (!ok) setActionError(t('notifications.markFailed'));
     }
     if (notification.type === 'NEW_NOTE' && notification.projectId) {
+      returningFromNotificationRef.current = true;
       navigation.navigate('projects/[id]/notes', {
         id: notification.projectId,
         tab: 'notifications',
       });
     } else if (notification.projectId && notification.invoiceId) {
+      returningFromNotificationRef.current = true;
       navigation.navigate('projects/[id]/invoices/[invoiceId]/index', {
         id: notification.projectId,
         invoiceId: notification.invoiceId,
         tab: 'notifications',
       });
     } else if (notification.projectId) {
+      returningFromNotificationRef.current = true;
       navigation.navigate('projects/[id]/index', {
         id: notification.projectId,
         tab: 'notifications',
@@ -133,7 +149,7 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <Screen onScroll={handleScroll} scrollEventThrottle={160}>
+    <Screen ref={scrollRef} onScroll={handleScroll} scrollEventThrottle={160}>
       <View style={styles.headerRow}>
         <Text style={styles.heading}>{t('notifications.title')}</Text>
       </View>

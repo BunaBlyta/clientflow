@@ -429,28 +429,41 @@ export const useDataStore = create<DataState>((set, get) => ({
   archiveNotification: async (id, archived, token) => {
     const generation = sessionGeneration;
     try {
-      const result = await archiveNotificationRequest(id, archived, token);
+      const current = get().notifications.find((item) => item.id === id);
+      // Archiving implies read: a notification the client is putting away is
+      // one they're done with, so it should also stop counting as unread.
+      // Unarchiving leaves read state untouched either way.
+      const alsoMarkRead = archived && current ? !current.read : false;
+      const [result] = await Promise.all([
+        archiveNotificationRequest(id, archived, token),
+        alsoMarkRead ? markNotificationReadRequest(id, token) : Promise.resolve(null),
+      ]);
       if (generation === sessionGeneration) {
         set((state) => {
-          const current = state.notifications.find((item) => item.id === id);
-          if (!current && !result.notification) return state;
+          const existing = state.notifications.find((item) => item.id === id);
+          if (!existing && !result.notification) return state;
           const serverNotification = result.notification;
           const next = serverNotification
             ? {
-                ...(current ?? serverNotification),
+                ...(existing ?? serverNotification),
                 ...serverNotification,
-                // Archiving is deliberately independent from read state. A
-                // server response from an older endpoint must not make the
-                // local unread badge disappear as a side effect.
-                ...(current ? { read: current.read } : {}),
+                read: archived ? true : (existing ? existing.read : serverNotification.read),
                 archived: result.archived ?? serverNotification.archived ?? archived,
               }
-            : { ...current!, archived };
+            : { ...existing!, archived, read: archived ? true : existing!.read };
+          const notifications = mergeNotificationList(
+            state.notifications.filter((item) => item.id !== id),
+            [next],
+          );
+          const becameRead = Boolean(archived && existing && !existing.read);
+          const unreadCount = state.notificationsUnreadCount === null
+            ? null
+            : becameRead
+              ? Math.max(0, state.notificationsUnreadCount - 1)
+              : state.notificationsUnreadCount;
           return {
-            notifications: mergeNotificationList(
-              state.notifications.filter((item) => item.id !== id),
-              [next],
-            ),
+            notifications,
+            notificationsUnreadCount: unreadCount ?? countUnread(notifications),
           };
         });
       }

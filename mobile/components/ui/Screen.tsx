@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import { forwardRef, type PropsWithChildren } from 'react';
 import {
   ScrollView,
   StyleProp,
@@ -18,14 +18,10 @@ interface ScreenProps extends PropsWithChildren {
   scrollEventThrottle?: number;
 }
 
-export function Screen({
-  children,
-  scroll = true,
-  style,
-  contentContainerStyle,
-  onScroll,
-  scrollEventThrottle,
-}: ScreenProps) {
+export const Screen = forwardRef<ScrollView, ScreenProps>(function Screen(
+  { children, scroll = true, style, contentContainerStyle, onScroll, scrollEventThrottle },
+  ref,
+) {
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = createStyles(color);
@@ -41,6 +37,7 @@ export function Screen({
     <SafeAreaView edges={['top']} style={[styles.container, style]}>
       <AtmosphereBackground />
       <ScrollView
+        ref={ref}
         style={styles.scroll}
         contentContainerStyle={[
           styles.content,
@@ -56,7 +53,7 @@ export function Screen({
       </ScrollView>
     </SafeAreaView>
   );
-}
+});
 
 function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
