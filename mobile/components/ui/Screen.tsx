@@ -1,5 +1,6 @@
 import { forwardRef, type PropsWithChildren } from 'react';
 import {
+  Platform,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -45,6 +46,7 @@ export const Screen = forwardRef<ScrollView, ScreenProps>(function Screen(
           contentContainerStyle,
         ]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         onScroll={onScroll}
         scrollEventThrottle={scrollEventThrottle}
         showsVerticalScrollIndicator={false}
