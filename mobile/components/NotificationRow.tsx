@@ -118,7 +118,7 @@ export function NotificationRow({
           accessibilityLabel={notification.archived ? t('notifications.unarchive') : t('notifications.archive')}
           accessibilityState={{ disabled: isArchiving }}
           disabled={isArchiving}
-          hitSlop={8}
+          hitSlop={10}
           onPress={(event) => {
             event.stopPropagation();
             onArchive();
@@ -128,7 +128,7 @@ export function NotificationRow({
           {isArchiving ? (
             <ActivityIndicator size="small" color={color.textMuted} />
           ) : (
-            <ArchiveIcon size={17} color={color.textMuted} strokeWidth={1.7} />
+            <ArchiveIcon size={14} color={color.textMuted} strokeWidth={1.7} />
           )}
         </Pressable>
       ) : null}
@@ -211,8 +211,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.xs,
-    height: 32,
-    width: 28,
+    marginTop: -spacing.xs,
+    height: 24,
+    width: 24,
   },
   archivePressed: {
     opacity: 0.55,
