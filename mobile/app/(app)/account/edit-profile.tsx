@@ -10,6 +10,13 @@ import { useI18n } from '../../../lib/i18n';
 import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useAuthStore } from '../../../store/auth-store';
 
+const PHONE_FORMAT = /^\+?[0-9\s().-]{7,20}$/;
+
+function isValidPhone(value: string) {
+  const digitCount = value.replace(/\D/g, '').length;
+  return PHONE_FORMAT.test(value) && digitCount >= 7 && digitCount <= 15;
+}
+
 export default function EditProfileScreen() {
   const { color } = useTheme();
   const { t } = useI18n();
@@ -35,12 +42,17 @@ export default function EditProfileScreen() {
       setError(t('account.nameRequired'));
       return;
     }
+    const trimmedPhone = phone.trim();
+    if (trimmedPhone && !isValidPhone(trimmedPhone)) {
+      setError(t('account.invalidPhone'));
+      return;
+    }
 
     // Only send the fields that actually changed.
     const changes: ProfileUpdateInput = {};
     if (trimmedName !== (client?.name ?? '')) changes.name = trimmedName;
     if (companyName.trim() !== (client?.companyName ?? '')) changes.companyName = companyName.trim();
-    if (phone.trim() !== (client?.phone ?? '')) changes.phone = phone.trim();
+    if (trimmedPhone !== (client?.phone ?? '')) changes.phone = trimmedPhone;
 
     if (Object.keys(changes).length === 0) {
       goBack();
