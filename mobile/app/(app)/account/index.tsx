@@ -500,7 +500,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textSecondary,
     },
     preferenceGroup: {
-      marginBottom: spacing.md,
+      marginBottom: spacing.sm,
     },
     preferenceLabel: {
       fontFamily: fontFamily.medium,
@@ -508,7 +508,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
-      marginBottom: spacing.lg,
+      marginBottom: spacing.sm,
     },
     preferenceOptions: {
       gap: 0,
