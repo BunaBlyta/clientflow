@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStripeSignature } from '@/app/api/_lib/stripe';
-import { prisma } from '@/app/api/_lib/prisma';
-import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
+import { markInvoiceFailed, markInvoicePaid } from '@/app/api/_lib/invoice-payments';
 
 export const runtime = 'nodejs';
 
@@ -9,8 +8,9 @@ type StripeEvent = {
   type?: string;
   data?: { object?: {
     id?: string;
+    object?: 'checkout.session' | 'payment_intent';
     metadata?: { invoiceId?: string; projectId?: string };
-    payment_intent?: string | null;
+    payment_intent?: string | { id?: string } | null;
     payment_status?: 'paid' | 'unpaid' | 'no_payment_required' | null;
   } };
 };
@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
   const invoiceId = stripeObject?.metadata?.invoiceId;
   if (!invoiceId) return NextResponse.json({ received: true });
 
+  const isPaymentIntent =
+    stripeObject?.object === 'payment_intent' || event.type?.startsWith('payment_intent.');
+  const checkoutSessionId = isPaymentIntent ? undefined : stripeObject?.id;
+  const paymentIntentId = isPaymentIntent
+    ? stripeObject?.id
+    : typeof stripeObject?.payment_intent === 'string'
+      ? stripeObject.payment_intent
+      : stripeObject?.payment_intent?.id;
+
   const checkoutCompletedWithFunds =
     event.type === 'checkout.session.completed' && stripeObject?.payment_status === 'paid';
   if (
@@ -45,150 +54,14 @@ export async function POST(request: NextRequest) {
     event.type === 'checkout.session.async_payment_succeeded' ||
     event.type === 'payment_intent.succeeded'
   ) {
-    await markInvoicePaid(invoiceId, stripeObject);
+    await markInvoicePaid(invoiceId, { checkoutSessionId, paymentIntentId });
   } else if (
     event.type === 'payment_intent.payment_failed' ||
     event.type === 'checkout.session.async_payment_failed' ||
     event.type === 'checkout.session.expired'
   ) {
-    await markInvoiceFailed(invoiceId, stripeObject);
+    await markInvoiceFailed(invoiceId, { paymentIntentId });
   }
 
   return NextResponse.json({ received: true });
-}
-
-async function markInvoicePaid(
-  invoiceId: string,
-  stripeObject: NonNullable<StripeEvent['data']>['object'],
-) {
-  const result = await prisma.$transaction(async (transaction) => {
-    const result = await transaction.invoice.updateMany({
-      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
-      data: {
-        status: 'PAID',
-        paidAt: new Date(),
-        stripeCheckoutSessionId: stripeObject?.id,
-        stripePaymentIntentId: stripeObject?.payment_intent,
-      },
-    });
-    if (result.count !== 1) return;
-
-    const invoice = await transaction.invoice.findUnique({
-      where: { id: invoiceId },
-      select: { id: true, projectId: true, clientId: true, type: true, status: true },
-    });
-    if (!invoice) return;
-
-    const project = await transaction.project.findUnique({
-      where: { id: invoice.projectId },
-      select: { status: true },
-    });
-    if ((invoice.type === 'DEPOSIT' || invoice.type === 'CUSTOM') && project?.status === 'PENDING') {
-      await transaction.project.update({
-        where: { id: invoice.projectId },
-        data: { status: 'DISCOVERY' },
-      });
-      await transaction.note.create({
-        data: {
-          projectId: invoice.projectId,
-          content: `${invoice.type === 'DEPOSIT' ? 'Deposit' : 'Custom invoice'} payment confirmed. Project moved to Discovery.`,
-          isSystem: true,
-        },
-      });
-    }
-
-    const notificationIds: string[] = [];
-    const clientNotificationId = await createNotification(transaction, {
-      userId: await clientUserId(transaction, invoice.clientId),
-      type: 'PAYMENT_SUCCEEDED',
-      invoiceId: invoice.id,
-      projectId: invoice.projectId,
-      title: 'Payment received',
-      message: 'Your invoice payment was confirmed.',
-    });
-    if (clientNotificationId) notificationIds.push(clientNotificationId);
-
-    const staffUsers = await activeStaffUsers(transaction);
-    for (const staffUser of staffUsers) {
-      const staffNotificationId = await createNotification(transaction, {
-        userId: staffUser.id,
-        type: 'PAYMENT_SUCCEEDED',
-        invoiceId: invoice.id,
-        projectId: invoice.projectId,
-        title: 'Payment received',
-        message: 'A client invoice payment was confirmed.',
-      });
-      if (staffNotificationId) notificationIds.push(staffNotificationId);
-    }
-    return { notificationIds, projectId: invoice.projectId };
-  });
-  if (!result) return;
-  scheduleNotificationEffects(result.notificationIds);
-  scheduleEntityChanged({ entity: 'invoice', id: invoiceId, projectId: result.projectId, invoiceId, reason: 'payment' });
-  scheduleEntityChanged({ entity: 'project', id: result.projectId, projectId: result.projectId, invoiceId, reason: 'payment' });
-}
-
-async function markInvoiceFailed(
-  invoiceId: string,
-  stripeObject: NonNullable<StripeEvent['data']>['object'],
-) {
-  const result = await prisma.$transaction(async (transaction) => {
-    const result = await transaction.invoice.updateMany({
-      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
-      data: { status: 'FAILED', stripePaymentIntentId: stripeObject?.payment_intent },
-    });
-    if (result.count !== 1) return;
-
-    const invoice = await transaction.invoice.findUnique({
-      where: { id: invoiceId },
-      select: { id: true, clientId: true, projectId: true },
-    });
-    if (!invoice) return;
-
-    const notificationIds: string[] = [];
-    const clientNotificationId = await createNotification(transaction, {
-      userId: await clientUserId(transaction, invoice.clientId),
-      type: 'PAYMENT_FAILED',
-      invoiceId,
-      projectId: invoice.projectId,
-      title: 'Payment failed',
-      message: 'Your invoice payment could not be completed.',
-    });
-    if (clientNotificationId) notificationIds.push(clientNotificationId);
-    const staffUsers = await activeStaffUsers(transaction);
-    for (const staffUser of staffUsers) {
-      const staffNotificationId = await createNotification(transaction, {
-        userId: staffUser.id,
-        type: 'PAYMENT_FAILED',
-        invoiceId,
-        projectId: invoice.projectId,
-        title: 'Payment failed',
-        message: 'A client invoice payment could not be completed.',
-      });
-      if (staffNotificationId) notificationIds.push(staffNotificationId);
-    }
-    return { notificationIds, projectId: invoice.projectId };
-  });
-  if (!result) return;
-  scheduleNotificationEffects(result.notificationIds);
-  scheduleEntityChanged({ entity: 'invoice', id: invoiceId, projectId: result.projectId, invoiceId, reason: 'payment' });
-}
-
-async function activeStaffUsers(transaction: {
-  user?: { findMany(args: unknown): Promise<Array<{ id: string }>> };
-}) {
-  if (!transaction.user) return [];
-  return transaction.user.findMany({
-    where: { role: 'STAFF', isActive: true },
-    select: { id: true },
-  });
-}
-
-async function clientUserId(
-  transaction: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
-  clientId: string,
-) {
-  const client = await transaction.client.findUnique({ where: { id: clientId }, select: { userId: true } });
-  if (!client) throw new Error('Invoice client not found');
-  return client.userId;
 }

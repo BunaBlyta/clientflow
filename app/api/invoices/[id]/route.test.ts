@@ -11,7 +11,11 @@ const mocks = vi.hoisted(() => ({
   transactionUpdate: vi.fn(),
   transactionUpdateMany: vi.fn(),
   transactionFindUnique: vi.fn(),
+  projectFindUnique: vi.fn(),
+  projectUpdate: vi.fn(),
+  noteCreate: vi.fn(),
   clientFindUnique: vi.fn(),
+  userFindMany: vi.fn(),
   notificationCreate: vi.fn(),
   fetch: vi.fn(),
 }));
@@ -43,7 +47,11 @@ const invoice = {
   status: 'SENT' as const,
   dueDate: null,
   paidAt: null,
+  issuedAt: new Date('2026-08-11T10:00:00.000Z'),
   createdAt: new Date('2026-08-11T10:00:00.000Z'),
+  stripeCheckoutAttemptId: null,
+  stripeCheckoutSessionId: null,
+  stripePaymentIntentId: null,
 };
 
 function request(status: string) {
@@ -195,6 +203,134 @@ describe('PATCH /api/invoices/:id', () => {
     expect(response.status).toBe(409);
     expect(mocks.notificationCreate).not.toHaveBeenCalled();
   });
+
+  it('expires an open Stripe Session before voiding a pending invoice', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test';
+    vi.stubGlobal('fetch', mocks.fetch);
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    const pendingInvoice = {
+      ...invoice,
+      status: 'PAYMENT_PENDING' as const,
+      stripeCheckoutAttemptId: 'web_attempt-1',
+      stripeCheckoutSessionId: 'cs-open',
+    };
+    mocks.findUnique.mockResolvedValue(pendingInvoice);
+    mocks.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({
+          id: 'cs-open',
+          status: 'open',
+          payment_status: 'unpaid',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({ id: 'cs-open', status: 'expired' }),
+      });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({ ...pendingInvoice, status: 'VOIDED' });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
+      client: { findUnique: mocks.clientFindUnique },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('VOIDED'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: 'VOIDED' });
+    expect(mocks.fetch.mock.calls[1]?.[0]).toBe(
+      'https://api.stripe.com/v1/checkout/sessions/cs-open/expire',
+    );
+    expect(mocks.transactionUpdateMany).toHaveBeenCalledAfter(mocks.fetch);
+  });
+
+  it('does not void when an active Stripe Session cannot be expired', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test';
+    vi.stubGlobal('fetch', mocks.fetch);
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue({
+      ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'web_attempt-1',
+      stripeCheckoutSessionId: 'cs-open',
+    });
+    mocks.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({ status: 'open', payment_status: 'unpaid' }),
+      })
+      .mockResolvedValueOnce({ ok: false, status: 409, json: vi.fn() })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({ status: 'open', payment_status: 'unpaid' }),
+      });
+
+    const response = await PATCH(request('VOIDED'), params());
+
+    expect(response.status).toBe(502);
+    expect(mocks.transactionUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('settles a paid Stripe Session and blocks voiding it', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test';
+    vi.stubGlobal('fetch', mocks.fetch);
+    mocks.authenticate.mockResolvedValue({ role: 'STAFF' });
+    mocks.findUnique.mockResolvedValue({
+      ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'web_attempt-1',
+      stripeCheckoutSessionId: 'cs-paid',
+    });
+    mocks.fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({
+        id: 'cs-paid',
+        status: 'complete',
+        payment_status: 'paid',
+        payment_intent: 'pi-paid',
+      }),
+    });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({
+      id: 'inv-1',
+      projectId: 'proj-1',
+      clientId: 'client-1',
+      type: 'DEPOSIT',
+      status: 'PAID',
+    });
+    mocks.projectFindUnique.mockResolvedValue({ status: 'DISCOVERY' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-client-1' });
+    mocks.userFindMany.mockResolvedValue([{ id: 'staff-1' }]);
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
+      project: { findUnique: mocks.projectFindUnique, update: mocks.projectUpdate },
+      note: { create: mocks.noteCreate },
+      client: { findUnique: mocks.clientFindUnique },
+      user: { findMany: mocks.userFindMany },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await PATCH(request('VOIDED'), params());
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'A paid invoice cannot be voided' });
+    expect(mocks.transactionUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'inv-1', status: 'PAYMENT_PENDING' },
+      data: expect.objectContaining({
+        status: 'PAID',
+        stripeCheckoutSessionId: 'cs-paid',
+        stripePaymentIntentId: 'pi-paid',
+      }),
+    });
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('GET /api/invoices/:id', () => {
@@ -223,6 +359,7 @@ describe('GET /api/invoices/:id', () => {
     });
     mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
     mocks.transactionFindUnique.mockResolvedValue({ ...pendingInvoice, status: 'FAILED' });
+    mocks.findUnique.mockResolvedValue({ ...pendingInvoice, status: 'FAILED' });
     mocks.clientFindUnique.mockResolvedValue({ userId: 'user-client-1' });
     mocks.transaction.mockImplementation(async (callback) => callback({
       invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
@@ -238,6 +375,67 @@ describe('GET /api/invoices/:id', () => {
     expect(mocks.transactionUpdateMany).toHaveBeenCalledWith({
       where: { id: 'inv-1', status: 'PAYMENT_PENDING' },
       data: { status: 'FAILED', stripePaymentIntentId: 'pi-abandoned' },
+    });
+    expect(mocks.notificationCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('repairs a missed success webhook from Stripe server-to-server state', async () => {
+    const pendingInvoice = {
+      ...invoice,
+      status: 'PAYMENT_PENDING' as const,
+      stripeCheckoutAttemptId: 'mobile_attempt-1',
+      stripeCheckoutSessionId: 'cs-paid',
+      stripePaymentIntentId: null,
+    };
+    const paidInvoice = {
+      ...pendingInvoice,
+      status: 'PAID' as const,
+      paidAt: new Date('2026-08-28T08:00:00.000Z'),
+      stripePaymentIntentId: 'pi-paid',
+    };
+    mocks.findFirst.mockResolvedValue(pendingInvoice);
+    mocks.fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({
+        id: 'cs-paid',
+        status: 'complete',
+        payment_status: 'paid',
+        payment_intent: { id: 'pi-paid', status: 'succeeded' },
+      }),
+    });
+    mocks.transactionUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transactionFindUnique.mockResolvedValue({
+      id: 'inv-1',
+      projectId: 'proj-1',
+      clientId: 'client-1',
+      type: 'DEPOSIT',
+      status: 'PAID',
+    });
+    mocks.projectFindUnique.mockResolvedValue({ status: 'DISCOVERY' });
+    mocks.clientFindUnique.mockResolvedValue({ userId: 'user-client-1' });
+    mocks.userFindMany.mockResolvedValue([{ id: 'staff-1' }]);
+    mocks.findUnique.mockResolvedValue(paidInvoice);
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      invoice: { updateMany: mocks.transactionUpdateMany, findUnique: mocks.transactionFindUnique },
+      project: { findUnique: mocks.projectFindUnique, update: mocks.projectUpdate },
+      note: { create: mocks.noteCreate },
+      client: { findUnique: mocks.clientFindUnique },
+      user: { findMany: mocks.userFindMany },
+      notification: { create: mocks.notificationCreate },
+    }));
+
+    const response = await GET(invoiceRequest('?reconcilePayment=true'), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: 'PAID', paidAt: '2026-08-28T08:00:00.000Z' });
+    expect(mocks.transactionUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'inv-1', status: 'PAYMENT_PENDING' },
+      data: expect.objectContaining({
+        status: 'PAID',
+        stripeCheckoutSessionId: 'cs-paid',
+        stripePaymentIntentId: 'pi-paid',
+      }),
     });
     expect(mocks.notificationCreate).toHaveBeenCalledTimes(2);
   });

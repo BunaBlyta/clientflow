@@ -189,6 +189,7 @@ model Invoice {
   currency                 String        @default("usd")
   status                   InvoiceStatus @default(DRAFT)
   dueDate                  DateTime?
+  stripeCheckoutAttemptId String?       @unique
   stripeCheckoutSessionId String?       @unique
   stripePaymentIntentId   String?       @unique
   paidAt                   DateTime?

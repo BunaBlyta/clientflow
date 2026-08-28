@@ -4,7 +4,7 @@ Living document. Update it in the same commit/session that changes the structure
 
 ## System overview
 
-Two frontends, one backend, one database. The Next.js web app serves the public marketing site and the staff dashboard, and also hosts the API routes that both the web app and the separate Expo mobile app call — the mobile app has no direct database access, it only talks to the API. Neon Postgres via Prisma underneath everything. Stripe (sandbox) handles payments, with the single rule that money-related state only ever changes on a confirmed, signature-verified webhook, never on a client-side click. Resend sends transactional email (verification codes, invites, approval notifications). See `AGENTS.md` section 4 for the full entity list.
+Two frontends, one backend, one database. The Next.js web app serves the public marketing site and the staff dashboard, and also hosts the API routes that both the web app and the separate Expo mobile app call — the mobile app has no direct database access, it only talks to the API. Neon Postgres via Prisma underneath everything. Stripe (sandbox) handles payments: money-related state only changes from Stripe-authoritative server evidence, normally a signature-verified webhook and secondarily an explicit server-to-server Checkout reconciliation when a webhook is delayed or missed, never from a client-side click or redirect. Resend sends transactional email (verification codes, invites, approval notifications). See `AGENTS.md` section 4 for the full entity list.
 
 ### Analytics insight
 
@@ -57,7 +57,7 @@ contract.
 | Decision | Why | Date |
 |----------|-----|------|
 | Single-tenant, not a multi-tenant SaaS other agencies sign up for | Multi-tenancy's real risk is a data-isolation bug leaking one org's data into another's — exactly the kind of bug that would undercut "functionality," one of the two things this build can't be weak on. Given only one studio actually uses this app, that entire risk class is unnecessary. The Stripe purchasing flow still has a real home either way: the client, not the studio, is the one paying. | 2026-08-10 |
-| Payment-confirmed state changes are webhook-driven, never triggered by the client clicking "Pay" | A click doesn't mean payment succeeded — it could fail, get abandoned, or the browser could close mid-flow. A project or invoice only advances on a confirmed Stripe webhook event, which is the only source of truth Stripe actually guarantees. | 2026-08-10 |
+| Payment-confirmed state changes require Stripe-authoritative server evidence, never the client clicking "Pay" | A click or redirect does not mean payment succeeded. Signed webhooks remain the primary settlement path. `GET /api/invoices/:id?reconcilePayment=true` may also retrieve the stored Checkout Session directly from Stripe and run the same idempotent settlement transaction; this repairs a delayed or permanently missed webhook without trusting client input. | 2026-08-10; reconciliation exception 2026-08-28 |
 | Notifications use durable database rows plus provider-specific delivery | `Notification` is the canonical inbox and recovery source. `PushDevice` and `PushDelivery` add an Expo outbox for iOS, while Ably carries short-lived web invalidation hints. Provider calls always happen after the database transaction, so a push or realtime outage cannot roll back payment or project state. | 2026-08-17 |
 | File upload/storage cut entirely from v1 | Not in the mentor's actual requirement list — it was added unprompted while building an early visual mockup, then caught and questioned. Adds a real storage dependency (Vercel Blob, upload handling, size/type limits) for a feature nobody asked for. The shared note feed carries written updates instead. | 2026-08-10 |
 | Mobile app (Expo) is scoped to the client experience only, not a mirror of the full staff dashboard | Dense data tables and analytics charts aren't comfortable on a phone, and building full feature parity across two platforms wasn't achievable in a 4-day window. The client side is the part that genuinely benefits from being native (push notifications, checking status on the go); staff keep the web dashboard. | 2026-08-10 |
@@ -289,23 +289,46 @@ When `returnTo` is omitted, the Stripe success URL remains the web flow:
 `"mobile"`, the server builds the fixed success URL with the invoice and
 project IDs:
 `/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=...&invoice_id=...`.
-The mobile cancel URL is likewise fixed to
-`/payment/cancelled?return_to=mobile&project_id=...&invoice_id=...`; the normal
-web cancel URL remains `/payment/cancelled`.
+Checkout cancellation first returns through
+`GET /api/stripe/checkout/cancel?invoice_id=...&attempt_id=...`. The opaque
+attempt ID must still be current for that invoice. The route retrieves the
+stored Session from Stripe, expires it when it is open, changes the invoice
+from `PAYMENT_PENDING` to `FAILED`, and only then redirects to
+`/payment/cancelled`. A stale cancel link cannot expire a newer Session. If
+Stripe already reports the Session paid, the route runs normal settlement and
+redirects to `/payment/success` instead.
 Other `returnTo` values are rejected with 400; callers never supply an
 arbitrary redirect URL.
 
-If an invoice already has a Stripe Checkout Session, web requests may reuse it
-as before. Mobile requests reuse it only when Stripe's retrieved `success_url`
-is the Clientflow payment-success path with `return_to=mobile` and matching
-project and invoice IDs, and its `cancel_url` is the matching Clientflow mobile
-cancel path with the same IDs. An old web-only session, or a session without
-both verifiable mobile URLs, gets a new mobile Checkout Session instead.
+Every creation attempt first atomically claims `Invoice.stripeCheckoutAttemptId`
+and uses it in Stripe's `Idempotency-Key` header. Concurrent callers and retries
+therefore recover the same Stripe Session, including a process crash after
+Stripe created the Session but before its ID reached Postgres. A replacement
+attempt gets a new key. An existing Session is reused only when Stripe reports
+it `open`, its URL is active, its web/mobile success URL matches the requested
+channel, and its cancel URL carries the same current invoice and attempt IDs.
+Before replacing an open Session, the API expires it through Stripe; it never
+leaves two known payable links active. Expired, complete, legacy, mismatched,
+and unverifiable Sessions are not returned as payable URLs.
+
 Checkout can only start from `SENT`, `PAYMENT_PENDING`, or `FAILED`; it moves
 the invoice to `PAYMENT_PENDING` through the shared invoice state helper before
-returning a reusable or newly-created session. Draft invoices must be sent
-first, and the signed webhook only accepts `PAYMENT_PENDING` invoices for the
-success or failure transition.
+returning a reusable or newly-created Session. Draft invoices must be sent
+first. Both the signed webhook and the explicit Stripe reconciliation claim
+only `PAYMENT_PENDING` invoices for success or failure, so their project,
+notification, and activity-feed side effects remain idempotent.
+
+`GET /api/invoices/:id?reconcilePayment=true` retrieves the stored Checkout
+Session with its PaymentIntent. `payment_status=paid` runs the same paid
+settlement transaction as the webhook; an expired Session or a PaymentIntent
+in `requires_payment_method`/`canceled` runs the same failed transaction. A
+genuinely processing payment stays `PAYMENT_PENDING`. Ordinary invoice reads
+never call Stripe.
+
+Webhook identifier mapping follows the event object's real type: Checkout
+Session events store `object.id` as the Session ID and their `payment_intent`
+as the PaymentIntent ID; PaymentIntent events store `object.id` only as the
+PaymentIntent ID and preserve the invoice's existing Session ID.
 
 ## Package management contracts
 
@@ -430,8 +453,12 @@ proof that this particular inquiry was converted.
 It returns the same serialized invoice object as `GET /api/invoices/:id`.
 Invalid status values return 400, missing invoices return 404, client sessions
 return 403, and illegal transitions return 409 with an error naming both states.
-Manual updates cannot target `PAID` or `REFUNDED`: Stripe's verified webhook is
-the only payment confirmation path, and refunds are intentionally out of scope.
+Manual updates cannot target `PAID` or `REFUNDED`: only Stripe's signed webhook
+or direct server-to-server reconciliation can confirm payment, and refunds are
+intentionally out of scope. Voiding a `PAYMENT_PENDING` invoice first retrieves
+its Stripe Session. An open Session must be successfully expired before the
+database transition; a paid or processing Session blocks voiding, and a Stripe
+lookup/expiration failure fails closed without changing the invoice.
 
 `PATCH /api/projects/:id` is also staff-only and accepts:
 
@@ -453,9 +480,9 @@ manual phase change until the project's oldest initial invoice is exactly
 `CUSTOM` invoice for a custom project. A missing, pending, failed, voided, or
 refunded initial invoice is not a confirmed payment. The route also rejects
 manual `PENDING → DISCOVERY` even after payment, because that transition belongs
-to the verified Stripe webhook. A paid `DEPOSIT` or `CUSTOM` invoice moves a
-pending project to `DISCOVERY` in that webhook transaction and records the
-payment confirmation in the system note feed.
+to the shared Stripe settlement transaction. A paid `DEPOSIT` or `CUSTOM`
+invoice moves a pending project to `DISCOVERY` in the webhook or reconciliation
+transaction and records the payment confirmation in the system note feed.
 
 ## Client onboarding contracts
 

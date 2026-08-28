@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
+import { markInvoiceFailed, markInvoicePaid } from '@/app/api/_lib/invoice-payments';
 import { prisma } from '@/app/api/_lib/prisma';
+import {
+  expireCheckoutSession,
+  paymentIntentId,
+  retrieveCheckoutSession,
+} from '@/app/api/_lib/stripe-checkout';
 import { serializeInvoice } from '@/app/api/invoices/serialize';
 import { INVOICE_STATUSES, transitionInvoiceStatus, type InvoiceStatus } from '@/prisma/invoice-state';
 import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
@@ -19,22 +25,13 @@ const invoiceSelect = {
   paidAt: true,
   issuedAt: true,
   createdAt: true,
+  stripeCheckoutAttemptId: true,
   stripeCheckoutSessionId: true,
   stripePaymentIntentId: true,
 } as const;
 
-type StripePaymentIntent = {
-  id?: string;
-  status?: string;
-};
-
-type StripeCheckoutSession = {
-  status?: 'open' | 'complete' | 'expired' | null;
-  payment_status?: 'paid' | 'unpaid' | 'no_payment_required' | null;
-  payment_intent?: string | StripePaymentIntent | null;
-};
-
 type ReconciliationInvoice = Parameters<typeof serializeInvoice>[0] & {
+  stripeCheckoutAttemptId: string | null;
   stripeCheckoutSessionId: string | null;
   stripePaymentIntentId: string | null;
 };
@@ -84,26 +81,25 @@ async function reconcilePendingPayment(invoice: ReconciliationInvoice) {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) return invoice;
 
-  const sessionUrl = new URL(
-    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(invoice.stripeCheckoutSessionId)}`,
+  const retrieved = await retrieveCheckoutSession(
+    invoice.stripeCheckoutSessionId,
+    secretKey,
+    { expandPaymentIntent: true },
   );
-  sessionUrl.searchParams.set('expand[]', 'payment_intent');
+  if (!retrieved.ok) return invoice;
 
-  let session: StripeCheckoutSession;
-  try {
-    const response = await fetch(sessionUrl, {
-      headers: { Authorization: `Bearer ${secretKey}` },
+  const session = retrieved.value;
+  const paymentIntent = typeof session.payment_intent === 'object'
+    ? session.payment_intent
+    : null;
+  if (session.payment_status === 'paid') {
+    await markInvoicePaid(invoice.id, {
+      checkoutSessionId: session.id ?? invoice.stripeCheckoutSessionId,
+      paymentIntentId: paymentIntentId(session),
     });
-    if (!response.ok) return invoice;
-    session = (await response.json()) as StripeCheckoutSession;
-  } catch {
-    return invoice;
+    return (await prisma.invoice.findUnique({ where: { id: invoice.id }, select: invoiceSelect })) ?? invoice;
   }
 
-  const paymentIntent =
-    session.payment_intent && typeof session.payment_intent === 'object'
-      ? session.payment_intent
-      : null;
   const paymentIntentFailed =
     paymentIntent?.status === 'requires_payment_method' ||
     paymentIntent?.status === 'canceled';
@@ -111,59 +107,8 @@ async function reconcilePendingPayment(invoice: ReconciliationInvoice) {
 
   if (!checkoutExpired && !paymentIntentFailed) return invoice;
 
-  const result = await prisma.$transaction(async (transaction) => {
-    const updated = await transaction.invoice.updateMany({
-      where: { id: invoice.id, status: 'PAYMENT_PENDING' },
-      data: {
-        status: 'FAILED',
-        ...(paymentIntent?.id ? { stripePaymentIntentId: paymentIntent.id } : {}),
-      },
-    });
-    if (updated.count !== 1) return null;
-
-    const failedInvoice = await transaction.invoice.findUnique({
-      where: { id: invoice.id },
-      select: invoiceSelect,
-    });
-    if (!failedInvoice) return null;
-
-    const notificationIds: string[] = [];
-    const client = await transaction.client.findUnique({
-      where: { id: failedInvoice.clientId },
-      select: { userId: true },
-    });
-    if (client) {
-      const notificationId = await createNotification(transaction, {
-        userId: client.userId,
-        type: 'PAYMENT_FAILED',
-        invoiceId: failedInvoice.id,
-        projectId: failedInvoice.projectId,
-        title: 'Payment failed',
-        message: 'Your invoice payment could not be completed.',
-      });
-      if (notificationId) notificationIds.push(notificationId);
-    }
-    const staffUsers = await transaction.user.findMany({
-      where: { role: 'STAFF', isActive: true },
-      select: { id: true },
-    });
-    for (const staffUser of staffUsers) {
-      const notificationId = await createNotification(transaction, {
-        userId: staffUser.id,
-        type: 'PAYMENT_FAILED',
-        invoiceId: failedInvoice.id,
-        projectId: failedInvoice.projectId,
-        title: 'Payment failed',
-        message: 'A client invoice payment could not be completed.',
-      });
-      if (notificationId) notificationIds.push(notificationId);
-    }
-    return { invoice: failedInvoice, notificationIds };
-  });
-  if (!result) return invoice;
-  scheduleNotificationEffects(result.notificationIds);
-  scheduleEntityChanged({ entity: 'invoice', id: invoice.id, projectId: invoice.projectId, invoiceId: invoice.id, reason: 'payment' });
-  return result.invoice;
+  await markInvoiceFailed(invoice.id, { paymentIntentId: paymentIntentId(session) });
+  return (await prisma.invoice.findUnique({ where: { id: invoice.id }, select: invoiceSelect })) ?? invoice;
 }
 
 export async function PATCH(
@@ -214,6 +159,11 @@ export async function PATCH(
     );
   }
 
+  if (nextStatus === 'VOIDED' && invoice.status === 'PAYMENT_PENDING') {
+    const safeToVoid = await closeCheckoutBeforeVoid(invoice);
+    if (safeToVoid) return safeToVoid;
+  }
+
   let result: Awaited<ReturnType<typeof updateInvoice>>;
   try {
     result = await updateInvoice(id, invoice, nextStatus);
@@ -228,6 +178,69 @@ export async function PATCH(
   scheduleEntityChanged({ entity: 'invoice', id: result.updated.id, projectId: result.updated.projectId, invoiceId: result.updated.id });
 
   return NextResponse.json(serializeInvoice(result.updated));
+}
+
+async function closeCheckoutBeforeVoid(invoice: ReconciliationInvoice): Promise<NextResponse | null> {
+  if (!invoice.stripeCheckoutSessionId) {
+    return NextResponse.json(
+      { error: 'Invoice checkout is still being prepared; try again' },
+      { status: 409 },
+    );
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return NextResponse.json({ error: 'Stripe is not configured' }, { status: 503 });
+  }
+
+  const retrieved = await retrieveCheckoutSession(invoice.stripeCheckoutSessionId, secretKey);
+  if (!retrieved.ok) {
+    return NextResponse.json(
+      { error: 'Unable to verify the active Stripe checkout session' },
+      { status: 502 },
+    );
+  }
+
+  const session = retrieved.value;
+  if (session.payment_status === 'paid') {
+    await markInvoicePaid(invoice.id, {
+      checkoutSessionId: session.id ?? invoice.stripeCheckoutSessionId,
+      paymentIntentId: paymentIntentId(session),
+    });
+    return NextResponse.json({ error: 'A paid invoice cannot be voided' }, { status: 409 });
+  }
+
+  if (session.status === 'complete') {
+    return NextResponse.json(
+      { error: 'Payment is still processing; the invoice cannot be voided yet' },
+      { status: 409 },
+    );
+  }
+
+  if (session.status === 'open') {
+    const expired = await expireCheckoutSession(invoice.stripeCheckoutSessionId, secretKey);
+    if (!expired.ok) {
+      const latest = await retrieveCheckoutSession(invoice.stripeCheckoutSessionId, secretKey);
+      if (latest.ok && latest.value.payment_status === 'paid') {
+        await markInvoicePaid(invoice.id, {
+          checkoutSessionId: latest.value.id ?? invoice.stripeCheckoutSessionId,
+          paymentIntentId: paymentIntentId(latest.value),
+        });
+        return NextResponse.json({ error: 'A paid invoice cannot be voided' }, { status: 409 });
+      }
+      return NextResponse.json(
+        { error: 'Unable to close the active Stripe checkout session' },
+        { status: 502 },
+      );
+    }
+    return null;
+  }
+
+  if (session.status === 'expired') return null;
+  return NextResponse.json(
+    { error: 'Stripe returned an unknown checkout session state' },
+    { status: 502 },
+  );
 }
 
 async function updateInvoice(id: string, invoice: ReconciliationInvoice, nextStatus: InvoiceStatus) {

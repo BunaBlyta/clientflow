@@ -38,13 +38,15 @@ function request(event: unknown, signature?: string) {
 }
 
 function paymentEvent(type: string) {
+  const isPaymentIntent = type.startsWith('payment_intent.');
   return {
     type,
     data: {
       object: {
-        id: 'checkout-session-1',
+        id: isPaymentIntent ? 'payment-intent-1' : 'checkout-session-1',
+        object: isPaymentIntent ? 'payment_intent' : 'checkout.session',
         metadata: { invoiceId },
-        payment_intent: 'payment-intent-1',
+        ...(isPaymentIntent ? {} : { payment_intent: 'payment-intent-1' }),
         payment_status: 'paid',
       },
     },
@@ -167,6 +169,26 @@ describe('POST /api/stripe/webhook', () => {
       where: { id: invoiceId, status: 'PAYMENT_PENDING' },
       data: expect.objectContaining({ status: 'PAID' }),
     });
+  });
+
+  it('stores a real PaymentIntent success ID without overwriting the Checkout Session ID', async () => {
+    configureInvoice('FINAL');
+
+    const response = await POST(
+      request(paymentEvent('payment_intent.succeeded'), 'sig_test'),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: { id: invoiceId, status: 'PAYMENT_PENDING' },
+      data: expect.objectContaining({
+        status: 'PAID',
+        stripePaymentIntentId: 'payment-intent-1',
+      }),
+    });
+    expect(mocks.invoiceUpdateMany.mock.calls[0]?.[0]?.data).not.toHaveProperty(
+      'stripeCheckoutSessionId',
+    );
   });
 
   it('keeps a delayed Checkout Session pending until funds arrive', async () => {

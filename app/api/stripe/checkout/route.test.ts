@@ -4,7 +4,9 @@ import type { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
   invoiceFindFirst: vi.fn(),
-  invoiceUpdate: vi.fn(),
+  invoiceUpdateMany: vi.fn(),
+  markInvoicePaid: vi.fn(),
+  markInvoiceFailed: vi.fn(),
   fetch: vi.fn(),
 }));
 
@@ -16,9 +18,14 @@ vi.mock('@/app/api/_lib/prisma', () => ({
   prisma: {
     invoice: {
       findFirst: mocks.invoiceFindFirst,
-      update: mocks.invoiceUpdate,
+      updateMany: mocks.invoiceUpdateMany,
     },
   },
+}));
+
+vi.mock('@/app/api/_lib/invoice-payments', () => ({
+  markInvoicePaid: mocks.markInvoicePaid,
+  markInvoiceFailed: mocks.markInvoiceFailed,
 }));
 
 import { POST } from './route';
@@ -30,6 +37,7 @@ const invoice = {
   amount: '3250.00',
   currency: 'usd',
   status: 'SENT',
+  stripeCheckoutAttemptId: null,
   stripeCheckoutSessionId: null,
 };
 
@@ -44,6 +52,7 @@ function request(body: unknown) {
 function stripeResponse(body: unknown, ok = true) {
   return {
     ok,
+    status: ok ? 200 : 400,
     json: vi.fn().mockResolvedValue(body),
   };
 }
@@ -63,7 +72,9 @@ beforeEach(() => {
   process.env.APP_URL = 'https://app.clientflow.test';
   mocks.authenticate.mockResolvedValue({ id: 'user-client-1', role: 'CLIENT' });
   mocks.invoiceFindFirst.mockResolvedValue(invoice);
-  mocks.invoiceUpdate.mockResolvedValue({});
+  mocks.invoiceUpdateMany.mockResolvedValue({ count: 1 });
+  mocks.markInvoicePaid.mockResolvedValue(true);
+  mocks.markInvoiceFailed.mockResolvedValue(true);
   vi.stubGlobal('fetch', mocks.fetch);
 });
 
@@ -93,6 +104,7 @@ describe('POST /api/stripe/checkout', () => {
         amount: true,
         currency: true,
         status: true,
+        stripeCheckoutAttemptId: true,
         stripeCheckoutSessionId: true,
       },
     });
@@ -112,7 +124,12 @@ describe('POST /api/stripe/checkout', () => {
     expect(requestBody().get('success_url')).toBe(
       'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}',
     );
-    expect(requestBody().get('cancel_url')).toBe('https://app.clientflow.test/payment/cancelled');
+    const cancelUrl = new URL(String(requestBody().get('cancel_url')));
+    expect(cancelUrl.origin + cancelUrl.pathname).toBe(
+      'https://app.clientflow.test/api/stripe/checkout/cancel',
+    );
+    expect(cancelUrl.searchParams.get('invoice_id')).toBe('inv-1');
+    expect(cancelUrl.searchParams.get('attempt_id')).toMatch(/^web_/);
   });
 
   it('constructs the fixed mobile success URL when returnTo is mobile', async () => {
@@ -124,9 +141,14 @@ describe('POST /api/stripe/checkout', () => {
     expect(requestBody().get('success_url')).toBe(
       'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
     );
-    expect(requestBody().get('cancel_url')).toBe(
-      'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+    const cancelUrl = new URL(String(requestBody().get('cancel_url')));
+    expect(cancelUrl.origin + cancelUrl.pathname).toBe(
+      'https://app.clientflow.test/api/stripe/checkout/cancel',
     );
+    expect(cancelUrl.searchParams.get('return_to')).toBe('mobile');
+    expect(cancelUrl.searchParams.get('project_id')).toBe('proj-1');
+    expect(cancelUrl.searchParams.get('invoice_id')).toBe('inv-1');
+    expect(cancelUrl.searchParams.get('attempt_id')).toMatch(/^mobile_/);
     expect(await response.json()).toEqual({
       checkoutSessionId: 'cs-new',
       checkoutUrl: 'https://checkout.stripe.test/cs-new',
@@ -155,6 +177,47 @@ describe('POST /api/stripe/checkout', () => {
     expect(requestBody().get('payment_intent_data[metadata][projectId]')).toBe('proj-1');
   });
 
+  it('uses the claimed attempt as Stripe idempotency key', async () => {
+    mocks.fetch.mockResolvedValue(createSessionResponse());
+
+    await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
+
+    const headers = mocks.fetch.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    expect(headers['Idempotency-Key']).toMatch(/^clientflow:inv-1:mobile_/);
+    expect(mocks.invoiceUpdateMany).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      where: expect.objectContaining({
+        id: 'inv-1',
+        stripeCheckoutAttemptId: null,
+        stripeCheckoutSessionId: null,
+      }),
+      data: { stripeCheckoutAttemptId: expect.stringMatching(/^mobile_/) },
+    }));
+  });
+
+  it('recovers an interrupted creation with the same stored Stripe idempotency key', async () => {
+    mocks.invoiceFindFirst.mockResolvedValue({
+      ...invoice,
+      stripeCheckoutAttemptId: 'mobile_recover-1',
+    });
+    mocks.fetch.mockResolvedValue(createSessionResponse());
+
+    const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
+
+    expect(response.status).toBe(200);
+    const headers = mocks.fetch.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    expect(headers['Idempotency-Key']).toBe('clientflow:inv-1:mobile_recover-1');
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledTimes(1);
+    expect(mocks.invoiceUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'inv-1',
+        status: 'SENT',
+        stripeCheckoutAttemptId: 'mobile_recover-1',
+        stripeCheckoutSessionId: null,
+      },
+      data: { stripeCheckoutSessionId: 'cs-new', status: 'PAYMENT_PENDING' },
+    });
+  });
+
   it.each(['web', 'https://evil.example/return', null, 42] as const)(
     'rejects invalid returnTo value %s',
     async (returnTo) => {
@@ -171,11 +234,18 @@ describe('POST /api/stripe/checkout', () => {
     mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
     mocks.invoiceFindFirst.mockResolvedValue({
       ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'web_attempt-1',
       stripeCheckoutSessionId: 'cs-existing',
     });
     mocks.fetch.mockResolvedValue(stripeResponse({
+      id: 'cs-existing',
       url: 'https://checkout.stripe.test/cs-existing',
+      status: 'open',
+      payment_status: 'unpaid',
       success_url: 'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url:
+        'https://app.clientflow.test/api/stripe/checkout/cancel?invoice_id=inv-1&attempt_id=web_attempt-1',
     }));
 
     const response = await POST(request({ invoiceId: 'inv-1' }));
@@ -186,23 +256,25 @@ describe('POST /api/stripe/checkout', () => {
       checkoutUrl: 'https://checkout.stripe.test/cs-existing',
     });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
-      where: { id: 'inv-1' },
-      data: { status: 'PAYMENT_PENDING' },
-    });
+    expect(mocks.invoiceUpdateMany).not.toHaveBeenCalled();
   });
 
   it('reuses an existing mobile checkout session only when its success URL matches the invoice', async () => {
     mocks.invoiceFindFirst.mockResolvedValue({
       ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'mobile_attempt-1',
       stripeCheckoutSessionId: 'cs-existing-mobile',
     });
     mocks.fetch.mockResolvedValue(stripeResponse({
+      id: 'cs-existing-mobile',
       url: 'https://checkout.stripe.test/cs-existing-mobile',
+      status: 'open',
+      payment_status: 'unpaid',
       success_url:
         'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
       cancel_url:
-        'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+        'https://app.clientflow.test/api/stripe/checkout/cancel?invoice_id=inv-1&attempt_id=mobile_attempt-1&return_to=mobile&project_id=proj-1',
     }));
 
     const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
@@ -213,23 +285,27 @@ describe('POST /api/stripe/checkout', () => {
       checkoutUrl: 'https://checkout.stripe.test/cs-existing-mobile',
     });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
-      where: { id: 'inv-1' },
-      data: { status: 'PAYMENT_PENDING' },
-    });
+    expect(mocks.invoiceUpdateMany).not.toHaveBeenCalled();
   });
 
   it('creates a mobile session instead of reusing an existing web-only session', async () => {
     mocks.invoiceFindFirst.mockResolvedValue({
       ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'web_attempt-1',
       stripeCheckoutSessionId: 'cs-existing-web',
     });
     mocks.fetch
       .mockResolvedValueOnce(stripeResponse({
+        id: 'cs-existing-web',
         url: 'https://checkout.stripe.test/cs-existing-web',
+        status: 'open',
+        payment_status: 'unpaid',
         success_url: 'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: 'https://app.clientflow.test/payment/cancelled',
+        cancel_url:
+          'https://app.clientflow.test/api/stripe/checkout/cancel?invoice_id=inv-1&attempt_id=web_attempt-1',
       }))
+      .mockResolvedValueOnce(stripeResponse({ id: 'cs-existing-web', status: 'expired' }))
       .mockResolvedValueOnce(createSessionResponse());
 
     const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
@@ -239,30 +315,66 @@ describe('POST /api/stripe/checkout', () => {
       checkoutSessionId: 'cs-new',
       checkoutUrl: 'https://checkout.stripe.test/cs-new',
     });
-    expect(mocks.fetch).toHaveBeenCalledTimes(2);
-    expect(requestBody(1).get('success_url')).toBe(
+    expect(mocks.fetch).toHaveBeenCalledTimes(3);
+    expect(mocks.fetch.mock.calls[1]?.[0]).toBe(
+      'https://api.stripe.com/v1/checkout/sessions/cs-existing-web/expire',
+    );
+    expect(requestBody(2).get('success_url')).toBe(
       'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
     );
-    expect(requestBody(1).get('cancel_url')).toBe(
-      'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+    expect(new URL(String(requestBody(2).get('cancel_url'))).pathname).toBe(
+      '/api/stripe/checkout/cancel',
     );
-    expect(mocks.invoiceUpdate).toHaveBeenCalledWith({
-      where: { id: 'inv-1' },
-      data: { stripeCheckoutSessionId: 'cs-new', status: 'PAYMENT_PENDING' },
-    });
   });
 
   it('replaces a mobile session when its cancel URL is still web-only', async () => {
     mocks.invoiceFindFirst.mockResolvedValue({
       ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'mobile_attempt-old',
       stripeCheckoutSessionId: 'cs-existing-mobile-with-web-cancel',
     });
     mocks.fetch
       .mockResolvedValueOnce(stripeResponse({
         url: 'https://checkout.stripe.test/cs-existing-mobile-with-web-cancel',
+        status: 'open',
+        payment_status: 'unpaid',
         success_url:
           'https://app.clientflow.test/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=mobile&project_id=proj-1&invoice_id=inv-1',
         cancel_url: 'https://app.clientflow.test/payment/cancelled',
+      }))
+      .mockResolvedValueOnce(stripeResponse({
+        id: 'cs-existing-mobile-with-web-cancel',
+        status: 'expired',
+      }))
+      .mockResolvedValueOnce(createSessionResponse());
+
+    const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      checkoutSessionId: 'cs-new',
+      checkoutUrl: 'https://checkout.stripe.test/cs-new',
+    });
+    expect(mocks.fetch).toHaveBeenCalledTimes(3);
+    expect(new URL(String(requestBody(2).get('cancel_url'))).pathname).toBe(
+      '/api/stripe/checkout/cancel',
+    );
+  });
+
+  it('never reuses an expired Session when a failed invoice is retried', async () => {
+    mocks.invoiceFindFirst.mockResolvedValue({
+      ...invoice,
+      status: 'FAILED',
+      stripeCheckoutAttemptId: 'mobile_expired-1',
+      stripeCheckoutSessionId: 'cs-expired',
+    });
+    mocks.fetch
+      .mockResolvedValueOnce(stripeResponse({
+        id: 'cs-expired',
+        status: 'expired',
+        payment_status: 'unpaid',
+        url: null,
       }))
       .mockResolvedValueOnce(createSessionResponse());
 
@@ -274,9 +386,33 @@ describe('POST /api/stripe/checkout', () => {
       checkoutUrl: 'https://checkout.stripe.test/cs-new',
     });
     expect(mocks.fetch).toHaveBeenCalledTimes(2);
-    expect(requestBody(1).get('cancel_url')).toBe(
-      'https://app.clientflow.test/payment/cancelled?return_to=mobile&project_id=proj-1&invoice_id=inv-1',
+    expect(mocks.fetch.mock.calls[1]?.[0]).toBe(
+      'https://api.stripe.com/v1/checkout/sessions',
     );
+  });
+
+  it('settles an already-paid Stripe Session instead of creating another one', async () => {
+    mocks.invoiceFindFirst.mockResolvedValue({
+      ...invoice,
+      status: 'PAYMENT_PENDING',
+      stripeCheckoutAttemptId: 'mobile_paid-1',
+      stripeCheckoutSessionId: 'cs-paid',
+    });
+    mocks.fetch.mockResolvedValue(stripeResponse({
+      id: 'cs-paid',
+      status: 'complete',
+      payment_status: 'paid',
+      payment_intent: 'pi-paid',
+    }));
+
+    const response = await POST(request({ invoiceId: 'inv-1', returnTo: 'mobile' }));
+
+    expect(response.status).toBe(409);
+    expect(mocks.markInvoicePaid).toHaveBeenCalledWith('inv-1', {
+      checkoutSessionId: 'cs-paid',
+      paymentIntentId: 'pi-paid',
+    });
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -303,7 +439,7 @@ describe('POST /api/stripe/checkout', () => {
       error: 'Invoice cannot transition from DRAFT to PAYMENT_PENDING',
     });
     expect(mocks.fetch).not.toHaveBeenCalled();
-    expect(mocks.invoiceUpdate).not.toHaveBeenCalled();
+    expect(mocks.invoiceUpdateMany).not.toHaveBeenCalled();
   });
 
   it('returns 404 for a missing or non-owned invoice', async () => {
