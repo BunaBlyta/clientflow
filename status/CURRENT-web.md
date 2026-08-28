@@ -1,15 +1,17 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-28 16:29 by Codex — Clientflow browser tab icon
+Last updated: 2026-08-28 16:42 by Codex — light-cyan request package modal
 
 ## Current task
 
+- Added a subtle light-cyan radial/linear gradient to the light-theme “Request a package” modal, using the existing brand palette. Dark mode remains unchanged.
 - Replaced the default Next.js triangle browser-tab icon with the transparent Clientflow logo. Root metadata now points to `/crm-light-logo-grey.png`, and the old `app/favicon.ico` was removed so it cannot override the new icon.
 
 ## Verification
 
 - `npm run verify`: typecheck passed, then stopped at two pre-existing web-lane ESLint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`; neither file is part of this change.
 - `npx next build --webpack`: passed. The production build compiled the updated metadata successfully.
+- `npx next build --webpack`: passed after the request-modal gradient change.
 
 ## Current state
 

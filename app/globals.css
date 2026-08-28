@@ -2348,8 +2348,10 @@ html:not(.dark) [data-slot="dialog-overlay"] {
 }
 
 html:not(.dark) .request-modal {
-  background: #ffffff !important;
-  background-image: none !important;
+  background: #f3fcff !important;
+  background-image:
+    radial-gradient(120% 95% at 100% 0%, rgb(202 244 255 / 0.55), transparent 68%),
+    linear-gradient(135deg, #ffffff 0%, #f3fcff 58%, #e5f8ff 100%) !important;
   color: #16404b !important;
   box-shadow: none !important;
 }
