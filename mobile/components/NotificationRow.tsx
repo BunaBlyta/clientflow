@@ -35,19 +35,28 @@ const ICONS: Record<Notification['type'], typeof Bell> = {
   EXTRA_CHARGE_CREATED: FileText,
 };
 
-// Accent is the resting state. Semantic colour is reserved for outcomes
-// that deserve an immediate scan: successful or failed/payment-related
-// activity.
-function typeColor(type: Notification['type'], color: ThemeColors) {
+// Every type gets one of the app's four existing semantic colors, grouped
+// by what the color means rather than a unique hue per type — accent stays
+// the resting/informational state, success/danger mark outcomes, and
+// warning flags something that wants the client's attention (an amount to
+// review or pay). This keeps icons visually distinct type-to-type without
+// introducing colors outside the app's restrained palette.
+function notificationTone(type: Notification['type'], color: ThemeColors) {
   switch (type) {
     case 'PAYMENT_SUCCEEDED':
     case 'REQUEST_APPROVED':
-      return color.success;
+      return { tint: color.success, background: color.successBg };
     case 'PAYMENT_FAILED':
     case 'REQUEST_REJECTED':
-      return color.danger;
+      return { tint: color.danger, background: color.dangerBg };
+    case 'INVOICE_ISSUED':
+    case 'EXTRA_CHARGE_CREATED':
+      return { tint: color.warning, background: color.warningBg };
+    case 'REQUEST_SUBMITTED':
+    case 'PROJECT_STAGE_CHANGED':
+    case 'NEW_NOTE':
     default:
-      return color.accent;
+      return { tint: color.accent, background: color.accentSoft };
   }
 }
 
@@ -71,10 +80,7 @@ export function NotificationRow({
   const token = useAuthStore((state) => state.token);
   const styles = createStyles(color);
   const Icon = ICONS[notification.type] ?? Bell;
-  const tint = typeColor(notification.type, color);
-  const isDanger = notification.type === 'PAYMENT_FAILED' || notification.type === 'REQUEST_REJECTED';
-  const isSuccess = notification.type === 'PAYMENT_SUCCEEDED' || notification.type === 'REQUEST_APPROVED';
-  const iconBackground = isDanger ? color.dangerBg : isSuccess ? color.successBg : color.accentSoft;
+  const { tint, background: iconBackground } = notificationTone(notification.type, color);
   const localized = getLocalizedNotificationText(notification, t);
   const authoredBody = getUserAuthoredNotificationBody(notification);
   const invoiceDescription = getUserAuthoredInvoiceDescription(notification);
