@@ -84,7 +84,7 @@ export default function AccountScreen() {
     <>
     <Screen
       contentContainerStyle={{
-        paddingBottom: 64 + spacing.md,
+        paddingBottom: 64 + spacing.sm,
       }}
     >
       <Text style={styles.heading}>{t('account.title')}</Text>
@@ -500,7 +500,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textSecondary,
     },
     preferenceGroup: {
-      marginBottom: spacing.sm,
+      marginBottom: spacing.md,
     },
     preferenceLabel: {
       fontFamily: fontFamily.medium,
@@ -508,6 +508,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
+      marginTop: -3,
       marginBottom: spacing.md,
     },
     preferenceOptions: {
@@ -691,7 +692,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.meta,
       color: color.textMuted,
       textAlign: 'center',
-      marginTop: spacing.xl,
+      marginTop: spacing.md,
     },
   });
 }

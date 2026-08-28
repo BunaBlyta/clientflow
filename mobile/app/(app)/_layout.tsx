@@ -3,12 +3,13 @@ import { Bell, FileText, FolderKanban, House, UserRound } from 'lucide-react-nat
 import { useEffect } from 'react';
 import { Easing, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fontFamily, radius, spacing, useTheme } from '../../lib/theme';
+import { radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 
-const TAB_BAR_HEIGHT = 68;
+const TAB_BAR_HEIGHT = 60;
+const TAB_BAR_SIDE_MARGIN = spacing.lg;
 const TAB_TRANSITION_DISTANCE = 24;
 const TAB_TRANSITION_DURATION = 180;
 
@@ -65,25 +66,30 @@ export default function AppTabsLayout() {
           sceneStyle: { backgroundColor: color.canvas },
         tabBarActiveTintColor: color.navActive,
         tabBarInactiveTintColor: color.navInactive,
+        tabBarShowLabel: false,
+        // A floating pill, not the full-width bar this used to be: inset
+        // from both edges and fully rounded. Margin (not position:
+        // absolute) so it still reserves its own layout space below the
+        // scenes — no risk of the last row of content hiding behind it.
         tabBarStyle: {
-          height: TAB_BAR_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: spacing.xs,
+          height: TAB_BAR_HEIGHT,
+          marginHorizontal: TAB_BAR_SIDE_MARGIN,
+          marginBottom: insets.bottom > 0 ? insets.bottom : spacing.sm,
+          borderRadius: radius.pill,
           backgroundColor: color.navBackground,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: color.border,
-          shadowOpacity: 0,
-          elevation: 0,
+          borderTopWidth: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+          shadowColor: '#000',
+          shadowOpacity: 0.12,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 12,
         },
         tabBarItemStyle: {
           paddingTop: 0,
           paddingBottom: 0,
-        },
-        tabBarLabelStyle: {
-          fontFamily: fontFamily.regular,
-          fontSize: 11,
-          fontWeight: '400',
-          marginTop: spacing.sm,
+          height: TAB_BAR_HEIGHT,
         },
       }}
     >
