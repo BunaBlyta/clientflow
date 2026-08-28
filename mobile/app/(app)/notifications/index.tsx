@@ -209,6 +209,7 @@ export default function NotificationsScreen() {
         <EmptyState
           icon={Bell}
           title={showArchived ? t('notifications.noArchived') : t('notifications.caughtUp')}
+          subtitle={showArchived ? t('notifications.noArchivedSubtitle') : t('notifications.caughtUpSubtitle')}
         />
       ) : (
         <>
