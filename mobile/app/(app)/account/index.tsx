@@ -197,13 +197,21 @@ export default function AccountScreen() {
           <View style={styles.confirmActions}>
             <Pressable
               onPress={() => setConfirmingLogout(false)}
-              style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                styles.cancelButton,
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </Pressable>
             <Pressable
               onPress={handleLogout}
-              style={({ pressed }) => [styles.confirmLogoutButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                styles.confirmLogoutButton,
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={styles.logoutText}>{t('account.logOut')}</Text>
             </Pressable>
@@ -639,21 +647,18 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       flexDirection: 'row',
       gap: spacing.sm,
     },
-    cancelButton: {
+    confirmButton: {
       flex: 1,
-      height: 48,
-      borderRadius: radius.pill,
-      backgroundColor: color.surfaceMuted,
+      height: 56,
+      borderRadius: radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
     },
+    cancelButton: {
+      backgroundColor: color.surfaceMuted,
+    },
     confirmLogoutButton: {
-      flex: 1,
-      height: 48,
-      borderRadius: radius.pill,
       backgroundColor: color.dangerBg,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     cancelText: {
       fontFamily: fontFamily.medium,

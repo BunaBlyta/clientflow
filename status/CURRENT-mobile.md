@@ -1,12 +1,13 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-28 by Codex — semantic success, warning, and error indicators now use standard green, orange, and red without changing the app's brand green or adding UI
+Last updated: 2026-08-28 by Codex — logout confirmation actions now share the same 56px height and large radius as the original logout control
 
 Note: this lane is being worked by both Codex and Claude Code concurrently this week (Buna's call). Each session overwrites this file per the working agreement, so treat it as a merge point, not a single author's log — read `status/log/` for the full narrative if something here looks incomplete.
 
 ## Current state
 
 - Working tree clean, `npx tsc --noEmit` passes from `mobile/`.
+- Logout confirmation: Cancel and Log out use one shared button base, so their height and corner radius cannot drift apart. Both are 56px tall with `radius.lg`, matching the original full-width logout control they replace; their distinct neutral/error colors and behavior are unchanged. Mobile typecheck passes. Root `npm run verify` still stops on the two existing web-lane lint errors in `date-picker.tsx` and `settings-content.tsx`.
 - Semantic feedback colors: existing success badges/messages/icons now use standard green, warnings use orange, and errors use red in both themes. Only the shared `success*`, `warning*`, and `danger*` theme values changed; no badge, message, indicator, or decorative/brand color was added or repurposed. Mobile typecheck passes. Root `npm run verify` still stops on the two existing web-lane lint errors in `date-picker.tsx` and `settings-content.tsx`.
 - Checkout handoff: pressing “Continue to secure checkout” immediately enters the loading screen. Missing sessions, API/Stripe errors, polling timeouts, and `FAILED` or other non-paid invoice states all remain on that neutral screen; only a confirmed `PAID` invoice advances to success. The user can still leave through the existing back button. Mobile typecheck passes. Root `npm run verify` reaches lint and stops on the two existing web-lane errors in `date-picker.tsx` and `settings-content.tsx`.
 - Invoices tab: the two KPI cards (Outstanding / Paid to date) now use the same inner padding (both 12; "Paid to date" was falling through to the Card default of 20). Also pinned both labels to a single line (`numberOfLines={1}`) — "PAID TO DATE" wrapped to two lines in the narrow card while "OUTSTANDING" stayed on one, pushing the amount below it out of alignment with the other card. Finally, the currency amounts render in Georgia (`fontFamily.serif`), whose default oldstyle figures make digits like 4/5/7/9 dip below the baseline — added `fontVariant: ['lining-nums', 'tabular-nums']` to the KPI value and to `InvoiceRow`'s amount so figures sit on one baseline and align by column.
