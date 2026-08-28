@@ -36,7 +36,7 @@ export default function AccountScreen() {
   const [languageOptionsVisible, setLanguageOptionsVisible] = useState(false);
   const [themeToggleMode, setThemeToggleMode] = useState(mode);
   const { language, setLanguage, t } = useI18n();
-  const styles = createStyles(color);
+  const styles = createStyles(color, mode);
 
   useEffect(() => {
     setThemeToggleMode(mode);
@@ -287,8 +287,8 @@ export default function AccountScreen() {
 }
 
 function PreferenceGroup({ label, children }: { label: string; children: ReactNode }) {
-  const { color } = useTheme();
-  const styles = createStyles(color);
+  const { color, mode } = useTheme();
+  const styles = createStyles(color, mode);
   return (
     <View style={styles.preferenceGroup}>
       <Text style={styles.preferenceLabel}>{label}</Text>
@@ -465,7 +465,13 @@ function LanguageOption({
   );
 }
 
-function createStyles(color: ReturnType<typeof useTheme>['color']) {
+function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnType<typeof useTheme>['mode']) {
+  // color.danger on its own reads faded in dark mode — a mid-saturation
+  // red on the similarly dark-red dangerBorder fill lacks the punch it
+  // has in light mode against a pale pink fill. White gives real contrast
+  // against the dark fill without needing a new color token; light mode
+  // keeps the original dark-red-on-pale-pink pairing, which already works.
+  const logoutLabelColor = mode === 'dark' ? color.textOnAccent : color.danger;
   return StyleSheet.create({
     heading: {
       ...textShadow,
@@ -730,12 +736,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     logoutText: {
       fontFamily: fontFamily.medium,
       fontSize: fontSize.caption,
-      color: color.danger,
+      color: logoutLabelColor,
     },
     primaryLogoutText: {
       fontFamily: fontFamily.medium,
       fontSize: fontSize.caption,
-      color: color.danger,
+      color: logoutLabelColor,
     },
     confirmText: {
       fontFamily: fontFamily.semibold,
