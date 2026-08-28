@@ -75,7 +75,7 @@ export default function AppTabsLayout() {
           // A small fixed gap regardless of the home-indicator inset — the
           // pill sits low, close to the edge, rather than scaling its
           // position with however tall that inset is on a given device.
-          marginBottom: spacing.xs,
+          marginBottom: spacing.sm,
           borderRadius: radius.pill,
           backgroundColor: color.navBackground,
           borderTopWidth: 0,
