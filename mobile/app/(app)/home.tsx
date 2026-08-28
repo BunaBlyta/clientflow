@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, FolderKanban } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, FolderKanban } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -10,6 +10,7 @@ import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { getLocalizedNotificationText } from '../../lib/notification-text';
+import { readHomeProjectId, writeHomeProjectId } from '../../lib/home-project-preference';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const refreshProjects = useDataStore((s) => s.refreshProjects);
   const refreshInvoices = useDataStore((s) => s.refreshInvoices);
   const [loading, setLoading] = useState(true);
+  const [homeProjectId, setHomeProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -46,7 +48,28 @@ export default function HomeScreen() {
     };
   }, [refreshInvoices, refreshProjects, token]);
 
-  const project = projects[0];
+  useEffect(() => {
+    let active = true;
+    void readHomeProjectId().then((id) => {
+      if (active) setHomeProjectId(id);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // -1 (not found — stale/deleted project, or nothing saved yet) falls
+  // back to the first project via Math.max, same as no preference at all.
+  const projectIndex = homeProjectId ? Math.max(0, projects.findIndex((p) => p.id === homeProjectId)) : 0;
+  const project = projects[projectIndex];
+
+  function switchProject(step: 1 | -1) {
+    if (projects.length < 2) return;
+    const nextIndex = (projectIndex + step + projects.length) % projects.length;
+    const next = projects[nextIndex];
+    setHomeProjectId(next.id);
+    void writeHomeProjectId(next.id);
+  }
   const payableInvoice = invoices.find((invoice) => invoice.status === 'SENT' || invoice.status === 'FAILED');
   const unreadMessages = notifications.filter((notification) => !notification.read).length;
   const phaseCount = project ? Math.max(0, PROJECT_STAGES.indexOf(project.status)) : 0;
@@ -77,10 +100,40 @@ export default function HomeScreen() {
                 <View style={styles.statusCopy}>
                   <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
                 </View>
-                <View style={styles.statusLink}>
-                  <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>
-                    {getProjectStatusLabel(project.status, t)}
-                  </Text>
+                <View style={styles.statusRight}>
+                  {projects.length > 1 && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t('ui.previousProject')}
+                      hitSlop={8}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        switchProject(-1);
+                      }}
+                      style={({ pressed }) => pressed && styles.pressed}
+                    >
+                      <ChevronLeft size={16} color={color.textMuted} strokeWidth={1.8} />
+                    </Pressable>
+                  )}
+                  <View style={styles.statusLink}>
+                    <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>
+                      {getProjectStatusLabel(project.status, t)}
+                    </Text>
+                  </View>
+                  {projects.length > 1 && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t('ui.nextProject')}
+                      hitSlop={8}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        switchProject(1);
+                      }}
+                      style={({ pressed }) => pressed && styles.pressed}
+                    >
+                      <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+                    </Pressable>
+                  )}
                 </View>
               </View>
               <View style={styles.phaseRow}>
@@ -126,7 +179,9 @@ export default function HomeScreen() {
             >
               <Text style={styles.statLabel}>{t('ui.messages')}</Text>
               <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{t('ui.newMessages', { count: unreadMessages })}</Text>
-              <Text style={styles.statHint} numberOfLines={1}>{notifications[0] ? getLocalizedNotificationText(notifications[0], t).title : t('notifications.caughtUp')}</Text>
+              <Text style={styles.statHint} numberOfLines={1}>
+                {unreadMessages > 0 && notifications[0] ? getLocalizedNotificationText(notifications[0], t).title : t('ui.noNewMessages')}
+              </Text>
             </Pressable>
           </View>
 
@@ -203,6 +258,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     statusHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md },
     statusCopy: { flex: 1 },
     projectName: { flex: 1, fontFamily: fontFamily.serif, fontSize: fontSize.cardTitle + 2, color: color.textPrimary },
+    statusRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     statusLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: color.surfaceMuted },
     statusValue: { fontFamily: fontFamily.semibold, fontSize: fontSize.meta, textTransform: 'uppercase' },
     phaseRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg },

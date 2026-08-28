@@ -1,7 +1,17 @@
 import { CalendarDays, CircleHelp, ChevronRight, Globe2, KeyRound, LogOut, Mail, Moon, Phone, SquarePen, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { formatMonthYear } from '../../../lib/format';
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  LayoutAnimation,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
+} from 'react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Screen } from '../../../components/ui/Screen';
 import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../../lib/theme';
@@ -9,6 +19,12 @@ import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import type { LucideIcon } from 'lucide-react-native';
 import { useSingleFire } from '../../../lib/use-single-fire';
+
+// LayoutAnimation needs to be opted into on Android; iOS has it on by
+// default. No-op if already enabled or unsupported.
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
@@ -63,12 +79,18 @@ export default function AccountScreen() {
     height: number;
   } | null>(null);
 
+  function toggleLanguageOptions() {
+    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setLanguageOptionsVisible((visible) => !visible);
+  }
+
   function handleLogout() {
-    if (confirmingLogout) {
-      void logout();
-      return;
-    }
     setConfirmingLogout(true);
+  }
+
+  function confirmLogout() {
+    setConfirmingLogout(false);
+    void logout();
   }
 
   function handleThemeToggle() {
@@ -146,7 +168,7 @@ export default function AccountScreen() {
           icon={Globe2}
           label={t('account.language')}
           value={language === 'en' ? t('account.english') : language === 'sq' ? t('account.albanian') : t('account.german')}
-          onPress={() => setLanguageOptionsVisible((visible) => !visible)}
+          onPress={toggleLanguageOptions}
           styles={styles}
         />
         {languageOptionsVisible && (
@@ -194,41 +216,18 @@ export default function AccountScreen() {
         />
       </PreferenceGroup>
 
-      {confirmingLogout ? (
-        <View style={styles.logoutSection}>
-          <View style={styles.confirmActions}>
-            <Pressable
-              onPress={() => setConfirmingLogout(false)}
-              style={({ pressed }) => [
-                styles.confirmButton,
-                styles.cancelButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleLogout}
-              style={({ pressed }) => [
-                styles.confirmButton,
-                styles.confirmLogoutButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.logoutText}>{t('account.logOut')}</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.confirmText}>{t('account.confirmLogOut')}</Text>
-        </View>
-      ) : (
-        <Pressable
-            onPress={handleLogout}
-            style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
-          >
-          <LogOut size={16} color={color.danger} />
-          <Text style={styles.primaryLogoutText}>{t('account.logOut')}</Text>
-        </Pressable>
-      )}
+      <Pressable
+          onPress={handleLogout}
+          disabled={confirmingLogout}
+          style={({ pressed }) => [
+            styles.logoutButton,
+            confirmingLogout && styles.logoutButtonDisabled,
+            pressed && styles.pressed,
+          ]}
+        >
+        <LogOut size={16} color={color.danger} />
+        <Text style={styles.primaryLogoutText}>{t('account.logOut')}</Text>
+      </Pressable>
 
       <Text style={styles.footer}>{t('account.version')}</Text>
     </Screen>
@@ -248,6 +247,41 @@ export default function AccountScreen() {
         </View>
       </Modal>
     ) : null}
+    <Modal
+      transparent
+      visible={confirmingLogout}
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => setConfirmingLogout(false)}
+    >
+      <Pressable style={styles.modalBackdrop} onPress={() => setConfirmingLogout(false)}>
+        <Pressable style={styles.modalCard} onPress={() => {}}>
+          <Text style={styles.confirmText}>{t('account.confirmLogOut')}</Text>
+          <View style={styles.confirmActions}>
+            <Pressable
+              onPress={() => setConfirmingLogout(false)}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                styles.cancelButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={confirmLogout}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                styles.confirmLogoutButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.logoutText}>{t('account.logMeOut')}</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
     </>
   );
 }
@@ -290,10 +324,12 @@ function SettingsRow({
       onPress={onPress}
       style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
     >
-      <View style={styles.settingsIcon}>
-        {iconNode ?? (Icon ? <Icon size={16} color={color.accent} strokeWidth={1.8} /> : null)}
+      <View style={styles.settingsLeading}>
+        <View style={styles.settingsIcon}>
+          {iconNode ?? (Icon ? <Icon size={16} color={color.accent} strokeWidth={1.8} /> : null)}
+        </View>
+        <Text style={styles.settingsLabel}>{label}</Text>
       </View>
-      <Text style={styles.settingsLabel}>{label}</Text>
       {trailing ? <View style={styles.trailingControl}>{trailing}</View> : (
         <>
           {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
@@ -531,22 +567,23 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     settingsRowLast: {
       borderBottomWidth: 0,
     },
+    settingsLeading: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
     settingsIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: 10,
+      width: 20,
+      height: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      // Lighter than the shared accentSoft token on purpose (that one's
-      // used for avatar/language-row/notification treatments elsewhere
-      // that shouldn't change) — a low-alpha wash of the accent color
-      // instead of a flat tint.
-      backgroundColor: `${color.accent}1F`,
     },
     settingsLabel: {
       flex: 1,
       fontFamily: fontFamily.semibold,
       fontSize: fontSize.body,
+      lineHeight: 20,
       color: color.textPrimary,
     },
     settingsValue: {
@@ -650,8 +687,23 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       // border needed, the fill itself just needed more color.
       backgroundColor: color.dangerBorder,
     },
-    logoutSection: {
-      gap: spacing.md,
+    logoutButtonDisabled: {
+      opacity: 0.45,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.xl,
+    },
+    modalCard: {
+      width: '100%',
+      maxWidth: 360,
+      backgroundColor: color.surface,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      gap: spacing.lg,
     },
     confirmActions: {
       flexDirection: 'row',
@@ -659,8 +711,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     confirmButton: {
       flex: 1,
-      height: 56,
-      borderRadius: radius.lg,
+      height: 44,
+      borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -686,9 +738,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       color: color.danger,
     },
     confirmText: {
-      fontFamily: fontFamily.regular,
-      fontSize: fontSize.meta,
-      color: color.textMuted,
+      fontFamily: fontFamily.semibold,
+      fontSize: fontSize.cardTitle,
+      color: color.textPrimary,
       textAlign: 'center',
     },
     pressed: {

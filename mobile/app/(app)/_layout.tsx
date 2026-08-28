@@ -8,15 +8,23 @@ import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
 import { TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT, TAB_BAR_SIDE_MARGIN } from '../../lib/tab-bar';
 
-const TAB_TRANSITION_DISTANCE = 24;
-const TAB_TRANSITION_DURATION = 180;
+const TAB_TRANSITION_DISTANCE = 16;
+const TAB_TRANSITION_DURATION = 220;
 
+// A small fade alongside the slide — a pure translateX with no opacity
+// change reads as a hard, mechanical cut once the outgoing/incoming scenes
+// overlap; blending both softens the handoff into something that actually
+// looks smooth rather than just fast.
 const tabSceneStyleInterpolator = ({
   current,
 }: {
   current: { progress: import('react-native').Animated.Value };
 }) => ({
   sceneStyle: {
+    opacity: current.progress.interpolate({
+      inputRange: [-1, 0, 1],
+      outputRange: [0, 1, 0],
+    }),
     transform: [
       {
         translateX: current.progress.interpolate({
