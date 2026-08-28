@@ -10,11 +10,15 @@ import { useI18n } from '../../../lib/i18n';
 import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
 import { useAuthStore } from '../../../store/auth-store';
 
-const PHONE_FORMAT = /^\+?[0-9\s().-]{7,20}$/;
+const PHONE_CHARS = /^\+?[0-9\s().-]+$/;
 
 function isValidPhone(value: string) {
+  if (!PHONE_CHARS.test(value)) return false;
+  // 10-15 matches a full national number up through E.164's max length
+  // (country code + subscriber number) — short local-only numbers without
+  // an area/country code are rejected as too ambiguous to be useful.
   const digitCount = value.replace(/\D/g, '').length;
-  return PHONE_FORMAT.test(value) && digitCount >= 7 && digitCount <= 15;
+  return digitCount >= 10 && digitCount <= 15;
 }
 
 export default function EditProfileScreen() {
