@@ -7,8 +7,6 @@ import {
   StyleSheet,
   Text,
   View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
 import { NotificationRow } from '../../../components/NotificationRow';
@@ -83,12 +81,8 @@ export default function NotificationsScreen() {
     }, [refreshNotifications, token]),
   );
 
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleLoadOlder = useCallback(() => {
     if (!token || notificationsLoading || notificationsLoadingMore || !notificationsHasMore) return;
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const distanceFromEnd = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-    if (distanceFromEnd > spacing.xl * 2) return;
-
     void loadMoreNotifications(token).then((ok) => {
       if (!ok) setActionError(t('notifications.loadFailed'));
     });
@@ -149,7 +143,7 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <Screen ref={scrollRef} onScroll={handleScroll} scrollEventThrottle={160}>
+    <Screen ref={scrollRef}>
       <View style={styles.headerRow}>
         <Text style={styles.heading}>{t('notifications.title')}</Text>
       </View>
@@ -230,13 +224,17 @@ export default function NotificationsScreen() {
               </View>
             </View>
           ))}
-          {notificationsLoadingMore ? (
-            <ActivityIndicator color={color.accent} style={styles.loadingMore} />
-          ) : null}
         </>
       )}
-      {visibleNotifications.length === 0 && notificationsLoadingMore ? (
+      {notificationsLoadingMore ? (
         <ActivityIndicator color={color.accent} style={styles.loadingMore} />
+      ) : notificationsHasMore ? (
+        <Pressable
+          onPress={handleLoadOlder}
+          style={({ pressed }) => [styles.loadOlderButton, pressed && styles.loadOlderPressed]}
+        >
+          <Text style={styles.loadOlderText}>{t('notifications.loadOlder')}</Text>
+        </Pressable>
       ) : null}
     </Screen>
   );
@@ -352,6 +350,19 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   },
   loadingMore: {
     marginVertical: spacing.md,
+  },
+  loadOlderButton: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    marginTop: spacing.xs,
+  },
+  loadOlderPressed: {
+    opacity: 0.6,
+  },
+  loadOlderText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.caption,
+    color: color.accent,
   },
   });
 }
