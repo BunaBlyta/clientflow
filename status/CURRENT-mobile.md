@@ -1,6 +1,17 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-28 by Codex — notification archive books icon is smaller and shifted further toward the row's top while retaining a large tap target
+Last updated: 2026-08-28 10:53 by Codex — confirmed the configured Vercel API origin is timing out
+
+## Latest verification
+
+- Confirmed `mobile/.env` already points at `https://clientflow-ijdn.vercel.app`.
+- A direct request to both the site root and the realtime API origin timed out
+  after 20 seconds. The deployment is therefore unavailable from this
+  environment; changing the mobile value to the same URL would not fix the
+  Ably timeout.
+- Once the Vercel deployment responds again, restart Expo with
+  `npx expo start -c`; an installed build needs to be rebuilt if its embedded
+  API URL changes.
 
 Note: this lane is being worked by both Codex and Claude Code concurrently this week (Buna's call). Each session overwrites this file per the working agreement, so treat it as a merge point, not a single author's log — read `status/log/` for the full narrative if something here looks incomplete.
 
