@@ -16,6 +16,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Clientflow",
   description: "Client and project management for a web design studio.",
+  icons: {
+    icon: "/crm-light-logo-grey.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

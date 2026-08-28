@@ -1,15 +1,15 @@
 # CURRENT — web UI lane (Agent B)
 
-Last updated: 2026-08-27 17:32 by Claude Code — analytics KPI grid pattern in dark mode
+Last updated: 2026-08-28 16:29 by Codex — Clientflow browser tab icon
 
 ## Current task
 
-- Restored the graph-paper square grid pattern on the Analytics KPI strip in dark mode. The dark rule used the `background` shorthand, which cleared the `background-image` gradients the light rule draws; it now sets `background-color` and re-declares the same crossing linear-gradients, with the dark grid-line colour bumped to `rgb(255 255 255 / 0.05)` so it is visible against the card.
-- Follow-up: removed the hairline border from the dark Analytics KPI strip per Buna.
+- Replaced the default Next.js triangle browser-tab icon with the transparent Clientflow logo. Root metadata now points to `/crm-light-logo-grey.png`, and the old `app/favicon.ico` was removed so it cannot override the new icon.
 
 ## Verification
 
-- `npm run verify`: blocked at pre-existing web-lane ESLint errors in `components/dashboard/settings-content.tsx` and `components/dashboard/stat-tile.tsx` (present on `main` before this change; confirmed via `git stash`). The CSS-only `app/globals.css` change is not implicated.
+- `npm run verify`: typecheck passed, then stopped at two pre-existing web-lane ESLint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`; neither file is part of this change.
+- `npx next build --webpack`: passed. The production build compiled the updated metadata successfully.
 
 ## Current state
 
