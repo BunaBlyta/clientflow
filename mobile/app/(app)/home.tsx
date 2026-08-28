@@ -67,42 +67,45 @@ export default function HomeScreen() {
         <EmptyState icon={FolderKanban} title={t('projects.emptyTitle')} subtitle={t('projects.emptySubtitle')} />
       ) : (
         <>
-          <Card tone="glow" padding={20} style={styles.statusSection}>
-            <View style={styles.statusHeader}>
-              <View style={styles.statusCopy}>
-                <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => projectNavigation.openProject(project.id, 'home')}
+            style={({ pressed }) => pressed && styles.pressed}
+          >
+            <Card tone="glow" padding={20} style={styles.statusSection}>
+              <View style={styles.statusHeader}>
+                <View style={styles.statusCopy}>
+                  <Text style={styles.projectName} numberOfLines={2}>{project.name}</Text>
+                </View>
+                <View style={styles.statusLink}>
+                  <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>
+                    {getProjectStatusLabel(project.status, t)}
+                  </Text>
+                </View>
               </View>
-              <Pressable
-                onPress={() => projectNavigation.openProject(project.id, 'home')}
-                style={({ pressed }) => [styles.statusLink, pressed && styles.pressed]}
-              >
-                <Text style={[styles.statusValue, { color: getProjectStatusMeta(project.status, color, t).text }]}>
-                  {getProjectStatusLabel(project.status, t)}
+              <View style={styles.phaseRow}>
+                <View style={styles.phaseChips}>
+                  {PROJECT_STAGES.slice(1).map((stage, index) => (
+                    <View key={stage} style={[styles.phaseChip, index < phaseCount && styles.phaseChipActive]} />
+                  ))}
+                </View>
+                <Text style={styles.phaseText}>{t('ui.phase', { status: getProjectStatusLabel(phaseStatus ?? 'DISCOVERY', t) })}</Text>
+              </View>
+              <View style={styles.statusDivider} />
+              <View style={styles.dateRow}>
+                <Text style={styles.dateText}>{t('ui.started', { date: formatDate(project.createdAt, language) })}</Text>
+                <Text style={[styles.dateText, styles.dateTextRight]}>
+                  {project.targetLaunchDate
+                    ? t(project.status === 'LAUNCHED' ? 'ui.launched' : 'ui.estimatedLaunch', { date: formatDate(project.targetLaunchDate, language) })
+                    : t('ui.notScheduled')}
                 </Text>
-              </Pressable>
-            </View>
-            <View style={styles.phaseRow}>
-              <View style={styles.phaseChips}>
-                {PROJECT_STAGES.slice(1).map((stage, index) => (
-                  <View key={stage} style={[styles.phaseChip, index < phaseCount && styles.phaseChipActive]} />
-                ))}
               </View>
-              <Text style={styles.phaseText}>{t('ui.phase', { status: getProjectStatusLabel(phaseStatus ?? 'DISCOVERY', t) })}</Text>
-            </View>
-            <View style={styles.statusDivider} />
-            <View style={styles.dateRow}>
-              <Text style={styles.dateText}>{t('ui.started', { date: formatDate(project.createdAt, language) })}</Text>
-              <Text style={[styles.dateText, styles.dateTextRight]}>
-                {project.targetLaunchDate
-                  ? t(project.status === 'LAUNCHED' ? 'ui.launched' : 'ui.estimatedLaunch', { date: formatDate(project.targetLaunchDate, language) })
-                  : t('ui.notScheduled')}
-              </Text>
-            </View>
-            <Pressable onPress={() => projectNavigation.openProject(project.id, 'home')} style={styles.detailsRow}>
-              <Text style={styles.detailsText}>{t('ui.viewDetails')}</Text>
-              <ChevronRight size={18} color={color.accent} />
-            </Pressable>
-          </Card>
+              <View style={styles.detailsRow}>
+                <Text style={styles.detailsText}>{t('ui.viewDetails')}</Text>
+                <ChevronRight size={18} color={color.accent} />
+              </View>
+            </Card>
+          </Pressable>
 
           <View style={styles.statsRow}>
             <Pressable
