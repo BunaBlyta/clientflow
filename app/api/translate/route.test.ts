@@ -10,8 +10,10 @@ vi.mock('@/app/api/_lib/auth', () => ({
   getAuthenticatedUser: mocks.authenticate,
 }));
 
-import { MYMEMORY_REQUEST_TIMEOUT_MS, POST } from './route';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@/app/api/_lib/text-limits';
+import { POST } from './route';
+
+const MYMEMORY_REQUEST_TIMEOUT_MS = 10_000;
 
 function request(body: unknown) {
   return new Request('http://localhost/api/translate', {

@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
     user,
     sendVerificationEmail: vi.fn(),
     userFindUnique: vi.fn(async () => user),
+    clientFindUnique: vi.fn(async () => ({ companyName: null, phone: null })),
     userUpdate: vi.fn(async ({ data }: { data: Partial<typeof user> }) => {
       Object.assign(user, data);
       return user;
@@ -31,6 +32,9 @@ vi.mock('@/app/api/_lib/prisma', () => ({
     user: {
       findUnique: mocks.userFindUnique,
       update: mocks.userUpdate,
+    },
+    client: {
+      findUnique: mocks.clientFindUnique,
     },
   },
 }));
@@ -61,6 +65,7 @@ describe('client verification flow', () => {
     mocks.user.verificationCodeExpiresAt = null;
     mocks.sendVerificationEmail.mockReset();
     mocks.userFindUnique.mockClear();
+    mocks.clientFindUnique.mockClear();
     mocks.userUpdate.mockClear();
   });
 
@@ -75,7 +80,7 @@ describe('client verification flow', () => {
     );
 
     expect(sentResponse.status).toBe(200);
-    expect(await sentResponse.json()).toEqual({ sent: true });
+    expect(await sentResponse.json()).toEqual({ sent: true, registered: true });
     expect(deliveredCode).toMatch(/^\d{6}$/);
 
     const codeHashBeforeCheck = mocks.user.verificationCodeHash;

@@ -4,7 +4,7 @@ import { MAX_TRANSLATION_TEXT_LENGTH } from '@/app/api/_lib/text-limits';
 
 export const runtime = 'nodejs';
 
-export const MYMEMORY_REQUEST_TIMEOUT_MS = 10_000;
+const MYMEMORY_REQUEST_TIMEOUT_MS = 10_000;
 
 const MYMEMORY_ENDPOINT = 'https://api.mymemory.translated.net/get';
 const MYMEMORY_MAX_CHUNK_BYTES = 450;
