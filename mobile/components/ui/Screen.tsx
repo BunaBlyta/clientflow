@@ -7,8 +7,9 @@ import {
   ViewStyle,
   type ScrollViewProps,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { spacing, useTheme } from '../../lib/theme';
+import { TAB_BAR_CLEARANCE } from '../../lib/tab-bar';
 import { AtmosphereBackground } from './AtmosphereBackground';
 
 interface ScreenProps extends PropsWithChildren {
@@ -24,7 +25,6 @@ export const Screen = forwardRef<ScrollView, ScreenProps>(function Screen(
   ref,
 ) {
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const styles = createStyles(color);
   if (!scroll) {
     return (
@@ -42,7 +42,7 @@ export const Screen = forwardRef<ScrollView, ScreenProps>(function Screen(
         style={styles.scroll}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: spacing.xl + insets.bottom },
+          { paddingBottom: TAB_BAR_CLEARANCE },
           contentContainerStyle,
         ]}
         keyboardShouldPersistTaps="handled"

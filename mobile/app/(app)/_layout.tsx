@@ -2,13 +2,12 @@ import { Tabs } from 'expo-router';
 import { Bell, FileText, FolderKanban, House, UserRound } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { Easing, Platform, StyleSheet, View } from 'react-native';
-import { radius, spacing, useTheme } from '../../lib/theme';
+import { radius, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { useDataStore } from '../../store/data-store';
+import { TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT, TAB_BAR_SIDE_MARGIN } from '../../lib/tab-bar';
 
-const TAB_BAR_HEIGHT = 60;
-const TAB_BAR_SIDE_MARGIN = spacing.lg;
 const TAB_TRANSITION_DISTANCE = 24;
 const TAB_TRANSITION_DURATION = 180;
 
@@ -41,16 +40,6 @@ export default function AppTabsLayout() {
   }, [refreshNotifications, token]);
 
   return (
-    // The pill floats via margin, not position:absolute (see the note on
-    // tabBarStyle below), so the tab bar's own reserved band still spans
-    // full width/height behind it — without this wrapper that band paints
-    // with the navigator's own default background, not the app's own.
-    // Deliberately matches the pill's own navBackground (white), not the
-    // page canvas (a very slightly grey off-white, #F5F6F3) — canvas was
-    // never visibly distinct from white when the bar was a flush,
-    // full-width strip, but became a visible seam around the pill's
-    // margins once there was a gap for it to show through.
-    <View style={{ flex: 1, backgroundColor: color.navBackground }}>
     <Tabs
       detachInactiveScreens={false}
       screenOptions={{
@@ -71,30 +60,48 @@ export default function AppTabsLayout() {
             easing: Easing.out(Easing.cubic),
           },
         },
-          // Matches navBackground, not the page canvas — the shift
-          // animation renders scenes absolutely, so this color is what
-          // shows in the sliver behind the tab bar's margin gap, below
-          // where each screen's own Screen/SafeAreaView content ends.
-          sceneStyle: { backgroundColor: color.navBackground },
+        sceneStyle: { backgroundColor: color.background },
         tabBarActiveTintColor: color.navActive,
         tabBarInactiveTintColor: color.navInactive,
         tabBarShowLabel: false,
-        // A floating pill, not the full-width bar this used to be: inset
-        // from both edges and fully rounded. Margin (not position:
-        // absolute) so it still reserves its own layout space below the
-        // scenes — no risk of the last row of content hiding behind it.
+        // A genuine floating overlay, like Instagram/WhatsApp: position
+        // absolute so the pill sits on top of scrolling content rather than
+        // reserving its own dedicated band below it. The bar's own
+        // container has no background (nothing to paint outside the pill
+        // shape itself), so content is visible right up through the
+        // transparent gutter around it — only the opaque, rounded pill body
+        // actually covers anything. Screen.tsx's TAB_BAR_CLEARANCE gives
+        // scroll content enough bottom padding that the last item settles
+        // above the pill instead of ending up hidden underneath it.
         tabBarStyle: {
+          position: 'absolute',
+          // The library's own base style (styles.bottom in BottomTabBar.js)
+          // sets start:0/end:0 — RTL-aware logical properties, which RN
+          // treats as distinct from left/right rather than being
+          // overridden by them. Setting only left/right left start/end at
+          // their library default of 0 (full width) in the flattened
+          // style, fighting with these — set all four so nothing is left
+          // ambiguous between the two property pairs.
+          left: TAB_BAR_SIDE_MARGIN,
+          right: TAB_BAR_SIDE_MARGIN,
+          start: TAB_BAR_SIDE_MARGIN,
+          end: TAB_BAR_SIDE_MARGIN,
+          bottom: TAB_BAR_BOTTOM_MARGIN,
           height: TAB_BAR_HEIGHT,
-          marginHorizontal: TAB_BAR_SIDE_MARGIN,
-          // A small fixed gap regardless of the home-indicator inset — the
-          // pill sits low, close to the edge, rather than scaling its
-          // position with however tall that inset is on a given device.
-          marginBottom: spacing.lg,
           borderRadius: radius.pill,
           backgroundColor: color.navBackground,
           borderTopWidth: 0,
           paddingTop: 0,
           paddingBottom: 0,
+          // bottom-tabs' own internal style computation (BottomTabBar.js)
+          // sets paddingHorizontal: Math.max(insets.left, insets.right)
+          // ahead of this style object in its merge array — left
+          // unaccounted for, that's free to squeeze the row of icons in
+          // from both sides while the pill's own outer width (left/right
+          // above) stays the same, which is what "stretched" actually
+          // was: a fixed-width pill with its content compressed narrower
+          // than its own shape.
+          paddingHorizontal: 0,
           shadowColor: '#000',
           shadowOpacity: 0.12,
           shadowRadius: 16,
@@ -156,7 +163,6 @@ export default function AppTabsLayout() {
         }}
       />
     </Tabs>
-    </View>
   );
 }
 
