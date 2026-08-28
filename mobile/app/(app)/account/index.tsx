@@ -642,6 +642,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       gap: spacing.sm,
       borderRadius: radius.lg,
       backgroundColor: color.dangerBg,
+      // dangerBg alone reads too washed-out against the light canvas — a
+      // border (same tint the badges elsewhere already pair it with)
+      // gives it enough definition to actually look like a button.
+      borderWidth: 1,
+      borderColor: color.dangerBorder,
     },
     logoutSection: {
       gap: spacing.md,
@@ -662,6 +667,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     },
     confirmLogoutButton: {
       backgroundColor: color.dangerBg,
+      borderWidth: 1,
+      borderColor: color.dangerBorder,
     },
     cancelText: {
       fontFamily: fontFamily.medium,
