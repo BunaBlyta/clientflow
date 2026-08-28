@@ -291,7 +291,7 @@ function SettingsRow({
       style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
     >
       <View style={styles.settingsIcon}>
-        {iconNode ?? (Icon ? <Icon size={16} color={color.textSecondary} strokeWidth={1.8} /> : null)}
+        {iconNode ?? (Icon ? <Icon size={16} color={color.accent} strokeWidth={1.8} /> : null)}
       </View>
       <Text style={styles.settingsLabel}>{label}</Text>
       {trailing ? <View style={styles.trailingControl}>{trailing}</View> : (
@@ -331,10 +331,10 @@ function ThemeRowIcon({
   return (
     <View style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={{ position: 'absolute', opacity: sunOpacity }}>
-        <Sun size={16} color={color.textSecondary} strokeWidth={1.8} />
+        <Sun size={16} color={color.accent} strokeWidth={1.8} />
       </Animated.View>
       <Animated.View style={{ position: 'absolute', opacity: moonOpacity }}>
-        <Moon size={16} color={color.textSecondary} strokeWidth={1.8} />
+        <Moon size={16} color={color.accent} strokeWidth={1.8} />
       </Animated.View>
     </View>
   );
@@ -641,12 +641,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       justifyContent: 'center',
       gap: spacing.sm,
       borderRadius: radius.lg,
-      backgroundColor: color.dangerBg,
-      // dangerBg alone reads too washed-out against the light canvas — a
-      // border (same tint the badges elsewhere already pair it with)
-      // gives it enough definition to actually look like a button.
-      borderWidth: 1,
-      borderColor: color.dangerBorder,
+      // dangerBg alone read as too washed-out against the light canvas.
+      // dangerBorder is the same token family, just a shade darker — no
+      // border needed, the fill itself just needed more color.
+      backgroundColor: color.dangerBorder,
     },
     logoutSection: {
       gap: spacing.md,
@@ -666,9 +664,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       backgroundColor: color.surfaceMuted,
     },
     confirmLogoutButton: {
-      backgroundColor: color.dangerBg,
-      borderWidth: 1,
-      borderColor: color.dangerBorder,
+      backgroundColor: color.dangerBorder,
     },
     cancelText: {
       fontFamily: fontFamily.medium,
