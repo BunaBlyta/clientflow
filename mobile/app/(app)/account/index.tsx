@@ -537,7 +537,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: color.surfaceMuted,
+      backgroundColor: color.accentSoft,
     },
     settingsLabel: {
       flex: 1,
