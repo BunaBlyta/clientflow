@@ -263,9 +263,10 @@ export const useDataStore = create<DataState>((set, get) => ({
             notificationPage: preserveLoadedPages
               ? Math.max(state.notificationPage, page.page)
               : page.page,
-            notificationsHasMore: preserveLoadedPages
-              ? state.notificationsHasMore || page.hasMore
-              : page.hasMore,
+            // Always trust the freshest page-1 response rather than OR-ing
+            // with the previous value — a stale `true` from before must not
+            // stick around once the server confirms there's nothing left.
+            notificationsHasMore: page.hasMore,
             notificationsNextCursor: preserveLoadedPages
               ? state.notificationsNextCursor
               : page.nextCursor,
