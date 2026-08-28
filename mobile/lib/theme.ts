@@ -159,11 +159,16 @@ export const textShadow = {
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
 export const radius = { xs: 8, sm: 12, md: 14, lg: 18, xl: 18, pill: 999 } as const;
 export const fontFamily = {
-  regular: 'Georgia',
-  medium: 'Georgia',
-  semibold: 'Georgia',
-  bold: 'Georgia',
-  serif: 'Georgia',
+  regular: 'Figtree_400Regular',
+  medium: 'Figtree_500Medium',
+  semibold: 'Figtree_600SemiBold',
+  bold: 'Figtree_700Bold',
+  // Headings used a separate serif (Georgia) for an editorial look; per
+  // 2026-08-28 direction, Figtree replaces it everywhere, headings
+  // included — this token is kept (rather than removed) so call sites
+  // don't need touching, it just now resolves to the same family at the
+  // heavier of the two weights the design direction allows for headings.
+  serif: 'Figtree_600SemiBold',
 } as const;
 // A wider spread than a typical scale on purpose: meta/caption stay small and
 // quiet so heading and hero sizes read as a real jump, not a nudge.
