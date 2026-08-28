@@ -225,7 +225,7 @@ export default function AccountScreen() {
             pressed && styles.pressed,
           ]}
         >
-        <LogOut size={16} color={color.danger} />
+        <LogOut size={16} color={styles.primaryLogoutText.color} />
         <Text style={styles.primaryLogoutText}>{t('account.logOut')}</Text>
       </Pressable>
 
