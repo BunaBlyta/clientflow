@@ -12,7 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/auth-store';
 import { I18nProvider } from '../lib/i18n';
-import { ThemeProvider } from '../lib/theme';
+import { ThemeProvider, useTheme } from '../lib/theme';
 import { NotificationCoordinator } from '../lib/notification-coordinator';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -56,9 +56,15 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { color } = useTheme();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    // Neither this Stack nor the (app) tabs group below it ever customized
+    // React Navigation's default theme, so contentStyle fell back to its
+    // built-in ~#F2F2F2 grey — invisible while every bar was flush and
+    // full-bleed, but exposed as a strip in any gap once the tab bar became
+    // an inset pill with margin around it (see app/(app)/_layout.tsx).
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.navBackground } }}>
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>

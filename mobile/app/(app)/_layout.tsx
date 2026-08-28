@@ -41,6 +41,16 @@ export default function AppTabsLayout() {
   }, [refreshNotifications, token]);
 
   return (
+    // The pill floats via margin, not position:absolute (see the note on
+    // tabBarStyle below), so the tab bar's own reserved band still spans
+    // full width/height behind it — without this wrapper that band paints
+    // with the navigator's own default background, not the app's own.
+    // Deliberately matches the pill's own navBackground (white), not the
+    // page canvas (a very slightly grey off-white, #F5F6F3) — canvas was
+    // never visibly distinct from white when the bar was a flush,
+    // full-width strip, but became a visible seam around the pill's
+    // margins once there was a gap for it to show through.
+    <View style={{ flex: 1, backgroundColor: color.navBackground }}>
     <Tabs
       detachInactiveScreens={false}
       screenOptions={{
@@ -61,7 +71,11 @@ export default function AppTabsLayout() {
             easing: Easing.out(Easing.cubic),
           },
         },
-          sceneStyle: { backgroundColor: color.canvas },
+          // Matches navBackground, not the page canvas — the shift
+          // animation renders scenes absolutely, so this color is what
+          // shows in the sliver behind the tab bar's margin gap, below
+          // where each screen's own Screen/SafeAreaView content ends.
+          sceneStyle: { backgroundColor: color.navBackground },
         tabBarActiveTintColor: color.navActive,
         tabBarInactiveTintColor: color.navInactive,
         tabBarShowLabel: false,
@@ -75,7 +89,7 @@ export default function AppTabsLayout() {
           // A small fixed gap regardless of the home-indicator inset — the
           // pill sits low, close to the edge, rather than scaling its
           // position with however tall that inset is on a given device.
-          marginBottom: spacing.sm,
+          marginBottom: spacing.lg,
           borderRadius: radius.pill,
           backgroundColor: color.navBackground,
           borderTopWidth: 0,
@@ -94,12 +108,13 @@ export default function AppTabsLayout() {
           alignItems: 'center',
           justifyContent: 'center',
         },
-        // Zeroes out bottom-tabs' built-in icon margin, which is sized to
-        // leave room for a label underneath — with tabBarShowLabel false
-        // that margin has nothing to balance against and pushes the icon
-        // off-center inside the pill.
+        // Zeroes out bottom-tabs' built-in icon margin (sized to leave room
+        // for a label underneath, which no longer renders), then nudges the
+        // icon down a few px from dead-center — sitting exactly in the
+        // geometric middle of the pill read as slightly too high.
         tabBarIconStyle: {
-          margin: 0,
+          marginTop: 10,
+          marginBottom: 0,
         },
       }}
     >
@@ -141,6 +156,7 @@ export default function AppTabsLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
 
