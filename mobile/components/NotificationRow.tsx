@@ -1,9 +1,9 @@
 import {
-  Archive,
   ArchiveRestore,
   Bell,
   CreditCard,
   FileText,
+  LibraryBig,
   MessageSquare,
   Milestone,
   ShieldCheck,
@@ -90,7 +90,7 @@ export function NotificationRow({
     : invoiceDescription !== null
       ? getLocalizedNotificationText(notification, t, { invoiceDescription: translatedContent }).body
       : localized.body;
-  const ArchiveIcon = notification.archived ? ArchiveRestore : Archive;
+  const ArchiveIcon = notification.archived ? ArchiveRestore : LibraryBig;
 
   return (
     <View style={[styles.row, isLast && styles.lastRow]}>
@@ -207,10 +207,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.textMuted,
   },
   archiveButton: {
+    alignSelf: 'flex-start',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.xs,
-    minHeight: 32,
+    height: 32,
     width: 28,
   },
   archivePressed: {
