@@ -1,11 +1,10 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
-import { CheckCircle2, Lock, XCircle } from 'lucide-react-native';
+import { CheckCircle2, Lock } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -17,10 +16,10 @@ import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../../../
 import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
-import { ApiError, checkoutRequest } from '../../../../../../lib/api';
+import { checkoutRequest } from '../../../../../../lib/api';
 import { AppBackButton } from '../../../../../../components/OriginBackButton';
 
-type Step = 'select' | 'processing' | 'success' | 'failed';
+type Step = 'select' | 'processing' | 'success';
 
 const PAYMENT_STATUS_ATTEMPTS = 8;
 const PAYMENT_STATUS_DELAY_MS = 1500;
@@ -54,76 +53,49 @@ export default function CheckoutScreen() {
   }
 
   const [step, setStep] = useState<Step>('select');
-  const [message, setMessage] = useState<string | null>(null);
-  const [checkingStatus, setCheckingStatus] = useState(false);
   const statusCheckInFlight = useRef(false);
 
   async function refreshAfterReturn() {
     if (!token || !invoiceId || statusCheckInFlight.current) return;
     statusCheckInFlight.current = true;
-    setCheckingStatus(true);
 
     try {
       for (let attempt = 0; attempt < PAYMENT_STATUS_ATTEMPTS; attempt += 1) {
         const live = await refreshInvoice(invoiceId, token, true);
         const latest = useDataStore.getState().invoiceById(invoiceId);
 
-        if (!live) {
-          setMessage(t('checkout.couldNotCheck'));
-          return;
-        }
+        if (!live) return;
 
         if (latest?.status === 'PAID') {
-          setMessage(null);
           setStep('success');
           return;
         }
 
-        if (latest?.status === 'FAILED') {
-          setMessage(t('checkout.notConfirmedRetry'));
-          setStep('failed');
-          return;
-        }
+        if (latest?.status !== 'PAYMENT_PENDING') return;
 
         if (attempt < PAYMENT_STATUS_ATTEMPTS - 1) {
           await new Promise((resolve) => setTimeout(resolve, PAYMENT_STATUS_DELAY_MS));
         }
       }
-
-      // Stripe redirects before the webhook necessarily reaches the API. Keep
-      // the screen recoverable if the webhook is delayed. The user can retry
-      // from here; the invoice remains protected by the server-side webhook
-      // state transition.
-      setMessage(t('checkout.notConfirmedRetry'));
-      setStep('failed');
+    } catch {
+      // Checkout handoff stays neutral if Stripe or the API cannot be checked.
+      // The invoice screen remains available through the back button.
     } finally {
       statusCheckInFlight.current = false;
-      setCheckingStatus(false);
     }
   }
 
   async function handlePay() {
-    if (!token) {
-      setMessage(t('checkout.sessionExpired'));
-      setStep('failed');
-      return;
-    }
     setStep('processing');
-    setMessage(null);
+    if (!token) return;
+
     try {
       const response = await checkoutRequest(invoiceId, token);
       await Linking.openURL(response.checkoutUrl);
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        await refreshAfterReturn();
-        setMessage(t('checkout.alreadyPaid'));
-      } else if (error instanceof ApiError && error.status === 503) {
-        setMessage(t('checkout.unavailable'));
-        setStep('failed');
-      } else {
-        setMessage(t('checkout.paymentFailed'));
-        setStep('failed');
-      }
+    } catch {
+      // Never replace the secure-checkout handoff with a declined state. A
+      // reconciliation check can still promote a confirmed payment to success.
+      await refreshAfterReturn();
     }
   }
 
@@ -134,13 +106,9 @@ export default function CheckoutScreen() {
   useEffect(() => {
     if (step !== 'processing') return;
     if (invoice?.status === 'PAID') {
-      setMessage(null);
       setStep('success');
-    } else if (invoice?.status === 'FAILED') {
-      setMessage(t('checkout.notConfirmedRetry'));
-      setStep('failed');
     }
-  }, [invoice?.status, step, t]);
+  }, [invoice?.status, step]);
 
   useEffect(() => {
     let wasBackgrounded = false;
@@ -207,9 +175,6 @@ export default function CheckoutScreen() {
           <Text style={styles.centerSubtitle}>
             {t('checkout.confirmingSubheading')}
           </Text>
-          {checkingStatus && (
-            <ActivityIndicator color={color.accent} style={{ marginTop: spacing.lg }} />
-          )}
         </View>
       )}
 
@@ -226,26 +191,6 @@ export default function CheckoutScreen() {
             onPress={returnToInvoice}
           />
         </View>
-      )}
-
-      {step === 'failed' && (
-        <View style={styles.centerState}>
-          <XCircle size={40} color={color.danger} />
-          <Text style={styles.centerTitle}>{t('checkout.declined')}</Text>
-          <Text style={styles.centerSubtitle}>
-            {message || t('checkout.declinedSubheading')}
-          </Text>
-          <View style={{ height: spacing.lg }} />
-          <Button label={t('common.retry')} onPress={() => setStep('select')} />
-          <View style={{ height: spacing.sm }} />
-          <Pressable onPress={returnToInvoice}>
-            <Text style={styles.backLink}>{t('checkout.returnToInvoice')}</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {message && step !== 'failed' && step !== 'success' && (
-        <Text style={styles.message}>{message}</Text>
       )}
     </Screen>
   );
@@ -352,19 +297,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     textAlign: 'center',
     marginTop: spacing.sm,
     lineHeight: 19,
-  },
-  backLink: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accentText,
-    textAlign: 'center',
-  },
-  message: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.caption,
-    color: color.warning,
-    textAlign: 'center',
-    marginTop: spacing.lg,
   },
   notFound: {
     color: color.textPrimary,
