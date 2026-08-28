@@ -11,6 +11,7 @@ import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { useEffect, useState } from 'react';
+import { useSingleFire } from '../../../lib/use-single-fire';
 
 export default function ProjectsListScreen() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function ProjectsListScreen() {
   const projects = useDataStore(useShallow((s) => s.projects));
   const refreshProjects = useDataStore((s) => s.refreshProjects);
   const [loading, setLoading] = useState(true);
+  const openProject = useSingleFire((id: string) => router.push(`/projects/${id}`));
 
   useEffect(() => {
     if (!token) {
@@ -62,7 +64,7 @@ export default function ProjectsListScreen() {
                 key={project.id}
                 project={project}
                 index={index}
-                onPress={() => router.push(`/projects/${project.id}`)}
+                onPress={() => openProject(project.id)}
               />
             ))}
           </View>

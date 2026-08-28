@@ -13,6 +13,7 @@ import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
+import { useSingleFire } from '../../../lib/use-single-fire';
 
 export default function InvoicesScreen() {
   const navigation = useNavigation() as unknown as {
@@ -21,6 +22,9 @@ export default function InvoicesScreen() {
       params: { invoiceId: string; id: string; tab: 'invoices' },
     ) => void;
   };
+  const openInvoice = useSingleFire((invoiceId: string, projectId: string) =>
+    navigation.navigate('[invoiceId]', { invoiceId, id: projectId, tab: 'invoices' }),
+  );
   const { color } = useTheme();
   const { language, t } = useI18n();
   const styles = createStyles(color);
@@ -91,13 +95,7 @@ export default function InvoicesScreen() {
               <InvoiceRow
                 key={invoice.id}
                 invoice={invoice}
-                onPress={() =>
-                  navigation.navigate('[invoiceId]', {
-                    invoiceId: invoice.id,
-                    id: invoice.projectId,
-                    tab: 'invoices',
-                  })
-                }
+                onPress={() => openInvoice(invoice.id, invoice.projectId)}
               />
             ))}
           </View>

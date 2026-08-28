@@ -8,11 +8,13 @@ import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import type { LucideIcon } from 'lucide-react-native';
+import { useSingleFire } from '../../../lib/use-single-fire';
 
 export default function AccountScreen() {
   const client = useAuthStore((s) => s.client);
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
+  const navigateTo = useSingleFire((href: Parameters<typeof router.push>[0]) => router.push(href));
   const { color, mode, setMode, isTransitioning } = useTheme();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [languageOptionsVisible, setLanguageOptionsVisible] = useState(false);
@@ -127,13 +129,13 @@ export default function AccountScreen() {
         <SettingsRow
           icon={SquarePen}
           label={t('account.editProfile')}
-          onPress={() => router.push('/account/edit-profile')}
+          onPress={() => navigateTo('/account/edit-profile')}
           styles={styles}
         />
         <SettingsRow
           icon={KeyRound}
           label={t('account.changePassword')}
-          onPress={() => router.push('/account/change-password')}
+          onPress={() => navigateTo('/account/change-password')}
           styles={styles}
           last
         />
@@ -186,7 +188,7 @@ export default function AccountScreen() {
         <SettingsRow
           icon={CircleHelp}
           label={t('ui.helpSupport')}
-          onPress={() => router.push('/account/help-support')}
+          onPress={() => navigateTo('/account/help-support')}
           styles={styles}
           last
         />

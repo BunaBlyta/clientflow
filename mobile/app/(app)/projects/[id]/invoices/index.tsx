@@ -12,10 +12,12 @@ import { useDataStore } from '../../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '../../../../../store/auth-store';
 import { AppBackButton } from '../../../../../components/OriginBackButton';
+import { useSingleFire } from '../../../../../lib/use-single-fire';
 
 export default function ProjectInvoicesScreen() {
   const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
+  const navigateTo = useSingleFire((href: Parameters<typeof router.push>[0]) => router.push(href));
   const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
@@ -83,7 +85,7 @@ export default function ProjectInvoicesScreen() {
             key={invoice.id}
             invoice={invoice}
             onPress={() =>
-              router.push(
+              navigateTo(
                 tab === 'notifications'
                   ? `/notifications/projects/${id}/invoices/${invoice.id}?tab=notifications`
                   : `/projects/${id}/invoices/${invoice.id}`,

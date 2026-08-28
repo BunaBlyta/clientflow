@@ -17,6 +17,7 @@ import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../
 import { useI18n } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth-store';
 import { useDataStore } from '../../../store/data-store';
+import { useSingleFire } from '../../../lib/use-single-fire';
 import type { Notification } from '../../../lib/types';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -88,7 +89,7 @@ export default function NotificationsScreen() {
     });
   }, [loadMoreNotifications, notificationsHasMore, notificationsLoading, notificationsLoadingMore, t, token]);
 
-  async function handlePress(notification: Notification) {
+  const handlePress = useSingleFire(async (notification: Notification) => {
     if (markingId || markingAll || archivingId) return;
     setActionError('');
     if (!notification.read && token) {
@@ -117,7 +118,7 @@ export default function NotificationsScreen() {
         tab: 'notifications',
       });
     }
-  }
+  });
 
   async function handleMarkAll() {
     if (!token || markingAll || archivingId || unread === 0) return;

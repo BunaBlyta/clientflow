@@ -17,6 +17,7 @@ import { useI18n } from '../../../../../../lib/i18n';
 import { useDataStore } from '../../../../../../store/data-store';
 import { useAuthStore } from '../../../../../../store/auth-store';
 import { AppBackButton } from '../../../../../../components/OriginBackButton';
+import { useSingleFire } from '../../../../../../lib/use-single-fire';
 
 export default function InvoiceDetailScreen() {
   const { id, invoiceId, source, tab } = useLocalSearchParams<{
@@ -42,6 +43,23 @@ export default function InvoiceDetailScreen() {
   const [unreachable, setUnreachable] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentCheckMessage, setPaymentCheckMessage] = useState<string | null>(null);
+  const openCheckout = useSingleFire(() => {
+    if (tab === 'invoices') {
+      navigation.navigate('[invoiceId]/checkout', {
+        invoiceId,
+        id,
+        tab: 'invoices',
+      });
+      return;
+    }
+    if (tab === 'notifications') {
+      router.push(
+        `/notifications/projects/${id}/invoices/${invoiceId}/checkout?tab=notifications`,
+      );
+      return;
+    }
+    router.push(`/projects/${id}/invoices/${invoiceId}/checkout`);
+  });
 
   async function handleCheckPayment() {
     if (!token || !invoiceId) return;
@@ -170,23 +188,7 @@ export default function InvoiceDetailScreen() {
       {payable && (
         <Button
           label={invoice.status === 'FAILED' ? t('invoices.retryPayment') : t('invoices.payNow')}
-          onPress={() => {
-            if (tab === 'invoices') {
-              navigation.navigate('[invoiceId]/checkout', {
-                invoiceId,
-                id,
-                tab: 'invoices',
-              });
-              return;
-            }
-            if (tab === 'notifications') {
-              router.push(
-                `/notifications/projects/${id}/invoices/${invoiceId}/checkout?tab=notifications`,
-              );
-              return;
-            }
-            router.push(`/projects/${id}/invoices/${invoiceId}/checkout`);
-          }}
+          onPress={openCheckout}
         />
       )}
     </Screen>

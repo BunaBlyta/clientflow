@@ -19,6 +19,7 @@ import { Card } from '../../../../components/ui/Card';
 import { RadialRing } from '../../../../components/ui/RadialRing';
 import { PROJECT_STAGES, getProjectStatusLabel, getProjectStatusMeta } from '../../../../lib/status';
 import { AppBackButton } from '../../../../components/OriginBackButton';
+import { useSingleFire } from '../../../../lib/use-single-fire';
 
 export default function ProjectDetailScreen() {
   const { id, source, tab } = useLocalSearchParams<{
@@ -48,6 +49,7 @@ export default function ProjectDetailScreen() {
   const projectRoute = tab === 'notifications'
     ? `/notifications/projects/${id}` as const
     : `/projects/${id}` as const;
+  const navigateTo = useSingleFire((href: Parameters<typeof router.push>[0]) => router.push(href));
 
   useEffect(() => {
     if (!id || !token) {
@@ -138,7 +140,7 @@ export default function ProjectDetailScreen() {
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.notes')}</Text>
           <Pressable
             onPress={() =>
-              router.push(
+              navigateTo(
                 tab === 'notifications'
                   ? `${projectRoute}/notes?tab=notifications`
                   : `${projectRoute}/notes`,
@@ -174,7 +176,7 @@ export default function ProjectDetailScreen() {
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.invoices')}</Text>
           <Pressable
             onPress={() =>
-              router.push(
+              navigateTo(
                 tab === 'notifications'
                   ? `${projectRoute}/invoices?tab=notifications`
                   : `${projectRoute}/invoices`,
@@ -201,7 +203,7 @@ export default function ProjectDetailScreen() {
                   key={invoice.id}
                   invoice={invoice}
                   onPress={() =>
-                    router.push(
+                    navigateTo(
                       tab === 'notifications'
                         ? `${projectRoute}/invoices/${invoice.id}?tab=notifications`
                         : `${projectRoute}/invoices/${invoice.id}`,
