@@ -537,7 +537,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: color.accentSoft,
+      // Lighter than the shared accentSoft token on purpose (that one's
+      // used for avatar/language-row/notification treatments elsewhere
+      // that shouldn't change) — a low-alpha wash of the accent color
+      // instead of a flat tint.
+      backgroundColor: `${color.accent}1F`,
     },
     settingsLabel: {
       flex: 1,
