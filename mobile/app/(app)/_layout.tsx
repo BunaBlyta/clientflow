@@ -2,7 +2,6 @@ import { Tabs } from 'expo-router';
 import { Bell, FileText, FolderKanban, House, UserRound } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { Easing, Platform, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radius, spacing, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
@@ -33,7 +32,6 @@ const tabSceneStyleInterpolator = ({
 export default function AppTabsLayout() {
   const { color } = useTheme();
   const { t } = useI18n();
-  const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
   const refreshNotifications = useDataStore((s) => s.refreshNotifications);
   const unread = useDataStore((s) => s.unreadNotificationCount());
@@ -74,10 +72,10 @@ export default function AppTabsLayout() {
         tabBarStyle: {
           height: TAB_BAR_HEIGHT,
           marginHorizontal: TAB_BAR_SIDE_MARGIN,
-          // Full insets.bottom (the home-indicator clearance) left too much
-          // air below the pill — it only needs enough of that clearance to
-          // keep clear of the gesture area, not all of it.
-          marginBottom: insets.bottom > 0 ? Math.max(insets.bottom - spacing.sm, spacing.xs) : spacing.xs,
+          // A small fixed gap regardless of the home-indicator inset — the
+          // pill sits low, close to the edge, rather than scaling its
+          // position with however tall that inset is on a given device.
+          marginBottom: spacing.xs,
           borderRadius: radius.pill,
           backgroundColor: color.navBackground,
           borderTopWidth: 0,
