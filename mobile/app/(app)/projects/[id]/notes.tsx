@@ -2,11 +2,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  Easing,
   Keyboard,
-  type KeyboardEvent,
-  type KeyboardEventEasing,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -28,7 +25,7 @@ import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
-import { TAB_BAR_BOTTOM_MARGIN, TAB_BAR_SIDE_MARGIN } from '../../../../lib/tab-bar';
+import { TAB_BAR_SIDE_MARGIN } from '../../../../lib/tab-bar';
 import type { Note as NoteType } from '../../../../lib/types';
 
 // The visible affordance is the input capsule itself (the composer row has no
@@ -51,30 +48,6 @@ type OutboxItem = {
   // store note while the "Sent" tick is still showing.
   noteId?: string;
 };
-
-// Maps iOS's reported keyboard animation curve to an Easing function so our
-// manual composer animation matches the system keyboard's curve, not just
-// its duration.
-function keyboardEasing(easing: KeyboardEventEasing): (value: number) => number {
-  switch (easing) {
-    case 'easeIn':
-      return Easing.in(Easing.ease);
-    case 'easeOut':
-      return Easing.out(Easing.ease);
-    case 'linear':
-      return Easing.linear;
-    case 'easeInEaseOut':
-    case 'keyboard':
-    default:
-      // iOS reports the system keyboard's motion as 'keyboard' (its private
-      // UIViewAnimationCurve 7) or 'easeInEaseOut'. Neither is a symmetric
-      // ease-in-out — that has near-zero velocity at the start, which reads
-      // as a stall before the composer moves. The keyboard itself starts
-      // at full speed and decelerates smoothly into place, like something
-      // being shoved and settling — a plain ease-out cubic.
-      return Easing.out(Easing.cubic);
-  }
-}
 
 export default function ProjectNotesScreen() {
   const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
@@ -113,51 +86,35 @@ export default function ProjectNotesScreen() {
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
 
-  // The composer sits where the tab bar would (that bar is hidden on this
-  // screen — see app/(app)/_layout.tsx): same side margins, same resting gap
-  // from the bottom edge. It's a normal flex sibling *below* the ScrollView,
-  // so the list already ends where the composer begins; `composerLift` is an
-  // animated spacer rendered below the composer, and growing it shrinks the
-  // ScrollView and carries the composer up in one motion — the whole screen
-  // above the keyboard, nothing left below the composer. `height` is a layout
-  // prop, so this runs on the JS driver — driven straight off the keyboard
-  // event, it tracks the system keyboard's duration/curve.
-  const composerLift = useRef(new Animated.Value(TAB_BAR_BOTTOM_MARGIN)).current;
-
+  // Keep the newest message in view whenever the keyboard opens — the list has
+  // just been shortened by the KeyboardAvoidingView, so without this the last
+  // message can end up behind the composer on a long thread.
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    const animate = (event: KeyboardEvent, toValue: number) => {
-      Animated.timing(composerLift, {
-        toValue,
-        duration: event.duration > 10 ? event.duration : 250,
-        easing: keyboardEasing(event.easing),
-        useNativeDriver: false,
-      }).start();
-    };
-
-    const showSub = Keyboard.addListener('keyboardWillShow', (event) => {
-      // Keyboard height plus a small breathing gap so the composer sits just
-      // above the keyboard rather than jammed against it.
-      animate(event, event.endCoordinates.height + spacing.md);
-      // Follow the newest message up with the keyboard, animated in step.
-      requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
-    });
-    const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
-      animate(event, TAB_BAR_BOTTOM_MARGIN);
-    });
+    const moveSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      },
+    );
+    // iOS's "will show" event starts the movement in sync with the keyboard,
+    // then "did show" corrects the final offset after the native layout
+    // animation has fully settled. Without that second anchor, long threads
+    // can stop partway through the final message and require a manual scroll.
+    const settleSub = Platform.OS === 'ios'
+      ? Keyboard.addListener('keyboardDidShow', () => {
+          requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: false }));
+        })
+      : null;
 
     return () => {
-      showSub.remove();
-      hideSub.remove();
+      moveSub.remove();
+      settleSub?.remove();
     };
-  }, [composerLift]);
+  }, []);
 
-  // Scroll to the newest message when the message count changes. The keyboard
-  // opening scrolls separately (in the keyboardWillShow handler, animated in
-  // step), so this stays off resize events. One rAF wasn't consistently
-  // enough time for the composer's post-send shrink to land in a completed
-  // layout pass, so this waits two.
+  // Scroll to the newest message when the message count changes. One rAF wasn't
+  // consistently enough time for the composer's post-send shrink to land in a
+  // completed layout pass, so this waits two.
   useEffect(() => {
     if (notes.length === 0 && outbox.length === 0) return;
     let secondFrame = 0;
@@ -294,142 +251,154 @@ export default function ProjectNotesScreen() {
     <View style={styles.flex}>
       <AtmosphereBackground />
       {notesHeader}
-      <ScrollView
-        ref={scrollRef}
+      {/* Pushes the whole message list + composer up as one when the keyboard
+          opens, the way every chat app does — nothing is left underneath the
+          keyboard. */}
+      <KeyboardAvoidingView
         style={styles.flex}
-        contentContainerStyle={[
-          styles.content,
-          // Pin messages to the bottom, just above the composer, the way a
-          // chat does. When the keyboard opens and the list's height shrinks,
-          // the messages ride up with its bottom edge instead of being left
-          // stranded near the top. (No effect once the thread is long enough
-          // to fill the viewport — it just scrolls.)
-          { flexGrow: 1, justifyContent: 'flex-end' },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-        showsVerticalScrollIndicator={false}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {unreachable && (
-          <Text style={styles.error}>
-            {t('notes.unavailable')}
-          </Text>
-        )}
-        {!hasContent ? (
-          <View style={styles.emptyState}>
-            <EmptyState
-              icon={MessageSquare}
-              title={t('notes.noNotes')}
-              subtitle={t('notes.emptySubtitle')}
-            />
-          </View>
-        ) : (
-          <View style={styles.timeline}>
-            {timelineNotes.map((note, index) => {
-              const previousNote = timelineNotes[index - 1];
-              const noteDate = formatDate(note.createdAt, language);
-              const showDate = !previousNote || formatDate(previousNote.createdAt, language) !== noteDate;
-
-              return (
-                <View key={note.id}>
-                  {showDate && (
-                    <View style={styles.dateSeparator}>
-                      <View style={styles.dateLine} />
-                      <Text style={styles.dateLabel}>{noteDate}</Text>
-                      <View style={styles.dateLine} />
-                    </View>
-                  )}
-                  <NoteBubble
-                    note={note}
-                    showAuthor={
-                      !previousNote ||
-                      previousNote.authorRole === 'SYSTEM' ||
-                      previousNote.authorRole !== note.authorRole ||
-                      previousNote.authorName !== note.authorName
-                    }
-                  />
-                </View>
-              );
-            })}
-            {outbox.map((item, index) => {
-              const previous = index === 0
-                ? timelineNotes[timelineNotes.length - 1]
-                : undefined;
-              const itemDate = formatDate(item.createdAt, language);
-              const showDate =
-                index === 0 &&
-                (!previous || formatDate(previous.createdAt, language) !== itemDate);
-              return (
-                <View key={item.tempId}>
-                  {showDate && (
-                    <View style={styles.dateSeparator}>
-                      <View style={styles.dateLine} />
-                      <Text style={styles.dateLabel}>{itemDate}</Text>
-                      <View style={styles.dateLine} />
-                    </View>
-                  )}
-                  <NoteBubble
-                    note={outboxNote(item)}
-                    showAuthor={false}
-                    status={item.state}
-                    onRetry={() => handleRetry(item)}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.composerWrap}>
-        <Pressable
-          style={styles.composer}
-          // Tapping anywhere on the pill (its padding, the gap beside the
-          // field) focuses the field, so the keyboard and composer come up.
-          onPress={() => inputRef.current?.focus()}
-          accessibilityRole="none"
+        <ScrollView
+          ref={scrollRef}
+          style={styles.flex}
+          // KeyboardAvoidingView changes this viewport's height as the
+          // keyboard moves. Re-anchor after that real layout pass so a long
+          // thread follows the composer immediately instead of keeping its
+          // old scroll offset and making the user scroll the latest messages
+          // back into view by hand.
+          onLayout={() => {
+            requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: false }));
+          }}
+          contentContainerStyle={[
+            styles.content,
+            // Pin messages to the bottom, just above the composer, the way a
+            // chat does. When the keyboard opens and the list's height shrinks,
+            // the messages ride up with its bottom edge instead of being left
+            // stranded near the top. (No effect once the thread is long enough
+            // to fill the viewport — it just scrolls.)
+            { flexGrow: 1, justifyContent: 'flex-end' },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
         >
-          {postError ? <Text style={styles.error}>{postError}</Text> : null}
-          <View style={styles.composerRow}>
-            <TextInput
-              ref={inputRef}
-              value={draft}
-              onChangeText={(value) => {
-                setDraft(value);
-                if (forceCompact) setForceCompact(false);
-                if (postError) setPostError('');
-              }}
-              placeholder={t('notes.writeNote')}
-              placeholderTextColor={color.textMuted}
-              style={[
-                styles.input,
-                forceCompact && { height: NOTE_INPUT_MIN_HEIGHT },
-              ]}
-              multiline
-              scrollEnabled
-            />
-            <Pressable
-              onPress={handleSend}
-              disabled={!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.send')}
-              style={({ pressed }) => [
-                styles.sendButton,
-                (!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH) && styles.sendButtonDisabled,
-                pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && styles.sendButtonPressed,
-              ]}
-            >
-              {/* The glyph's ink sits low-left of its box; nudge it back to
-                  the optical centre of the circle. */}
-              <Send size={16} color={color.textOnAccent} style={styles.sendIcon} />
-            </Pressable>
-          </View>
-        </Pressable>
-      </View>
-      {/* Grows with the keyboard, carrying the composer up and shrinking the
-          list so the newest message stays visible. Rests at the tab bar's
-          bottom margin so the pill sits exactly where the tab bar would. */}
-      <Animated.View style={{ height: composerLift }} />
+          {unreachable && (
+            <Text style={styles.error}>
+              {t('notes.unavailable')}
+            </Text>
+          )}
+          {!hasContent ? (
+            <View style={styles.emptyState}>
+              <EmptyState
+                icon={MessageSquare}
+                title={t('notes.noNotes')}
+                subtitle={t('notes.emptySubtitle')}
+              />
+            </View>
+          ) : (
+            <View style={styles.timeline}>
+              {timelineNotes.map((note, index) => {
+                const previousNote = timelineNotes[index - 1];
+                const noteDate = formatDate(note.createdAt, language);
+                const showDate = !previousNote || formatDate(previousNote.createdAt, language) !== noteDate;
+
+                return (
+                  <View key={note.id}>
+                    {showDate && (
+                      <View style={styles.dateSeparator}>
+                        <View style={styles.dateLine} />
+                        <Text style={styles.dateLabel}>{noteDate}</Text>
+                        <View style={styles.dateLine} />
+                      </View>
+                    )}
+                    <NoteBubble
+                      note={note}
+                      showAuthor={
+                        !previousNote ||
+                        previousNote.authorRole === 'SYSTEM' ||
+                        previousNote.authorRole !== note.authorRole ||
+                        previousNote.authorName !== note.authorName
+                      }
+                    />
+                  </View>
+                );
+              })}
+              {outbox.map((item, index) => {
+                const previous = index === 0
+                  ? timelineNotes[timelineNotes.length - 1]
+                  : undefined;
+                const itemDate = formatDate(item.createdAt, language);
+                const showDate =
+                  index === 0 &&
+                  (!previous || formatDate(previous.createdAt, language) !== itemDate);
+                return (
+                  <View key={item.tempId}>
+                    {showDate && (
+                      <View style={styles.dateSeparator}>
+                        <View style={styles.dateLine} />
+                        <Text style={styles.dateLabel}>{itemDate}</Text>
+                        <View style={styles.dateLine} />
+                      </View>
+                    )}
+                    <NoteBubble
+                      note={outboxNote(item)}
+                      showAuthor={false}
+                      status={item.state}
+                      onRetry={() => handleRetry(item)}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={styles.composerWrap}>
+          <Pressable
+            style={styles.composer}
+            // Tapping anywhere on the pill (its padding, the gap beside the
+            // field) focuses the field, so the keyboard and composer come up.
+            onPress={() => inputRef.current?.focus()}
+            accessibilityRole="none"
+          >
+            {postError ? <Text style={styles.error}>{postError}</Text> : null}
+            <View style={styles.composerRow}>
+              <TextInput
+                ref={inputRef}
+                value={draft}
+                onChangeText={(value) => {
+                  setDraft(value);
+                  if (forceCompact) setForceCompact(false);
+                  if (postError) setPostError('');
+                }}
+                placeholder={t('notes.writeNote')}
+                placeholderTextColor={color.textMuted}
+                style={[
+                  styles.input,
+                  forceCompact && { height: NOTE_INPUT_MIN_HEIGHT },
+                ]}
+                multiline
+                scrollEnabled
+              />
+              <Pressable
+                onPress={handleSend}
+                disabled={!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.send')}
+                style={({ pressed }) => [
+                  styles.sendButton,
+                  (!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH) && styles.sendButtonDisabled,
+                  pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && styles.sendButtonPressed,
+                ]}
+              >
+                {/* The glyph's ink sits low-left of its box; nudge it back to
+                    the optical centre of the circle. */}
+                <Send size={16} color={color.textOnAccent} style={styles.sendIcon} />
+              </Pressable>
+            </View>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -526,12 +495,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     justifyContent: 'center',
     minHeight: 260,
   },
-  // Aligns with the tab bar's pill: same side margin from the screen edge,
-  // same resting gap from the bottom. `paddingTop` keeps it clear of the last
-  // message above it.
+  // Same side margin from the screen edge as the tab bar pill. `paddingTop`
+  // keeps it clear of the last message; `paddingBottom` is the gap below the
+  // capsule — at rest it's the distance from the screen edge, and with the
+  // keyboard open (KeyboardAvoidingView) it's the gap above the keyboard.
   composerWrap: {
     paddingHorizontal: TAB_BAR_SIDE_MARGIN,
     paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
   // No background or shadow of its own — like the tab bar's container, only
   // the control inside it (the input capsule) is a visible surface.
