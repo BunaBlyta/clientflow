@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-31 by Codex — fixed the Projects tab reopening its remembered nested chat screen. Tapping Projects now explicitly opens the project list, and leaving the tab resets its nested stack so future presses cannot restore an old detail/chat route. Programmatic actions from Home, Invoices, and Notifications can still open a specific project screen. Mobile typecheck passes. Root verification still stops on the two existing web-lane lint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`. Prior mobile work remains documented below.
+Last updated: 2026-08-31 by Codex — diagnosed the reported `KeyRound` crash as a stale Expo bundle. The current account screen no longer uses `KeyRound` at the reported line; restarting Expo with `npx expo start -c` is required to discard the old bundle. Mobile typecheck passes. Root verification still stops on the two existing web-lane lint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`. Prior mobile work remains documented below.
 
 ## Latest verification
 
