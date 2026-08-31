@@ -29,7 +29,11 @@ import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
-import { TAB_BAR_SIDE_MARGIN } from '../../../../lib/tab-bar';
+import {
+  TAB_BAR_BOTTOM_MARGIN,
+  TAB_BAR_HEIGHT,
+  TAB_BAR_SIDE_MARGIN,
+} from '../../../../lib/tab-bar';
 import type { Note as NoteType } from '../../../../lib/types';
 
 // The visible affordance is the input capsule itself (the composer row has no
@@ -38,6 +42,14 @@ import type { Note as NoteType } from '../../../../lib/types';
 const NOTE_INPUT_MIN_HEIGHT = 44;
 const NOTE_INPUT_MAX_HEIGHT = 168;
 const NOTE_SEND_BUTTON_SIZE = NOTE_INPUT_MIN_HEIGHT;
+// Align the resting compose controls to the floating nav pill's centerline,
+// even though the controls themselves are intentionally shorter than the nav,
+// then lift them one grid step for a little more breathing room at the edge.
+const NOTE_COMPOSER_REST_BOTTOM =
+  TAB_BAR_BOTTOM_MARGIN + (TAB_BAR_HEIGHT - NOTE_INPUT_MIN_HEIGHT) / 2 + spacing.xs;
+const NOTE_COMPOSER_KEYBOARD_GAP = spacing.md;
+const NOTE_KEYBOARD_LIFT_ADJUSTMENT =
+  NOTE_COMPOSER_REST_BOTTOM - NOTE_COMPOSER_KEYBOARD_GAP;
 
 // How long a delivered message keeps showing its "Sent" tick before the
 // confirmed store note quietly takes its place.
@@ -123,14 +135,18 @@ export default function ProjectNotesScreen() {
       const keyboardHeight = forceHidden
         ? 0
         : Math.max(screenHeight - event.endCoordinates.screenY, 0);
+      // At rest the composer is centered against the taller nav pill. While
+      // typing it keeps the tighter messaging-app gap it had before, so the
+      // extra resting inset is removed from the keyboard travel distance.
+      const chatOffset = Math.max(keyboardHeight - NOTE_KEYBOARD_LIFT_ADJUSTMENT, 0);
 
       if (event.duration <= 10) {
-        chatLift.setValue(-keyboardHeight);
+        chatLift.setValue(-chatOffset);
         return;
       }
 
       Animated.timing(chatLift, {
-        toValue: -keyboardHeight,
+        toValue: -chatOffset,
         duration: event.duration,
         easing: keyboardMotionEasing(event.easing),
         useNativeDriver: true,
@@ -414,6 +430,7 @@ export default function ProjectNotesScreen() {
                 placeholderTextColor={color.textMuted}
                 style={[
                   styles.input,
+                  styles.composerControlShadow,
                   forceCompact && { height: NOTE_INPUT_MIN_HEIGHT },
                 ]}
                 multiline
@@ -426,6 +443,7 @@ export default function ProjectNotesScreen() {
                 accessibilityLabel={t('common.send')}
                 style={({ pressed }) => [
                   styles.sendButton,
+                  styles.composerControlShadow,
                   (!draft.trim() || draft.length > MAX_NOTE_BODY_LENGTH) && styles.sendButtonDisabled,
                   pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && styles.sendButtonPressed,
                 ]}
@@ -546,7 +564,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
   composerWrap: {
     paddingHorizontal: TAB_BAR_SIDE_MARGIN,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
+    paddingBottom: NOTE_COMPOSER_REST_BOTTOM,
   },
   // No background or shadow of its own — like the tab bar's container, only
   // the control inside it (the input capsule) is a visible surface.
@@ -557,6 +575,13 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  composerControlShadow: {
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 12,
   },
   input: {
     flex: 1,
