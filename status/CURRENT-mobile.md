@@ -1,6 +1,6 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-31 by Codex — refactored the Account controls and stabilized the theme-toggle handoff. Mobile typecheck passes. Root verification still stops on the two existing web-lane lint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`. Prior mobile work remains documented below.
+Last updated: 2026-08-31 by Codex — stopped CRM-originated note events from refetching and replacing the notes timeline while that project’s notes screen is open. Notifications still arrive live, while the notes list refreshes normally on mount/focus. Mobile typecheck passes. Root verification still stops on the two existing web-lane lint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`. Prior mobile work remains documented below.
 
 ## Account refactor
 
@@ -26,6 +26,7 @@ Note: this lane is being worked by both Codex and Claude Code concurrently this 
 
 ## Current state
 
+- When staff post a note from the CRM, the mobile realtime coordinator no longer refreshes the active project notes screen or jumps its scroll position. It still merges the notification, and screens outside the open conversation keep their project/note preview data current. Reopening or returning to the conversation performs the normal authoritative notes fetch.
 - Projects-tab task paths are clean after commit; the unrelated pre-existing `mobile/app.json` encryption declaration remains uncommitted. `npx tsc --noEmit` passes from `mobile/`.
 - Projects tab navigation (`app/(app)/_layout.tsx`): nested project detail/chat/invoice screens no longer become the tab's remembered landing screen. `popToTopOnBlur` resets the nested stack whenever the user leaves Projects, and the tab-press listener explicitly navigates to `projects/index`, including when a stale chat route was already remembered before the fix loaded. Direct actions elsewhere in the app that intentionally navigate into a project detail remain unaffected.
 - Project chat (notes) composer: the bottom tab bar stays hidden on both notes routes, and the composer remains a normal sibling directly below the bottom-pinned message list. Its resting bottom inset is calculated from `TAB_BAR_BOTTOM_MARGIN + (TAB_BAR_HEIGHT - NOTE_INPUT_MIN_HEIGHT) / 2 + spacing.xs`, putting the 44px compose controls 4px above the 60px nav pill's centerline. The input and send button share the nav pill's restrained black shadow (`0.12` opacity, `16px` blur, `6px` downward offset, Android elevation `12`) without adding a surrounding container box. The iOS native keyboard transform subtracts the extra resting inset, preserving the tighter 12px keyboard gap; Android continues using native window resize. Both endpoints and the shadow are verified in the iPhone 17 simulator, and temporary verification code was removed before commit.

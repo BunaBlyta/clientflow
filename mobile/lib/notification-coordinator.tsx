@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Realtime } from 'ably';
 import type { InboundMessage, TokenDetails, TokenRequest } from 'ably';
-import { useRootNavigationState, useRouter } from 'expo-router';
+import { usePathname, useRootNavigationState, useRouter } from 'expo-router';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { InAppNotificationBanner } from '../components/InAppNotificationBanner';
@@ -100,6 +100,15 @@ export function notificationTarget(data: PushNotificationData): string | null {
   if (projectId) return `/notifications/projects/${projectId}?tab=notifications`;
   return null;
 }
+
+function isProjectNotesPath(pathname: string, projectId: string): boolean {
+  const encodedProjectId = encodeURIComponent(projectId);
+  return (
+    pathname === `/projects/${encodedProjectId}/notes` ||
+    pathname === `/notifications/projects/${encodedProjectId}/notes`
+  );
+}
+
 function dataFromNotification(notification: Notifications.Notification) {
   return parsePushNotificationData(notification.request.content.data);
 }
@@ -110,6 +119,7 @@ function dataFromResponse(response: Notifications.NotificationResponse) {
 
 export function NotificationCoordinator() {
   const router = useRouter();
+  const pathname = usePathname();
   const navigationState = useRootNavigationState();
   const token = useAuthStore((state) => state.token);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -123,7 +133,12 @@ export function NotificationCoordinator() {
   const clientUserId = useAuthStore((state) => state.client?.id);
   const markNotificationRead = useDataStore((state) => state.markNotificationRead);
   const processedResponses = useRef(new Set<string>());
+  const pathnameRef = useRef(pathname);
   const [bannerNotification, setBannerNotification] = useState<AppNotification | null>(null);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     if (Platform.OS === 'web' || !isAuthenticated || !token) return;
@@ -264,7 +279,17 @@ export function NotificationCoordinator() {
         invoiceId: notification.invoiceId,
         requestId: notification.requestId,
       };
-      if (data.projectId) void refreshProject(data.projectId, authToken);
+      // A full notes refetch replaces the active timeline and makes the page
+      // visibly jump when a staff member posts from the CRM. Keep the
+      // notification live, but leave the open conversation alone; its next
+      // focus/mount still fetches the authoritative list.
+      const viewingProjectNotes =
+        data.type === 'NEW_NOTE' &&
+        data.projectId !== undefined &&
+        isProjectNotesPath(pathnameRef.current, data.projectId);
+      if (data.projectId && !viewingProjectNotes) {
+        void refreshProject(data.projectId, authToken);
+      }
       if (data.invoiceId) {
         void refreshInvoice(
           data.invoiceId,
@@ -272,7 +297,7 @@ export function NotificationCoordinator() {
           data.type === 'PAYMENT_SUCCEEDED' || data.type === 'PAYMENT_FAILED',
         );
       }
-      if (data.type === 'NEW_NOTE' && data.projectId) {
+      if (data.type === 'NEW_NOTE' && data.projectId && !viewingProjectNotes) {
         void refreshNotes(authToken, data.projectId);
       }
     };
