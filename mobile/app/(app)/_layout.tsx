@@ -155,8 +155,21 @@ export default function AppTabsLayout() {
         name="projects"
         options={{
           title: t('tabs.projects'),
+          // Project detail/chat/invoice screens live inside this tab's nested
+          // stack. Never leave one of them as the tab's remembered landing
+          // screen after the user navigates elsewhere.
+          popToTopOnBlur: true,
           tabBarIcon: ({ focused }) => <TabIcon icon={FolderKanban} focused={focused} color={color} />,
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (event) => {
+            // Also reset on the press itself. `popToTopOnBlur` handles future
+            // tab switches, while this clears any nested route already
+            // remembered before that option mounted (including deep links).
+            event.preventDefault();
+            navigation.navigate('projects', { screen: 'index' });
+          },
+        })}
       />
       <Tabs.Screen
         name="invoices"
