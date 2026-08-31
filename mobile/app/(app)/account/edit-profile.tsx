@@ -1,13 +1,15 @@
-import { SquarePen } from 'lucide-react-native';
+import { ChevronRight, KeyRound, SquarePen } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppBackButton, useOriginBack } from '../../../components/OriginBackButton';
 import { Button } from '../../../components/ui/Button';
 import { Screen } from '../../../components/ui/Screen';
 import { TextField } from '../../../components/ui/TextField';
 import { ApiError, updateProfileRequest, type ProfileUpdateInput } from '../../../lib/api';
 import { useI18n } from '../../../lib/i18n';
-import { fontFamily, fontSize, spacing, useTheme } from '../../../lib/theme';
+import { fontFamily, fontSize, radius, spacing, useTheme } from '../../../lib/theme';
+import { useSingleFire } from '../../../lib/use-single-fire';
 import { useAuthStore } from '../../../store/auth-store';
 
 // Requires a leading "+" so the number always carries its country code —
@@ -30,6 +32,8 @@ export default function EditProfileScreen() {
   // This screen lives in the Account stack, so a plain pop returns to the
   // Account list — no origin routing needed.
   const { goBack } = useOriginBack();
+  const router = useRouter();
+  const openChangePassword = useSingleFire(() => router.push('/account/change-password'));
 
   const client = useAuthStore((s) => s.client);
   const token = useAuthStore((s) => s.token);
@@ -130,6 +134,21 @@ export default function EditProfileScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Button label={t('common.save')} onPress={handleSave} loading={saving} />
       </View>
+
+      <View style={styles.securitySection}>
+        <Text style={styles.sectionLabel}>{t('account.security')}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={openChangePassword}
+          style={({ pressed }) => [styles.passwordRow, pressed && styles.pressed]}
+        >
+          <View style={styles.passwordLeading}>
+            <KeyRound size={17} color={color.textSecondary} strokeWidth={1.8} />
+            <Text style={styles.passwordLabel}>{t('account.changePassword')}</Text>
+          </View>
+          <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+        </Pressable>
+      </View>
     </Screen>
   );
 }
@@ -170,6 +189,42 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
       fontSize: fontSize.meta,
       color: color.danger,
       marginBottom: spacing.lg,
+    },
+    securitySection: {
+      marginTop: spacing.xl,
+    },
+    sectionLabel: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.meta,
+      color: color.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: spacing.sm,
+      paddingHorizontal: spacing.xs,
+    },
+    passwordRow: {
+      minHeight: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+      paddingHorizontal: spacing.lg,
+      backgroundColor: color.surface,
+      borderRadius: radius.lg,
+    },
+    passwordLeading: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    passwordLabel: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.body,
+      color: color.textPrimary,
+    },
+    pressed: {
+      opacity: 0.72,
     },
   });
 }

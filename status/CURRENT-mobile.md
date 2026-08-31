@@ -1,6 +1,15 @@
 # CURRENT — mobile lane (Agent C)
 
-Last updated: 2026-08-31 by Codex — diagnosed the reported `KeyRound` crash as a stale Expo bundle. The current account screen no longer uses `KeyRound` at the reported line; restarting Expo with `npx expo start -c` is required to discard the old bundle. Mobile typecheck passes. Root verification still stops on the two existing web-lane lint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`. Prior mobile work remains documented below.
+Last updated: 2026-08-31 by Codex — refactored the Account controls and stabilized the theme-toggle handoff. Mobile typecheck passes. Root verification still stops on the two existing web-lane lint errors in `components/dashboard/date-picker.tsx` and `components/dashboard/settings-content.tsx`. Prior mobile work remains documented below.
+
+## Account refactor
+
+- The profile card is now the Edit Profile entry point, with more vertical room and a separator between identity and contact details.
+- Account controls are grouped into Preferences and Support. Language keeps its original inline expansion; Change Password moved into a Security section at the bottom of Edit Profile.
+- Cards have subtle light-mode outlines. Ordinary row icons, including the sun/moon beside Theme, are grey; the toggle's internal icons remain green and Log out remains red.
+- The toggle's floating screenshot copy is pre-measured and mounted before its original spring begins. Its track, thumb surface, and internal icons share one animation value, avoiding early and midpoint handoff jumps.
+- The pre-existing `mobile/app.json` encryption declaration remains unrelated and uncommitted.
+- `npx tsc --noEmit` and `git diff --check` pass. Root `npm run verify` passes typecheck, then stops at the two existing web-lane lint errors noted above; two existing `<img>` warnings also remain.
 
 ## Latest verification
 

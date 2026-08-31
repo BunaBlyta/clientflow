@@ -1,6 +1,16 @@
-import { CalendarDays, CircleHelp, ChevronRight, Globe2, KeyRound, LogOut, Mail, Moon, Phone, SquarePen, Sun } from 'lucide-react-native';
+import {
+  CalendarDays,
+  ChevronRight,
+  CircleHelp,
+  Globe2,
+  LogOut,
+  Mail,
+  Moon,
+  Phone,
+  Sun,
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { formatMonthYear } from '../../../lib/format';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   LayoutAnimation,
@@ -12,13 +22,20 @@ import {
   UIManager,
   View,
 } from 'react-native';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Screen } from '../../../components/ui/Screen';
-import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../../lib/theme';
+import { formatMonthYear } from '../../../lib/format';
 import { useI18n } from '../../../lib/i18n';
+import {
+  fontFamily,
+  fontSize,
+  radius,
+  spacing,
+  textShadow,
+  useTheme,
+} from '../../../lib/theme';
+import { useSingleFire } from '../../../lib/use-single-fire';
 import { useAuthStore } from '../../../store/auth-store';
 import type { LucideIcon } from 'lucide-react-native';
-import { useSingleFire } from '../../../lib/use-single-fire';
 
 // LayoutAnimation needs to be opted into on Android; iOS has it on by
 // default. No-op if already enabled or unsupported.
@@ -27,15 +44,15 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function AccountScreen() {
-  const client = useAuthStore((s) => s.client);
-  const logout = useAuthStore((s) => s.logout);
+  const client = useAuthStore((state) => state.client);
+  const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
   const navigateTo = useSingleFire((href: Parameters<typeof router.push>[0]) => router.push(href));
   const { color, mode, setMode, isTransitioning } = useTheme();
+  const { language, setLanguage, t } = useI18n();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [languageOptionsVisible, setLanguageOptionsVisible] = useState(false);
   const [themeToggleMode, setThemeToggleMode] = useState(mode);
-  const { language, setLanguage, t } = useI18n();
   const styles = createStyles(color, mode);
 
   useEffect(() => {
@@ -80,12 +97,14 @@ export default function AccountScreen() {
   } | null>(null);
 
   function toggleLanguageOptions() {
-    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    LayoutAnimation.configureNext(
+      LayoutAnimation.create(
+        220,
+        LayoutAnimation.Types.easeInEaseOut,
+        LayoutAnimation.Properties.opacity,
+      ),
+    );
     setLanguageOptionsVisible((visible) => !visible);
-  }
-
-  function handleLogout() {
-    setConfirmingLogout(true);
   }
 
   function confirmLogout() {
@@ -93,208 +112,220 @@ export default function AccountScreen() {
     void logout();
   }
 
-  function handleThemeToggle() {
-    const nextMode = themeToggleMode === 'dark' ? 'light' : 'dark';
+  function measureThemeToggle() {
     toggleRef.current?.measureInWindow((x, y, width, height) => {
       setFloatingToggleRect({ x, y, width, height });
     });
+  }
+
+  function handleThemeToggle() {
+    const nextMode = themeToggleMode === 'dark' ? 'light' : 'dark';
+    measureThemeToggle();
     setThemeToggleMode(nextMode);
     setMode(nextMode);
   }
 
   return (
     <>
-    <Screen
-      contentContainerStyle={{
-        paddingBottom: 64 + spacing.sm,
-      }}
-    >
-      <Text style={styles.heading}>{t('account.title')}</Text>
+      <Screen contentContainerStyle={styles.screenContent}>
+        <Text style={styles.heading}>{t('account.title')}</Text>
 
-      <View style={styles.profileHeader}>
-        <View style={styles.profileTop}>
-          <View style={styles.avatarWrap}>
-            <Text style={styles.avatarInitial}>
-              {client?.name?.charAt(0).toUpperCase() ?? '?'}
-            </Text>
-          </View>
-          <View style={styles.profileCopy}>
-            <Text style={styles.name} numberOfLines={1}>{client?.name}</Text>
-            {client?.companyName ? (
-              <Text style={styles.company} numberOfLines={1}>{client.companyName}</Text>
-            ) : null}
-          </View>
-        </View>
-        <View style={styles.profileDetails}>
-          <View style={styles.detailRow}>
-            <Mail size={14} color={color.textMuted} strokeWidth={1.8} />
-            <Text style={styles.detailText} numberOfLines={1}>{client?.email}</Text>
-          </View>
-          {client?.phone ? (
-            <View style={styles.detailRow}>
-              <Phone size={14} color={color.textMuted} strokeWidth={1.8} />
-              <Text style={styles.detailText} numberOfLines={1}>{client.phone}</Text>
-            </View>
-          ) : null}
-          {client?.memberSince ? (
-            <View style={styles.detailRow}>
-              <CalendarDays size={14} color={color.textMuted} strokeWidth={1.8} />
-              <Text style={styles.detailText} numberOfLines={1}>
-                {t('account.memberSince', { date: formatMonthYear(client.memberSince, language) })}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('account.editProfile')}
+          onPress={() => navigateTo('/account/edit-profile')}
+          style={({ pressed }) => [styles.profileHeader, pressed && styles.pressed]}
+        >
+          <View style={styles.profileTop}>
+            <View style={styles.avatarWrap}>
+              <Text style={styles.avatarInitial}>
+                {client?.name?.charAt(0).toUpperCase() ?? '?'}
               </Text>
             </View>
-          ) : null}
-        </View>
-      </View>
-
-      <PreferenceGroup label={t('account.profile')}>
-        <SettingsRow
-          icon={SquarePen}
-          label={t('account.editProfile')}
-          onPress={() => navigateTo('/account/edit-profile')}
-          styles={styles}
-        />
-        <SettingsRow
-          icon={KeyRound}
-          label={t('account.changePassword')}
-          onPress={() => navigateTo('/account/change-password')}
-          styles={styles}
-          last
-        />
-      </PreferenceGroup>
-
-      <PreferenceGroup label={t('ui.settings')}>
-        <SettingsRow
-          icon={Globe2}
-          label={t('account.language')}
-          value={language === 'en' ? t('account.english') : language === 'sq' ? t('account.albanian') : t('account.german')}
-          onPress={toggleLanguageOptions}
-          styles={styles}
-        />
-        {languageOptionsVisible && (
-          <View style={styles.languageControl}>
-          <LanguageOption
-            code="EN"
-            label={t('account.english')}
-            selected={language === 'en'}
-            onPress={() => setLanguage('en')}
-            styles={styles}
-          />
-          <LanguageOption
-            code="SQ"
-            label={t('account.albanian')}
-            selected={language === 'sq'}
-            onPress={() => setLanguage('sq')}
-            styles={styles}
-          />
-          <LanguageOption
-            code="DE"
-            label={t('account.german')}
-            selected={language === 'de'}
-            onPress={() => setLanguage('de')}
-            styles={styles}
-          />
-          </View>
-        )}
-        <SettingsRow
-          iconNode={<ThemeRowIcon progress={toggleProgress} color={color} />}
-          label={t('account.theme')}
-          onPress={handleThemeToggle}
-          styles={styles}
-          trailing={
-            <View ref={toggleRef} collapsable={false}>
-              <ThemeToggle progress={toggleProgress} styles={styles} />
+            <View style={styles.profileCopy}>
+              <Text style={styles.name} numberOfLines={1}>
+                {client?.name}
+              </Text>
+              {client?.companyName ? (
+                <Text style={styles.company} numberOfLines={1}>
+                  {client.companyName}
+                </Text>
+              ) : null}
             </View>
-          }
-        />
-        <SettingsRow
-          icon={CircleHelp}
-          label={t('ui.helpSupport')}
-          onPress={() => navigateTo('/account/help-support')}
-          styles={styles}
-          last
-        />
-      </PreferenceGroup>
+            <ChevronRight size={18} color={color.textMuted} strokeWidth={1.8} />
+          </View>
 
-      <Pressable
-          onPress={handleLogout}
+          <View style={styles.profileDetails}>
+            <View style={styles.detailRow}>
+              <Mail size={14} color={color.textMuted} strokeWidth={1.8} />
+              <Text style={styles.detailText} numberOfLines={1}>
+                {client?.email}
+              </Text>
+            </View>
+            {client?.phone ? (
+              <View style={styles.detailRow}>
+                <Phone size={14} color={color.textMuted} strokeWidth={1.8} />
+                <Text style={styles.detailText} numberOfLines={1}>
+                  {client.phone}
+                </Text>
+              </View>
+            ) : null}
+            {client?.memberSince ? (
+              <View style={styles.detailRow}>
+                <CalendarDays size={14} color={color.textMuted} strokeWidth={1.8} />
+                <Text style={styles.detailText} numberOfLines={1}>
+                  {t('account.memberSince', { date: formatMonthYear(client.memberSince, language) })}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </Pressable>
+
+        <SettingsSection label={t('account.preferences')} styles={styles}>
+          <SettingsRow
+            icon={Globe2}
+            label={t('account.language')}
+            value={
+              language === 'en'
+                ? t('account.english')
+                : language === 'sq'
+                  ? t('account.albanian')
+                  : t('account.german')
+            }
+            onPress={toggleLanguageOptions}
+            styles={styles}
+          />
+          {languageOptionsVisible ? (
+            <View style={styles.languageControl}>
+              <LanguageOption
+                code="EN"
+                label={t('account.english')}
+                selected={language === 'en'}
+                onPress={() => setLanguage('en')}
+                styles={styles}
+              />
+              <LanguageOption
+                code="SQ"
+                label={t('account.albanian')}
+                selected={language === 'sq'}
+                onPress={() => setLanguage('sq')}
+                styles={styles}
+              />
+              <LanguageOption
+                code="DE"
+                label={t('account.german')}
+                selected={language === 'de'}
+                onPress={() => setLanguage('de')}
+                styles={styles}
+              />
+            </View>
+          ) : null}
+          <SettingsRow
+            iconNode={<ThemeRowIcon progress={toggleProgress} color={color.textSecondary} />}
+            label={t('account.theme')}
+            onPress={handleThemeToggle}
+            styles={styles}
+            trailing={
+              <View ref={toggleRef} collapsable={false} onLayout={measureThemeToggle}>
+                <ThemeToggle progress={toggleProgress} styles={styles} />
+              </View>
+            }
+            last
+          />
+        </SettingsSection>
+
+        <SettingsSection label={t('account.support')} styles={styles}>
+          <SettingsRow
+            icon={CircleHelp}
+            label={t('ui.helpSupport')}
+            onPress={() => navigateTo('/account/help-support')}
+            styles={styles}
+            last
+          />
+        </SettingsSection>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setConfirmingLogout(true)}
           disabled={confirmingLogout}
           style={({ pressed }) => [
-            styles.logoutButton,
-            confirmingLogout && styles.logoutButtonDisabled,
+            styles.logoutRow,
+            confirmingLogout && styles.disabled,
             pressed && styles.pressed,
           ]}
         >
-        <LogOut size={16} color={styles.primaryLogoutText.color} />
-        <Text style={styles.primaryLogoutText}>{t('account.logOut')}</Text>
-      </Pressable>
-
-      <Text style={styles.footer}>{t('account.version')}</Text>
-    </Screen>
-    {isTransitioning && floatingToggleRect ? (
-      <Modal transparent visible animationType="none" statusBarTranslucent>
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: floatingToggleRect.x,
-            top: floatingToggleRect.y,
-            width: floatingToggleRect.width,
-            height: floatingToggleRect.height,
-          }}
-        >
-          <ThemeToggle progress={toggleProgress} styles={styles} />
-        </View>
-      </Modal>
-    ) : null}
-    <Modal
-      transparent
-      visible={confirmingLogout}
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={() => setConfirmingLogout(false)}
-    >
-      <Pressable style={styles.modalBackdrop} onPress={() => setConfirmingLogout(false)}>
-        <Pressable style={styles.modalCard} onPress={() => {}}>
-          <Text style={styles.confirmText}>{t('account.confirmLogOut')}</Text>
-          <View style={styles.confirmActions}>
-            <Pressable
-              onPress={() => setConfirmingLogout(false)}
-              style={({ pressed }) => [
-                styles.confirmButton,
-                styles.cancelButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
-            </Pressable>
-            <Pressable
-              onPress={confirmLogout}
-              style={({ pressed }) => [
-                styles.confirmButton,
-                styles.confirmLogoutButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.logoutText}>{t('account.logMeOut')}</Text>
-            </Pressable>
-          </View>
+          <LogOut size={17} color={color.danger} strokeWidth={1.8} />
+          <Text style={styles.logoutRowText}>{t('account.logOut')}</Text>
         </Pressable>
-      </Pressable>
-    </Modal>
+
+        <Text style={styles.footer}>{t('account.version')}</Text>
+      </Screen>
+
+      {isTransitioning && floatingToggleRect ? (
+        <Modal transparent visible animationType="none" statusBarTranslucent>
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: floatingToggleRect.x,
+              top: floatingToggleRect.y,
+              width: floatingToggleRect.width,
+              height: floatingToggleRect.height,
+            }}
+          >
+            <ThemeToggle progress={toggleProgress} styles={styles} />
+          </View>
+        </Modal>
+      ) : null}
+
+      <Modal
+        transparent
+        visible={confirmingLogout}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setConfirmingLogout(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setConfirmingLogout(false)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <Text style={styles.confirmText}>{t('account.confirmLogOut')}</Text>
+            <View style={styles.confirmActions}>
+              <Pressable
+                onPress={() => setConfirmingLogout(false)}
+                style={({ pressed }) => [styles.confirmButton, styles.cancelButton, pressed && styles.pressed]}
+              >
+                <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmLogout}
+                style={({ pressed }) => [
+                  styles.confirmButton,
+                  styles.confirmLogoutButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.confirmLogoutText}>{t('account.logMeOut')}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </>
   );
 }
 
-function PreferenceGroup({ label, children }: { label: string; children: ReactNode }) {
-  const { color, mode } = useTheme();
-  const styles = createStyles(color, mode);
+function SettingsSection({
+  label,
+  styles,
+  children,
+}: {
+  label: string;
+  styles: ReturnType<typeof createStyles>;
+  children: ReactNode;
+}) {
   return (
-    <View style={styles.preferenceGroup}>
-      <Text style={styles.preferenceLabel}>{label}</Text>
-      <View style={styles.preferenceOptions}>
-        {children}
-      </View>
+    <View style={styles.settingsSection}>
+      <Text style={styles.sectionLabel}>{label}</Text>
+      <View style={styles.sectionRows}>{children}</View>
     </View>
   );
 }
@@ -319,20 +350,28 @@ function SettingsRow({
   trailing?: ReactNode;
 }) {
   const { color } = useTheme();
+
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.settingsRow, last && styles.settingsRowLast, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.settingsRow, !last && styles.settingsRowDivider, pressed && styles.pressed]}
     >
       <View style={styles.settingsLeading}>
         <View style={styles.settingsIcon}>
-          {iconNode ?? (Icon ? <Icon size={16} color={color.accent} strokeWidth={1.8} /> : null)}
+          {iconNode ?? (Icon ? <Icon size={17} color={color.textSecondary} strokeWidth={1.8} /> : null)}
         </View>
         <Text style={styles.settingsLabel}>{label}</Text>
       </View>
-      {trailing ? <View style={styles.trailingControl}>{trailing}</View> : (
+      {trailing ? (
+        <View style={styles.trailingControl}>{trailing}</View>
+      ) : (
         <>
-          {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
+          {value ? (
+            <Text style={styles.settingsValue} numberOfLines={1}>
+              {value}
+            </Text>
+          ) : null}
           <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
         </>
       )}
@@ -354,7 +393,7 @@ function ThemeRowIcon({
   color,
 }: {
   progress: Animated.Value;
-  color: ReturnType<typeof useTheme>['color'];
+  color: string;
 }) {
   const sunOpacity = progress.interpolate({
     inputRange: [0, 0.45, 1],
@@ -367,10 +406,10 @@ function ThemeRowIcon({
   return (
     <View style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={{ position: 'absolute', opacity: sunOpacity }}>
-        <Sun size={16} color={color.accent} strokeWidth={1.8} />
+        <Sun size={16} color={color} strokeWidth={1.8} />
       </Animated.View>
       <Animated.View style={{ position: 'absolute', opacity: moonOpacity }}>
-        <Moon size={16} color={color.accent} strokeWidth={1.8} />
+        <Moon size={16} color={color} strokeWidth={1.8} />
       </Animated.View>
     </View>
   );
@@ -392,8 +431,6 @@ function ThemeToggle({
   progress: Animated.Value;
   styles: ReturnType<typeof createStyles>;
 }) {
-  const { color } = useTheme();
-
   const lightTrackOpacity = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 0],
@@ -418,12 +455,18 @@ function ThemeToggle({
         <Animated.View
           style={[StyleSheet.absoluteFill, { backgroundColor: '#E9ECE7', opacity: lightTrackOpacity }]}
         />
-        <Animated.View style={[styles.themeToggleThumb, { transform: [{ translateX: thumbOffset }] }]}>
+        <Animated.View
+          style={[styles.themeToggleThumb, { transform: [{ translateX: thumbOffset }] }]}
+        >
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A2224' }]} />
+          <Animated.View
+            style={[StyleSheet.absoluteFill, { backgroundColor: '#FFFFFF', opacity: lightTrackOpacity }]}
+          />
           <Animated.View style={[styles.themeToggleIcon, { opacity: sunOpacity }]}>
-            <Sun size={15} color={color.accent} strokeWidth={1.8} />
+            <Sun size={15} color="#1D6F5B" strokeWidth={1.8} />
           </Animated.View>
           <Animated.View style={[styles.themeToggleIcon, { opacity: moonOpacity }]}>
-            <Moon size={15} color={color.accent} strokeWidth={1.8} />
+            <Moon size={15} color="#2FBF9F" strokeWidth={1.8} />
           </Animated.View>
         </Animated.View>
       </View>
@@ -458,21 +501,26 @@ function LanguageOption({
           {code}
         </Text>
       </View>
-      <Text style={[styles.languageOptionText, selected && styles.languageOptionTextSelected]} numberOfLines={1}>
+      <Text
+        style={[styles.languageOptionText, selected && styles.languageOptionTextSelected]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </Pressable>
   );
 }
 
-function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnType<typeof useTheme>['mode']) {
-  // color.danger on its own reads faded in dark mode — a mid-saturation
-  // red on the similarly dark-red dangerBorder fill lacks the punch it
-  // has in light mode against a pale pink fill. White gives real contrast
-  // against the dark fill without needing a new color token; light mode
-  // keeps the original dark-red-on-pale-pink pairing, which already works.
-  const logoutLabelColor = mode === 'dark' ? color.textOnAccent : color.danger;
+function createStyles(
+  color: ReturnType<typeof useTheme>['color'],
+  mode: ReturnType<typeof useTheme>['mode'],
+) {
+  const confirmLogoutColor = mode === 'dark' ? color.textOnAccent : color.danger;
+
   return StyleSheet.create({
+    screenContent: {
+      paddingBottom: 64 + spacing.sm,
+    },
     heading: {
       ...textShadow,
       fontFamily: fontFamily.serif,
@@ -481,11 +529,12 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       marginBottom: spacing.xl,
     },
     profileHeader: {
-      marginBottom: spacing.md,
-      padding: spacing.lg,
+      marginBottom: spacing.lg,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.xl,
       backgroundColor: color.surface,
       borderWidth: 1,
-      borderColor: color.border,
+      borderColor: mode === 'light' ? color.border : 'transparent',
       borderRadius: radius.lg,
     },
     profileTop: {
@@ -496,7 +545,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     avatarWrap: {
       width: 56,
       height: 56,
-      borderRadius: 28,
+      borderRadius: radius.pill,
       backgroundColor: color.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
@@ -523,11 +572,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       marginTop: spacing.xs,
     },
     profileDetails: {
-      marginTop: spacing.lg,
-      paddingTop: spacing.lg,
-      borderTopWidth: StyleSheet.hairlineWidth,
+      marginTop: spacing.xl,
+      paddingTop: spacing.xl,
+      borderTopWidth: 1,
       borderTopColor: color.border,
-      gap: spacing.sm,
+      gap: spacing.md,
     },
     detailRow: {
       flexDirection: 'row',
@@ -541,23 +590,22 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       fontSize: 13,
       color: color.textSecondary,
     },
-    preferenceGroup: {
-      marginBottom: spacing.md,
+    settingsSection: {
+      marginBottom: spacing.lg,
     },
-    preferenceLabel: {
+    sectionLabel: {
       fontFamily: fontFamily.medium,
       fontSize: fontSize.meta,
       color: color.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
-      marginTop: -3,
-      marginBottom: spacing.md,
+      marginBottom: spacing.sm,
+      paddingHorizontal: spacing.xs,
     },
-    preferenceOptions: {
-      gap: 0,
+    sectionRows: {
       backgroundColor: color.surface,
       borderWidth: 1,
-      borderColor: color.border,
+      borderColor: mode === 'light' ? color.border : 'transparent',
       borderRadius: radius.lg,
       overflow: 'hidden',
     },
@@ -565,16 +613,16 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       minHeight: 56,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.md,
-      paddingHorizontal: spacing.md,
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+    },
+    settingsRowDivider: {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: color.border,
     },
-    settingsRowLast: {
-      borderBottomWidth: 0,
-    },
     settingsLeading: {
       flex: 1,
+      minWidth: 0,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
@@ -587,13 +635,14 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     },
     settingsLabel: {
       flex: 1,
-      fontFamily: fontFamily.semibold,
+      fontFamily: fontFamily.medium,
       fontSize: fontSize.body,
       lineHeight: 20,
       color: color.textPrimary,
     },
     settingsValue: {
-      fontFamily: fontFamily.medium,
+      maxWidth: 112,
+      fontFamily: fontFamily.regular,
       fontSize: fontSize.meta,
       color: color.textMuted,
     },
@@ -623,7 +672,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: color.surface,
+      overflow: 'hidden',
     },
     themeToggleIcon: {
       position: 'absolute',
@@ -631,6 +680,36 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       height: 28,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    logoutRow: {
+      minHeight: 52,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.lg,
+      marginTop: spacing.xs,
+      backgroundColor: color.surface,
+      borderWidth: 1,
+      borderColor: mode === 'light' ? color.border : 'transparent',
+      borderRadius: radius.lg,
+    },
+    logoutRowText: {
+      fontFamily: fontFamily.medium,
+      fontSize: fontSize.body,
+      color: color.danger,
+    },
+    disabled: {
+      opacity: 0.45,
+    },
+    footer: {
+      fontFamily: fontFamily.regular,
+      fontSize: fontSize.meta,
+      color: color.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.lg,
+    },
+    pressed: {
+      opacity: 0.72,
     },
     languageControl: {
       gap: 0,
@@ -681,21 +760,6 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     languageOptionTextSelected: {
       color: color.textPrimary,
     },
-    logoutButton: {
-      height: 56,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.sm,
-      borderRadius: radius.lg,
-      // dangerBg alone read as too washed-out against the light canvas.
-      // dangerBorder is the same token family, just a shade darker — no
-      // border needed, the fill itself just needed more color.
-      backgroundColor: color.dangerBorder,
-    },
-    logoutButtonDisabled: {
-      opacity: 0.45,
-    },
     modalBackdrop: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.45)',
@@ -733,31 +797,16 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
       fontSize: fontSize.caption,
       color: color.textSecondary,
     },
-    logoutText: {
+    confirmLogoutText: {
       fontFamily: fontFamily.medium,
       fontSize: fontSize.caption,
-      color: logoutLabelColor,
-    },
-    primaryLogoutText: {
-      fontFamily: fontFamily.medium,
-      fontSize: fontSize.caption,
-      color: logoutLabelColor,
+      color: confirmLogoutColor,
     },
     confirmText: {
       fontFamily: fontFamily.semibold,
       fontSize: fontSize.cardTitle,
       color: color.textPrimary,
       textAlign: 'center',
-    },
-    pressed: {
-      opacity: 0.72,
-    },
-    footer: {
-      fontFamily: fontFamily.regular,
-      fontSize: fontSize.meta,
-      color: color.textMuted,
-      textAlign: 'center',
-      marginTop: spacing.md,
     },
   });
 }
