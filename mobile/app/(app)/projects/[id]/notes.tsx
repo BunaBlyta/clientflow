@@ -2,8 +2,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { MessageSquare, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Dimensions,
+  Easing,
   Keyboard,
-  KeyboardAvoidingView,
+  type KeyboardEvent,
+  type KeyboardEventEasing,
   Platform,
   Pressable,
   ScrollView,
@@ -49,6 +53,25 @@ type OutboxItem = {
   noteId?: string;
 };
 
+function keyboardMotionEasing(easing: KeyboardEventEasing): (value: number) => number {
+  switch (easing) {
+    case 'linear':
+      return Easing.linear;
+    case 'easeIn':
+      return Easing.in(Easing.cubic);
+    case 'easeOut':
+      return Easing.out(Easing.cubic);
+    case 'easeInEaseOut':
+      return Easing.inOut(Easing.cubic);
+    case 'keyboard':
+    default:
+      // iOS exposes its private keyboard curve by name. A decelerating cubic
+      // is the closest Animated equivalent and, unlike a layout animation,
+      // can run entirely on the native driver alongside the keyboard.
+      return Easing.out(Easing.cubic);
+  }
+}
+
 export default function ProjectNotesScreen() {
   const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
   const { color, mode } = useTheme();
@@ -82,35 +105,52 @@ export default function ProjectNotesScreen() {
   const [forceCompact, setForceCompact] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const chatLift = useRef(new Animated.Value(0)).current;
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
 
-  // Keep the newest message in view whenever the keyboard opens — the list has
-  // just been shortened by the KeyboardAvoidingView, so without this the last
-  // message can end up behind the composer on a long thread.
+  // Move the whole chat surface on the native animation driver as soon as iOS
+  // announces the keyboard's next frame. This avoids waiting for a React
+  // layout pass (the visible lag in KeyboardAvoidingView) and keeps the list
+  // and composer locked together throughout the keyboard animation. Android's
+  // window already resizes natively, so it needs no parallel transform.
   useEffect(() => {
-    const moveSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
-      },
-    );
-    // iOS's "will show" event starts the movement in sync with the keyboard,
-    // then "did show" corrects the final offset after the native layout
-    // animation has fully settled. Without that second anchor, long threads
-    // can stop partway through the final message and require a manual scroll.
-    const settleSub = Platform.OS === 'ios'
-      ? Keyboard.addListener('keyboardDidShow', () => {
-          requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: false }));
-        })
-      : null;
+    if (Platform.OS !== 'ios') return;
+
+    const animateToKeyboardFrame = (event: KeyboardEvent, forceHidden = false) => {
+      const screenHeight = Dimensions.get('screen').height;
+      const keyboardHeight = forceHidden
+        ? 0
+        : Math.max(screenHeight - event.endCoordinates.screenY, 0);
+
+      if (event.duration <= 10) {
+        chatLift.setValue(-keyboardHeight);
+        return;
+      }
+
+      Animated.timing(chatLift, {
+        toValue: -keyboardHeight,
+        duration: event.duration,
+        easing: keyboardMotionEasing(event.easing),
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const frameSub = Keyboard.addListener('keyboardWillChangeFrame', (event) => {
+      animateToKeyboardFrame(event);
+    });
+    // A floating/undocked keyboard can report a final frame-change before its
+    // hide event. This fallback guarantees the chat returns exactly to rest.
+    const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
+      animateToKeyboardFrame(event, true);
+    });
 
     return () => {
-      moveSub.remove();
-      settleSub?.remove();
+      frameSub.remove();
+      hideSub.remove();
     };
-  }, []);
+  }, [chatLift]);
 
   // Scroll to the newest message when the message count changes. One rAF wasn't
   // consistently enough time for the composer's post-send shrink to land in a
@@ -251,31 +291,30 @@ export default function ProjectNotesScreen() {
     <View style={styles.flex}>
       <AtmosphereBackground />
       {notesHeader}
-      {/* Pushes the whole message list + composer up as one when the keyboard
-          opens, the way every chat app does — nothing is left underneath the
-          keyboard. */}
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      {/* Clipping the translated surface at the fixed header keeps old
+          messages from sliding over it while the keyboard opens. */}
+      <View style={styles.keyboardViewport}>
+        <Animated.View
+          style={[
+            styles.flex,
+            Platform.OS === 'ios' && { transform: [{ translateY: chatLift }] },
+          ]}
+        >
         <ScrollView
           ref={scrollRef}
           style={styles.flex}
-          // KeyboardAvoidingView changes this viewport's height as the
-          // keyboard moves. Re-anchor after that real layout pass so a long
-          // thread follows the composer immediately instead of keeping its
-          // old scroll offset and making the user scroll the latest messages
-          // back into view by hand.
+          // Initial/message-layout changes still anchor to the newest item.
+          // Keyboard movement itself uses a transform, so the timeline and
+          // composer retain their exact relative positions during the rise.
           onLayout={() => {
             requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: false }));
           }}
           contentContainerStyle={[
             styles.content,
             // Pin messages to the bottom, just above the composer, the way a
-            // chat does. When the keyboard opens and the list's height shrinks,
-            // the messages ride up with its bottom edge instead of being left
-            // stranded near the top. (No effect once the thread is long enough
-            // to fill the viewport — it just scrolls.)
+            // chat does. The native transform preserves that relationship
+            // throughout keyboard movement. (No effect once the thread is long
+            // enough to fill the viewport — it just scrolls.)
             { flexGrow: 1, justifyContent: 'flex-end' },
           ]}
           keyboardShouldPersistTaps="handled"
@@ -398,7 +437,8 @@ export default function ProjectNotesScreen() {
             </View>
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -410,6 +450,10 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
   const separator = mode === 'dark' ? '#454545' : '#D8D8D8';
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: 'transparent' },
+  keyboardViewport: {
+    flex: 1,
+    overflow: 'hidden',
+  },
   content: {
     paddingHorizontal: spacing.lg,
     // Small — the composer is a real sibling below the list now, so it already
@@ -497,8 +541,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
   },
   // Same side margin from the screen edge as the tab bar pill. `paddingTop`
   // keeps it clear of the last message; `paddingBottom` is the gap below the
-  // capsule — at rest it's the distance from the screen edge, and with the
-  // keyboard open (KeyboardAvoidingView) it's the gap above the keyboard.
+  // capsule — at rest it's the distance from the screen edge, and after the
+  // native keyboard lift it's the gap above the keyboard.
   composerWrap: {
     paddingHorizontal: TAB_BAR_SIDE_MARGIN,
     paddingTop: spacing.sm,
