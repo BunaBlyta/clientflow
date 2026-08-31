@@ -28,10 +28,15 @@ import { useDataStore } from '../../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
 import { AppBackButton } from '../../../../components/OriginBackButton';
 import { MAX_NOTE_BODY_LENGTH } from '../../../../lib/api';
+import { TAB_BAR_BOTTOM_MARGIN, TAB_BAR_SIDE_MARGIN } from '../../../../lib/tab-bar';
 import type { Note as NoteType } from '../../../../lib/types';
 
-const NOTE_INPUT_MIN_HEIGHT = 52;
+// The visible affordance is the input capsule itself (the composer row has no
+// background of its own, like the tab bar's container) — this is its resting
+// height and it doubles as the send button's diameter so the two line up.
+const NOTE_INPUT_MIN_HEIGHT = 44;
 const NOTE_INPUT_MAX_HEIGHT = 168;
+const NOTE_SEND_BUTTON_SIZE = NOTE_INPUT_MIN_HEIGHT;
 
 // How long a delivered message keeps showing its "Sent" tick before the
 // confirmed store note quietly takes its place.
@@ -93,7 +98,6 @@ export default function ProjectNotesScreen() {
   const [outbox, setOutbox] = useState<OutboxItem[]>([]);
   const [unreachable, setUnreachable] = useState(false);
   const [postError, setPostError] = useState('');
-  const [inputFocused, setInputFocused] = useState(false);
   // The input otherwise sizes itself to content natively (no JS height
   // state — see the commit that removed the onContentSizeChange-driven
   // version). That's fine for growing, but a native multiline view doesn't
@@ -109,33 +113,22 @@ export default function ProjectNotesScreen() {
   // closest to the composer, like a normal chat timeline.
   const orderedNotes = notes;
 
-  // Lifts the composer above the keyboard by shrinking the whole screen from
-  // the bottom (animated paddingBottom on the root), NOT by transforming the
-  // composer over the list. The composer stays a normal flex sibling below the
-  // ScrollView, so it can never draw on top of a message — the ScrollView
-  // physically ends where the composer begins. Driven straight off the
-  // keyboard event (its own duration + curve), so there's none of the
-  // KeyboardAvoidingView animation-start lag. `paddingBottom` is a layout
-  // prop, so this runs on the JS driver.
-  // A spacer rendered *below* the composer. Growing it pushes the composer
-  // (and shrinks the ScrollView) up above the keyboard, so the composer is
-  // never transformed over the list — the ScrollView physically ends where
-  // the composer begins and can't be covered. The spacer is the composer's
-  // own surface colour, so if the measured lift is a hair off it reads as
-  // the composer extending down rather than a coloured gap.
-  const keyboardPad = useRef(new Animated.Value(0)).current;
-  // This screen sits inside the bottom tab navigator, so the composer's
-  // resting position is above the tab bar, not flush with the screen edge.
-  // We measure the composer's true window position when the keyboard opens
-  // and lift it by exactly the amount the keyboard would otherwise cover —
-  // no assumption about where this screen's root sits.
-  const composerRef = useRef<View>(null);
+  // The composer sits where the tab bar would (that bar is hidden on this
+  // screen — see app/(app)/_layout.tsx): same side margins, same resting gap
+  // from the bottom edge. It's a normal flex sibling *below* the ScrollView,
+  // so the list already ends where the composer begins; `composerLift` is an
+  // animated spacer rendered below the composer, and growing it shrinks the
+  // ScrollView and carries the composer up in one motion — the whole screen
+  // above the keyboard, nothing left below the composer. `height` is a layout
+  // prop, so this runs on the JS driver — driven straight off the keyboard
+  // event, it tracks the system keyboard's duration/curve.
+  const composerLift = useRef(new Animated.Value(TAB_BAR_BOTTOM_MARGIN)).current;
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
     const animate = (event: KeyboardEvent, toValue: number) => {
-      Animated.timing(keyboardPad, {
+      Animated.timing(composerLift, {
         toValue,
         duration: event.duration > 10 ? event.duration : 250,
         easing: keyboardEasing(event.easing),
@@ -144,24 +137,21 @@ export default function ProjectNotesScreen() {
     };
 
     const showSub = Keyboard.addListener('keyboardWillShow', (event) => {
-      const node = composerRef.current;
-      if (!node) return;
-      node.measureInWindow((_x, y, _width, height) => {
-        const overlap = Math.max(y + height - event.endCoordinates.screenY, 0);
-        animate(event, overlap);
-        // Follow the newest message up with the keyboard, animated in step.
-        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
-      });
+      // Keyboard height plus a small breathing gap so the composer sits just
+      // above the keyboard rather than jammed against it.
+      animate(event, event.endCoordinates.height + spacing.md);
+      // Follow the newest message up with the keyboard, animated in step.
+      requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
     });
     const hideSub = Keyboard.addListener('keyboardWillHide', (event) => {
-      animate(event, 0);
+      animate(event, TAB_BAR_BOTTOM_MARGIN);
     });
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, [keyboardPad]);
+  }, [composerLift]);
 
   // Scroll to the newest message when the message count changes. The keyboard
   // opening scrolls separately (in the keyboardWillShow handler, animated in
@@ -309,7 +299,12 @@ export default function ProjectNotesScreen() {
         style={styles.flex}
         contentContainerStyle={[
           styles.content,
-          { flexGrow: 1 },
+          // Pin messages to the bottom, just above the composer, the way a
+          // chat does. When the keyboard opens and the list's height shrinks,
+          // the messages ride up with its bottom edge instead of being left
+          // stranded near the top. (No effect once the thread is long enough
+          // to fill the viewport — it just scrolls.)
+          { flexGrow: 1, justifyContent: 'flex-end' },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -386,10 +381,10 @@ export default function ProjectNotesScreen() {
         )}
       </ScrollView>
 
-      <View ref={composerRef} style={{ backgroundColor: color.surface }}>
+      <View style={styles.composerWrap}>
         <Pressable
           style={styles.composer}
-          // Tapping anywhere on the strip (its padding, the gap beside the
+          // Tapping anywhere on the pill (its padding, the gap beside the
           // field) focuses the field, so the keyboard and composer come up.
           onPress={() => inputRef.current?.focus()}
           accessibilityRole="none"
@@ -408,12 +403,9 @@ export default function ProjectNotesScreen() {
               placeholderTextColor={color.textMuted}
               style={[
                 styles.input,
-                inputFocused && styles.inputFocused,
                 forceCompact && { height: NOTE_INPUT_MIN_HEIGHT },
               ]}
               multiline
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => setInputFocused(false)}
               scrollEnabled
             />
             <Pressable
@@ -427,12 +419,17 @@ export default function ProjectNotesScreen() {
                 pressed && draft.trim().length > 0 && draft.length <= MAX_NOTE_BODY_LENGTH && styles.sendButtonPressed,
               ]}
             >
-              <Send size={16} color={color.textOnAccent} />
+              {/* The glyph's ink sits low-left of its box; nudge it back to
+                  the optical centre of the circle. */}
+              <Send size={16} color={color.textOnAccent} style={styles.sendIcon} />
             </Pressable>
           </View>
         </Pressable>
       </View>
-      <Animated.View style={{ height: keyboardPad, backgroundColor: color.surface }} />
+      {/* Grows with the keyboard, carrying the composer up and shrinking the
+          list so the newest message stays visible. Rests at the tab bar's
+          bottom margin so the pill sits exactly where the tab bar would. */}
+      <Animated.View style={{ height: composerLift }} />
     </View>
   );
 }
@@ -446,7 +443,9 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
   flex: { flex: 1, backgroundColor: 'transparent' },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    // Small — the composer is a real sibling below the list now, so it already
+    // ends where the composer begins; this is just breathing room.
+    paddingBottom: spacing.sm,
   },
   loading: {
     marginTop: spacing.xxl,
@@ -527,49 +526,48 @@ function createStyles(color: ReturnType<typeof useTheme>['color'], mode: ReturnT
     justifyContent: 'center',
     minHeight: 260,
   },
+  // Aligns with the tab bar's pill: same side margin from the screen edge,
+  // same resting gap from the bottom. `paddingTop` keeps it clear of the last
+  // message above it.
+  composerWrap: {
+    paddingHorizontal: TAB_BAR_SIDE_MARGIN,
+    paddingTop: spacing.sm,
+  },
+  // No background or shadow of its own — like the tab bar's container, only
+  // the control inside it (the input capsule) is a visible surface.
   composer: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: color.border,
-    backgroundColor: color.surface,
+    justifyContent: 'center',
   },
   composerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   input: {
     flex: 1,
     minHeight: NOTE_INPUT_MIN_HEIGHT,
+    maxHeight: NOTE_INPUT_MAX_HEIGHT,
+    // Fixed radius (half the resting height) so it's a clean capsule at one
+    // line and a rounded rectangle once it grows, never a swelling stadium.
+    borderRadius: NOTE_INPUT_MIN_HEIGHT / 2,
+    backgroundColor: color.navBackground,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.body,
     color: color.textPrimary,
-    borderRadius: radius.md,
-    // Horizontal and vertical padding both stay >= borderRadius so a long,
-    // scrolled message never slides under the rounded corners — at the very
-    // top and bottom edges the corner curve eats into anything inside the
-    // radius, which was clipping the first and last visible lines of text.
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
     textAlignVertical: 'top',
-    backgroundColor: color.surfaceMuted,
-    maxHeight: NOTE_INPUT_MAX_HEIGHT,
-  },
-  inputFocused: {
-    backgroundColor: color.surface,
   },
   sendButton: {
-    // Square, sized to the composer input's resting height and sharing its
-    // corner radius so the button reads as the same control as the field
-    // beside it rather than a smaller pill floating next to it.
-    width: NOTE_INPUT_MIN_HEIGHT,
-    height: NOTE_INPUT_MIN_HEIGHT,
-    borderRadius: radius.md,
+    width: NOTE_SEND_BUTTON_SIZE,
+    height: NOTE_SEND_BUTTON_SIZE,
+    borderRadius: NOTE_SEND_BUTTON_SIZE / 2,
     backgroundColor: color.accent,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sendIcon: {
+    transform: [{ translateX: 1 }],
   },
   sendButtonPressed: {
     opacity: 0.78,

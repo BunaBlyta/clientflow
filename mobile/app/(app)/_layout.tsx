@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import { Bell, FileText, FolderKanban, House, UserRound } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { Easing, Platform, StyleSheet, View } from 'react-native';
@@ -42,6 +42,13 @@ export default function AppTabsLayout() {
   const token = useAuthStore((s) => s.token);
   const refreshNotifications = useDataStore((s) => s.refreshNotifications);
   const unread = useDataStore((s) => s.unreadNotificationCount());
+  // The project chat (notes) screen puts its own composer pill where the tab
+  // bar sits, so the tab bar is hidden there — otherwise the two pills stack
+  // and the composer's send button ends up behind the bar. Matches both the
+  // projects-tab route (/projects/[id]/notes) and the notifications-tab one
+  // (/notifications/projects/[id]/notes).
+  const pathname = usePathname();
+  const hideTabBar = pathname.endsWith('/notes');
 
   useEffect(() => {
     if (token) void refreshNotifications(token);
@@ -82,6 +89,10 @@ export default function AppTabsLayout() {
         // scroll content enough bottom padding that the last item settles
         // above the pill instead of ending up hidden underneath it.
         tabBarStyle: {
+          // Hidden on the chat/notes screen, whose composer pill takes this
+          // pill's place. `display` toggles cleanly here; the bar animates
+          // back in on the way out of that screen.
+          display: hideTabBar ? 'none' : 'flex',
           position: 'absolute',
           // The library's own base style (styles.bottom in BottomTabBar.js)
           // sets start:0/end:0 — RTL-aware logical properties, which RN
