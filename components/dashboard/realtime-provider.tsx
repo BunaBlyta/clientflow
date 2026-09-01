@@ -49,6 +49,7 @@ function notifyEntityChanged(detail: RealtimeEventDetail): void {
 
 export function DashboardRealtimeProvider({ children }: { children: React.ReactNode }) {
   const realtimeRef = useRef<Realtime | null>(null);
+  const notificationLoadRef = useRef<Promise<void> | null>(null);
   const entityTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
   const setLoading = useNotificationStore((state) => state.setLoading);
@@ -58,26 +59,39 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
   const mergeRemoteNotification = useNotificationStore((state) => state.mergeRemoteNotification);
   const setReadLocally = useNotificationStore((state) => state.setReadLocally);
 
-  const loadNotifications = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const data = await fetchJson<unknown>(
-        "/api/notifications",
-        "We couldn't load notifications.",
-        signal,
-      );
-      if (!Array.isArray(data)) throw new Error("We couldn't load notifications.");
-      replaceNotifications(data);
-    } catch (caughtError) {
-      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load notifications.");
-        setLoading(false);
+  const loadNotifications = useCallback((signal?: AbortSignal) => {
+    if (notificationLoadRef.current) return notificationLoadRef.current;
+
+    const loadPromise = (async () => {
+      try {
+        const data = await fetchJson<unknown>(
+          "/api/notifications",
+          "We couldn't load notifications.",
+          signal,
+        );
+        if (!Array.isArray(data)) throw new Error("We couldn't load notifications.");
+        replaceNotifications(data);
+      } catch (caughtError) {
+        if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
+        if (!signal?.aborted) {
+          setError(caughtError instanceof Error ? caughtError.message : "We couldn't load notifications.");
+          setLoading(false);
+        }
       }
-    }
+    })();
+
+    notificationLoadRef.current = loadPromise;
+    void loadPromise.finally(() => {
+      if (notificationLoadRef.current === loadPromise) notificationLoadRef.current = null;
+    });
+
+    return loadPromise;
   }, [replaceNotifications, setError, setLoading]);
 
   useEffect(() => {
     let disposed = false;
+    let hasConnected = false;
+    let hasInitialSnapshot = false;
     let degradedPolling: ReturnType<typeof setInterval> | null = null;
     const controller = new AbortController();
     const entityTimers = entityTimersRef.current;
@@ -100,7 +114,7 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
     };
 
     const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || !hasInitialSnapshot) return;
       sync();
     };
 
@@ -155,7 +169,10 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
         const handleConnectionState = (change: { current: string }) => {
           if (change.current === "connected") {
             setConnectionState("connected");
-            sync();
+            // The post-subscription snapshot below handles initial startup.
+            // Later connections are recoveries and need a fresh snapshot.
+            if (hasConnected && hasInitialSnapshot) sync();
+            hasConnected = true;
             return;
           }
           if (["failed", "suspended", "disconnected"].includes(change.current)) {
@@ -192,6 +209,7 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
         // GET is merged by the store, while events missed during startup are
         // recovered by this authoritative catch-up request.
         await loadNotifications(controller.signal);
+        hasInitialSnapshot = true;
       } catch (caughtError) {
         if (!disposed && !(caughtError instanceof DOMException && caughtError.name === "AbortError")) {
           setConnectionState("degraded");
@@ -204,7 +222,7 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
     };
 
     const handleConnectionRecovery = () => {
-      sync();
+      if (hasInitialSnapshot) sync();
     };
 
     const handleExplicitRefresh = () => sync();
