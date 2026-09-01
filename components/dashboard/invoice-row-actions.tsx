@@ -38,6 +38,11 @@ export function InvoiceRowActions({
 
   async function updateStatus(status: "SENT" | "VOIDED") {
     setIsUpdating(true);
+    onInvoiceUpdated({
+      ...invoice,
+      status,
+      ...(status === "SENT" && !invoice.issuedAt ? { issuedAt: new Date().toISOString() } : {}),
+    });
 
     try {
       const updatedInvoice = await patchJson<Invoice>(
@@ -53,6 +58,7 @@ export function InvoiceRowActions({
       onInvoiceUpdated(updatedInvoice);
       toast.success(status === "SENT" ? t("status.invoiceSent") : t("status.invoiceVoided"));
     } catch (error) {
+      onInvoiceUpdated(invoice);
       toast.error(error instanceof Error ? error.message : t("status.updateInvoiceError"));
     } finally {
       setIsUpdating(false);

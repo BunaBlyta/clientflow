@@ -244,7 +244,14 @@ export async function POST(
   if ('conflict' in conversion) return NextResponse.json({ error: conversion.conflict }, { status: 409 });
 
   scheduleNotificationEffects(conversion.notificationIds);
-  scheduleEntityChanged({ entity: 'project', id: conversion.project.id, projectId: conversion.project.id, invoiceId: conversion.invoice.id });
+  scheduleEntityChanged({ entity: 'lead', id: conversion.lead.id, reason: 'request' });
+  scheduleEntityChanged({ entity: 'project', id: conversion.project.id, projectId: conversion.project.id });
+  scheduleEntityChanged({
+    entity: 'invoice',
+    id: conversion.invoice.id,
+    projectId: conversion.project.id,
+    invoiceId: conversion.invoice.id,
+  });
 
   let emailSent = true;
   if (conversion.shouldInvite) {

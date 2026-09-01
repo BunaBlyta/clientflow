@@ -53,6 +53,7 @@ const english: Messages = {
   "common.updating": "Updating…",
   "common.working": "Working…",
   "common.logOut": "Log out",
+  "pagination.loadingMore": "Loading more…",
   "dashboard.overview": "Overview",
   "dashboard.overviewIntro": "A quick read on revenue, pipeline, and the work waiting on you.",
   "dashboard.analytics": "Analytics",
@@ -420,6 +421,7 @@ const albanian: Messages = {
 };
 
 Object.assign(german, {
+  "pagination.loadingMore": "Weitere werden geladen…",
   "dashboard.revenuePeriodIntro": "Bezahlter Umsatz pro Monat",
   "dashboard.singlePeriod": "Einzelner Zeitraum",
   "dashboard.comparePeriods": "Zeiträume vergleichen",
@@ -470,6 +472,7 @@ Object.assign(german, {
   "payment.viewInvoices": "Rechnungen ansehen", "payment.submittedIntro": "Danke — Stripe hat deine Zahlung entgegengenommen. Die Rechnung wird erst nach der Stripe-Bestätigung als bezahlt markiert.", "payment.returnToApp": "Du kannst zur Clientflow-App zurückkehren.", "payment.devLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Native App-Links folgen nach verfügbaren Builds.", "payment.cancelledIntro": "Es wurde keine Zahlung vorgenommen und die Rechnung bleibt unverändert. Du kannst sie später bezahlen.", "payment.cancelledDevLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Die Rechnung bleibt unverändert.",
 });
 Object.assign(albanian, {
+  "pagination.loadingMore": "Duke ngarkuar të tjera…",
   "dashboard.revenuePeriodIntro": "Të ardhurat e paguara sipas muajit",
   "dashboard.singlePeriod": "Një periudhë",
   "dashboard.comparePeriods": "Krahaso periudhat",

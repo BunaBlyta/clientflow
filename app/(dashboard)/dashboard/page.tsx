@@ -12,11 +12,12 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
-import type { CustomLead, Invoice, ManagedPackage, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
+import type { CustomLead, CustomLeadDetail, Invoice, ManagedPackage, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { useNotificationStore } from "@/lib/realtime-notification-store";
+import { upsertById } from "@/lib/upsert-by-id";
 
 const PIPELINE_STAGES: ProjectStatus[] = [
   "PENDING",
@@ -111,17 +112,55 @@ export default function OverviewPage() {
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
-      if (
-        detail?.entity === "invoice" ||
-        detail?.entity === "project" ||
-        detail?.entity === "request"
-      ) {
-        void loadOverview();
+      if (detail?.entity === "invoice") {
+        void fetchJson<Invoice>(
+          `/api/invoices/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this invoice.",
+        )
+          .then((invoice) => setInvoices((current) => upsertById(current, invoice)))
+          .catch(() => undefined);
+      } else if (detail?.entity === "project") {
+        void fetchJson<Project>(
+          `/api/projects/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this project.",
+        )
+          .then((project) => setProjects((current) => upsertById(current, project)))
+          .catch(() => undefined);
+      } else if (detail?.entity === "request") {
+        void fetchJson<ProjectRequest>(
+          `/api/requests/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this request.",
+        )
+          .then((projectRequest) =>
+            setProjectRequests((current) =>
+              current.some((request) => request.id === projectRequest.id)
+                ? upsertById(current, projectRequest)
+                : [projectRequest, ...current],
+            ),
+          )
+          .catch(() => undefined);
+      } else if (detail?.entity === "lead") {
+        void fetchJson<CustomLeadDetail>(
+          `/api/contact-leads/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this inquiry.",
+        )
+          .then((lead) =>
+            setCustomLeads((current) => {
+              const updatedLead = {
+                ...lead,
+                ...(lead.client ? { clientId: lead.client.id } : {}),
+              };
+              return current.some((currentLead) => currentLead.id === updatedLead.id)
+                ? upsertById(current, updatedLead)
+                : [updatedLead, ...current];
+            }),
+          )
+          .catch(() => undefined);
       }
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
-  }, [loadOverview]);
+  }, []);
 
   if (isLoading) {
     return (

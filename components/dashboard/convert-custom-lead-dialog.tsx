@@ -22,7 +22,7 @@ export function ConvertCustomLeadDialog({
   onConverted,
 }: {
   lead: CustomLead;
-  onConverted: () => void;
+  onConverted: (lead: CustomLead) => void;
 }) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
@@ -53,7 +53,11 @@ export function ConvertCustomLeadDialog({
     setError(null);
 
     try {
-      const result = await fetchJson<{ emailSent: boolean | null }>(
+      const result = await fetchJson<{
+        lead: CustomLead;
+        client: { id: string };
+        emailSent: boolean | null;
+      }>(
         `/api/contact-leads/${encodeURIComponent(lead.id)}/convert`,
         "We couldn't create the custom project.",
         undefined,
@@ -73,7 +77,7 @@ export function ConvertCustomLeadDialog({
       );
       setOpen(false);
       setFieldErrors({});
-      onConverted();
+      onConverted({ ...result.lead, clientId: result.client.id });
       toast.success("Custom project created", {
         description:
           result.emailSent === false

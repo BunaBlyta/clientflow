@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { INVOICE_STATUS_TONE, invoiceDisplayLabelKey, invoiceDisplayTone } from "@/lib/status";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
+import { InfiniteTableLoader, useInfiniteTable } from "@/components/dashboard/infinite-table-loader";
+import { useStableTableColumns } from "@/components/dashboard/use-stable-table-columns";
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +19,9 @@ import {
 import type { Client, Invoice, InvoiceStatus, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
+import { fetchJson } from "@/lib/fetch-json";
+import { upsertById } from "@/lib/upsert-by-id";
+import type { PaginatedResponse } from "@/lib/pagination";
 
 type ApiInvoice = Invoice & { clientId: string };
 
@@ -34,75 +39,107 @@ const STATUS_FILTERS: { value: InvoiceStatus | "ALL" | "OVERDUE"; label: string 
 
 export default function InvoicesPage() {
   const { t } = useLocale();
-  const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [areLookupsLoading, setAreLookupsLoading] = useState(true);
+  const [lookupsError, setLookupsError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "ALL" | "OVERDUE">("ALL");
 
-  const loadInvoices = useCallback(async (signal?: AbortSignal) => {
-    setIsLoading(true);
-    setError(null);
+  const loadLookups = useCallback(async (signal?: AbortSignal) => {
+    setAreLookupsLoading(true);
+    setLookupsError(null);
 
     try {
-      const [invoicesResponse, projectsResponse, clientsResponse] = await Promise.all([
-        fetch("/api/invoices", { credentials: "include", signal }),
-        fetch("/api/projects", { credentials: "include", signal }),
-        fetch("/api/clients", { credentials: "include", signal }),
+      const [projectData, clientData] = await Promise.all([
+        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
+        fetchJson<Client[]>("/api/clients", "We couldn't load the clients.", signal),
       ]);
-
-      const responses = [
-        [invoicesResponse, "invoices"],
-        [projectsResponse, "projects"],
-        [clientsResponse, "clients"],
-      ] as const;
-      for (const [response, resource] of responses) {
-        if (!response.ok) {
-          const body = (await response.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `We couldn't load the ${resource}.`);
-        }
-      }
-
-      const [invoiceData, projectData, clientData] = (await Promise.all([
-        invoicesResponse.json(),
-        projectsResponse.json(),
-        clientsResponse.json(),
-      ])) as [ApiInvoice[], Project[], Client[]];
-      if (!Array.isArray(invoiceData) || !Array.isArray(projectData) || !Array.isArray(clientData)) {
+      if (!Array.isArray(projectData) || !Array.isArray(clientData)) {
         throw new Error("The server returned an unexpected invoice response.");
       }
 
       if (!signal?.aborted) {
-        setInvoices(invoiceData);
         setProjects(projectData);
         setClients(clientData);
       }
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
       if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the invoices.");
+        setLookupsError(caughtError instanceof Error ? caughtError.message : "We couldn't load invoice details.");
       }
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (!signal?.aborted) setAreLookupsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.resolve().then(() => loadInvoices(controller.signal));
+    void Promise.resolve().then(() => loadLookups(controller.signal));
     return () => controller.abort();
-  }, [loadInvoices]);
+  }, [loadLookups]);
+
+  const loadInvoicePage = useCallback((page: number, signal?: AbortSignal) => {
+    const query = new URLSearchParams({ page: String(page), pageSize: "20" });
+    if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
+    if (statusFilter !== "ALL") query.set("status", statusFilter);
+    return fetchJson<PaginatedResponse<ApiInvoice>>(
+      `/api/invoices?${query.toString()}`,
+      "We couldn't load the invoices.",
+      signal,
+    );
+  }, [deferredSearch, statusFilter]);
+  const invoiceTable = useInfiniteTable(loadInvoicePage);
+  const invoices = invoiceTable.items;
+  const setInvoices = invoiceTable.setItems;
+  const isLoading = invoiceTable.isInitialLoading || areLookupsLoading;
+  const error = invoiceTable.error ?? lookupsError;
+  const tableRef = useStableTableColumns(!isLoading && !error);
+  const invoiceMatchesFilters = useCallback((invoice: ApiInvoice) => {
+    const matchesStatus = statusFilter === "ALL"
+      || (statusFilter === "OVERDUE"
+        ? invoiceDisplayLabelKey(invoice) === "status.invoice.OVERDUE"
+        : invoice.status === statusFilter);
+    if (!matchesStatus) return false;
+
+    const projectName = projects.find((project) => project.id === invoice.projectId)?.name ?? "";
+    const clientName = clients.find((client) => client.id === invoice.clientId)?.companyName ?? "";
+    return `${invoice.label} ${projectName} ${clientName}`
+      .toLowerCase()
+      .includes(deferredSearch.trim().toLowerCase());
+  }, [clients, deferredSearch, projects, statusFilter]);
 
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
-      if (detail?.entity === "invoice" || detail?.entity === "project") void loadInvoices();
+      if (detail?.entity === "invoice") {
+        void fetchJson<ApiInvoice>(
+          `/api/invoices/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this invoice.",
+        )
+          .then((updatedInvoice) => setInvoices((currentInvoices) => {
+            if (!invoiceMatchesFilters(updatedInvoice)) {
+              return currentInvoices.filter((invoice) => invoice.id !== updatedInvoice.id);
+            }
+            return upsertById(currentInvoices, updatedInvoice)
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          }))
+          .catch(() => undefined);
+      } else if (detail?.entity === "project") {
+        void fetchJson<Project>(
+          `/api/projects/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this project.",
+        )
+          .then((updatedProject) =>
+            setProjects((currentProjects) => upsertById(currentProjects, updatedProject)),
+          )
+          .catch(() => undefined);
+      }
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
-  }, [loadInvoices]);
+  }, [invoiceMatchesFilters, setInvoices]);
 
   const projectNames = useMemo(
     () => new Map(projects.map((project) => [project.id, project])),
@@ -113,30 +150,22 @@ export default function InvoicesPage() {
     [clients],
   );
 
-  const filtered = useMemo(() => {
-    return invoices
-      .filter((invoice) => {
-        if (statusFilter === "ALL") return true;
-        if (statusFilter === "OVERDUE") return invoiceDisplayLabelKey(invoice) === "status.invoice.OVERDUE";
-        return invoice.status === statusFilter;
-      })
-      .filter((invoice) => {
-        const project = projectNames.get(invoice.projectId);
-        const haystack = `${invoice.label} ${project?.name ?? ""} ${
-          clientNames.get(invoice.clientId) ?? ""
-        }`.toLowerCase();
-        return haystack.includes(search.toLowerCase());
-      })
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [clientNames, invoices, projectNames, search, statusFilter]);
-
   const handleInvoiceUpdated = useCallback((updatedInvoice: Invoice) => {
-    setInvoices((currentInvoices) =>
-      currentInvoices.map((invoice) =>
-        invoice.id === updatedInvoice.id ? { ...invoice, ...updatedInvoice } : invoice,
-      ),
-    );
-  }, []);
+    setInvoices((currentInvoices) => {
+      const currentInvoice = currentInvoices.find((invoice) => invoice.id === updatedInvoice.id);
+      const apiUpdatedInvoice = updatedInvoice as ApiInvoice;
+      const mergedInvoice = currentInvoice
+        ? { ...currentInvoice, ...updatedInvoice }
+        : typeof apiUpdatedInvoice.clientId === "string"
+          ? apiUpdatedInvoice
+          : null;
+      if (!mergedInvoice) return currentInvoices;
+      if (!invoiceMatchesFilters(mergedInvoice)) {
+        return currentInvoices.filter((invoice) => invoice.id !== updatedInvoice.id);
+      }
+      return upsertById(currentInvoices, mergedInvoice);
+    });
+  }, [invoiceMatchesFilters, setInvoices]);
 
   if (isLoading) {
     return (
@@ -157,7 +186,10 @@ export default function InvoicesPage() {
         <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
           <p className="text-[13px] font-medium text-status-danger">{t("dashboard.invoicesLoadFailed")}</p>
           <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
-          <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadInvoices()}>
+          <Button className="mt-4" variant="outline" size="sm" onClick={() => {
+            invoiceTable.reload();
+            if (lookupsError) void loadLookups();
+          }}>
             <RefreshCw />
           {t("common.tryAgain")}
           </Button>
@@ -192,7 +224,17 @@ export default function InvoicesPage() {
       </TableToolbar>
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
               <th className="py-3 pr-2 pl-5 font-normal">{t("invoices.invoice")}</th>
@@ -208,7 +250,7 @@ export default function InvoicesPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((invoice) => {
+            {invoices.map((invoice) => {
               const project = projectNames.get(invoice.projectId);
               return (
                 <tr key={invoice.id} className="border-b border-border last:border-0 hover:bg-muted/40">
@@ -246,7 +288,7 @@ export default function InvoicesPage() {
                 </tr>
               );
             })}
-            {invoices.length === 0 && (
+            {invoices.length === 0 && !deferredSearch.trim() && statusFilter === "ALL" && (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center">
                   <p className="text-[13px] font-medium">{t("invoices.noInvoices")}</p>
@@ -256,7 +298,7 @@ export default function InvoicesPage() {
                 </td>
               </tr>
             )}
-            {invoices.length > 0 && filtered.length === 0 && (
+            {invoices.length === 0 && (deferredSearch.trim() || statusFilter !== "ALL") && (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                   {t("invoices.noMatch")}
@@ -266,6 +308,12 @@ export default function InvoicesPage() {
           </tbody>
         </table>
       </div>
+      <InfiniteTableLoader
+        hasMore={invoiceTable.hasMore}
+        isLoading={invoiceTable.isLoadingMore}
+        error={invoiceTable.loadMoreError}
+        onLoadMore={invoiceTable.loadMore}
+      />
     </div>
   );
 }

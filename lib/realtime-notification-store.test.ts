@@ -56,9 +56,10 @@ describe("realtime notification helpers", () => {
     expect(isNotificationPayload(notification("one", "2026-01-01"))).toBe(true);
     expect(isNotificationPayload({ id: "one" })).toBe(false);
     expect(
-      isEntityChangedEvent({ entity: "invoice", invoiceId: "inv-1", reason: "payment" }),
+      isEntityChangedEvent({ entity: "invoice", id: "inv-1", invoiceId: "inv-1", reason: "payment" }),
     ).toBe(true);
-    expect(isEntityChangedEvent({ entity: "request", reason: "invoice" })).toBe(true);
-    expect(isEntityChangedEvent({ entity: "client", reason: "payment" })).toBe(false);
+    expect(isEntityChangedEvent({ entity: "lead", id: "lead-1", reason: "request" })).toBe(true);
+    expect(isEntityChangedEvent({ entity: "request", reason: "request" })).toBe(false);
+    expect(isEntityChangedEvent({ entity: "client", id: "client-1", reason: "payment" })).toBe(false);
   });
 });

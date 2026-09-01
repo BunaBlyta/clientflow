@@ -8,13 +8,14 @@ export type RealtimeConnectionState =
   | "degraded"
   | "disabled";
 
-export type RealtimeEntity = "invoice" | "project" | "note" | "request";
+export type RealtimeEntity = "invoice" | "project" | "note" | "request" | "lead";
 
 export interface EntityChangedEvent {
   entity: RealtimeEntity;
+  id: string;
   projectId?: string;
   invoiceId?: string;
-  reason: "payment" | "status" | "note" | "invoice";
+  reason: "payment" | "status" | "note" | "invoice" | "request";
 }
 
 export function sortNotifications(notifications: Notification[]): Notification[] {
@@ -64,11 +65,14 @@ export function isEntityChangedEvent(value: unknown): value is EntityChangedEven
     (candidate.entity === "invoice" ||
       candidate.entity === "project" ||
       candidate.entity === "note" ||
-      candidate.entity === "request") &&
+      candidate.entity === "request" ||
+      candidate.entity === "lead") &&
+    typeof candidate.id === "string" &&
     (candidate.reason === "payment" ||
       candidate.reason === "status" ||
       candidate.reason === "note" ||
-      candidate.reason === "invoice")
+      candidate.reason === "invoice" ||
+      candidate.reason === "request")
   );
 }
 

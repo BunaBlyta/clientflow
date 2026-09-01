@@ -17,6 +17,7 @@ import { NoteComposer } from "@/components/dashboard/note-composer";
 import type { Client, Invoice, Note, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
+import { upsertById } from "@/lib/upsert-by-id";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
@@ -103,28 +104,50 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
-      const isRelevant =
-        detail?.projectId === projectId ||
-        (detail?.entity === "project" && detail.projectId === projectId);
-      if (isRelevant) void loadProject();
+      if (detail?.projectId !== projectId) return;
+
+      if (detail.entity === "project") {
+        void Promise.all([
+          fetchJson<Project>(
+            `/api/projects/${encodeURIComponent(detail.id)}`,
+            "We couldn't refresh this project.",
+          ),
+          fetchNotes(),
+        ])
+          .then(([updatedProject, updatedNotes]) => {
+            setProject(updatedProject);
+            setNotes(updatedNotes);
+          })
+          .catch(() => undefined);
+      } else if (detail.entity === "invoice") {
+        void fetchJson<Invoice>(
+          `/api/invoices/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this invoice.",
+        )
+          .then((updatedInvoice) =>
+            setInvoices((currentInvoices) => upsertById(currentInvoices, updatedInvoice)),
+          )
+          .catch(() => undefined);
+      } else if (detail.entity === "note") {
+        void fetchNotes().then(setNotes).catch(() => undefined);
+      }
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
-  }, [loadProject, projectId]);
+  }, [fetchNotes, projectId]);
 
-  const handleProjectUpdated = useCallback(
-    (updatedProject: Project) => {
-      setProject(updatedProject);
+  const handleProjectUpdated = useCallback((updatedProject: Project) => {
+    setProject(updatedProject);
+  }, []);
 
-      // Re-read the feed after the PATCH transaction completes; do not predict or append its note locally.
-      void fetchNotes()
-        .then(setNotes)
-        .catch((caughtError) => {
-          setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the project activity.");
-        });
-    },
-    [fetchNotes],
-  );
+  const handleProjectUpdateConfirmed = useCallback(() => {
+    // Re-read the project-scoped feed after the status transaction creates its system note.
+    void fetchNotes()
+      .then(setNotes)
+      .catch((caughtError) => {
+        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the project activity.");
+      });
+  }, [fetchNotes]);
 
   const handleInvoiceUpdated = useCallback((updatedInvoice: Invoice) => {
     setInvoices((currentInvoices) =>
@@ -212,7 +235,11 @@ export default function ProjectDetailPage() {
             {client?.companyName} · {pkg?.name}
           </p>
         </div>
-        <ProjectStatusMenu project={project} onProjectUpdated={handleProjectUpdated} />
+        <ProjectStatusMenu
+          project={project}
+          onProjectUpdated={handleProjectUpdated}
+          onProjectUpdateConfirmed={handleProjectUpdateConfirmed}
+        />
       </div>
 
       <div className="rounded-lg border border-border p-5 dark:bg-card">

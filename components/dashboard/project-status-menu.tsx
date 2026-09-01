@@ -29,16 +29,22 @@ const SELECTABLE_STATUSES: ProjectStatus[] = [
 export function ProjectStatusMenu({
   project,
   onProjectUpdated,
+  onProjectUpdateConfirmed,
 }: {
   project: Project;
   onProjectUpdated: (project: Project) => void;
+  onProjectUpdateConfirmed?: () => void;
 }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [optimisticStatus, setOptimisticStatus] = useState<ProjectStatus | null>(null);
   const { t } = useLocale();
   const isAwaitingDeposit = project.status === "PENDING" && Boolean(project.packageId);
+  const displayedStatus = optimisticStatus ?? project.status;
 
   async function updateStatus(status: ProjectStatus) {
     setIsUpdating(true);
+    setOptimisticStatus(status);
+    onProjectUpdated({ ...project, status, updatedAt: new Date().toISOString() });
 
     try {
       const updatedProject = await patchJson<Project>(
@@ -52,10 +58,13 @@ export function ProjectStatusMenu({
       }
 
       onProjectUpdated(updatedProject);
+      onProjectUpdateConfirmed?.();
       toast.success(`${t("status.projectMovedTo")} ${t(`status.project.${status}`)}.`);
     } catch (error) {
+      onProjectUpdated(project);
       toast.error(error instanceof Error ? error.message : t("status.updateProjectError"));
     } finally {
+      setOptimisticStatus(null);
       setIsUpdating(false);
     }
   }
@@ -70,8 +79,8 @@ export function ProjectStatusMenu({
         isAwaitingDeposit ? t("status.depositGate") : undefined
       }
     >
-      <span className={PROJECT_STATUS_TONE[project.status]}>
-        {t(`status.project.${project.status}`)}
+      <span className={PROJECT_STATUS_TONE[displayedStatus]}>
+        {t(`status.project.${displayedStatus}`)}
       </span>
       {isUpdating ? (
         <LoaderCircle className="size-3 animate-spin text-brand-accent" />

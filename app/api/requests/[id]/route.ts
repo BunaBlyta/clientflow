@@ -368,7 +368,7 @@ export async function PATCH(
         select: { id: true },
       });
 
-      await transaction.invoice.create({
+      const invoice = await transaction.invoice.create({
         data: {
           projectId: project.id,
           clientId: client.id,
@@ -379,6 +379,7 @@ export async function PATCH(
           status: transitionInvoiceStatus('DRAFT', 'SENT'),
           issuedAt: new Date(),
         },
+        select: { id: true },
       });
 
       const notificationId = await createNotification(transaction, {
@@ -400,6 +401,7 @@ export async function PATCH(
         projectRequest: approvedRequest,
         user: { id: userRecord.id, email: userRecord.email, name: userRecord.name },
         projectId: project.id,
+        invoiceId: invoice.id,
         notificationIds: notificationId ? [notificationId] : [],
       };
     });
@@ -414,6 +416,13 @@ export async function PATCH(
   let emailSent = true;
   scheduleNotificationEffects(approval.notificationIds);
   scheduleEntityChanged({ entity: 'request', id, projectId: approval.projectId });
+  scheduleEntityChanged({ entity: 'project', id: approval.projectId, projectId: approval.projectId });
+  scheduleEntityChanged({
+    entity: 'invoice',
+    id: approval.invoiceId,
+    projectId: approval.projectId,
+    invoiceId: approval.invoiceId,
+  });
   try {
     await issueVerificationEmail(approval.user);
   } catch (error) {

@@ -34,11 +34,11 @@ type NotificationWriteClient = {
 };
 
 export type EntityChanged = {
-  entity: 'invoice' | 'project' | 'note' | 'notification' | 'request';
+  entity: 'invoice' | 'project' | 'note' | 'notification' | 'request' | 'lead';
   id: string;
   projectId?: string;
   invoiceId?: string;
-  reason?: 'payment' | 'status' | 'note' | 'invoice';
+  reason?: 'payment' | 'status' | 'note' | 'invoice' | 'request';
 };
 
 /**
@@ -196,7 +196,15 @@ async function publishEntityChanged(entity: EntityChanged) {
     id: entity.id,
     projectId: entity.projectId ?? null,
     invoiceId: entity.invoiceId ?? null,
-    reason: entity.reason ?? (entity.entity === 'note' ? 'note' : entity.entity === 'project' ? 'status' : 'invoice'),
+    reason: entity.reason ?? (
+      entity.entity === 'note'
+        ? 'note'
+        : entity.entity === 'project'
+          ? 'status'
+          : entity.entity === 'request' || entity.entity === 'lead'
+            ? 'request'
+            : 'invoice'
+    ),
   });
 }
 

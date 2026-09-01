@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LoaderCircle, MoreHorizontal, RefreshCw } from "lucide-react";
@@ -8,6 +8,8 @@ import { fetchJson } from "@/lib/fetch-json";
 import { formatCurrency, formatDate, initials } from "@/lib/format";
 import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
+import { InfiniteTableLoader, useInfiniteTable } from "@/components/dashboard/infinite-table-loader";
+import { useStableTableColumns } from "@/components/dashboard/use-stable-table-columns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -18,65 +20,70 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Client, Invoice, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { PaginatedResponse } from "@/lib/pagination";
 
 type ApiInvoice = Invoice & { clientId: string };
 
 export default function ClientsPage() {
   const { t } = useLocale();
   const router = useRouter();
-  const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [areTotalsLoading, setAreTotalsLoading] = useState(true);
+  const [totalsError, setTotalsError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [resendingClientId, setResendingClientId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ clientId: string; message: string } | null>(null);
 
-  const loadClients = useCallback(async (signal?: AbortSignal) => {
-    setIsLoading(true);
-    setError(null);
+  const loadTotals = useCallback(async (signal?: AbortSignal) => {
+    setAreTotalsLoading(true);
+    setTotalsError(null);
 
     try {
-      const [clientData, projectData, invoiceData] = await Promise.all([
-        fetchJson<Client[]>("/api/clients", "We couldn't load the clients.", signal),
+      const [projectData, invoiceData] = await Promise.all([
         fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
         fetchJson<ApiInvoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
       ]);
 
-      if (!Array.isArray(clientData) || !Array.isArray(projectData) || !Array.isArray(invoiceData)) {
+      if (!Array.isArray(projectData) || !Array.isArray(invoiceData)) {
         throw new Error("The server returned an unexpected clients response.");
       }
 
       if (!signal?.aborted) {
-        setClients(clientData);
         setProjects(projectData);
         setInvoices(invoiceData);
       }
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
       if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the clients.");
+        setTotalsError(caughtError instanceof Error ? caughtError.message : "We couldn't load the client totals.");
       }
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (!signal?.aborted) setAreTotalsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.resolve().then(() => loadClients(controller.signal));
+    void Promise.resolve().then(() => loadTotals(controller.signal));
     return () => controller.abort();
-  }, [loadClients]);
+  }, [loadTotals]);
 
-  const filtered = useMemo(() => {
-    return clients
-      .filter((c) => {
-        const haystack = `${c.companyName} ${c.contactName} ${c.email}`.toLowerCase();
-        return haystack.includes(search.toLowerCase());
-      })
-      .sort((a, b) => a.companyName.localeCompare(b.companyName));
-  }, [clients, search]);
+  const loadClientPage = useCallback((page: number, signal?: AbortSignal) => {
+    const query = new URLSearchParams({ page: String(page), pageSize: "20" });
+    if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
+    return fetchJson<PaginatedResponse<Client>>(
+      `/api/clients?${query.toString()}`,
+      "We couldn't load the clients.",
+      signal,
+    );
+  }, [deferredSearch]);
+  const clientTable = useInfiniteTable(loadClientPage);
+  const clients = clientTable.items;
+  const isLoading = clientTable.isInitialLoading || areTotalsLoading;
+  const error = clientTable.error ?? totalsError;
+  const tableRef = useStableTableColumns(!isLoading && !error);
 
   const billedByClient = useMemo(() => {
     const projectClient = new Map(projects.map((project) => [project.id, project.clientId]));
@@ -127,7 +134,10 @@ export default function ClientsPage() {
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
         <p className="text-[13px] font-medium text-status-danger">{t("dashboard.clientsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
-        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadClients()}>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => {
+          clientTable.reload();
+          if (totalsError) void loadTotals();
+        }}>
           <RefreshCw />
           {t("common.tryAgain")}
         </Button>
@@ -140,7 +150,15 @@ export default function ClientsPage() {
       <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("clients.search")} />
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
               <th className="px-4 py-2.5 font-normal">{t("clients.company")}</th>
@@ -152,7 +170,7 @@ export default function ClientsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((client) => {
+            {clients.map((client) => {
               const clientProjects = projects.filter((p) => p.clientId === client.id);
               return (
                 <tr
@@ -219,7 +237,7 @@ export default function ClientsPage() {
                 </tr>
               );
             })}
-            {filtered.length === 0 && (
+            {clients.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                   {t("clients.noMatch")}
@@ -229,6 +247,12 @@ export default function ClientsPage() {
           </tbody>
         </table>
       </div>
+      <InfiniteTableLoader
+        hasMore={clientTable.hasMore}
+        isLoading={clientTable.isLoadingMore}
+        error={clientTable.loadMoreError}
+        onLoadMore={clientTable.loadMore}
+      />
     </div>
   );
 }

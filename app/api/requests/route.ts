@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
+import type { Prisma } from '@/lib/generated/prisma/client';
+import { paginatedResponse, readPagination } from '@/lib/pagination';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +57,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Staff access required' }, { status: 403 });
   }
 
+  const searchParams = new URL(request.url).searchParams;
+  const pagination = readPagination(searchParams);
+  if (pagination.enabled && 'error' in pagination) return invalidRequest(pagination.error);
+  const search = searchParams.get('search')?.trim() ?? '';
+  const where: Prisma.ProjectRequestWhereInput = search ? {
+    OR: [
+      { name: { contains: search, mode: 'insensitive' } },
+      { companyName: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+    ],
+  } : {};
   const requests = await prisma.projectRequest.findMany({
+    where,
     select: {
       id: true,
       packageId: true,
@@ -68,9 +82,13 @@ export async function GET(request: NextRequest) {
       createdAt: true,
     },
     orderBy: { createdAt: 'desc' },
+    ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
 
-  return NextResponse.json(requests.map(serializeProjectRequest));
+  const serialized = requests.map(serializeProjectRequest);
+  if (!pagination.enabled) return NextResponse.json(serialized);
+  const totalItems = await prisma.projectRequest.count({ where });
+  return NextResponse.json(paginatedResponse(serialized, pagination.value, totalItems));
 }
 
 export async function POST(request: NextRequest) {

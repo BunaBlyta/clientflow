@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,8 @@ import { fetchJson } from "@/lib/fetch-json";
 import { formatDate } from "@/lib/format";
 import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
+import { InfiniteTableLoader, useInfiniteTable } from "@/components/dashboard/infinite-table-loader";
+import { useStableTableColumns } from "@/components/dashboard/use-stable-table-columns";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { CustomLeadsTable } from "@/components/dashboard/custom-leads-table";
@@ -24,6 +26,8 @@ import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
+import { upsertById } from "@/lib/upsert-by-id";
+import type { PaginatedResponse } from "@/lib/pagination";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All statuses" },
@@ -131,86 +135,88 @@ function ProjectsTable({
 }) {
   const router = useRouter();
   const { t } = useLocale();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const deferredSearch = useDeferredValue(search);
   const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [areClientsLoading, setAreClientsLoading] = useState(true);
+  const [clientsError, setClientsError] = useState<string | null>(null);
 
-  const loadProjects = useCallback(async (signal?: AbortSignal) => {
-    setIsLoading(true);
-    setError(null);
-
+  const loadClients = useCallback(async (signal?: AbortSignal) => {
+    setAreClientsLoading(true);
+    setClientsError(null);
     try {
-      const [projectsResponse, clientsResponse] = await Promise.all([
-        fetch("/api/projects", { credentials: "include", signal }),
-        fetch("/api/clients", { credentials: "include", signal }),
-      ]);
-
-      if (!projectsResponse.ok) {
-        const body = (await projectsResponse.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? "We couldn't load the projects.");
-      }
-      if (!clientsResponse.ok) {
-        const body = (await clientsResponse.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? "We couldn't load the client list.");
-      }
-
-      const [projectData, clientData] = (await Promise.all([
-        projectsResponse.json(),
-        clientsResponse.json(),
-      ])) as [Project[], Client[]];
-      if (!Array.isArray(projectData) || !Array.isArray(clientData)) {
-        throw new Error("The server returned an unexpected project response.");
-      }
-
-      if (!signal?.aborted) {
-        setProjects(projectData);
-        setClients(clientData);
-      }
+      const data = await fetchJson<Client[]>("/api/clients", "We couldn't load the client list.", signal);
+      if (!Array.isArray(data)) throw new Error("The server returned an unexpected client response.");
+      if (!signal?.aborted) setClients(data);
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load the projects.");
-      }
+      if (!signal?.aborted) setClientsError(caughtError instanceof Error ? caughtError.message : "We couldn't load the client list.");
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (!signal?.aborted) setAreClientsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.resolve().then(() => loadProjects(controller.signal));
+    void Promise.resolve().then(() => loadClients(controller.signal));
     return () => controller.abort();
-  }, [loadProjects]);
+  }, [loadClients]);
+
+  const loadProjectPage = useCallback((page: number, signal?: AbortSignal) => {
+    const query = new URLSearchParams({ page: String(page), pageSize: "20" });
+    if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
+    if (statusFilter !== "ALL") query.set("status", statusFilter);
+    return fetchJson<PaginatedResponse<Project>>(
+      `/api/projects?${query.toString()}`,
+      "We couldn't load the projects.",
+      signal,
+    );
+  }, [deferredSearch, statusFilter]);
+  const projectTable = useInfiniteTable(loadProjectPage);
+  const projects = projectTable.items;
+  const setProjects = projectTable.setItems;
+  const isLoading = projectTable.isInitialLoading || areClientsLoading;
+  const error = projectTable.error ?? clientsError;
+  const tableRef = useStableTableColumns(!isLoading && !error);
+  const projectMatchesFilters = useCallback((project: Project) => (
+    (statusFilter === "ALL" || project.status === statusFilter) &&
+    project.name.toLowerCase().includes(deferredSearch.trim().toLowerCase())
+  ), [deferredSearch, statusFilter]);
 
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
-      if (detail?.entity === "project") void loadProjects();
+      if (detail?.entity !== "project") return;
+      void fetchJson<Project>(
+        `/api/projects/${encodeURIComponent(detail.id)}`,
+        "We couldn't refresh this project.",
+      )
+        .then((updatedProject) => setProjects((currentProjects) => {
+          if (!projectMatchesFilters(updatedProject)) {
+            return currentProjects.filter((project) => project.id !== updatedProject.id);
+          }
+          return upsertById(currentProjects, updatedProject)
+            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        }))
+        .catch(() => undefined);
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
-  }, [loadProjects]);
+  }, [projectMatchesFilters, setProjects]);
 
   const clientNames = useMemo(
     () => new Map(clients.map((client) => [client.id, client.companyName])),
     [clients],
   );
 
-  const filtered = useMemo(() => {
-    return projects
-      .filter((p) => statusFilter === "ALL" || p.status === statusFilter)
-      .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [projects, search, statusFilter]);
-
   const handleProjectUpdated = useCallback((updatedProject: Project) => {
-    setProjects((currentProjects) =>
-      currentProjects.map((project) =>
-        project.id === updatedProject.id ? updatedProject : project,
-      ),
-    );
-  }, []);
+    setProjects((currentProjects) => {
+      if (!projectMatchesFilters(updatedProject)) {
+        return currentProjects.filter((project) => project.id !== updatedProject.id);
+      }
+      return upsertById(currentProjects, updatedProject)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    });
+  }, [projectMatchesFilters, setProjects]);
 
   if (isLoading) {
     return (
@@ -228,7 +234,10 @@ function ProjectsTable({
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
         <p className="text-[13px] font-medium text-status-danger">{t("dashboard.projectsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
-        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadProjects()}>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => {
+          projectTable.reload();
+          if (clientsError) void loadClients();
+        }}>
           <RefreshCw />
           {t("common.tryAgain")}
         </Button>
@@ -239,7 +248,14 @@ function ProjectsTable({
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
               <th className="px-4 py-2.5 font-normal">{t("projects.project")}</th>
@@ -250,7 +266,7 @@ function ProjectsTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((project) => {
+            {projects.map((project) => {
               const packageLabel = project.package?.name ?? "Custom project";
               return (
                 <tr
@@ -292,7 +308,7 @@ function ProjectsTable({
                 </tr>
               );
             })}
-            {projects.length === 0 && (
+            {projects.length === 0 && !deferredSearch.trim() && statusFilter === "ALL" && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center">
                   <p className="text-[13px] font-medium">{t("projects.noProjects")}</p>
@@ -300,7 +316,7 @@ function ProjectsTable({
                 </td>
               </tr>
             )}
-            {projects.length > 0 && filtered.length === 0 && (
+            {projects.length === 0 && (deferredSearch.trim() || statusFilter !== "ALL") && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                   {t("projects.noMatch")}
@@ -310,6 +326,12 @@ function ProjectsTable({
           </tbody>
         </table>
       </div>
+      <InfiniteTableLoader
+        hasMore={projectTable.hasMore}
+        isLoading={projectTable.isLoadingMore}
+        error={projectTable.loadMoreError}
+        onLoadMore={projectTable.loadMore}
+      />
     </div>
   );
 }
@@ -317,47 +339,93 @@ function ProjectsTable({
 function RequestsTable({ search }: { search: string }) {
   const router = useRouter();
   const { t } = useLocale();
-  const [projectRequests, setProjectRequests] = useState<ProjectRequest[]>([]);
+  const deferredSearch = useDeferredValue(search);
   const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [arePackagesLoading, setArePackagesLoading] = useState(true);
+  const [packagesError, setPackagesError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
-  const loadRequests = useCallback(async (signal?: AbortSignal) => {
-    setIsLoading(true);
-    setError(null);
-
+  const loadPackages = useCallback(async (signal?: AbortSignal) => {
+    setArePackagesLoading(true);
+    setPackagesError(null);
     try {
-      const [requestData, packageData] = await Promise.all([
-        fetchJson<ProjectRequest[]>("/api/requests", "We couldn't load project requests.", signal),
-        fetchJson<Pick<Package, "id" | "name">[]>("/api/packages", "We couldn't load packages.", signal),
-      ]);
-      if (!Array.isArray(requestData) || !Array.isArray(packageData)) {
-        throw new Error("The server returned an unexpected request response.");
-      }
-      if (!signal?.aborted) {
-        setProjectRequests(requestData);
-        setPackages(packageData);
-      }
+      const data = await fetchJson<Pick<Package, "id" | "name">[]>("/api/packages", "We couldn't load packages.", signal);
+      if (!Array.isArray(data)) throw new Error("The server returned an unexpected package response.");
+      if (!signal?.aborted) setPackages(data);
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setError(caughtError instanceof Error ? caughtError.message : "We couldn't load project requests.");
-      }
+      if (!signal?.aborted) setPackagesError(caughtError instanceof Error ? caughtError.message : "We couldn't load packages.");
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (!signal?.aborted) setArePackagesLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.resolve().then(() => loadRequests(controller.signal));
+    void Promise.resolve().then(() => loadPackages(controller.signal));
     return () => controller.abort();
-  }, [loadRequests]);
+  }, [loadPackages]);
+
+  const loadRequestPage = useCallback((page: number, signal?: AbortSignal) => {
+    const query = new URLSearchParams({ page: String(page), pageSize: "20" });
+    if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
+    return fetchJson<PaginatedResponse<ProjectRequest>>(
+      `/api/requests?${query.toString()}`,
+      "We couldn't load project requests.",
+      signal,
+    );
+  }, [deferredSearch]);
+  const requestTable = useInfiniteTable(loadRequestPage);
+  const projectRequests = requestTable.items;
+  const setProjectRequests = requestTable.setItems;
+  const isLoading = requestTable.isInitialLoading || arePackagesLoading;
+  const error = requestTable.error ?? packagesError ?? actionError;
+  const tableRef = useStableTableColumns(!isLoading && !error);
+  const requestMatchesSearch = useCallback((request: ProjectRequest) => {
+    const query = deferredSearch.trim().toLowerCase();
+    return `${request.prospectName} ${request.companyName ?? ""} ${request.prospectEmail}`
+      .toLowerCase()
+      .includes(query);
+  }, [deferredSearch]);
+
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity !== "request") return;
+      void fetchJson<ProjectRequest>(
+        `/api/requests/${encodeURIComponent(detail.id)}`,
+        "We couldn't refresh this request.",
+      )
+        .then((updatedRequest) => setProjectRequests((currentRequests) => {
+          if (!requestMatchesSearch(updatedRequest)) {
+            return currentRequests.filter((request) => request.id !== updatedRequest.id);
+          }
+          return currentRequests.some((request) => request.id === updatedRequest.id)
+            ? upsertById(currentRequests, updatedRequest)
+            : [updatedRequest, ...currentRequests];
+        }))
+        .catch(() => undefined);
+    };
+
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
+  }, [requestMatchesSearch, setProjectRequests]);
 
   const updateRequest = useCallback(async (requestId: string, status: "APPROVED" | "REJECTED") => {
+    const previousRequest = projectRequests.find((request) => request.id === requestId);
+    setActionError(null);
     setUpdatingId(requestId);
+    if (previousRequest) {
+      setProjectRequests((currentRequests) =>
+        currentRequests.map((request) =>
+          request.id === requestId
+            ? { ...request, status, reviewedAt: new Date().toISOString() }
+            : request,
+        ),
+      );
+    }
     try {
       const response = await fetch(`/api/requests/${encodeURIComponent(requestId)}`, {
         method: "PATCH",
@@ -382,25 +450,18 @@ function RequestsTable({ search }: { search: string }) {
         throw new Error("The server returned an unexpected request update.");
       }
       setProjectRequests((currentRequests) =>
-        currentRequests.map((request) => (request.id === updatedRequest.id ? updatedRequest : request)),
+        upsertById(currentRequests, updatedRequest),
       );
       setRejectingId(null);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "We couldn't update this request.");
+      if (previousRequest) {
+        setProjectRequests((currentRequests) => upsertById(currentRequests, previousRequest));
+      }
+      setActionError(caughtError instanceof Error ? caughtError.message : "We couldn't update this request.");
     } finally {
       setUpdatingId(null);
     }
-  }, []);
-
-  const filtered = useMemo(() => {
-    return [...projectRequests]
-      .filter(
-        (r) =>
-          r.prospectName.toLowerCase().includes(search.toLowerCase()) ||
-          (r.companyName ?? "").toLowerCase().includes(search.toLowerCase())
-      )
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [projectRequests, search]);
+  }, [projectRequests, setProjectRequests]);
 
   const packageNames = useMemo(() => new Map(packages.map((pkg) => [pkg.id, pkg.name])), [packages]);
 
@@ -420,7 +481,11 @@ function RequestsTable({ search }: { search: string }) {
       <div className="flex min-h-56 flex-col items-center justify-center border border-status-danger/30 px-6 text-center">
         <p className="text-[13px] font-medium text-status-danger">{t("dashboard.requestsLoadFailed")}</p>
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
-        <Button className="mt-4" variant="outline" size="sm" onClick={() => void loadRequests()}>
+        <Button className="mt-4" variant="outline" size="sm" onClick={() => {
+          setActionError(null);
+          requestTable.reload();
+          if (packagesError) void loadPackages();
+        }}>
           <RefreshCw />
           {t("common.tryAgain")}
         </Button>
@@ -431,7 +496,14 @@ function RequestsTable({ search }: { search: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
               <th className="px-4 py-2.5 font-normal">{t("projects.prospect")}</th>
@@ -442,7 +514,7 @@ function RequestsTable({ search }: { search: string }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => {
+            {projectRequests.map((r) => {
               return (
                 <tr
                   key={r.id}
@@ -514,7 +586,7 @@ function RequestsTable({ search }: { search: string }) {
                 </tr>
               );
             })}
-            {filtered.length === 0 && (
+            {projectRequests.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                   {t("projects.noRequests")}
@@ -524,6 +596,13 @@ function RequestsTable({ search }: { search: string }) {
           </tbody>
         </table>
       </div>
+
+      <InfiniteTableLoader
+        hasMore={requestTable.hasMore}
+        isLoading={requestTable.isLoadingMore}
+        error={requestTable.loadMoreError}
+        onLoadMore={requestTable.loadMore}
+      />
 
       <ConfirmDialog
         open={rejectingId !== null}

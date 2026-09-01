@@ -242,6 +242,7 @@ describe('PATCH /api/requests/:id', () => {
         status: 'SENT',
         issuedAt: expect.any(Date),
       }),
+      select: { id: true },
     });
     expect(mocks.transactionRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'req-1' },

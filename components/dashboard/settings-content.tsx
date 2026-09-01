@@ -307,7 +307,7 @@ function TeamSection({ isActive }: { isActive: boolean }) {
 
     setIsInviting(true);
     try {
-      const result = await fetchJson<{ emailSent?: boolean }>(
+      const result = await fetchJson<{ user: StaffMember; emailSent?: boolean }>(
         "/api/staff/invite",
         "We couldn't send the invitation.",
         undefined,
@@ -322,7 +322,10 @@ function TeamSection({ isActive }: { isActive: boolean }) {
       setEmail("");
       setFieldErrors({});
       setIsInviteFormOpen(false);
-      await loadTeam();
+      setStaff((currentStaff) => [
+        result.user,
+        ...currentStaff.filter((staffMember) => staffMember.id !== result.user.id),
+      ]);
       if (result.emailSent === false) {
         toast.error("Invitation created, but the email could not be sent", {
           description: "The teammate is listed below. Use Resend to try the email again.",

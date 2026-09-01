@@ -30,6 +30,7 @@ import { DatePicker } from "@/components/dashboard/date-picker";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
+import { upsertById } from "@/lib/upsert-by-id";
 
 function toDateInputValue(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -96,11 +97,25 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
-      if (detail?.entity === "invoice" || detail?.entity === "project") void loadAnalytics();
+      if (detail?.entity === "invoice") {
+        void fetchJson<Invoice>(
+          `/api/invoices/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this invoice.",
+        )
+          .then((invoice) => setInvoices((current) => upsertById(current, invoice)))
+          .catch(() => undefined);
+      } else if (detail?.entity === "project") {
+        void fetchJson<Project>(
+          `/api/projects/${encodeURIComponent(detail.id)}`,
+          "We couldn't refresh this project.",
+        )
+          .then((project) => setProjects((current) => upsertById(current, project)))
+          .catch(() => undefined);
+      }
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
-  }, [loadAnalytics]);
+  }, []);
 
   useEffect(() => {
     const pipelineCard = pipelineCardRef.current;

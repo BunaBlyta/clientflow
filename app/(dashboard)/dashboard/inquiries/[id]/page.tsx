@@ -10,6 +10,7 @@ import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import type { CustomLeadDetail } from "@/lib/types";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 export default function InquiryDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,18 @@ export default function InquiryDetailPage() {
     } finally { if (!signal?.aborted) setIsLoading(false); }
   }, [id]);
   useEffect(() => { const controller = new AbortController(); void Promise.resolve().then(() => loadInquiry(controller.signal)); return () => controller.abort(); }, [loadInquiry]);
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity !== "lead" || detail.id !== id) return;
+      void fetchJson<CustomLeadDetail>(
+        `/api/contact-leads/${encodeURIComponent(id)}`,
+        "We couldn't refresh this inquiry.",
+      ).then(setInquiry).catch(() => undefined);
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
+  }, [id]);
 
   if (isLoading) return <State label="Loading inquiry…" />;
   if (error) return <ErrorState error={error} onRetry={() => void loadInquiry()} />;

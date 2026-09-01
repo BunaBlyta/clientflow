@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { fetchJson } from "@/lib/fetch-json";
 import {
+  type EntityChangedEvent,
   isEntityChangedEvent,
   isNotificationPayload,
   useNotificationStore,
@@ -16,12 +17,7 @@ type CurrentUser = {
   role: "STAFF" | "CLIENT";
 };
 
-type RealtimeEventDetail = {
-  entity: "invoice" | "project" | "note" | "request";
-  projectId?: string;
-  invoiceId?: string;
-  reason: "payment" | "status" | "note" | "invoice";
-};
+type RealtimeEventDetail = EntityChangedEvent;
 
 function decodeMessageData(data: unknown): unknown {
   if (typeof data !== "string") return data;
@@ -101,7 +97,7 @@ export function DashboardRealtimeProvider({ children }: { children: React.ReactN
     };
 
     const scheduleEntityRefetch = (detail: RealtimeEventDetail) => {
-      const key = `${detail.entity}:${detail.projectId ?? detail.invoiceId ?? "all"}`;
+      const key = `${detail.entity}:${detail.id}`;
       const existingTimer = entityTimers.get(key);
       if (existingTimer) clearTimeout(existingTimer);
       entityTimers.set(

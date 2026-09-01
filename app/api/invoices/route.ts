@@ -3,8 +3,10 @@ import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { serializeInvoice } from './serialize';
 import { transitionInvoiceStatus } from '@/prisma/invoice-state';
-import { InvoiceType } from '@/lib/generated/prisma/enums';
+import { InvoiceStatus, InvoiceType } from '@/lib/generated/prisma/enums';
+import type { Prisma } from '@/lib/generated/prisma/client';
 import { scheduleEntityChanged } from '@/app/api/_lib/notifications';
+import { paginatedResponse, readPagination } from '@/lib/pagination';
 
 export const runtime = 'nodejs';
 
@@ -52,13 +54,37 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
-  const projectId = request.nextUrl.searchParams.get('projectId');
+  const searchParams = new URL(request.url).searchParams;
+  const projectId = searchParams.get('projectId');
   const clientWhere = user.role === 'CLIENT' ? { userId: user.id } : undefined;
+  const pagination = readPagination(searchParams);
+  if (pagination.enabled && 'error' in pagination) return invalidRequest(pagination.error);
+  const search = searchParams.get('search')?.trim() ?? '';
+  const status = searchParams.get('status');
+  if (status && status !== 'OVERDUE' && !Object.values(InvoiceStatus).includes(status as InvoiceStatus)) {
+    return invalidRequest('A valid invoice status is required');
+  }
+  const startOfToday = new Date();
+  startOfToday.setUTCHours(0, 0, 0, 0);
+  const where: Prisma.InvoiceWhereInput = {
+    ...(projectId ? { projectId } : {}),
+    ...(clientWhere ? { client: clientWhere } : {}),
+    ...(search ? {
+      OR: [
+        { description: { contains: search, mode: 'insensitive' } },
+        { project: { name: { contains: search, mode: 'insensitive' } } },
+        { client: { companyName: { contains: search, mode: 'insensitive' } } },
+        { client: { name: { contains: search, mode: 'insensitive' } } },
+      ],
+    } : {}),
+    ...(status === 'OVERDUE'
+      ? { status: { in: [InvoiceStatus.SENT, InvoiceStatus.PAYMENT_PENDING] }, dueDate: { lt: startOfToday } }
+      : status
+        ? { status: status as InvoiceStatus }
+        : {}),
+  };
   const invoices = await prisma.invoice.findMany({
-    where: {
-      ...(projectId ? { projectId } : {}),
-      ...(clientWhere ? { client: clientWhere } : {}),
-    },
+    where,
     select: {
       id: true,
       projectId: true,
@@ -73,9 +99,13 @@ export async function GET(request: NextRequest) {
       createdAt: true,
     },
     orderBy: { createdAt: 'desc' },
+    ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
 
-  return NextResponse.json(invoices.map(serializeInvoice));
+  const serialized = invoices.map(serializeInvoice);
+  if (!pagination.enabled) return NextResponse.json(serialized);
+  const totalItems = await prisma.invoice.count({ where });
+  return NextResponse.json(paginatedResponse(serialized, pagination.value, totalItems));
 }
 
 export async function POST(request: NextRequest) {

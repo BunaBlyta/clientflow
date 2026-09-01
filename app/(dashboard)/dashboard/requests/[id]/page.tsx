@@ -9,8 +9,9 @@ import { formatDate, formatMajorCurrency } from "@/lib/format";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
-import type { ProjectRequestDetail } from "@/lib/types";
+import type { ProjectRequest, ProjectRequestDetail } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,12 +33,34 @@ export default function RequestDetailPage() {
     } finally { if (!signal?.aborted) setIsLoading(false); }
   }, [id]);
   useEffect(() => { const controller = new AbortController(); void Promise.resolve().then(() => loadRequest(controller.signal)); return () => controller.abort(); }, [loadRequest]);
+  useEffect(() => {
+    const handleEntityChanged = (event: Event) => {
+      const detail = (event as CustomEvent<EntityChangedEvent>).detail;
+      if (detail?.entity !== "request" || detail.id !== id) return;
+      void fetchJson<ProjectRequestDetail>(
+        `/api/requests/${encodeURIComponent(id)}`,
+        "We couldn't refresh this request.",
+      ).then(setRequest).catch(() => undefined);
+    };
+    window.addEventListener("clientflow:entity-changed", handleEntityChanged);
+    return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
+  }, [id]);
 
   async function updateRequest(status: "APPROVED" | "REJECTED") {
+    const previousRequest = request;
     setUpdatingStatus(status);
     setError(null);
+    if (previousRequest) {
+      setRequest({
+        ...previousRequest,
+        status,
+        reviewedAt: new Date().toISOString(),
+      });
+    }
     try {
-      await fetchJson<unknown>(
+      const result = await fetchJson<
+        ProjectRequest | { request: ProjectRequest; emailSent: boolean }
+      >(
         `/api/requests/${encodeURIComponent(id)}`,
         "We couldn't update this request.",
         undefined,
@@ -47,9 +70,20 @@ export default function RequestDetailPage() {
           body: JSON.stringify({ status }),
         },
       );
+      const updatedRequest = "request" in result ? result.request : result;
+      setRequest((currentRequest) =>
+        currentRequest ? { ...currentRequest, ...updatedRequest } : currentRequest,
+      );
       setIsRejectDialogOpen(false);
-      await loadRequest();
+      if (status === "APPROVED") {
+        const updatedDetail = await fetchJson<ProjectRequestDetail>(
+          `/api/requests/${encodeURIComponent(id)}`,
+          "We couldn't refresh this request.",
+        );
+        setRequest(updatedDetail);
+      }
     } catch (caughtError) {
+      setRequest(previousRequest);
       setError(caughtError instanceof Error ? caughtError.message : "We couldn't update this request.");
     } finally {
       setUpdatingStatus(null);

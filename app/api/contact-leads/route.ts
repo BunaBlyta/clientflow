@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { createNotification, scheduleEntityChanged, scheduleNotificationEffects } from '@/app/api/_lib/notifications';
+import type { Prisma } from '@/lib/generated/prisma/client';
+import { paginatedResponse, readPagination } from '@/lib/pagination';
 
 export const runtime = 'nodejs';
 
@@ -41,9 +43,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Staff access required' }, { status: 403 });
   }
 
+  const searchParams = new URL(request.url).searchParams;
+  const pagination = readPagination(searchParams);
+  if (pagination.enabled && 'error' in pagination) return invalidRequest(pagination.error);
+  const search = searchParams.get('search')?.trim() ?? '';
+  const where: Prisma.ContactLeadWhereInput = search ? {
+    OR: [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { message: { contains: search, mode: 'insensitive' } },
+    ],
+  } : {};
   const leads = await prisma.contactLead.findMany({
+    where,
     select: contactLeadSelect,
     orderBy: { createdAt: 'desc' },
+    ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
   const emails = [...new Set(leads.map((lead) => lead.email))];
   const clients = emails.length
@@ -54,7 +69,10 @@ export async function GET(request: NextRequest) {
     : [];
   const clientIds = new Map(clients.map((client) => [client.email, client.id]));
 
-  return NextResponse.json(leads.map((lead) => serializeContactLead(lead, clientIds.get(lead.email))));
+  const serialized = leads.map((lead) => serializeContactLead(lead, clientIds.get(lead.email)));
+  if (!pagination.enabled) return NextResponse.json(serialized);
+  const totalItems = await prisma.contactLead.count({ where });
+  return NextResponse.json(paginatedResponse(serialized, pagination.value, totalItems));
 }
 
 export async function POST(request: NextRequest) {
@@ -109,6 +127,6 @@ export async function POST(request: NextRequest) {
   });
 
   scheduleNotificationEffects(result.notificationIds);
-  scheduleEntityChanged({ entity: 'request', id: result.lead.id });
+  scheduleEntityChanged({ entity: 'lead', id: result.lead.id });
   return NextResponse.json(serializeContactLead(result.lead), { status: 201 });
 }
