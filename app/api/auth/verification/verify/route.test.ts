@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => {
     sendVerificationEmail: vi.fn(),
     userFindUnique: vi.fn(async () => user),
     clientFindUnique: vi.fn(async () => ({ companyName: null, phone: null })),
+    consumeLoginRateLimit: vi.fn(async () => ({ allowed: true, retryAfterSeconds: 0 })),
+    clearLoginAccountRateLimit: vi.fn(async () => undefined),
     userUpdate: vi.fn(async ({ data }: { data: Partial<typeof user> }) => {
       Object.assign(user, data);
       return user;
@@ -37,6 +39,11 @@ vi.mock('@/app/api/_lib/prisma', () => ({
       findUnique: mocks.clientFindUnique,
     },
   },
+}));
+
+vi.mock('@/app/api/_lib/login-rate-limit', () => ({
+  consumeLoginRateLimit: mocks.consumeLoginRateLimit,
+  clearLoginAccountRateLimit: mocks.clearLoginAccountRateLimit,
 }));
 
 vi.mock('@/app/api/_lib/resend', () => ({
@@ -67,6 +74,8 @@ describe('client verification flow', () => {
     mocks.userFindUnique.mockClear();
     mocks.clientFindUnique.mockClear();
     mocks.userUpdate.mockClear();
+    mocks.consumeLoginRateLimit.mockClear();
+    mocks.clearLoginAccountRateLimit.mockClear();
   });
 
   it('keeps the code available between verification and password setup', async () => {

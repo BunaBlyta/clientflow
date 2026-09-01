@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSessionToken, SESSION_COOKIE, verifyPassword } from '@/app/api/_lib/auth';
+import {
+  clearLoginAccountRateLimit,
+  consumeLoginRateLimit,
+} from '@/app/api/_lib/login-rate-limit';
 import { prisma } from '@/app/api/_lib/prisma';
 
 export const runtime = 'nodejs';
@@ -27,6 +31,20 @@ export async function POST(request: NextRequest) {
 
   const email = (body as { email: string }).email.trim().toLowerCase();
   const password = (body as { password: string }).password;
+  const rateLimit = await consumeLoginRateLimit(request, email);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many login attempts. Please try again later.' },
+      {
+        status: 429,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
@@ -43,6 +61,8 @@ export async function POST(request: NextRequest) {
   if (!user || !user.isActive || !verifyPassword(password, user.passwordHash)) {
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   }
+
+  await clearLoginAccountRateLimit(email);
 
   const client = user.role === 'CLIENT'
     ? await prisma.client.findUnique({

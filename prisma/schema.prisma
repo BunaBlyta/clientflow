@@ -285,3 +285,12 @@ model PushDelivery {
   @@index([status, nextAttemptAt])
   @@index([notificationId])
 }
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
