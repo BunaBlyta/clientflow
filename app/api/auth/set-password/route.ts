@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSessionToken, hashPassword, SESSION_COOKIE } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { verifyCode } from '@/app/api/_lib/verification';
+import { isValidEmail } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
   const code = (body as { code: string }).code.trim();
   const password = (body as { password: string }).password;
 
-  if (!email || !email.includes('@')) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
   }
 

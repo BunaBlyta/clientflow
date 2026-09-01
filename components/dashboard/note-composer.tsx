@@ -18,8 +18,8 @@ interface NoteComposerProps {
   className?: string;
 }
 
-// Resting height of the empty field. The visible 999px corner always curves
-// to half the field's height, so at rest the caps are 22px semicircles.
+// Resting height of the empty field. Short notes use a pill shape; once the
+// content grows beyond one line, the field switches to a compact rectangle.
 const MIN_HEIGHT = 44;
 // Baseline inset of every line of text from the field's edge. The caret and
 // the placeholder both sit here too, so an empty field reads as one point
@@ -66,6 +66,9 @@ export function NoteComposer({
   const editableRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
   const pillHeight = Math.max(MIN_HEIGHT, contentHeight);
+  // Keep the pill for one line, then switch to a square as soon as the text
+  // wraps or the user inserts a line break.
+  const isMultiline = contentHeight > 24 || value.includes("\n");
 
   // Keep the caps sized to the text block as the note grows. The caps'
   // geometry follows the height and the height follows how the text wraps
@@ -95,7 +98,11 @@ export function NoteComposer({
 
   const emitChange = useCallback(() => {
     const element = editableRef.current;
-    if (element) onChange(element.innerText.replace(/\n$/, ""));
+    if (element) {
+      const nextValue = element.innerText.replace(/\n$/, "");
+      if (!nextValue) setContentHeight(0);
+      onChange(nextValue);
+    }
   }, [onChange]);
 
   const handlePaste = useCallback(
@@ -123,12 +130,15 @@ export function NoteComposer({
   return (
     <div
       className={cn(
-        "note-composer relative flex w-full items-center overflow-hidden rounded-full border border-input bg-transparent px-1 text-xs transition-colors",
+        "note-composer relative flex w-full items-center overflow-hidden border border-input bg-transparent px-1 text-xs transition-colors",
         "focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}
-      style={{ minHeight: MIN_HEIGHT }}
+      style={{
+        minHeight: MIN_HEIGHT,
+        borderRadius: isMultiline ? 6 : 9999,
+      }}
       onMouseDown={(event) => {
         if (disabled || event.target === editableRef.current) return;
         // A click anywhere on the pill focuses the field and drops the caret
@@ -146,8 +156,12 @@ export function NoteComposer({
       }}
     >
       <div className="w-full" style={{ display: "flow-root" }}>
-        <div aria-hidden="true" style={capStyle("left")} />
-        <div aria-hidden="true" style={capStyle("right")} />
+        {!isMultiline && (
+          <>
+            <div aria-hidden="true" style={capStyle("left")} />
+            <div aria-hidden="true" style={capStyle("right")} />
+          </>
+        )}
         <div
           ref={editableRef}
           role="textbox"
@@ -160,7 +174,10 @@ export function NoteComposer({
           spellCheck
           onInput={emitChange}
           onPaste={handlePaste}
-          style={{ paddingInline: EDGE_INSET }}
+          style={{
+            paddingInline: isMultiline ? 12 : EDGE_INSET,
+            paddingBlock: isMultiline ? 10 : 0,
+          }}
           className={cn(
             "note-composer-field whitespace-pre-wrap break-words leading-[1.5] outline-none",
             "empty:before:pointer-events-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground",

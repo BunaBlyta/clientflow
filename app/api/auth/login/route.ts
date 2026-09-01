@@ -5,6 +5,7 @@ import {
   consumeLoginRateLimit,
 } from '@/app/api/_lib/login-rate-limit';
 import { prisma } from '@/app/api/_lib/prisma';
+import { isValidEmail } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,9 @@ export async function POST(request: NextRequest) {
 
   const email = (body as { email: string }).email.trim().toLowerCase();
   const password = (body as { password: string }).password;
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
+  }
   const rateLimit = await consumeLoginRateLimit(request, email);
   if (!rateLimit.allowed) {
     return NextResponse.json(

@@ -12,6 +12,7 @@ import { useI18n } from '../../lib/i18n';
 import type { ProjectRequest } from '../../lib/types';
 import { AppBackButton } from '../../components/OriginBackButton';
 import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
+import { isValidEmail } from '../../lib/validation';
 
 export default function RequestStatusScreen() {
   const { color } = useTheme();
@@ -19,10 +20,18 @@ export default function RequestStatusScreen() {
   const styles = createStyles(color);
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
   const [result, setResult] = useState<ProjectRequest | null>(null);
 
   function handleCheck() {
+    if (!isValidEmail(email)) {
+      setSearched(false);
+      setResult(null);
+      setError(t('auth.validEmail'));
+      return;
+    }
+    setError('');
     const found = MOCK_REQUESTS.find(
       (r) => r.prospectEmail.toLowerCase() === email.trim().toLowerCase()
     );
@@ -53,11 +62,13 @@ export default function RequestStatusScreen() {
         onChangeText={(t) => {
           setEmail(t);
           setSearched(false);
+          setError('');
         }}
         placeholder={t('auth.emailPlaceholder')}
         keyboardType="email-address"
         autoComplete="email"
         helperText={t('auth.demoEmails')}
+        error={error || undefined}
       />
 
       <Button label={t('auth.checkStatus')} onPress={handleCheck} disabled={!email.trim()} />

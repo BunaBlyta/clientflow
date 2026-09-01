@@ -11,6 +11,7 @@ import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { AppBackButton } from '../../components/OriginBackButton';
 import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
+import { isValidEmail } from '../../lib/validation';
 
 export default function SetPasswordScreen() {
   const router = useRouter();
@@ -37,9 +38,13 @@ export default function SetPasswordScreen() {
       setError(t('auth.passwordMismatch'));
       return;
     }
-    const email = params.email?.trim().toLowerCase();
+    const email = params.email?.trim().toLowerCase() ?? '';
     const code = params.code?.trim();
-    if (!email || !code) {
+    if (!isValidEmail(email)) {
+      setError(t('auth.validEmail'));
+      return;
+    }
+    if (!code) {
       setError(t('auth.missingCode'));
       return;
     }

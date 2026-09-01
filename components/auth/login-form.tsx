@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/i18n";
+import { isValidEmail } from "@/lib/validation";
 
 type LoginResponse = {
   user?: { role?: string };
@@ -24,6 +25,19 @@ export function LoginForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setError(t("auth.emailRequired"));
+      return;
+    }
+    if (!isValidEmail(normalizedEmail)) {
+      setError(t("common.invalidEmail"));
+      return;
+    }
+    if (!password) {
+      setError(t("auth.passwordRequired"));
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -31,12 +45,27 @@ export function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
       const result = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
-        setError(result.error ?? t("auth.invalidLogin"));
+        if (response.status === 400) {
+          setError(t("auth.emailPasswordRequired"));
+        } else if (response.status === 401) {
+          setError(t("auth.invalidCredentials"));
+        } else if (response.status === 429) {
+          const retryAfter = Number(response.headers.get("Retry-After"));
+          setError(
+            retryAfter > 0
+              ? t("auth.tooManyAttemptsWait", { minutes: Math.max(1, Math.ceil(retryAfter / 60)) })
+              : t("auth.tooManyAttempts"),
+          );
+        } else if (response.status >= 500) {
+          setError(t("auth.serverUnavailable"));
+        } else {
+          setError(result.error ?? t("auth.loginError"));
+        }
         return;
       }
 
@@ -50,7 +79,7 @@ export function LoginForm() {
       router.replace(destination);
       router.refresh();
     } catch {
-      setError(t("auth.loginError"));
+      setError(t("auth.networkError"));
     } finally {
       setIsSubmitting(false);
     }

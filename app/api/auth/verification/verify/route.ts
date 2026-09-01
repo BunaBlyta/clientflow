@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/api/_lib/prisma';
 import { verifyCode } from '@/app/api/_lib/verification';
+import { isValidEmail } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 
@@ -24,6 +25,9 @@ export async function POST(request: NextRequest) {
 
   const email = (body as { email: string }).email.trim().toLowerCase();
   const code = (body as { code: string }).code.trim();
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
+  }
   const user = await prisma.user.findUnique({
     where: { email },
     select: {

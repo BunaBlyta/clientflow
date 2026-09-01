@@ -10,6 +10,7 @@ import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../
 import { useI18n } from '../../lib/i18n';
 import { AppBackButton } from '../../components/OriginBackButton';
 import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
+import { isValidEmail } from '../../lib/validation';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function ForgotPasswordScreen() {
   async function handleSend() {
     setError('');
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+    if (!isValidEmail(normalizedEmail)) {
       setError(t('auth.validEmail'));
       return;
     }

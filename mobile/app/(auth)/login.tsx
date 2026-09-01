@@ -19,6 +19,7 @@ import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../
 import { useI18n } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth-store';
 import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
+import { isValidEmail } from '../../lib/validation';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -38,6 +39,10 @@ export default function LoginScreen() {
     setError('');
     if (!email.trim() || !password) {
       setError(t('auth.emailPasswordRequired'));
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError(t('auth.validEmail'));
       return;
     }
     setLoading(true);

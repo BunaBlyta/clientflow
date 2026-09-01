@@ -10,6 +10,7 @@ import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../
 import { useI18n } from '../../lib/i18n';
 import { AppBackButton } from '../../components/OriginBackButton';
 import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
+import { isValidEmail } from '../../lib/validation';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function VerifyCodeScreen() {
 
   const [email, setEmail] = useState(params.email ?? '');
   const [code, setCode] = useState('');
-  const [error, setError] = useState<'invalid' | 'expired' | ''>('');
+  const [error, setError] = useState<'email' | 'invalid' | 'expired' | ''>('');
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -51,8 +52,8 @@ export default function VerifyCodeScreen() {
     setError('');
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedCode = code.trim();
-    if (!normalizedEmail) {
-      setError('invalid');
+    if (!isValidEmail(normalizedEmail)) {
+      setError('email');
       return;
     }
     if (normalizedCode.length !== 6) {
@@ -74,8 +75,8 @@ export default function VerifyCodeScreen() {
 
   async function handleResend() {
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) {
-      setError('invalid');
+    if (!isValidEmail(normalizedEmail)) {
+      setError('email');
       return;
     }
     setCode('');
@@ -131,11 +132,13 @@ export default function VerifyCodeScreen() {
         maxLength={6}
         helperText={!error ? t('auth.codeHelper') : undefined}
         error={
-          error === 'invalid'
-            ? t('auth.invalidCode')
-            : error === 'expired'
-              ? t('auth.expiredCode')
-              : undefined
+          error === 'email'
+            ? t('auth.validEmail')
+            : error === 'invalid'
+              ? t('auth.invalidCode')
+              : error === 'expired'
+                ? t('auth.expiredCode')
+                : undefined
         }
       />
 

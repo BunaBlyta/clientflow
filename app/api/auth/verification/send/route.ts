@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/api/_lib/prisma';
 import { issueVerificationEmail } from '@/app/api/_lib/verification-email';
+import { isValidEmail } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = (body as { email: string }).email.trim().toLowerCase();
-  if (!email || !email.includes('@')) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
   }
 

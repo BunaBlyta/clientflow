@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/i18n";
+import { isValidEmail } from "@/lib/validation";
 
 type SetPasswordResponse = {
   user?: { role?: string };
@@ -26,6 +27,15 @@ export function AcceptInviteForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setError(t("auth.emailRequired"));
+      return;
+    }
+    if (!isValidEmail(normalizedEmail)) {
+      setError(t("common.invalidEmail"));
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -33,7 +43,7 @@ export function AcceptInviteForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: email.trim(), code, password }),
+        body: JSON.stringify({ email: normalizedEmail, code, password }),
       });
       const result = (await response.json().catch(() => null)) as SetPasswordResponse | null;
 

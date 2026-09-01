@@ -67,6 +67,15 @@ describe('POST /api/auth/login', () => {
     expect(mocks.findUser).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed email addresses before rate limiting', async () => {
+    const response = await POST(request({ email: 'not-an-email', password: 'password' }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'A valid email is required' });
+    expect(mocks.consumeRateLimit).not.toHaveBeenCalled();
+    expect(mocks.findUser).not.toHaveBeenCalled();
+  });
+
   it('keeps invalid credentials generic and retains the failed-attempt count', async () => {
     mocks.findUser.mockResolvedValue(null);
 
