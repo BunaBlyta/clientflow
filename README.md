@@ -23,12 +23,9 @@ Other things it handles:
 
 ## Demo
 
-```
-jordan@riversidecoffee.com / riverside123
-verification code: 123456
-```
+The live link above opens the staff dashboard. Sign in as the seeded staff user — email `sam@clientflow.studio`, password `clientflow-demo`. Everything behind it is seeded demo data, so feel free to poke around. The mobile app signs in as a client instead; that account is seeded alongside the staff one in `prisma/seed.ts`.
 
-Mock data — feel free to poke around.
+**A note on email verification.** Signup and forgot-password send their codes through Resend, but I don't own a sending domain, so the app falls back to Resend's shared `onboarding@resend.dev` sender. That sender only delivers to the address on my own Resend account — for any other recipient the mail is accepted but never lands, and I read the code out of the Resend dashboard logs instead. Both seeded accounts are already verified, so you can log in with them directly and skip the code entirely.
 
 ## Tech stack
 
