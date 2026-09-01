@@ -42,10 +42,12 @@ export default function CheckoutScreen() {
     ? `/invoices/${invoiceId}?id=${id}&tab=invoices` as const
     : tab === 'notifications'
       ? `/notifications/projects/${id}/invoices/${invoiceId}?tab=notifications` as const
-    : `/projects/${id}/invoices/${invoiceId}` as const;
+      : tab === 'home'
+        ? `/home/projects/${id}/invoices/${invoiceId}?tab=home` as const
+        : `/projects/${id}/invoices/${invoiceId}` as const;
 
   function returnToInvoice() {
-    if ((tab === 'invoices' || tab === 'notifications') && navigation.canGoBack()) {
+    if ((tab === 'invoices' || tab === 'notifications' || tab === 'home') && navigation.canGoBack()) {
       navigation.goBack();
       return;
     }

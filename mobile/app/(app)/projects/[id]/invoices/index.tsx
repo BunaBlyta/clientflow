@@ -86,9 +86,11 @@ export default function ProjectInvoicesScreen() {
             invoice={invoice}
             onPress={() =>
               navigateTo(
-                tab === 'notifications'
-                  ? `/notifications/projects/${id}/invoices/${invoice.id}?tab=notifications`
-                  : `/projects/${id}/invoices/${invoice.id}`,
+                tab === 'home'
+                  ? `/home/projects/${id}/invoices/${invoice.id}?tab=home`
+                  : tab === 'notifications'
+                    ? `/notifications/projects/${id}/invoices/${invoice.id}?tab=notifications`
+                    : `/projects/${id}/invoices/${invoice.id}`,
               )
             }
           />

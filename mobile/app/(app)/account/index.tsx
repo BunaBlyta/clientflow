@@ -194,25 +194,26 @@ export default function AccountScreen() {
             }
             onPress={toggleLanguageOptions}
             styles={styles}
+            expanded={languageOptionsVisible}
           />
           {languageOptionsVisible ? (
             <View style={styles.languageControl}>
               <LanguageOption
-                code="EN"
+                flag="🇬🇧"
                 label={t('account.english')}
                 selected={language === 'en'}
                 onPress={() => setLanguage('en')}
                 styles={styles}
               />
               <LanguageOption
-                code="SQ"
+                flag="🇦🇱"
                 label={t('account.albanian')}
                 selected={language === 'sq'}
                 onPress={() => setLanguage('sq')}
                 styles={styles}
               />
               <LanguageOption
-                code="DE"
+                flag="🇩🇪"
                 label={t('account.german')}
                 selected={language === 'de'}
                 onPress={() => setLanguage('de')}
@@ -339,6 +340,7 @@ function SettingsRow({
   styles,
   last = false,
   trailing,
+  expanded = false,
 }: {
   icon?: LucideIcon;
   iconNode?: ReactNode;
@@ -348,8 +350,23 @@ function SettingsRow({
   styles: ReturnType<typeof createStyles>;
   last?: boolean;
   trailing?: ReactNode;
+  expanded?: boolean;
 }) {
   const { color } = useTheme();
+  const chevronProgress = useRef(new Animated.Value(expanded ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(chevronProgress, {
+      toValue: expanded ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [chevronProgress, expanded]);
+
+  const chevronRotation = chevronProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
 
   return (
     <Pressable
@@ -372,7 +389,9 @@ function SettingsRow({
               {value}
             </Text>
           ) : null}
-          <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+          <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+            <ChevronRight size={16} color={color.textMuted} strokeWidth={1.8} />
+          </Animated.View>
         </>
       )}
     </Pressable>
@@ -475,13 +494,13 @@ function ThemeToggle({
 }
 
 function LanguageOption({
-  code,
+  flag,
   label,
   selected,
   onPress,
   styles,
 }: {
-  code: string;
+  flag: string;
   label: string;
   selected: boolean;
   onPress: () => void;
@@ -496,11 +515,7 @@ function LanguageOption({
         pressed && styles.pressed,
       ]}
     >
-      <View style={[styles.languageCode, selected && styles.languageCodeSelected]}>
-        <Text style={[styles.languageCodeText, selected && styles.languageCodeTextSelected]}>
-          {code}
-        </Text>
-      </View>
+      <Text style={styles.languageFlag}>{flag}</Text>
       <Text
         style={[styles.languageOptionText, selected && styles.languageOptionTextSelected]}
         numberOfLines={1}
@@ -730,25 +745,11 @@ function createStyles(
     languageOptionSelected: {
       backgroundColor: color.accentSoft,
     },
-    languageCode: {
+    languageFlag: {
       width: 28,
-      height: 28,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: color.surfaceMuted,
-    },
-    languageCodeSelected: {
-      backgroundColor: color.accent,
-    },
-    languageCodeText: {
-      fontFamily: fontFamily.semibold,
-      fontSize: 10,
-      color: color.textPrimary,
-      letterSpacing: 0.4,
-    },
-    languageCodeTextSelected: {
-      color: color.textOnAccent,
+      fontSize: 24,
+      lineHeight: 28,
+      textAlign: 'center',
     },
     languageOptionText: {
       flex: 1,

@@ -1,5 +1,5 @@
 import { useFocusEffect, useNavigation } from 'expo-router';
-import { Bell } from 'lucide-react-native';
+import { Bell, ChevronDown, ChevronUp } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Pressable,
@@ -20,6 +20,8 @@ import { useDataStore } from '../../../store/data-store';
 import { useSingleFire } from '../../../lib/use-single-fire';
 import type { Notification } from '../../../lib/types';
 import { useShallow } from 'zustand/react/shallow';
+
+const NOTIFICATION_PREVIEW_LIMIT = 10;
 
 export default function NotificationsScreen() {
   const navigation = useNavigation() as unknown as {
@@ -45,6 +47,7 @@ export default function NotificationsScreen() {
   const [markingAll, setMarkingAll] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [olderNotificationsVisible, setOlderNotificationsVisible] = useState(false);
   const [actionError, setActionError] = useState('');
   const notifications = useDataStore(
     useShallow((s) =>
@@ -52,9 +55,13 @@ export default function NotificationsScreen() {
     )
   );
   const unread = useDataStore((s) => s.unreadNotificationCount());
-  const visibleNotifications = notifications.filter((notification) =>
+  const filteredNotifications = notifications.filter((notification) =>
     showArchived ? notification.archived === true : notification.archived !== true,
   );
+  const hiddenOlderCount = Math.max(filteredNotifications.length - NOTIFICATION_PREVIEW_LIMIT, 0);
+  const visibleNotifications = olderNotificationsVisible
+    ? filteredNotifications
+    : filteredNotifications.slice(0, NOTIFICATION_PREVIEW_LIMIT);
   const groups = groupByRecency(visibleNotifications, t);
   const scrollRef = useRef<ScrollView>(null);
   // Set right before navigating away to open a notification, so the
@@ -71,6 +78,7 @@ export default function NotificationsScreen() {
       } else {
         scrollRef.current?.scrollTo({ y: 0, animated: false });
       }
+      setOlderNotificationsVisible(false);
       if (!token) return undefined;
       let active = true;
       void refreshNotifications(token, { reset: true }).then((ok) => {
@@ -82,12 +90,20 @@ export default function NotificationsScreen() {
     }, [refreshNotifications, token]),
   );
 
-  const handleLoadOlder = useCallback(() => {
-    if (!token || notificationsLoading || notificationsLoadingMore || !notificationsHasMore) return;
+  const handleOlderAction = useCallback(() => {
+    if (!token || notificationsLoading || notificationsLoadingMore) return;
+    if (!olderNotificationsVisible) {
+      setOlderNotificationsVisible(true);
+      if (hiddenOlderCount > 0 || !notificationsHasMore) return;
+    }
     void loadMoreNotifications(token).then((ok) => {
       if (!ok) setActionError(t('notifications.loadFailed'));
     });
-  }, [loadMoreNotifications, notificationsHasMore, notificationsLoading, notificationsLoadingMore, t, token]);
+  }, [hiddenOlderCount, loadMoreNotifications, notificationsHasMore, notificationsLoading, notificationsLoadingMore, olderNotificationsVisible, t, token]);
+
+  const handleHideOlder = useCallback(() => {
+    setOlderNotificationsVisible(false);
+  }, []);
 
   const handlePress = useSingleFire(async (notification: Notification) => {
     if (markingId || markingAll || archivingId) return;
@@ -154,6 +170,7 @@ export default function NotificationsScreen() {
           accessibilityState={{ selected: !showArchived }}
           onPress={() => {
             setShowArchived(false);
+            setOlderNotificationsVisible(false);
             setActionError('');
           }}
           style={[styles.filterButton, !showArchived && styles.filterButtonSelected]}
@@ -167,6 +184,7 @@ export default function NotificationsScreen() {
           accessibilityState={{ selected: showArchived }}
           onPress={() => {
             setShowArchived(true);
+            setOlderNotificationsVisible(false);
             setActionError('');
           }}
           style={[styles.filterButton, showArchived && styles.filterButtonSelected]}
@@ -232,15 +250,31 @@ export default function NotificationsScreen() {
           ))}
         </>
       )}
+      {!notificationsLoadingMore && (hiddenOlderCount > 0 || notificationsHasMore) ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={olderNotificationsVisible && !notificationsHasMore ? t('notes.hideOlder') : t('notes.showOlder')}
+          onPress={
+            olderNotificationsVisible && !notificationsHasMore
+              ? handleHideOlder
+              : handleOlderAction
+          }
+          style={({ pressed }) => [styles.olderToggle, pressed && styles.olderTogglePressed]}
+        >
+          {olderNotificationsVisible && !notificationsHasMore ? (
+            <ChevronUp size={14} color={color.accentText} strokeWidth={2} />
+          ) : (
+            <ChevronDown size={14} color={color.accentText} strokeWidth={2} />
+          )}
+          <Text style={styles.olderToggleText}>
+            {olderNotificationsVisible && !notificationsHasMore
+              ? t('notes.hideOlder')
+              : t('notes.showOlder')}
+          </Text>
+        </Pressable>
+      ) : null}
       {notificationsLoadingMore ? (
         <ActivityIndicator color={color.accent} style={styles.loadingMore} />
-      ) : notificationsHasMore ? (
-        <Pressable
-          onPress={handleLoadOlder}
-          style={({ pressed }) => [styles.loadOlderButton, pressed && styles.loadOlderPressed]}
-        >
-          <Text style={styles.loadOlderText}>{t('notifications.loadOlder')}</Text>
-        </Pressable>
       ) : null}
     </Screen>
   );
@@ -357,18 +391,24 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   loadingMore: {
     marginVertical: spacing.md,
   },
-  loadOlderButton: {
+  olderToggle: {
+    alignSelf: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    marginTop: spacing.xs,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: color.surfaceMuted,
   },
-  loadOlderPressed: {
-    opacity: 0.6,
+  olderTogglePressed: {
+    opacity: 0.7,
   },
-  loadOlderText: {
+  olderToggleText: {
     fontFamily: fontFamily.medium,
-    fontSize: fontSize.caption,
-    color: color.accent,
+    fontSize: fontSize.meta,
+    color: color.accentText,
   },
   });
 }

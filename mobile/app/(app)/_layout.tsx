@@ -161,15 +161,6 @@ export default function AppTabsLayout() {
           popToTopOnBlur: true,
           tabBarIcon: ({ focused }) => <TabIcon icon={FolderKanban} focused={focused} color={color} />,
         }}
-        listeners={({ navigation }) => ({
-          tabPress: (event) => {
-            // Also reset on the press itself. `popToTopOnBlur` handles future
-            // tab switches, while this clears any nested route already
-            // remembered before that option mounted (including deep links).
-            event.preventDefault();
-            navigation.navigate('projects', { screen: 'index' });
-          },
-        })}
       />
       <Tabs.Screen
         name="invoices"

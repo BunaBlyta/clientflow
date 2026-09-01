@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronRight, FileText, MessageSquare } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { NoteBubble } from '../../../../components/NoteBubble';
 import { ProjectStageTracker } from '../../../../components/ProjectStageTracker';
 import { InvoiceRow } from '../../../../components/InvoiceRow';
@@ -13,12 +13,12 @@ import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../
 import { useI18n } from '../../../../lib/i18n';
 import { useAuthStore } from '../../../../store/auth-store';
 import { useDataStore } from '../../../../store/data-store';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Card } from '../../../../components/ui/Card';
 import { RadialRing } from '../../../../components/ui/RadialRing';
 import { PROJECT_STAGES, getProjectStatusLabel, getProjectStatusMeta } from '../../../../lib/status';
-import { AppBackButton } from '../../../../components/OriginBackButton';
+import { AppBackButton, useOriginBack } from '../../../../components/OriginBackButton';
 import { useSingleFire } from '../../../../lib/use-single-fire';
 
 export default function ProjectDetailScreen() {
@@ -28,6 +28,7 @@ export default function ProjectDetailScreen() {
     tab?: string;
   }>();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { color } = useTheme();
   const { language, t } = useI18n();
   const styles = createStyles(color);
@@ -46,10 +47,36 @@ export default function ProjectDetailScreen() {
   // back to the skeleton when they have no data yet, so a cached list still
   // renders immediately with no flash.
   const [loading, setLoading] = useState(true);
-  const projectRoute = tab === 'notifications'
-    ? `/notifications/projects/${id}` as const
-    : `/projects/${id}` as const;
+  const projectRoute = tab === 'home'
+    ? `/home/projects/${id}` as const
+    : tab === 'notifications'
+      ? `/notifications/projects/${id}` as const
+      : `/projects/${id}` as const;
+  const tabQuery = tab === 'home' || tab === 'notifications' ? `?tab=${tab}` : '';
   const navigateTo = useSingleFire((href: Parameters<typeof router.push>[0]) => router.push(href));
+  const { goBack } = useOriginBack(source);
+  const closeProgress = useRef(new Animated.Value(0)).current;
+  const closing = useRef(false);
+  const handleClose = useCallback(() => {
+    if (closing.current) return;
+    if (!source) {
+      goBack();
+      return;
+    }
+    closing.current = true;
+    Animated.timing(closeProgress, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) goBack();
+      else closing.current = false;
+    });
+  }, [closeProgress, goBack, source]);
+  const detailTransitionStyle = source
+    ? { transform: [{ translateX: closeProgress.interpolate({ inputRange: [0, 1], outputRange: [0, width] }) }] }
+    : undefined;
 
   useEffect(() => {
     if (!id || !token) {
@@ -76,14 +103,16 @@ export default function ProjectDetailScreen() {
 
   if (!project) {
     return (
-      <Screen>
-        <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
-        {loading ? (
-          <ProjectDetailSkeleton styles={styles} />
-        ) : (
-          <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
-        )}
-      </Screen>
+      <Animated.View style={[styles.detailTransition, detailTransitionStyle]}>
+        <Screen>
+          <AppBackButton source={source} onPress={handleClose} accessibilityLabel={t('common.backToProjects')} />
+          {loading ? (
+            <ProjectDetailSkeleton styles={styles} />
+          ) : (
+            <EmptyState icon={FileText} title={t('projects.projectNotFound')} />
+          )}
+        </Screen>
+      </Animated.View>
     );
   }
 
@@ -95,9 +124,10 @@ export default function ProjectDetailScreen() {
   const invoicePreviews = visibleInvoices.slice(0, 2);
 
   return (
-    <Screen>
+    <Animated.View style={[styles.detailTransition, detailTransitionStyle]}>
+      <Screen>
       <View style={styles.topbar}>
-        <AppBackButton source={source} accessibilityLabel={t('common.backToProjects')} />
+        <AppBackButton source={source} onPress={handleClose} accessibilityLabel={t('common.backToProjects')} />
         <View style={styles.topbarTitle}>
           <Text style={styles.topbarProjectName} numberOfLines={1}>{project.name}</Text>
           <Text style={styles.topbarClientName} numberOfLines={1}>{client?.companyName ?? pkg?.name ?? ''}</Text>
@@ -140,11 +170,7 @@ export default function ProjectDetailScreen() {
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.notes')}</Text>
           <Pressable
             onPress={() =>
-              navigateTo(
-                tab === 'notifications'
-                  ? `${projectRoute}/notes?tab=notifications`
-                  : `${projectRoute}/notes`,
-              )
+              navigateTo(`${projectRoute}/notes${tabQuery}`)
             }
             style={styles.viewAllRow}
           >
@@ -176,11 +202,7 @@ export default function ProjectDetailScreen() {
           <Text style={[styles.sectionTitle, styles.sectionHeaderTitle]}>{t('projects.invoices')}</Text>
           <Pressable
             onPress={() =>
-              navigateTo(
-                tab === 'notifications'
-                  ? `${projectRoute}/invoices?tab=notifications`
-                  : `${projectRoute}/invoices`,
-              )
+              navigateTo(`${projectRoute}/invoices${tabQuery}`)
             }
             style={styles.viewAllRow}
           >
@@ -203,11 +225,7 @@ export default function ProjectDetailScreen() {
                   key={invoice.id}
                   invoice={invoice}
                   onPress={() =>
-                    navigateTo(
-                      tab === 'notifications'
-                        ? `${projectRoute}/invoices/${invoice.id}?tab=notifications`
-                        : `${projectRoute}/invoices/${invoice.id}`,
-                    )
+                    navigateTo(`${projectRoute}/invoices/${invoice.id}${tabQuery}`)
                   }
                   preview
                 />
@@ -220,7 +238,8 @@ export default function ProjectDetailScreen() {
           </>
         )}
       </Card>
-    </Screen>
+      </Screen>
+    </Animated.View>
   );
 }
 
@@ -278,6 +297,7 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     color: color.danger,
     marginBottom: spacing.md,
   },
+  detailTransition: { flex: 1 },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   topbarTitle: { flex: 1, alignItems: 'center', minWidth: 0 },
   topbarProjectName: { fontFamily: fontFamily.serif, fontSize: fontSize.cardTitle + 2, color: color.textPrimary },

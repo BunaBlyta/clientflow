@@ -58,6 +58,10 @@ export default function InvoiceDetailScreen() {
       );
       return;
     }
+    if (tab === 'home') {
+      router.push(`/home/projects/${id}/invoices/${invoiceId}/checkout?tab=home`);
+      return;
+    }
     router.push(`/projects/${id}/invoices/${invoiceId}/checkout`);
   });
 

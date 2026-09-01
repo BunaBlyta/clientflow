@@ -58,16 +58,18 @@ export function useOriginBack(source?: string) {
 export function AppBackButton({
   source,
   accessibilityLabel,
+  onPress,
 }: {
   source?: string;
   accessibilityLabel: string;
+  onPress?: () => void;
 }) {
   const { color } = useTheme();
-  const { goBack } = useOriginBack(source);
+  const { goBack } = useOriginBack(onPress ? undefined : source);
 
   return (
     <Pressable
-      onPress={goBack}
+      onPress={onPress ?? goBack}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       hitSlop={spacing.sm}

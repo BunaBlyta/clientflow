@@ -63,6 +63,7 @@ type OutboxItem = {
   // The real note id once the server confirms — used to hide the duplicate
   // store note while the "Sent" tick is still showing.
   noteId?: string;
+  sentAt?: number;
 };
 
 function keyboardMotionEasing(easing: KeyboardEventEasing): (value: number) => number {
@@ -93,6 +94,7 @@ export default function ProjectNotesScreen() {
   const token = useAuthStore((s) => s.token);
   const project = useDataStore((s) => s.projectById(id));
   const notes = useDataStore(useShallow((s) => s.notesForProject(id)));
+  const mergeNote = useDataStore((s) => s.mergeNote);
   const postNote = useDataStore((s) => s.postNote);
   const refreshNotes = useDataStore((s) => s.refreshNotes);
 
@@ -117,6 +119,7 @@ export default function ProjectNotesScreen() {
   const [forceCompact, setForceCompact] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const noteRenderKeys = useRef(new Map<string, string>());
   const chatLift = useRef(new Animated.Value(0)).current;
   // The store returns notes oldest-to-newest so the newest message stays
   // closest to the composer, like a normal chat timeline.
@@ -185,6 +188,28 @@ export default function ProjectNotesScreen() {
     };
   }, [notes.length, outbox.length]);
 
+  // If a refresh temporarily misses a just-created note, keep its sent bubble
+  // visible. Once the server copy is back and the sent indicator has had time
+  // to show, remove the optimistic copy without making the message jump.
+  useEffect(() => {
+    if (notes.length === 0) return;
+    const confirmedNoteIds = new Set(notes.map((note) => note.id));
+    const now = Date.now();
+    setOutbox((list) => {
+      let changed = false;
+      const next = list.filter((item) => {
+        const shouldRemove =
+          item.noteId !== undefined &&
+          item.sentAt !== undefined &&
+          now - item.sentAt >= SENT_INDICATOR_MS &&
+          confirmedNoteIds.has(item.noteId);
+        if (shouldRemove) changed = true;
+        return !shouldRemove;
+      });
+      return changed ? next : list;
+    });
+  }, [notes]);
+
   useEffect(() => {
     if (!token || !id) {
       setLoading(false);
@@ -201,6 +226,12 @@ export default function ProjectNotesScreen() {
       active = false;
     };
   }, [id, refreshNotes, token]);
+
+  const settledNoteIds = new Set(
+    outbox.map((item) => item.noteId).filter((value): value is string => Boolean(value)),
+  );
+  const timelineNotes = orderedNotes.filter((note) => !settledNoteIds.has(note.id));
+  const hasContent = timelineNotes.length > 0 || outbox.length > 0;
 
   const notesHeader = (
     <View style={[styles.stickyHeader, { paddingTop: insets.top + spacing.sm }]}>
@@ -237,13 +268,22 @@ export default function ProjectNotesScreen() {
     const noteId = result.note.id;
     setOutbox((list) =>
       list.map((item) =>
-        item.tempId === tempId ? { ...item, state: 'sent', noteId } : item,
+        item.tempId === tempId ? { ...item, state: 'sent', noteId, sentAt: Date.now() } : item,
       ),
     );
+    // Keep the confirmed note keyed as the same bubble when the optimistic
+    // copy is removed, so React updates it in place instead of remounting it.
+    noteRenderKeys.current.set(noteId, tempId);
+    // Mark the optimistic item as reconciled before exposing the confirmed
+    // note to the timeline. This prevents a transient duplicate bubble.
+    mergeNote(result.note);
     // Once the "Sent" tick has shown for a moment, drop the optimistic copy;
     // the confirmed store note is already in the timeline underneath it.
     setTimeout(() => {
-      setOutbox((list) => list.filter((item) => item.tempId !== tempId));
+      const serverHasNote = useDataStore.getState().notes.some((note) => note.id === noteId);
+      if (serverHasNote) {
+        setOutbox((list) => list.filter((item) => item.noteId !== noteId));
+      }
     }, SENT_INDICATOR_MS);
   }
 
@@ -281,12 +321,6 @@ export default function ProjectNotesScreen() {
       createdAt: item.createdAt,
     };
   }
-
-  const settledNoteIds = new Set(
-    outbox.map((item) => item.noteId).filter((value): value is string => Boolean(value)),
-  );
-  const timelineNotes = orderedNotes.filter((note) => !settledNoteIds.has(note.id));
-  const hasContent = timelineNotes.length > 0 || outbox.length > 0;
 
   if (loading && notes.length === 0 && outbox.length === 0) {
     return (
@@ -358,7 +392,7 @@ export default function ProjectNotesScreen() {
                 const showDate = !previousNote || formatDate(previousNote.createdAt, language) !== noteDate;
 
                 return (
-                  <View key={note.id}>
+                  <View key={noteRenderKeys.current.get(note.id) ?? note.id}>
                     {showDate && (
                       <View style={styles.dateSeparator}>
                         <View style={styles.dateLine} />

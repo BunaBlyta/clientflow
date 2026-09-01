@@ -33,6 +33,7 @@ interface DataState {
   notificationsNextCursor?: string | null;
   notificationsLoading: boolean;
   notificationsLoadingMore: boolean;
+  notificationsTotal: number | null;
   notificationsUnreadCount: number | null;
   notificationsUnreadCountFromServer: boolean;
   notificationsHydrated: boolean;
@@ -50,6 +51,7 @@ interface DataState {
   refreshNotifications: (token: string, options?: { reset?: boolean }) => Promise<boolean>;
   loadMoreNotifications: (token: string) => Promise<boolean>;
   mergeNotification: (notification: Notification) => boolean;
+  mergeNote: (note: Note) => void;
   postNote: (projectId: string, body: string, token: string) => Promise<NotePostResult>;
   markNotificationRead: (id: string, token: string) => Promise<boolean>;
   markAllNotificationsRead: (token: string) => Promise<boolean>;
@@ -63,6 +65,7 @@ let sessionGeneration = 0;
 const projectsRequestIds = new Map<string, number>();
 const invoicesRequestIds = new Map<string, number>();
 const notesRequestIds = new Map<string, number>();
+const locallyCreatedNoteIds = new Set<string>();
 let notificationsRequestId = 0;
 const realtimeNotificationIds = new Set<string>();
 
@@ -111,6 +114,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   notificationsNextCursor: undefined,
   notificationsLoading: false,
   notificationsLoadingMore: false,
+  notificationsTotal: null,
   notificationsUnreadCount: null,
   notificationsUnreadCountFromServer: false,
   notificationsHydrated: false,
@@ -206,13 +210,24 @@ export const useDataStore = create<DataState>((set, get) => ({
           ? MOCK_NOTES.filter((note) => !projectId || note.projectId === projectId)
           : notes;
       if (generation === sessionGeneration && requestId === notesRequestIds.get(requestKey)) {
+        const visibleNoteIds = new Set(visibleNotes.map((note) => note.id));
+        for (const noteId of visibleNoteIds) locallyCreatedNoteIds.delete(noteId);
         set((state) => ({
           notes: projectId
             ? [
-                ...state.notes.filter((note) => note.projectId !== projectId),
+                ...state.notes.filter(
+                  (note) =>
+                    note.projectId !== projectId ||
+                    (locallyCreatedNoteIds.has(note.id) && !visibleNoteIds.has(note.id)),
+                ),
                 ...visibleNotes,
               ]
-            : visibleNotes,
+            : [
+                ...visibleNotes,
+                ...state.notes.filter(
+                  (note) => locallyCreatedNoteIds.has(note.id) && !visibleNoteIds.has(note.id),
+                ),
+              ],
         }));
       }
       return true;
@@ -255,6 +270,7 @@ export const useDataStore = create<DataState>((set, get) => ({
             ? state.notifications
             : state.notifications.filter((notification) => realtimeNotificationIds.has(notification.id));
           const notifications = mergeNotificationList(base, page.notifications);
+          const total = page.total ?? (preserveLoadedPages ? state.notificationsTotal : null);
           const unreadCountFromServer = page.unreadCount !== undefined
             ? true
             : preserveLoadedPages && state.notificationsUnreadCountFromServer;
@@ -266,10 +282,13 @@ export const useDataStore = create<DataState>((set, get) => ({
             // Always trust the freshest page-1 response rather than OR-ing
             // with the previous value — a stale `true` from before must not
             // stick around once the server confirms there's nothing left.
-            notificationsHasMore: page.hasMore,
+            notificationsHasMore: total !== null
+              ? notifications.length < total
+              : page.hasMore && page.notifications.length >= page.limit,
             notificationsNextCursor: preserveLoadedPages
               ? state.notificationsNextCursor
               : page.nextCursor,
+            notificationsTotal: total,
             notificationsUnreadCount: page.unreadCount
               ?? (unreadCountFromServer
                 ? state.notificationsUnreadCount
@@ -309,12 +328,16 @@ export const useDataStore = create<DataState>((set, get) => ({
       if (generation === sessionGeneration && requestId === notificationsRequestId) {
         set((current) => {
           const notifications = mergeNotificationList(current.notifications, page.notifications);
+          const total = page.total ?? current.notificationsTotal;
           const unreadCountFromServer = page.unreadCount !== undefined || current.notificationsUnreadCountFromServer;
           return {
             notifications,
             notificationPage: Math.max(current.notificationPage, page.page),
-            notificationsHasMore: page.hasMore,
+            notificationsHasMore: total !== null
+              ? notifications.length < total
+              : page.hasMore && page.notifications.length >= page.limit,
             notificationsNextCursor: page.nextCursor,
+            notificationsTotal: total,
             notificationsUnreadCount: page.unreadCount
               ?? (unreadCountFromServer
                 ? current.notificationsUnreadCount
@@ -347,17 +370,17 @@ export const useDataStore = create<DataState>((set, get) => ({
     });
     return !exists;
   },
+  mergeNote: (note) => {
+    locallyCreatedNoteIds.add(note.id);
+    set((state) => ({
+      notes: state.notes.some((item) => item.id === note.id)
+        ? state.notes.map((item) => (item.id === note.id ? note : item))
+        : [...state.notes, note],
+    }));
+  },
   postNote: async (projectId, body, token) => {
-    const generation = sessionGeneration;
     try {
       const note = await createNoteRequest(projectId, body, token);
-      if (generation === sessionGeneration) {
-        set((state) => ({
-          notes: state.notes.some((item) => item.id === note.id)
-            ? state.notes.map((item) => (item.id === note.id ? note : item))
-            : [...state.notes, note],
-        }));
-      }
       return { ok: true, note };
     } catch (error) {
       return {
@@ -480,6 +503,7 @@ export const useDataStore = create<DataState>((set, get) => ({
     projectsRequestIds.clear();
     invoicesRequestIds.clear();
     notesRequestIds.clear();
+    locallyCreatedNoteIds.clear();
     notificationsRequestId += 1;
     realtimeNotificationIds.clear();
     set({
@@ -492,6 +516,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       notificationsNextCursor: undefined,
       notificationsLoading: false,
       notificationsLoadingMore: false,
+      notificationsTotal: null,
       notificationsUnreadCount: null,
       notificationsUnreadCountFromServer: false,
       notificationsHydrated: false,

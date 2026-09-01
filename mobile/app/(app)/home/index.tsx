@@ -1,26 +1,41 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, FolderKanban } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { NotificationRowSkeleton, Skeleton } from '../../components/ui/Skeleton';
-import { Screen } from '../../components/ui/Screen';
-import { formatCurrency, formatDate } from '../../lib/format';
-import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../lib/status';
-import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../lib/theme';
-import { useI18n } from '../../lib/i18n';
-import { getLocalizedNotificationText } from '../../lib/notification-text';
-import { readHomeProjectId, writeHomeProjectId } from '../../lib/home-project-preference';
-import { useAuthStore } from '../../store/auth-store';
-import { useDataStore } from '../../store/data-store';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { NotificationRowSkeleton, Skeleton } from '../../../components/ui/Skeleton';
+import { Screen } from '../../../components/ui/Screen';
+import { formatCurrency, formatDate } from '../../../lib/format';
+import { getProjectStatusLabel, getProjectStatusMeta, PROJECT_STAGES } from '../../../lib/status';
+import { fontFamily, fontSize, radius, spacing, textShadow, useTheme } from '../../../lib/theme';
+import { useI18n } from '../../../lib/i18n';
+import { getLocalizedNotificationText } from '../../../lib/notification-text';
+import { readHomeProjectId, writeHomeProjectId } from '../../../lib/home-project-preference';
+import { useAuthStore } from '../../../store/auth-store';
+import { useDataStore } from '../../../store/data-store';
 import { useShallow } from 'zustand/react/shallow';
-import { Card } from '../../components/ui/Card';
-import { useProjectTabNavigation } from '../../lib/project-tab-navigation';
-import { NotificationRow } from '../../components/NotificationRow';
+import { Card } from '../../../components/ui/Card';
+import { NotificationRow } from '../../../components/NotificationRow';
+import { useSingleFire } from '../../../lib/use-single-fire';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const projectNavigation = useProjectTabNavigation();
+  const navigation = useNavigation() as unknown as {
+    navigate: (
+      screen: 'projects/[id]/index' | 'projects/[id]/invoices/[invoiceId]/index',
+      params: { id: string; invoiceId?: string; tab: 'home' },
+    ) => void;
+  };
+  const openProject = useSingleFire((id: string) =>
+    navigation.navigate('projects/[id]/index', { id, tab: 'home' }),
+  );
+  const openInvoice = useSingleFire((id: string, invoiceId: string) =>
+    navigation.navigate('projects/[id]/invoices/[invoiceId]/index', {
+      id,
+      invoiceId,
+      tab: 'home',
+    }),
+  );
   const { color } = useTheme();
   const { language, t } = useI18n();
   const styles = createStyles(color);
@@ -92,7 +107,7 @@ export default function HomeScreen() {
         <>
           <Pressable
             accessibilityRole="button"
-            onPress={() => projectNavigation.openProject(project.id, 'home')}
+            onPress={() => openProject(project.id)}
             style={({ pressed }) => pressed && styles.pressed}
           >
             <Card tone="glow" padding={20} style={styles.statusSection}>
@@ -162,7 +177,7 @@ export default function HomeScreen() {
 
           <View style={styles.statsRow}>
             <Pressable
-              onPress={() => payableInvoice ? projectNavigation.openInvoice(payableInvoice.projectId, payableInvoice.id, 'home') : router.push('/invoices')}
+              onPress={() => payableInvoice ? openInvoice(payableInvoice.projectId, payableInvoice.id) : router.push('/invoices')}
               style={({ pressed }) => [styles.statCard, pressed && styles.pressed]}
             >
               <Text style={styles.statLabel}>{t('ui.nextPayment')}</Text>

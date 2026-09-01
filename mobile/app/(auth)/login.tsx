@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CheckCircle2, ChevronRight, Layers3 } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   Image,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -23,7 +23,7 @@ import { AtmosphereBackground } from '../../components/ui/AtmosphereBackground';
 export default function LoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ banner?: string }>();
-  const { color, mode } = useTheme();
+  const { color } = useTheme();
   const { t } = useI18n();
   const styles = createStyles(color);
   const insets = useSafeAreaInsets();
@@ -62,20 +62,20 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={[styles.container, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}>
-        <AtmosphereBackground />
+    <View style={styles.flex}>
+      <AtmosphereBackground />
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
+        ]}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.brandRow}>
-          <View style={styles.logoMark}>
-            {mode === 'light' ? (
-              <Image source={require('../../assets/clientflow-logo-green.png')} style={styles.logoImage} />
-            ) : (
-              <Layers3 size={19} color={color.accentText} strokeWidth={1.8} />
-            )}
-          </View>
+          <Image source={require('../../assets/clientflow-logo-green.png')} style={styles.logoImage} />
           <Text style={styles.brand}>{t('auth.brand')}</Text>
         </View>
 
@@ -131,8 +131,8 @@ export default function LoginScreen() {
           <Text style={styles.inviteLinkText}>{t('auth.inviteCode')}</Text>
           <ChevronRight size={16} color={color.accent} />
         </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -140,8 +140,8 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.background },
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    flexGrow: 1,
+    justifyContent: 'flex-start',
     paddingHorizontal: spacing.xl,
   },
   brandRow: {
@@ -150,19 +150,11 @@ function createStyles(color: ReturnType<typeof useTheme>['color']) {
     gap: spacing.sm,
     marginBottom: spacing.xxl,
   },
-  logoMark: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
-    backgroundColor: color.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   logoImage: {
     width: 32,
     height: 32,
     borderRadius: radius.sm,
+    resizeMode: 'contain',
   },
   brand: {
     fontFamily: fontFamily.serif,
