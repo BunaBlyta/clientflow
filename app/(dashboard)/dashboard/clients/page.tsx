@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { SortableTableHeader } from "@/components/dashboard/sortable-table-header";
 import type { Client, Invoice, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { PaginatedResponse } from "@/lib/pagination";
@@ -32,6 +34,8 @@ export default function ClientsPage() {
   const [areTotalsLoading, setAreTotalsLoading] = useState(true);
   const [totalsError, setTotalsError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [packageFilter, setPackageFilter] = useState("ALL");
+  const [sort, setSort] = useState<{ key: "companyName" | "createdAt"; direction: "asc" | "desc" }>({ key: "companyName", direction: "asc" });
   const deferredSearch = useDeferredValue(search);
   const [resendingClientId, setResendingClientId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ clientId: string; message: string } | null>(null);
@@ -73,17 +77,23 @@ export default function ClientsPage() {
   const loadClientPage = useCallback((page: number, signal?: AbortSignal) => {
     const query = new URLSearchParams({ page: String(page), pageSize: "20" });
     if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
+    if (packageFilter !== "ALL") query.set("packageId", packageFilter);
+    query.set("sort", sort.key); query.set("direction", sort.direction);
     return fetchJson<PaginatedResponse<Client>>(
       `/api/clients?${query.toString()}`,
       "We couldn't load the clients.",
       signal,
     );
-  }, [deferredSearch]);
+  }, [deferredSearch, packageFilter, sort]);
   const clientTable = useInfiniteTable(loadClientPage);
   const clients = clientTable.items;
   const isLoading = clientTable.isInitialLoading || areTotalsLoading;
   const error = clientTable.error ?? totalsError;
   const tableRef = useStableTableColumns(!isLoading && !error);
+  const packageOptions = useMemo(
+    () => Array.from(new Map(projects.filter((project) => project.package).map((project) => [project.packageId, project.package!.name])).entries()),
+    [projects],
+  );
 
   const billedByClient = useMemo(() => {
     const projectClient = new Map(projects.map((project) => [project.id, project.clientId]));
@@ -147,10 +157,18 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("clients.search")} />
+      <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("clients.search")}>
+        <Select value={packageFilter} onValueChange={(value) => value && setPackageFilter(value)}>
+          <SelectTrigger className="w-44"><span>{packageFilter === "ALL" ? "All packages" : packageOptions.find(([id]) => id === packageFilter)?.[1]}</span></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All packages</SelectItem>
+            {packageOptions.filter(([id]) => id).map(([id, name]) => <SelectItem key={id} value={id!}>{name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </TableToolbar>
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table ref={tableRef} className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]" style={{ overflowAnchor: "none" }}>
           <colgroup>
             <col />
             <col />
@@ -161,11 +179,11 @@ export default function ClientsPage() {
           </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">{t("clients.company")}</th>
+              <SortableTableHeader label={t("clients.company")} active={sort.key === "companyName"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "companyName", direction: current.key === "companyName" && current.direction === "asc" ? "desc" : "asc" }))} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-normal">{t("clients.contact")}</th>
               <th className="px-4 py-2.5 font-normal">{t("clients.projects")}</th>
               <th className="px-4 py-2.5 text-right font-normal">{t("clients.totalBilled")}</th>
-              <th className="px-4 py-2.5 text-right font-normal">{t("clients.since")}</th>
+              <SortableTableHeader label={t("clients.since")} active={sort.key === "createdAt"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "createdAt", direction: current.key === "createdAt" && current.direction === "asc" ? "desc" : "asc" }))} className="px-4 py-2.5 text-right" />
               <th className="px-4 py-2.5" />
             </tr>
           </thead>

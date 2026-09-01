@@ -5,6 +5,7 @@ export const staffUserSelect = {
   email: true,
   name: true,
   role: true,
+  teamRole: true,
   isActive: true,
   createdAt: true,
 } as const;
@@ -14,6 +15,7 @@ export function serializeStaffUser(user: {
   email: string;
   name: string;
   role: string;
+  teamRole: string;
   isActive: boolean;
   createdAt: Date;
 }) {
@@ -22,6 +24,7 @@ export function serializeStaffUser(user: {
     email: user.email,
     name: user.name,
     role: user.role,
+    teamRole: user.teamRole,
     isActive: user.isActive,
     createdAt: user.createdAt.toISOString(),
   };

@@ -1,0 +1,3 @@
+CREATE TYPE "TeamRole" AS ENUM ('ADMIN', 'USER');
+
+ALTER TABLE "User" ADD COLUMN "teamRole" "TeamRole" NOT NULL DEFAULT 'ADMIN';

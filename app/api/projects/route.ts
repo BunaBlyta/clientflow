@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
   }
   const search = searchParams.get('search')?.trim() ?? '';
   const status = searchParams.get('status');
+  const packageId = searchParams.get('packageId');
+  const sort = searchParams.get('sort');
+  const direction = searchParams.get('direction') === 'asc' ? 'asc' : 'desc';
   if (status && !Object.values(ProjectStatus).includes(status as ProjectStatus)) {
     return NextResponse.json({ error: 'A valid project status is required' }, { status: 400 });
   }
@@ -29,6 +32,7 @@ export async function GET(request: NextRequest) {
     ...(user.role === 'CLIENT' ? { client: { userId: user.id } } : {}),
     ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
     ...(status ? { status: status as ProjectStatus } : {}),
+    ...(packageId ? { packageId } : {}),
   };
   const projects = await prisma.project.findMany({
     where,
@@ -50,7 +54,7 @@ export async function GET(request: NextRequest) {
       updatedAt: true,
       targetLaunchDate: true,
     },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: sort === 'name' ? { name: direction } : sort === 'status' ? { status: direction } : { updatedAt: direction },
     ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
 

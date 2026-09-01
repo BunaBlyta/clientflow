@@ -11,6 +11,7 @@ import { isTableRowInteractiveTarget } from "@/lib/table-navigation";
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { InfiniteTableLoader, useInfiniteTable } from "@/components/dashboard/infinite-table-loader";
 import { useStableTableColumns } from "@/components/dashboard/use-stable-table-columns";
+import { SortableTableHeader } from "@/components/dashboard/sortable-table-header";
 import { ProjectStatusMenu } from "@/components/dashboard/project-status-menu";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { CustomLeadsTable } from "@/components/dashboard/custom-leads-table";
@@ -49,8 +50,16 @@ function ProjectsPageInner() {
   const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
   const [projectSearch, setProjectSearch] = useState("");
   const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
+  const [projectPackageFilter, setProjectPackageFilter] = useState("ALL");
+  const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
   const [requestSearch, setRequestSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
+
+  useEffect(() => {
+    void fetchJson<Pick<Package, "id" | "name">[]>("/api/packages", "We couldn't load packages.")
+      .then((data) => setPackages(Array.isArray(data) ? data : []))
+      .catch(() => undefined);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
@@ -92,6 +101,13 @@ function ProjectsPageInner() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={projectPackageFilter} onValueChange={(value) => value && setProjectPackageFilter(value)}>
+                <SelectTrigger className="w-44"><span>{projectPackageFilter === "ALL" ? "All packages" : packages.find((item) => item.id === projectPackageFilter)?.name}</span></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All packages</SelectItem>
+                  {packages.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </TableToolbar>
           )}
           {tab === "requests" && (
@@ -105,6 +121,7 @@ function ProjectsPageInner() {
           <ProjectsTable
             search={projectSearch}
             statusFilter={projectStatusFilter}
+            packageFilter={projectPackageFilter}
           />
         </TabsContent>
         <TabsContent value="requests" className="mt-4">
@@ -129,9 +146,11 @@ export default function ProjectsPage() {
 function ProjectsTable({
   search,
   statusFilter,
+  packageFilter,
 }: {
   search: string;
   statusFilter: ProjectStatus | "ALL";
+  packageFilter: string;
 }) {
   const router = useRouter();
   const { t } = useLocale();
@@ -139,6 +158,7 @@ function ProjectsTable({
   const [clients, setClients] = useState<Client[]>([]);
   const [areClientsLoading, setAreClientsLoading] = useState(true);
   const [clientsError, setClientsError] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ key: "name" | "status" | "updatedAt"; direction: "asc" | "desc" }>({ key: "updatedAt", direction: "desc" });
 
   const loadClients = useCallback(async (signal?: AbortSignal) => {
     setAreClientsLoading(true);
@@ -165,12 +185,14 @@ function ProjectsTable({
     const query = new URLSearchParams({ page: String(page), pageSize: "20" });
     if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
     if (statusFilter !== "ALL") query.set("status", statusFilter);
+    if (packageFilter !== "ALL") query.set("packageId", packageFilter);
+    query.set("sort", sort.key); query.set("direction", sort.direction);
     return fetchJson<PaginatedResponse<Project>>(
       `/api/projects?${query.toString()}`,
       "We couldn't load the projects.",
       signal,
     );
-  }, [deferredSearch, statusFilter]);
+  }, [deferredSearch, packageFilter, sort, statusFilter]);
   const projectTable = useInfiniteTable(loadProjectPage);
   const projects = projectTable.items;
   const setProjects = projectTable.setItems;
@@ -179,8 +201,9 @@ function ProjectsTable({
   const tableRef = useStableTableColumns(!isLoading && !error);
   const projectMatchesFilters = useCallback((project: Project) => (
     (statusFilter === "ALL" || project.status === statusFilter) &&
+    (packageFilter === "ALL" || project.packageId === packageFilter) &&
     project.name.toLowerCase().includes(deferredSearch.trim().toLowerCase())
-  ), [deferredSearch, statusFilter]);
+  ), [deferredSearch, packageFilter, statusFilter]);
 
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
@@ -248,7 +271,7 @@ function ProjectsTable({
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table ref={tableRef} className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]" style={{ overflowAnchor: "none" }}>
           <colgroup>
             <col />
             <col />
@@ -258,11 +281,11 @@ function ProjectsTable({
           </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-              <th className="px-4 py-2.5 font-normal">{t("projects.project")}</th>
+              <SortableTableHeader label={t("projects.project")} active={sort.key === "name"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "name", direction: current.key === "name" && current.direction === "asc" ? "desc" : "asc" }))} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-normal">{t("projects.client")}</th>
               <th className="px-4 py-2.5 font-normal">{t("projects.package")}</th>
-              <th className="px-4 py-2.5 font-normal">{t("common.status")}</th>
-              <th className="px-4 py-2.5 text-right font-normal">{t("projects.updated")}</th>
+              <SortableTableHeader label={t("common.status")} active={sort.key === "status"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "status", direction: current.key === "status" && current.direction === "asc" ? "desc" : "asc" }))} className="px-4 py-2.5" />
+              <SortableTableHeader label={t("projects.updated")} active={sort.key === "updatedAt"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "updatedAt", direction: current.key === "updatedAt" && current.direction === "asc" ? "desc" : "asc" }))} className="px-4 py-2.5 text-right" />
             </tr>
           </thead>
           <tbody>
@@ -308,7 +331,7 @@ function ProjectsTable({
                 </tr>
               );
             })}
-            {projects.length === 0 && !deferredSearch.trim() && statusFilter === "ALL" && (
+            {projects.length === 0 && !deferredSearch.trim() && statusFilter === "ALL" && packageFilter === "ALL" && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center">
                   <p className="text-[13px] font-medium">{t("projects.noProjects")}</p>
@@ -316,7 +339,7 @@ function ProjectsTable({
                 </td>
               </tr>
             )}
-            {projects.length === 0 && (deferredSearch.trim() || statusFilter !== "ALL") && (
+            {projects.length === 0 && (deferredSearch.trim() || statusFilter !== "ALL" || packageFilter !== "ALL") && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                   {t("projects.noMatch")}
@@ -496,7 +519,7 @@ function RequestsTable({ search }: { search: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table ref={tableRef} className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]" style={{ overflowAnchor: "none" }}>
           <colgroup>
             <col />
             <col />

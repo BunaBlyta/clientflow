@@ -21,6 +21,7 @@ const staffUser = {
   email: 'jordan@example.com',
   name: 'Jordan Ellis',
   role: 'STAFF' as const,
+  teamRole: 'USER' as const,
   isActive: false,
   createdAt: new Date('2026-08-13T09:00:00.000Z'),
 };
@@ -63,6 +64,7 @@ describe('GET /api/staff', () => {
         email: 'jordan@example.com',
         name: 'Jordan Ellis',
         role: 'STAFF',
+        teamRole: 'USER',
         isActive: false,
         createdAt: '2026-08-13T09:00:00.000Z',
       },
@@ -74,6 +76,7 @@ describe('GET /api/staff', () => {
         email: true,
         name: true,
         role: true,
+        teamRole: true,
         isActive: true,
         createdAt: true,
       },

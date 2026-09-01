@@ -18,7 +18,7 @@ export async function handleStaffInvite(request: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
-  if (user.role !== 'STAFF') {
+  if (user.role !== 'STAFF' || (user.teamRole !== undefined && user.teamRole !== 'ADMIN')) {
     return NextResponse.json({ error: 'Staff access required' }, { status: 403 });
   }
 
@@ -36,6 +36,7 @@ export async function handleStaffInvite(request: NextRequest) {
   const values = body as Record<string, unknown>;
   const name = typeof values.name === 'string' ? values.name.trim() : '';
   const email = typeof values.email === 'string' ? values.email.trim().toLowerCase() : '';
+  const teamRole = values.teamRole === 'ADMIN' ? 'ADMIN' : 'USER';
 
   if (!name || name.length > 120) {
     return invalidStaffRequest('Name is required and must be 120 characters or fewer');
@@ -62,6 +63,7 @@ export async function handleStaffInvite(request: NextRequest) {
         email,
         name,
         role: 'STAFF',
+        teamRole,
         isActive: false,
       },
       select: staffUserSelect,

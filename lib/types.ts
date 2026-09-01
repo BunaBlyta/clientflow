@@ -57,6 +57,7 @@ export interface StaffMember {
   email: string;
   name: string;
   role: "STAFF";
+  teamRole: "ADMIN" | "USER";
   isActive: boolean;
   createdAt: string;
 }

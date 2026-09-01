@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
-import { LoaderCircle, Mail, Plus, RefreshCw } from "lucide-react";
+import { LoaderCircle, Mail, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { formatDate, formatMajorCurrency, initials } from "@/lib/format";
 import { EditPackageDialog } from "@/components/dashboard/edit-package-dialog";
 import { CreatePackageDialog } from "@/components/dashboard/create-package-dialog";
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
@@ -246,10 +247,12 @@ function TeamSection({ isActive }: { isActive: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [teamRole, setTeamRole] = useState<"ADMIN" | "USER">("USER");
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [resendingStaffId, setResendingStaffId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ staffId: string; message: string } | null>(null);
+  const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "email", string>>>({});
 
   const toggleInviteForm = useCallback(() => {
@@ -263,7 +266,7 @@ function TeamSection({ isActive }: { isActive: boolean }) {
     try {
       const [staffData, currentUser] = await Promise.all([
         fetchJson<StaffMember[]>("/api/staff", "We couldn't load the team.", signal),
-        fetchJson<{ id: string }>("/api/auth/me", "We couldn't load your account.", signal),
+        fetchJson<{ id: string; teamRole: "ADMIN" | "USER" }>("/api/auth/me", "We couldn't load your account.", signal),
       ]);
 
       if (!Array.isArray(staffData) || !currentUser || typeof currentUser.id !== "string") {
@@ -314,12 +317,13 @@ function TeamSection({ isActive }: { isActive: boolean }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: trimmedEmail, name: trimmedName }),
+          body: JSON.stringify({ email: trimmedEmail, name: trimmedName, teamRole }),
         },
       );
 
       setName("");
       setEmail("");
+      setTeamRole("USER");
       setFieldErrors({});
       setIsInviteFormOpen(false);
       setStaff((currentStaff) => [
@@ -338,6 +342,30 @@ function TeamSection({ isActive }: { isActive: boolean }) {
     } finally {
       setIsInviting(false);
     }
+  }
+
+  async function handleRoleChange(staffMember: StaffMember, nextRole: "ADMIN" | "USER") {
+    setUpdatingStaffId(staffMember.id);
+    try {
+      const updated = await fetchJson<StaffMember>(`/api/staff/${encodeURIComponent(staffMember.id)}`, "We couldn't update this teammate.", undefined, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ teamRole: nextRole }),
+      });
+      setStaff((current) => current.map((member) => member.id === updated.id ? updated : member));
+    } catch (caughtError) {
+      toast.error(caughtError instanceof Error ? caughtError.message : "We couldn't update this teammate.");
+    } finally { setUpdatingStaffId(null); }
+  }
+
+  async function handleRemove(staffMember: StaffMember) {
+    if (!window.confirm(`Remove ${staffMember.name} from the team?`)) return;
+    setUpdatingStaffId(staffMember.id);
+    try {
+      await fetchJson(`/api/staff/${encodeURIComponent(staffMember.id)}`, "We couldn't remove this teammate.", undefined, { method: "DELETE" });
+      setStaff((current) => current.filter((member) => member.id !== staffMember.id));
+      toast.success("Teammate removed");
+    } catch (caughtError) {
+      toast.error(caughtError instanceof Error ? caughtError.message : "We couldn't remove this teammate.");
+    } finally { setUpdatingStaffId(null); }
   }
 
   async function handleResend(staffMember: StaffMember) {
@@ -366,10 +394,11 @@ function TeamSection({ isActive }: { isActive: boolean }) {
 
   if (isLoading) return <LoadingState label={t("settings.teamLoading")} />;
   if (error) return <ErrorState title={t("settings.teamFailed")} error={error} onRetry={() => void loadTeam()} />;
+  const canManageTeam = currentUserId !== null && staff.find((member) => member.id === currentUserId)?.teamRole === "ADMIN";
 
   return (
     <>
-      {isActive && (
+      {isActive && canManageTeam && (
         <SettingsHeaderAction>
           <Button type="button" size="sm" onClick={toggleInviteForm}>
             <Plus />
@@ -390,13 +419,22 @@ function TeamSection({ isActive }: { isActive: boolean }) {
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-3">
               {currentUserId === staffMember.id && <span className="text-[12px] text-muted-foreground">{t("settings.you")}</span>}
-              {!staffMember.isActive && (
+              {canManageTeam && !staffMember.isActive && (
                 <>
                   <Badge className="bg-status-warning/10 text-status-warning">{t("settings.invited")}</Badge>
                   <Button type="button" variant="ghost" size="sm" disabled={resendingStaffId !== null} onClick={() => void handleResend(staffMember)}>
                     {resendingStaffId === staffMember.id && <LoaderCircle className="animate-spin" />}
                     {resendingStaffId === staffMember.id ? t("common.sending") : t("settings.resend")}
                   </Button>
+                </>
+              )}
+              {canManageTeam && currentUserId !== staffMember.id && (
+                <>
+                  <Select value={staffMember.teamRole} onValueChange={(value) => value && void handleRoleChange(staffMember, value as "ADMIN" | "USER")}>
+                    <SelectTrigger className="w-28" disabled={updatingStaffId === staffMember.id}><span>{staffMember.teamRole === "ADMIN" ? "Admin" : "User"}</span></SelectTrigger>
+                    <SelectContent><SelectItem value="ADMIN">Admin</SelectItem><SelectItem value="USER">User</SelectItem></SelectContent>
+                  </Select>
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label={`Remove ${staffMember.name}`} disabled={updatingStaffId === staffMember.id} onClick={() => void handleRemove(staffMember)}><Trash2 /></Button>
                 </>
               )}
             </div>
@@ -406,7 +444,7 @@ function TeamSection({ isActive }: { isActive: boolean }) {
         </div>
       </div>
 
-      {isInviteFormOpen && (
+      {isInviteFormOpen && canManageTeam && (
         <div className="rounded-lg border border-border p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -433,6 +471,10 @@ function TeamSection({ isActive }: { isActive: boolean }) {
               <Input id="invite-email" className="h-10" type="email" placeholder="teammate@tetbit.studio" value={email} onChange={(event) => { setEmail(event.target.value); setFieldErrors((current) => ({ ...current, email: undefined })); }} required aria-invalid={Boolean(fieldErrors.email)} aria-describedby={fieldErrors.email ? "invite-email-error" : undefined} />
             </div>
             <div className="border-t border-border pt-5">
+              <Select value={teamRole} onValueChange={(value) => value && setTeamRole(value as "ADMIN" | "USER")}>
+                <SelectTrigger className="mb-3 w-full"><span>{teamRole === "ADMIN" ? "Admin" : "User"}</span></SelectTrigger>
+                <SelectContent><SelectItem value="ADMIN">Admin</SelectItem><SelectItem value="USER">User</SelectItem></SelectContent>
+              </Select>
               <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
             </div>
           </form>

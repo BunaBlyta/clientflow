@@ -12,6 +12,11 @@ enum UserRole {
   CLIENT
 }
 
+enum TeamRole {
+  ADMIN
+  USER
+}
+
 enum ProjectRequestStatus {
   PENDING
   APPROVED
@@ -70,6 +75,7 @@ model User {
   name                       String
   passwordHash               String?
   role                       UserRole       @default(CLIENT)
+  teamRole                   TeamRole       @default(ADMIN)
   isActive                   Boolean        @default(false)
   emailVerifiedAt            DateTime?
   verificationCodeHash       String?

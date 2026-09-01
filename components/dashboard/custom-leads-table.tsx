@@ -81,7 +81,7 @@ export function CustomLeadsTable({ search }: { search: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table ref={tableRef} className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]" style={{ overflowAnchor: "none" }}>
           <colgroup>
             <col />
             <col />

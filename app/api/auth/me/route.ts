@@ -11,7 +11,7 @@ const PHONE_MAX_LENGTH = 40;
 type ClientProfile = { id: string; companyName: string | null; phone: string | null };
 
 function serializeMe(
-  user: { id: string; name: string; email: string; role: string },
+  user: { id: string; name: string; email: string; role: string; teamRole: string },
   client: ClientProfile | null,
 ) {
   return {
@@ -19,6 +19,7 @@ function serializeMe(
     name: user.name,
     email: user.email,
     role: user.role,
+    teamRole: user.teamRole,
     ...(client
       ? {
           clientId: client.id,

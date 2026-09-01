@@ -8,6 +8,7 @@ import { INVOICE_STATUS_TONE, invoiceDisplayLabelKey, invoiceDisplayTone } from 
 import { TableToolbar } from "@/components/dashboard/table-toolbar";
 import { InfiniteTableLoader, useInfiniteTable } from "@/components/dashboard/infinite-table-loader";
 import { useStableTableColumns } from "@/components/dashboard/use-stable-table-columns";
+import { SortableTableHeader } from "@/components/dashboard/sortable-table-header";
 import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,8 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "ALL" | "OVERDUE">("ALL");
+  const [timeFilter, setTimeFilter] = useState("ALL");
+  const [sort, setSort] = useState<{ key: "createdAt" | "amount" | "dueDate"; direction: "asc" | "desc" }>({ key: "createdAt", direction: "desc" });
 
   const loadLookups = useCallback(async (signal?: AbortSignal) => {
     setAreLookupsLoading(true);
@@ -84,12 +87,14 @@ export default function InvoicesPage() {
     const query = new URLSearchParams({ page: String(page), pageSize: "20" });
     if (deferredSearch.trim()) query.set("search", deferredSearch.trim());
     if (statusFilter !== "ALL") query.set("status", statusFilter);
+    if (timeFilter !== "ALL") query.set("time", timeFilter);
+    query.set("sort", sort.key); query.set("direction", sort.direction);
     return fetchJson<PaginatedResponse<ApiInvoice>>(
       `/api/invoices?${query.toString()}`,
       "We couldn't load the invoices.",
       signal,
     );
-  }, [deferredSearch, statusFilter]);
+  }, [deferredSearch, sort, statusFilter, timeFilter]);
   const invoiceTable = useInfiniteTable(loadInvoicePage);
   const invoices = invoiceTable.items;
   const setInvoices = invoiceTable.setItems;
@@ -102,13 +107,17 @@ export default function InvoicesPage() {
         ? invoiceDisplayLabelKey(invoice) === "status.invoice.OVERDUE"
         : invoice.status === statusFilter);
     if (!matchesStatus) return false;
+    if (timeFilter !== "ALL") {
+      const days = Number(timeFilter);
+      if (Number.isFinite(days) && new Date(invoice.createdAt).getTime() < Date.now() - days * 86400000) return false;
+    }
 
     const projectName = projects.find((project) => project.id === invoice.projectId)?.name ?? "";
     const clientName = clients.find((client) => client.id === invoice.clientId)?.companyName ?? "";
     return `${invoice.label} ${projectName} ${clientName}`
       .toLowerCase()
       .includes(deferredSearch.trim().toLowerCase());
-  }, [clients, deferredSearch, projects, statusFilter]);
+  }, [clients, deferredSearch, projects, statusFilter, timeFilter]);
 
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
@@ -221,10 +230,20 @@ export default function InvoicesPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={timeFilter} onValueChange={(value) => value && setTimeFilter(value)}>
+          <SelectTrigger className="w-36"><span>{timeFilter === "ALL" ? "All time" : `Last ${timeFilter} days`}</span></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All time</SelectItem>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
+            <SelectItem value="365">Last year</SelectItem>
+          </SelectContent>
+        </Select>
       </TableToolbar>
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table ref={tableRef} className="w-full text-[13px]">
+        <table ref={tableRef} className="w-full text-[13px]" style={{ overflowAnchor: "none" }}>
           <colgroup>
             <col />
             <col />
@@ -240,10 +259,10 @@ export default function InvoicesPage() {
               <th className="py-3 pr-2 pl-5 font-normal">{t("invoices.invoice")}</th>
               <th className="py-3 pr-5 pl-2 font-normal">{t("invoices.project")}</th>
               <th className="px-5 py-3 font-normal">{t("clients.company")}</th>
-              <th className="py-3 pr-0 pl-5 text-right font-normal">{t("common.amount")}</th>
+              <SortableTableHeader label={t("common.amount")} active={sort.key === "amount"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "amount", direction: current.key === "amount" && current.direction === "asc" ? "desc" : "asc" }))} className="py-3 pr-0 pl-5 text-right" />
               <th className="py-3 pr-5 pl-24 font-normal">{t("common.status")}</th>
               <th className="px-5 py-3 font-normal">{t("invoices.sent")}</th>
-              <th className="px-5 py-3 text-right font-normal">{t("invoices.due")}</th>
+              <SortableTableHeader label={t("invoices.due")} active={sort.key === "dueDate"} direction={sort.direction} onClick={() => setSort((current) => ({ key: "dueDate", direction: current.key === "dueDate" && current.direction === "asc" ? "desc" : "asc" }))} className="px-5 py-3 text-right" />
               <th className="px-3 py-3">
                 <span className="sr-only">Actions</span>
               </th>
@@ -288,7 +307,7 @@ export default function InvoicesPage() {
                 </tr>
               );
             })}
-            {invoices.length === 0 && !deferredSearch.trim() && statusFilter === "ALL" && (
+            {invoices.length === 0 && !deferredSearch.trim() && statusFilter === "ALL" && timeFilter === "ALL" && (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center">
                   <p className="text-[13px] font-medium">{t("invoices.noInvoices")}</p>
@@ -298,7 +317,7 @@ export default function InvoicesPage() {
                 </td>
               </tr>
             )}
-            {invoices.length === 0 && (deferredSearch.trim() || statusFilter !== "ALL") && (
+            {invoices.length === 0 && (deferredSearch.trim() || statusFilter !== "ALL" || timeFilter !== "ALL") && (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                   {t("invoices.noMatch")}

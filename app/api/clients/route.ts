@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: pagination.error }, { status: 400 });
   }
   const search = searchParams.get('search')?.trim() ?? '';
+  const packageId = searchParams.get('packageId');
+  const sort = searchParams.get('sort');
+  const direction = searchParams.get('direction') === 'desc' ? 'desc' : 'asc';
   const where: Prisma.ClientWhereInput = {
     ...(user.role === 'CLIENT' ? { userId: user.id } : {}),
     ...(search ? {
@@ -27,6 +30,7 @@ export async function GET(request: NextRequest) {
         { email: { contains: search, mode: 'insensitive' } },
       ],
     } : {}),
+    ...(packageId ? { projects: { some: { packageId } } } : {}),
   };
   const clients = await prisma.client.findMany({
     where,
@@ -39,7 +43,13 @@ export async function GET(request: NextRequest) {
       phone: true,
       createdAt: true,
     },
-    orderBy: pagination.enabled ? { companyName: 'asc' } : { createdAt: 'desc' },
+    orderBy: sort === 'createdAt'
+      ? { createdAt: direction }
+      : sort
+        ? { companyName: direction }
+        : pagination.enabled
+          ? { companyName: 'asc' }
+          : { createdAt: 'desc' },
     ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
 

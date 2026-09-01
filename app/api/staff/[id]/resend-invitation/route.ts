@@ -16,7 +16,7 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
-  if (user.role !== 'STAFF') {
+  if (user.role !== 'STAFF' || (user.teamRole !== undefined && user.teamRole !== 'ADMIN')) {
     return NextResponse.json({ error: 'Staff access required' }, { status: 403 });
   }
 

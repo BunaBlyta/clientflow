@@ -61,11 +61,16 @@ export async function GET(request: NextRequest) {
   if (pagination.enabled && 'error' in pagination) return invalidRequest(pagination.error);
   const search = searchParams.get('search')?.trim() ?? '';
   const status = searchParams.get('status');
+  const time = searchParams.get('time');
+  const sort = searchParams.get('sort');
+  const direction = searchParams.get('direction') === 'asc' ? 'asc' : 'desc';
   if (status && status !== 'OVERDUE' && !Object.values(InvoiceStatus).includes(status as InvoiceStatus)) {
     return invalidRequest('A valid invoice status is required');
   }
   const startOfToday = new Date();
   startOfToday.setUTCHours(0, 0, 0, 0);
+  const timeDays = time && /^\d+$/.test(time) ? Number(time) : null;
+  const timeStart = timeDays && timeDays > 0 ? new Date(startOfToday.getTime() - timeDays * 86400000) : null;
   const where: Prisma.InvoiceWhereInput = {
     ...(projectId ? { projectId } : {}),
     ...(clientWhere ? { client: clientWhere } : {}),
@@ -82,6 +87,7 @@ export async function GET(request: NextRequest) {
       : status
         ? { status: status as InvoiceStatus }
         : {}),
+    ...(timeStart ? { createdAt: { gte: timeStart } } : {}),
   };
   const invoices = await prisma.invoice.findMany({
     where,
@@ -98,7 +104,7 @@ export async function GET(request: NextRequest) {
       issuedAt: true,
       createdAt: true,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: sort === 'amount' ? { amount: direction } : sort === 'dueDate' ? { dueDate: direction } : { createdAt: direction },
     ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
 

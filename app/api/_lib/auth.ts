@@ -149,6 +149,7 @@ export async function getAuthenticatedUser(request: NextRequest) {
       email: true,
       name: true,
       role: true,
+      teamRole: true,
       isActive: true,
     },
   }).then((user) => (user?.isActive ? user : null));

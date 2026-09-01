@@ -34,6 +34,7 @@ const KIND_LABEL: Record<InvoiceKind, string> = {
   EXTRA: "Extra charge",
   CUSTOM: "Custom",
 };
+const CURRENCY_OPTIONS = ["usd", "eur", "gbp", "chf"] as const;
 
 type InvoiceField = "project" | "amount";
 
@@ -51,6 +52,7 @@ export function CreateInvoiceDialog({
   const [open, setOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const [kind, setKind] = useState<InvoiceKind>("EXTRA");
+  const [selectedCurrency, setSelectedCurrency] = useState(() => currency.toLowerCase());
   const [dueDate, setDueDate] = useState("");
   const [pending, setPending] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
@@ -105,7 +107,7 @@ export function CreateInvoiceDialog({
           projectId: targetProjectId,
           type: kind,
           amount,
-          currency: currency.toLowerCase(),
+          currency: selectedCurrency,
           dueDate: String(form.get("dueDate") ?? "") || undefined,
           description: String(form.get("label") || KIND_LABEL[kind]),
         }),
@@ -176,13 +178,22 @@ export function CreateInvoiceDialog({
             <Label htmlFor="label">{t("invoices.label")}</Label>
             <Input id="label" name="label" placeholder={KIND_LABEL[kind]} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label htmlFor="amount">{t("invoices.amountUsd")}</Label>
                 <FieldHint id="amount-error" message={fieldErrors.amount} />
               </div>
               <Input id="amount" name="amount" type="number" min="0" step="1" required aria-invalid={Boolean(fieldErrors.amount)} aria-describedby={fieldErrors.amount ? "amount-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, amount: undefined }))} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="currency">{t("settings.currency")}</Label>
+              <Select value={selectedCurrency} onValueChange={(value) => value && setSelectedCurrency(value)}>
+                <SelectTrigger id="currency" className="w-full"><span>{selectedCurrency.toUpperCase()}</span></SelectTrigger>
+                <SelectContent>
+                  {CURRENCY_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option.toUpperCase()}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
