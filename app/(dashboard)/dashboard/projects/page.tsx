@@ -28,7 +28,7 @@ import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { upsertById } from "@/lib/upsert-by-id";
-import { usePreferencesStore } from "@/lib/preferences-store";
+import { EMPTY_TABLE_FILTERS, usePreferencesStore } from "@/lib/preferences-store";
 import type { PaginatedResponse } from "@/lib/pagination";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
@@ -49,7 +49,7 @@ function ProjectsPageInner() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
-  const projectFilters = usePreferencesStore((state) => state.tableFilters.projects ?? {});
+  const projectFilters = usePreferencesStore((state) => state.tableFilters.projects) ?? EMPTY_TABLE_FILTERS;
   const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
   const projectSearch = projectFilters.search ?? "";
   const projectStatusFilter = (projectFilters.status ?? "ALL") as ProjectStatus | "ALL";

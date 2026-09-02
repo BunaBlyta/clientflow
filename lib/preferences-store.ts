@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Locale } from "@/lib/i18n";
 
+export const EMPTY_TABLE_FILTERS: Record<string, string> = Object.freeze({});
+
 type PreferencesState = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
@@ -19,6 +21,12 @@ function initialLocale(): Locale {
   return browserLocale.startsWith("de") ? "de" : browserLocale.startsWith("sq") ? "sq" : "en";
 }
 
+const serverStorage = {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+};
+
 export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
@@ -29,6 +37,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       tableFilters: {},
       setTableFilter: (table, key, value) => set((state) => ({ tableFilters: { ...state.tableFilters, [table]: { ...state.tableFilters[table], [key]: value } } })),
     }),
-    { name: "clientflow_preferences", storage: createJSONStorage(() => localStorage) },
+    {
+      name: "clientflow_preferences",
+      storage: createJSONStorage(() => (typeof window === "undefined" ? serverStorage : window.localStorage)),
+    },
   ),
 );

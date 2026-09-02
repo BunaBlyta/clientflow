@@ -22,13 +22,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { SortableTableHeader } from "@/components/dashboard/sortable-table-header";
 import type { Client } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
-import { usePreferencesStore } from "@/lib/preferences-store";
+import { EMPTY_TABLE_FILTERS, usePreferencesStore } from "@/lib/preferences-store";
 import type { PaginatedResponse } from "@/lib/pagination";
 
 export default function ClientsPage() {
   const { t } = useLocale();
   const router = useRouter();
-  const filters = usePreferencesStore((state) => state.tableFilters.clients ?? {});
+  const filters = usePreferencesStore((state) => state.tableFilters.clients) ?? EMPTY_TABLE_FILTERS;
   const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
   const search = filters.search ?? "";
   const packageFilter = filters.package ?? "ALL";

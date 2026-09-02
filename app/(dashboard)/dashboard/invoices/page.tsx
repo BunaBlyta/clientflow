@@ -22,7 +22,7 @@ import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { fetchJson } from "@/lib/fetch-json";
 import { upsertById } from "@/lib/upsert-by-id";
-import { usePreferencesStore } from "@/lib/preferences-store";
+import { EMPTY_TABLE_FILTERS, usePreferencesStore } from "@/lib/preferences-store";
 import type { PaginatedResponse } from "@/lib/pagination";
 
 type ApiInvoice = Invoice & { clientId: string };
@@ -41,7 +41,7 @@ const STATUS_FILTERS: { value: InvoiceStatus | "ALL" | "OVERDUE"; label: string 
 
 export default function InvoicesPage() {
   const { t } = useLocale();
-  const filters = usePreferencesStore((state) => state.tableFilters.invoices ?? {});
+  const filters = usePreferencesStore((state) => state.tableFilters.invoices) ?? EMPTY_TABLE_FILTERS;
   const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
   const search = filters.search ?? "";
   const setSearch = (value: string) => setTableFilter("invoices", "search", value);
