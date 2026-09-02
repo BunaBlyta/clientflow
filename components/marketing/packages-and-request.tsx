@@ -8,30 +8,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { fetchJson } from "@/lib/fetch-json";
 import { formatMajorCurrency } from "@/lib/format";
 import { useLocale } from "@/lib/i18n";
+import { packageDescription, packageDuration, packageName } from "@/lib/package-copy";
 import type { ManagedPackage } from "@/lib/types";
 
 const mostPopularSlug = "full-website";
 const customPackageSlug = "web-app-build";
 type RequestField = "name" | "email";
 
-const packageDescriptionExtensions: Record<ManagedPackage["slug"], string> = {
-  "landing-page": "Focused, fast, and built around one clear action.",
-  "full-website": "Structured for growth, content, and credibility.",
-  "web-app-build": "Designed around your product and your users.",
-};
-
 function isCustomPackage(pkg: ManagedPackage) {
   return pkg.slug === customPackageSlug;
-}
-
-function getPackageDescription(pkg: ManagedPackage) {
-  const extension = packageDescriptionExtensions[pkg.slug];
-  return extension ? `${pkg.description} ${extension}` : pkg.description;
 }
 
 function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
@@ -60,6 +50,7 @@ export function PackagesAndRequest() {
   const [packagesError, setPackagesError] = useState<string | null>(null);
   const standardPackages = packages.filter((p) => !isCustomPackage(p));
   const [selectedPackageId, setSelectedPackageId] = useState("");
+  const selectedPackage = standardPackages.find((p) => p.id === selectedPackageId);
   const [requestOpen, setRequestOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
@@ -77,7 +68,7 @@ export function PackagesAndRequest() {
           controller.signal,
         );
         if (!Array.isArray(packageData)) {
-          throw new Error("We couldn't load the packages.");
+          throw new Error(t("marketing.packagesLoadFailed"));
         }
         if (!controller.signal.aborted) {
           setPackages(packageData);
@@ -154,19 +145,19 @@ export function PackagesAndRequest() {
 
       if (!response.ok) {
         throw new Error(
-          typeof result?.error === "string" ? result.error : "We couldn't submit your request.",
+          typeof result?.error === "string" ? result.error : t("marketing.requestFailed"),
         );
       }
 
       formElement.reset();
       setFieldErrors({});
       setSubmitted(true);
-      toast.success("Request submitted", {
-        description: "We'll review it and follow up by email shortly.",
+      toast.success(t("marketing.requestSubmitted"), {
+        description: t("marketing.requestSubmittedIntro"),
       });
     } catch (caughtError) {
       setSubmitError(
-        caughtError instanceof Error ? caughtError.message : "We couldn't submit your request.",
+        caughtError instanceof Error ? caughtError.message : t("marketing.requestFailed"),
       );
     } finally {
       setPending(false);
@@ -209,17 +200,17 @@ export function PackagesAndRequest() {
                           {t("marketing.mostPopular")}
                         </span>
                       )}
-                      <h3 className="min-h-6 pr-20 text-[16px] font-semibold">{pkg.name}</h3>
+                      <h3 className="min-h-6 pr-20 text-[16px] font-semibold">{packageName(t, pkg)}</h3>
                       <p className="package-price mt-1 min-h-9 text-[28px] font-semibold tracking-tight">
                         {isCustom ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                       </p>
-                      <p className="package-description mt-2 min-h-10 line-clamp-2 text-[13px] leading-5 text-muted-foreground">{getPackageDescription(pkg)}</p>
+                      <p className="package-description mt-2 min-h-10 line-clamp-2 text-[13px] leading-5 text-muted-foreground">{packageDescription(t, pkg)}</p>
                       <ul className="mt-5 flex flex-1 flex-col gap-2.5">
                         <li className="flex items-start gap-2 text-[13px]">
                           <Check className="mt-0.5 size-4 shrink-0 text-brand-sky dark:rounded-full dark:bg-brand-accent/25 dark:p-0.5 dark:text-foreground" />
                           <span>
                             {pkg.estimatedDuration
-                              ? t("marketing.estimatedDelivery", { duration: pkg.estimatedDuration })
+                              ? t("marketing.estimatedDelivery", { duration: packageDuration(t, pkg.estimatedDuration) })
                               : t("marketing.timelineScoped")}
                           </span>
                         </li>
@@ -275,7 +266,16 @@ export function PackagesAndRequest() {
                   <Label htmlFor="package">{t("nav.packages")}</Label>
                   <Select value={selectedPackageId} onValueChange={(value) => value && setSelectedPackageId(value)}>
                     <SelectTrigger id="package" className="request-field request-modal-field w-full">
-                      <SelectValue />
+                      {/*
+                        Rendered explicitly rather than via <SelectValue />,
+                        which shows the raw item value — the package id — in the
+                        trigger. Same pattern as the dashboard's filter selects.
+                      */}
+                      <span>
+                        {selectedPackage
+                          ? `${packageName(t, selectedPackage)} — ${formatMajorCurrency(selectedPackage.price, selectedPackage.currency)}`
+                          : ""}
+                      </span>
                     </SelectTrigger>
                     <SelectContent
                       side="bottom"
@@ -286,7 +286,7 @@ export function PackagesAndRequest() {
                     >
                       {standardPackages.map((pkg) => (
                         <SelectItem key={pkg.id} value={pkg.id}>
-                          {pkg.name} — {formatMajorCurrency(pkg.price, pkg.currency)}
+                          {packageName(t, pkg)} — {formatMajorCurrency(pkg.price, pkg.currency)}
                         </SelectItem>
                       ))}
                     </SelectContent>

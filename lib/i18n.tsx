@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { usePreferencesStore } from "@/lib/preferences-store";
 import { type Locale, localeHomePath } from "@/lib/locales";
+import { persistLocaleCookie } from "@/lib/locale-cookie";
 
 // Re-exported so client components can keep importing them from here. Server
 // code must import from "@/lib/locales" directly — see the note in that file.
@@ -485,6 +486,20 @@ const english: Messages = {
   "status.request.REJECTED": "Rejected",
   "status.filter.ALL": "All statuses",
   "status.filter.OVERDUE": "Overdue",
+  "marketing.rights": "© {year} Clientflow Studio. All rights reserved.",
+  "marketing.weeks": "weeks",
+  "marketing.week": "week",
+  "marketing.appStoreKicker": "Download on the",
+  "marketing.appStoreBadge": "Download on the App Store — coming soon",
+  "marketing.googlePlayKicker": "GET IT ON",
+  "marketing.googlePlayBadge": "Get it on Google Play — coming soon",
+  "marketing.packagesLoadFailed": "We couldn’t load the packages.",
+  "marketing.requestFailed": "We couldn’t submit your request.",
+  "marketing.requestSubmitted": "Request submitted",
+  "marketing.requestSubmittedIntro": "We’ll review it and follow up by email shortly.",
+  "packages.landing-page.extension": "Focused, fast, and built around one clear action.",
+  "packages.full-website.extension": "Structured for growth, content, and credibility.",
+  "packages.web-app-build.extension": "Designed around your product and your users.",
 };
 
 const german: Messages = {
@@ -497,6 +512,35 @@ const german: Messages = {
   "invoices.search": "Rechnungen suchen…", "invoices.invoice": "Rechnung", "invoices.project": "Projekt", "invoices.due": "Fällig", "invoices.noInvoices": "Noch keine Rechnungen", "invoices.noMatch": "Keine Rechnungen passen zu den Filtern.", "clients.search": "Kunden suchen…", "clients.company": "Unternehmen", "clients.contact": "Kontakt", "clients.projects": "Projekte", "clients.noClients": "Noch keine Kunden.", "notifications.unread": "Ungelesene Benachrichtigungen", "notifications.viewAll": "Alle anzeigen", "notifications.noNotifications": "Noch keine Benachrichtigungen.", "notifications.all": "Alle", "notifications.unreadTab": "Ungelesen", "notifications.markAllRead": "Alle als gelesen markieren", "notifications.marking": "Wird markiert…",
   "auth.welcome": "Willkommen zurück", "auth.signInTitle": "In deinen Arbeitsbereich einloggen", "auth.signInIntro": "Nutze deine Studio-E-Mail und dein Passwort, um fortzufahren.", "auth.signIn": "Einloggen", "auth.signingIn": "Anmeldung…", "auth.email": "E-Mail", "auth.password": "Passwort", "auth.contactAdmin": "Wende dich zum Zurücksetzen an den Admin", "auth.passwordPlaceholder": "Passwort eingeben", "auth.staffOnly": "Dieser Arbeitsbereich ist für Studio-Mitarbeiter. Bitte nutze zum Einloggen die Kunden-App.", "auth.invalidLogin": "Anmeldung nicht möglich. Prüfe deine Angaben und versuche es erneut.", "auth.loginError": "Beim Einloggen ist ein Fehler aufgetreten. Bitte versuche es erneut.", "auth.invited": "Du bist eingeladen", "auth.setupAccount": "Konto einrichten", "auth.acceptInvitation": "Einladung annehmen", "auth.invitationIntro": "Gib den sechsstelligen Code aus deiner E-Mail ein und wähle ein Passwort für das Dashboard.", "auth.invitationCode": "Sechsstelliger Einladungscode", "auth.newPassword": "Neues Passwort", "auth.passwordLength": "Mindestens 8 Zeichen", "auth.settingUp": "Konto wird eingerichtet…", "auth.accept": "Einladung annehmen", "auth.invitationError": "Einladung konnte nicht angenommen werden. Prüfe deine Angaben und versuche es erneut.", "auth.invitationUnexpected": "Beim Annehmen der Einladung ist ein Fehler aufgetreten. Bitte versuche es erneut.",
   "marketing.studio": "Webdesign- und Entwicklungsstudio", "marketing.heroTitle": "Ein klarer Weg von der Anfrage bis zum Launch — und darüber hinaus.", "marketing.heroIntro": "Wähle ein Paket, erzähl uns von deinem Projekt und verfolge es vom ersten Gespräch bis zur Live-Seite — alles an einem Ort, mit einer mobilen App, die dich auf dem Laufenden hält.", "marketing.seePackages": "Pakete ansehen", "marketing.customBuild": "Über ein individuelles Projekt sprechen", "marketing.howItWorks": "So funktioniert es", "marketing.howItWorksIntro": "Ein Weg von der ersten Anfrage bis zur fertigen Website — jederzeit sichtbar.", "marketing.step": "Schritt {number}", "marketing.trackPhone": "Verfolge dein Projekt auf dem Handy", "marketing.trackPhoneIntro": "Nach der Freigabe ist die Clientflow-App der Ort für Zahlungen, Fortschritt, Notizen und Benachrichtigungen.", "marketing.liveTracker": "Live-Projektfortschritt", "marketing.securePayment": "Rechnungen und sichere Zahlung", "marketing.pushUpdates": "Push-Benachrichtigungen bei Updates", "marketing.comingSoon": "demnächst", "marketing.mostPopular": "Am beliebtesten", "marketing.custom": "Individuell", "marketing.estimatedDelivery": "Voraussichtliche Lieferung: {duration}", "marketing.timelineScoped": "Zeitplan nach Abstimmung", "marketing.talkToUs": "Sprich mit uns", "marketing.requestPackage": "Paket anfragen", "marketing.requestPackageTitle": "Paket anfragen", "marketing.requestPackageIntro": "Erzähl uns etwas über dein Projekt. Wir prüfen deine Anfrage und melden uns per E-Mail — Kosten entstehen erst nach deiner Freigabe und Anzahlung.", "marketing.yourName": "Dein Name", "marketing.company": "Unternehmen", "marketing.messageOptional": "Was möchtest du entwickeln? (optional)", "marketing.submitRequest": "Anfrage senden", "marketing.submitting": "Wird gesendet…", "marketing.requestReceived": "Anfrage erhalten.", "marketing.requestReceivedIntro": "Wir melden uns nach der Prüfung per E-Mail. Du kannst jederzeit eine weitere Anfrage senden.", "marketing.submitAnother": "Weitere Anfrage senden", "marketing.customBuildTitle": "Individuelle Web-App", "marketing.customBuildIntro": "Jedes individuelle Projekt beginnt mit einem Gespräch. Erzähl uns, was du entwickelst — wir klären Umfang, Preis und Zeitplan gemeinsam.", "marketing.thanksInquiry": "Danke — deine Anfrage ist beim Studio eingegangen.", "marketing.thanksInquiryIntro": "Wir prüfen die Angaben und melden uns per E-Mail. Du kannst jederzeit eine weitere Anfrage senden.", "marketing.sendAnotherInquiry": "Weitere Anfrage senden", "marketing.sendInquiry": "Anfrage senden", "marketing.inquirySent": "Anfrage gesendet", "marketing.inquirySentIntro": "Wir melden uns bald per E-Mail.", "marketing.whatBuild": "Was möchtest du entwickeln?", "marketing.buildPlaceholder": "Erzähl uns vom Produkt, der Zielgruppe und wobei wir beim Launch helfen können.", "payment.submitted": "Zahlung übermittelt", "payment.cancelled": "Zahlung abgebrochen", "payment.webhook": "Stripe bestätigt deine Zahlung. Diese Seite ändert den Rechnungsstatus nicht.", "payment.returnDashboard": "Zurück zu den Rechnungen", "payment.continueApp": "Zur Web-App",
+  "marketing.rights": "© {year} Clientflow Studio. Alle Rechte vorbehalten.",
+  "marketing.weeks": "Wochen",
+  "marketing.week": "Woche",
+  "marketing.appStoreKicker": "Laden im",
+  "marketing.appStoreBadge": "Laden im App Store — demnächst",
+  "marketing.googlePlayKicker": "JETZT BEI",
+  "marketing.googlePlayBadge": "Jetzt bei Google Play — demnächst",
+  "marketing.packagesLoadFailed": "Die Pakete konnten nicht geladen werden.",
+  "marketing.requestFailed": "Deine Anfrage konnte nicht gesendet werden.",
+  "marketing.requestSubmitted": "Anfrage gesendet",
+  "marketing.requestSubmittedIntro": "Wir prüfen sie und melden uns in Kürze per E-Mail.",
+  "packages.landing-page.name": "Landing Page",
+  "packages.landing-page.description": "Eine einzelne, conversion-starke Seite für einen Launch oder eine Kampagne.",
+  "packages.landing-page.extension": "Fokussiert, schnell und auf eine klare Aktion ausgerichtet.",
+  "packages.full-website.name": "Komplette Website",
+  "packages.full-website.description": "Eine vollständige Marketing-Website mit mehreren Seiten.",
+  "packages.full-website.extension": "Aufgebaut für Wachstum, Inhalte und Glaubwürdigkeit.",
+  "packages.web-app-build.name": "Web-App-Entwicklung",
+  "packages.web-app-build.description": "Eine individuelle Web-Anwendung, einzeln abgestimmt.",
+  "packages.web-app-build.extension": "Rund um dein Produkt und deine Nutzer gestaltet.",
+  "marketing.emailPlaceholder": "du@unternehmen.com",
+  "marketing.messagePlaceholder": "Eine Landing Page für einen Produkt-Launch im September …",
+  "marketing.noPackages": "Derzeit sind keine Pakete verfügbar.",
+  "marketing.packagesIntro": "Zwei Festpreis-Pakete, die du direkt anfragen kannst, und ein individuelles Projekt, das wir gemeinsam abstimmen.",
+  "marketing.deposit": "Anzahlung",
+  "marketing.finalPayment": "Schlusszahlung",
+  "marketing.notDue": "Noch nicht fällig",
+  "status.invoice.PAID": "Bezahlt",
+  "status.project.DESIGN": "Design",
 };
 
 const albanian: Messages = {
@@ -509,6 +553,35 @@ const albanian: Messages = {
   "invoices.search": "Kërko fatura…", "invoices.invoice": "Fatura", "invoices.project": "Projekti", "invoices.due": "Afati", "invoices.noInvoices": "Nuk ka fatura ende", "invoices.noMatch": "Asnjë faturë nuk përputhet me filtrat.", "clients.search": "Kërko klientë…", "clients.company": "Kompania", "clients.contact": "Kontakti", "clients.projects": "Projektet", "clients.noClients": "Nuk ka klientë ende.", "notifications.unread": "Njoftime të palexuara", "notifications.viewAll": "Shiko të gjitha", "notifications.noNotifications": "Nuk ka njoftime ende.", "notifications.all": "Të gjitha", "notifications.unreadTab": "Të palexuara", "notifications.markAllRead": "Shëno të gjitha si të lexuara", "notifications.marking": "Duke shënuar…",
   "auth.welcome": "Mirë se u ktheve", "auth.signInTitle": "Hyr në hapësirën tënde", "auth.signInIntro": "Përdor email-in dhe fjalëkalimin e studios për të vazhduar.", "auth.signIn": "Hyr", "auth.signingIn": "Duke hyrë…", "auth.email": "Email", "auth.password": "Fjalëkalimi", "auth.contactAdmin": "Kontakto administratorin për ta rivendosur", "auth.passwordPlaceholder": "Shkruaj fjalëkalimin", "auth.staffOnly": "Kjo hapësirë është vetëm për stafin e studios. Përdor aplikacionin e klientit për t'u identifikuar.", "auth.invalidLogin": "Hyrja dështoi. Kontrollo të dhënat dhe provo përsëri.", "auth.loginError": "Ndodhi një gabim gjatë hyrjes. Provo përsëri.", "auth.invited": "Je i ftuar", "auth.setupAccount": "Konfiguro llogarinë", "auth.acceptInvitation": "Prano ftesën", "auth.invitationIntro": "Shkruaj kodin gjashtëshifror nga email-i dhe zgjidh një fjalëkalim për panelin.", "auth.invitationCode": "Kodi gjashtëshifror i ftesës", "auth.newPassword": "Fjalëkalim i ri", "auth.passwordLength": "Të paktën 8 karaktere", "auth.settingUp": "Duke konfiguruar llogarinë…", "auth.accept": "Prano ftesën", "auth.invitationError": "Ftesa nuk u pranua. Kontrollo të dhënat dhe provo përsëri.", "auth.invitationUnexpected": "Ndodhi një gabim gjatë pranimit të ftesës. Provo përsëri.",
   "marketing.studio": "Studio dizajni dhe zhvillimi web", "marketing.heroTitle": "Një rrugë e qartë nga kërkesa te lançimi — dhe gjithçka më pas.", "marketing.heroIntro": "Zgjidh një paketë, na trego për projektin dhe ndiqe nga biseda e parë deri te faqja live — në një vend, me një aplikacion celular që të mban të informuar.", "marketing.seePackages": "Shiko paketat", "marketing.customBuild": "Flit me ne për një projekt të veçantë", "marketing.howItWorks": "Si funksionon", "marketing.howItWorksIntro": "Një rrugë nga kërkesa e parë te faqja e lançuar — e dukshme gjatë gjithë procesit.", "marketing.step": "Hapi {number}", "marketing.trackPhone": "Ndiq projektin nga telefoni", "marketing.trackPhoneIntro": "Pasi kërkesa të miratohet, aplikacioni Clientflow është vendi ku paguan, ndjek përparimin, lë shënime dhe merr njoftime.", "marketing.liveTracker": "Ndjekje live e fazës", "marketing.securePayment": "Fatura dhe pagesë e sigurt", "marketing.pushUpdates": "Njoftime për çdo përditësim", "marketing.comingSoon": "së shpejti", "marketing.mostPopular": "Më e preferuara", "marketing.custom": "E veçantë", "marketing.estimatedDelivery": "Dorëzimi i parashikuar: {duration}", "marketing.timelineScoped": "Afati caktohet pas përcaktimit", "marketing.talkToUs": "Flit me ne", "marketing.requestPackage": "Kërko këtë paketë", "marketing.requestPackageTitle": "Kërko një paketë", "marketing.requestPackageIntro": "Na trego pak për projektin. Do ta shqyrtojmë dhe do të të kontaktojmë me email — nuk ka pagesë pa miratimin dhe depozitën tënde.", "marketing.yourName": "Emri yt", "marketing.company": "Kompania", "marketing.messageOptional": "Çfarë dëshiron të ndërtosh? (opsionale)", "marketing.submitRequest": "Dërgo kërkesën", "marketing.submitting": "Duke dërguar…", "marketing.requestReceived": "Kërkesa u mor.", "marketing.requestReceivedIntro": "Do të të shkruajmë pasi ta shqyrtojmë. Mund të dërgosh një kërkesë tjetër kur të duash.", "marketing.submitAnother": "Dërgo një kërkesë tjetër", "marketing.customBuildTitle": "Ndërtim web app-i të veçantë", "marketing.customBuildIntro": "Çdo projekt i veçantë fillon me një bisedë. Na trego çfarë po ndërton dhe do ta përcaktojmë së bashku.", "marketing.thanksInquiry": "Faleminderit — kërkesa jote mbërriti në studio.", "marketing.thanksInquiryIntro": "Do ta shqyrtojmë dhe do të të kontaktojmë me email. Mund të dërgosh një kërkesë tjetër kur të duash.", "marketing.sendAnotherInquiry": "Dërgo një kërkesë tjetër", "marketing.sendInquiry": "Dërgo kërkesën", "marketing.inquirySent": "Kërkesa u dërgua", "marketing.inquirySentIntro": "Do të të kontaktojmë së shpejti me email.", "marketing.whatBuild": "Çfarë dëshiron të ndërtosh?", "marketing.buildPlaceholder": "Na trego për produktin, audiencën dhe si mund të të ndihmojmë me lançimin.", "payment.submitted": "Pagesa u dërgua", "payment.cancelled": "Pagesa u anulua", "payment.webhook": "Stripe po konfirmon pagesën. Kjo faqe nuk ndryshon statusin e faturës.", "payment.returnDashboard": "Kthehu te faturat", "payment.continueApp": "Vazhdo te aplikacioni web",
+  "marketing.rights": "© {year} Clientflow Studio. Të gjitha të drejtat e rezervuara.",
+  "marketing.weeks": "javë",
+  "marketing.week": "javë",
+  "marketing.appStoreKicker": "SHKARKO NË",
+  "marketing.appStoreBadge": "Shkarko në App Store — së shpejti",
+  "marketing.googlePlayKicker": "MERRE NË",
+  "marketing.googlePlayBadge": "Merre në Google Play — së shpejti",
+  "marketing.packagesLoadFailed": "Paketat nuk u ngarkuan dot.",
+  "marketing.requestFailed": "Kërkesa jote nuk u dërgua dot.",
+  "marketing.requestSubmitted": "Kërkesa u dërgua",
+  "marketing.requestSubmittedIntro": "Do ta shqyrtojmë dhe do të të shkruajmë me email së shpejti.",
+  "packages.landing-page.name": "Faqe Uljeje",
+  "packages.landing-page.description": "Një faqe e vetme me konvertim të lartë për një lançim ose fushatë.",
+  "packages.landing-page.extension": "E fokusuar, e shpejtë dhe e ndërtuar rreth një veprimi të qartë.",
+  "packages.full-website.name": "Faqe e Plotë",
+  "packages.full-website.description": "Një faqe marketingu e plotë me shumë nënfaqe.",
+  "packages.full-website.extension": "E strukturuar për rritje, përmbajtje dhe besueshmëri.",
+  "packages.web-app-build.name": "Ndërtim Web App-i",
+  "packages.web-app-build.description": "Një aplikacion web i personalizuar, i përcaktuar veç e veç.",
+  "packages.web-app-build.extension": "E dizajnuar rreth produktit dhe përdoruesve të tu.",
+  "marketing.emailPlaceholder": "ti@kompania.com",
+  "marketing.messagePlaceholder": "Një faqe uljeje për një lançim produkti në shtator …",
+  "marketing.noPackages": "Për momentin nuk ka paketa të disponueshme.",
+  "marketing.packagesIntro": "Dy paketa me çmim fiks që mund t’i kërkosh direkt, dhe një projekt të veçantë që e përcaktojmë bashkë.",
+  "marketing.deposit": "Depozita",
+  "marketing.finalPayment": "Pagesa përfundimtare",
+  "marketing.notDue": "Ende pa afat",
+  "status.invoice.PAID": "Paguar",
+  "status.project.DESIGN": "Dizajn",
 };
 
 Object.assign(german, {
@@ -695,6 +768,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale;
+    // Backfills the cookie for anyone whose preference predates it.
+    persistLocaleCookie(locale);
   }, [locale]);
 
   const value = useMemo<LocaleContextValue>(() => ({

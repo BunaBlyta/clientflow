@@ -31,7 +31,7 @@ export function MobileAppSection() {
           </ul>
           <div className="mt-7 flex flex-wrap gap-3">
             <span
-              aria-label="Download on the App Store — coming soon"
+              aria-label={t("marketing.appStoreBadge")}
               className="store-badge app-store-badge flex h-12 min-w-[148px] items-center gap-2 rounded-[7px] border border-white/15 bg-[#050505] px-3 text-white shadow-sm"
             >
               <img
@@ -41,12 +41,12 @@ export function MobileAppSection() {
                 className="size-6 shrink-0"
               />
               <span className="flex flex-col leading-none">
-                <span className="store-badge-kicker text-[9px] tracking-wide text-white/75">Download on the</span>
+                <span className="store-badge-kicker text-[9px] tracking-wide text-white/75">{t("marketing.appStoreKicker")}</span>
                 <span className="store-badge-title mt-1 text-[17px] font-medium tracking-[-0.03em]">App Store</span>
               </span>
             </span>
             <span
-              aria-label="Get it on Google Play — coming soon"
+              aria-label={t("marketing.googlePlayBadge")}
               className="store-badge google-play-badge flex h-12 min-w-[148px] items-center gap-2 rounded-[7px] border border-white/15 bg-[#050505] px-3 text-white shadow-sm"
             >
               <img
@@ -56,7 +56,7 @@ export function MobileAppSection() {
                 className="size-6 shrink-0"
               />
               <span className="flex flex-col leading-none">
-                <span className="store-badge-kicker text-[9px] tracking-wide text-white/75">GET IT ON</span>
+                <span className="store-badge-kicker text-[9px] tracking-wide text-white/75">{t("marketing.googlePlayKicker")}</span>
                 <span className="store-badge-title mt-1 text-[17px] font-medium tracking-[-0.03em]">Google Play</span>
               </span>
             </span>
@@ -69,7 +69,7 @@ export function MobileAppSection() {
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-medium">Marlowe &amp; Finch</span>
                 <span className="rounded-full bg-brand-accent/10 px-2 py-0.5 text-[11px] font-medium text-brand-accent">
-                  Design
+                  {t("status.project.DESIGN")}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">

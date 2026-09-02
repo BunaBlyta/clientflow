@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { DEFAULT_LOCALE, isLocale } from "@/lib/locales";
+import { LOCALE_COOKIE } from "@/lib/locale-cookie";
 
 const SESSION_COOKIE = "clientflow_session";
 const DEVELOPMENT_ONLY_SESSION_KEY = "not-a-secret-development-fallback";
@@ -102,6 +104,32 @@ export async function middleware(request: NextRequest) {
     return withCorsHeaders(NextResponse.next(), origin);
   }
 
+  // The public homepage. Handled before the auth check below, which would
+  // otherwise bounce every anonymous visitor to /login.
+  //
+  // `/` serves English and stays the canonical, shareable URL. A visitor who
+  // has already picked German or Albanian carries the locale cookie and is sent
+  // to their own URL instead. No cookie means no redirect, so crawlers — and
+  // anyone opening a shared link for the first time — get English.
+  if (pathname === "/") {
+    const preferred = request.cookies.get(LOCALE_COOKIE)?.value;
+    if (preferred && preferred !== DEFAULT_LOCALE && isLocale(preferred)) {
+      // 307, never 308: the visitor can change their mind, and a permanent
+      // redirect on `/` would be cached in browsers indefinitely.
+      const response = NextResponse.redirect(
+        new URL(`/${preferred}${request.nextUrl.search}`, request.url),
+        307,
+      );
+      // This redirect exists only because of a cookie, so no shared cache may
+      // replay it for a different visitor. The 200 needs no such header: `/` is
+      // in the matcher, so this runs on every request and nothing can serve the
+      // cached page without passing through here first.
+      response.headers.append("Vary", "Cookie");
+      return response;
+    }
+    return NextResponse.next();
+  }
+
   const isAuthenticated = await hasValidSession(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (pathname === "/login") {
@@ -122,5 +150,5 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // /accept-invite is intentionally omitted: invited users do not have a
   // session until set-password completes.
-  matcher: ["/dashboard/:path*", "/login", "/api/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/login", "/api/:path*"],
 };
