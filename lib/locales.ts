@@ -12,8 +12,13 @@ export const LOCALES = ["en", "de", "sq"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-/** English is served from the bare root, so it never carries a URL prefix. */
-export const DEFAULT_LOCALE: Locale = "en";
+/**
+ * English is served from the bare root, so it never carries a URL prefix.
+ *
+ * Typed as the literal rather than `Locale`, so `Exclude<Locale, typeof
+ * DEFAULT_LOCALE>` names the other locales instead of collapsing to `never`.
+ */
+export const DEFAULT_LOCALE = "en" satisfies Locale;
 
 export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);

@@ -65,7 +65,7 @@ function PackagesSection({
   isActive: boolean;
   onEditingChange: (isEditing: boolean) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [isCreatingPackage, setIsCreatingPackage] = useState(false);
@@ -200,8 +200,8 @@ function PackagesSection({
               ) : (
                 <>
                   <div>
-                    <p className="text-[14px] font-medium">{packageName(t, pkg)}</p>
-                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{packageDescription(t, pkg)}</p>
+                    <p className="text-[14px] font-medium">{packageName(t, pkg, locale)}</p>
+                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{packageDescription(t, pkg, locale)}</p>
                     <p className="mt-2 text-[13px]">
                       {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? t("settings.durationToBeScoped")}
                     </p>

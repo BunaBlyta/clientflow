@@ -9,6 +9,7 @@ export const packageSelect = {
   currency: true,
   estimatedDuration: true,
   sortOrder: true,
+  translations: true,
 } as const;
 
 export function invalidPackage(message: string) {

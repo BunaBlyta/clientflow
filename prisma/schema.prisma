@@ -121,6 +121,10 @@ model Package {
   price             Decimal         @db.Decimal(12, 2)
   currency          String          @default("usd")
   estimatedDuration String?
+  /// Per-locale overrides for name and description, keyed by locale:
+  /// { "de": { "name": "...", "description": "..." }, "sq": { ... } }.
+  /// Absent or partial entries fall back to the English columns above.
+  translations      Json?
   isActive          Boolean         @default(true)
   sortOrder         Int             @default(0)
   createdAt         DateTime        @default(now())

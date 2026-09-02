@@ -523,14 +523,8 @@ const german: Messages = {
   "marketing.requestFailed": "Deine Anfrage konnte nicht gesendet werden.",
   "marketing.requestSubmitted": "Anfrage gesendet",
   "marketing.requestSubmittedIntro": "Wir prüfen sie und melden uns in Kürze per E-Mail.",
-  "packages.landing-page.name": "Landing Page",
-  "packages.landing-page.description": "Eine einzelne, conversion-starke Seite für einen Launch oder eine Kampagne.",
   "packages.landing-page.extension": "Fokussiert, schnell und auf eine klare Aktion ausgerichtet.",
-  "packages.full-website.name": "Komplette Website",
-  "packages.full-website.description": "Eine vollständige Marketing-Website mit mehreren Seiten.",
   "packages.full-website.extension": "Aufgebaut für Wachstum, Inhalte und Glaubwürdigkeit.",
-  "packages.web-app-build.name": "Web-App-Entwicklung",
-  "packages.web-app-build.description": "Eine individuelle Web-Anwendung, einzeln abgestimmt.",
   "packages.web-app-build.extension": "Rund um dein Produkt und deine Nutzer gestaltet.",
   "marketing.emailPlaceholder": "du@unternehmen.com",
   "marketing.messagePlaceholder": "Eine Landing Page für einen Produkt-Launch im September …",
@@ -564,14 +558,8 @@ const albanian: Messages = {
   "marketing.requestFailed": "Kërkesa jote nuk u dërgua dot.",
   "marketing.requestSubmitted": "Kërkesa u dërgua",
   "marketing.requestSubmittedIntro": "Do ta shqyrtojmë dhe do të të shkruajmë me email së shpejti.",
-  "packages.landing-page.name": "Faqe Uljeje",
-  "packages.landing-page.description": "Një faqe e vetme me konvertim të lartë për një lançim ose fushatë.",
   "packages.landing-page.extension": "E fokusuar, e shpejtë dhe e ndërtuar rreth një veprimi të qartë.",
-  "packages.full-website.name": "Faqe e Plotë",
-  "packages.full-website.description": "Një faqe marketingu e plotë me shumë nënfaqe.",
   "packages.full-website.extension": "E strukturuar për rritje, përmbajtje dhe besueshmëri.",
-  "packages.web-app-build.name": "Ndërtim Web App-i",
-  "packages.web-app-build.description": "Një aplikacion web i personalizuar, i përcaktuar veç e veç.",
   "packages.web-app-build.extension": "E dizajnuar rreth produktit dhe përdoruesve të tu.",
   "marketing.emailPlaceholder": "ti@kompania.com",
   "marketing.messagePlaceholder": "Një faqe uljeje për një lançim produkti në shtator …",
@@ -1025,6 +1013,28 @@ Object.assign(albanian, {
   "notifications.markReadFailed": "Ky njoftim nuk u shënua dot si i lexuar.",
   "notifications.markAllReadFailed": "Nuk u shënuan dot të gjitha njoftimet si të lexuara.",
   "account.loadFailed": "Llogaria jote nuk u ngarkua dot.",
+});
+
+
+// Package translation editor.
+Object.assign(english, {
+  "settings.translations": "Translations",
+  "settings.translationsIntro": "Shown to visitors reading the site in that language. Leave a field blank to use the English text.",
+  "settings.packageName": "Package name",
+});
+
+// Package translation editor (German).
+Object.assign(german, {
+  "settings.translations": "Übersetzungen",
+  "settings.translationsIntro": "Wird Besuchern angezeigt, die die Seite in dieser Sprache lesen. Leer lassen, um den englischen Text zu verwenden.",
+  "settings.packageName": "Paketname",
+});
+
+// Package translation editor (Albanian).
+Object.assign(albanian, {
+  "settings.translations": "Përkthimet",
+  "settings.translationsIntro": "U shfaqet vizitorëve që e lexojnë faqen në atë gjuhë. Lëre bosh për të përdorur tekstin anglisht.",
+  "settings.packageName": "Emri i paketës",
 });
 
 const messages: Record<Locale, Messages> = { en: english, de: german, sq: albanian };

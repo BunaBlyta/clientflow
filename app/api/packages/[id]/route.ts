@@ -9,6 +9,8 @@ import {
   readPackageSlug,
 } from '@/app/api/packages/_lib';
 import { serializePackage } from '@/app/api/packages/serialize';
+import { readPackageTranslations } from '@/lib/package-translations';
+import { Prisma } from '@/lib/generated/prisma/client';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +58,14 @@ export async function PATCH(
     const description = readOptionalText(values.description);
     if (description === null || !description) return invalidPackage('Description must be a non-empty string');
     data.description = description;
+  }
+  if ('translations' in values) {
+    const translations = readPackageTranslations(values.translations);
+    if (translations === undefined) {
+      return invalidPackage('Translations must map a supported locale to a name and description');
+    }
+    // Prisma needs an explicit JSON null to clear the column rather than skip it.
+    data.translations = translations ?? Prisma.DbNull;
   }
   if ('estimatedDuration' in values) {
     const estimatedDuration = readOptionalText(values.estimatedDuration);

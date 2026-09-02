@@ -205,6 +205,10 @@ async function main() {
       price: '2500.00',
       estimatedDuration: '2–3 weeks',
       sortOrder: 1,
+      translations: {
+        de: { name: 'Landing Page', description: 'Eine einzelne, conversion-starke Seite für einen Launch oder eine Kampagne.' },
+        sq: { name: 'Faqe Uljeje', description: 'Një faqe e vetme me konvertim të lartë për një lançim ose fushatë.' },
+      },
     },
     {
       id: 'pkg-full-website',
@@ -214,6 +218,10 @@ async function main() {
       price: '6500.00',
       estimatedDuration: '6–8 weeks',
       sortOrder: 2,
+      translations: {
+        de: { name: 'Komplette Website', description: 'Eine vollständige Marketing-Website mit mehreren Seiten.' },
+        sq: { name: 'Faqe e Plotë', description: 'Një faqe marketingu e plotë me shumë nënfaqe.' },
+      },
     },
     {
       id: 'pkg-web-app',
@@ -223,6 +231,10 @@ async function main() {
       price: '18000.00',
       estimatedDuration: '10–14 weeks',
       sortOrder: 3,
+      translations: {
+        de: { name: 'Web-App-Entwicklung', description: 'Eine individuelle Web-Anwendung, einzeln abgestimmt.' },
+        sq: { name: 'Ndërtim Web App-i', description: 'Një aplikacion web i personalizuar, i përcaktuar veç e veç.' },
+      },
     },
   ];
 

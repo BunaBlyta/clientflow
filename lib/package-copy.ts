@@ -1,3 +1,6 @@
+import type { Locale } from "@/lib/locales";
+import { DEFAULT_LOCALE } from "@/lib/locales";
+import type { TranslatableLocale } from "@/lib/package-translations";
 import type { ManagedPackage } from "@/lib/types";
 
 type Translate = (key: string, values?: Record<string, string | number>) => string;
@@ -8,19 +11,27 @@ function translated(t: Translate, key: string): string | null {
   return value === key ? null : value;
 }
 
-/**
- * Package name, description and delivery estimate are database columns that
- * staff can edit from the dashboard, so English deliberately keeps whatever is
- * stored. German and Albanian use a translation when one exists for that slug
- * and fall back to the stored English text otherwise — a package added later
- * still renders, just untranslated.
- */
-export function packageName(t: Translate, pkg: ManagedPackage): string {
-  return translated(t, `packages.${pkg.slug}.name`) ?? pkg.name;
+function override(pkg: ManagedPackage, locale: Locale, field: "name" | "description"): string | null {
+  if (locale === DEFAULT_LOCALE) return null;
+  return pkg.translations?.[locale as TranslatableLocale]?.[field]?.trim() || null;
 }
 
-export function packageDescription(t: Translate, pkg: ManagedPackage): string {
-  const base = translated(t, `packages.${pkg.slug}.description`) ?? pkg.description;
+/**
+ * Package name and description are editable database columns, and so are their
+ * German and Albanian versions — staff maintain all of them from Settings.
+ *
+ * English always comes from the `name`/`description` columns; another locale
+ * uses its stored override when there is one and falls back to English per
+ * field, so a half-translated package still reads sensibly.
+ */
+export function packageName(t: Translate, pkg: ManagedPackage, locale: Locale): string {
+  return override(pkg, locale, "name") ?? pkg.name;
+}
+
+export function packageDescription(t: Translate, pkg: ManagedPackage, locale: Locale): string {
+  const base = override(pkg, locale, "description") ?? pkg.description;
+  // The trailing marketing blurb is fixed copy, not customer data, so it stays
+  // in the message catalogue keyed by slug.
   const extension = translated(t, `packages.${pkg.slug}.extension`);
   return extension ? `${base} ${extension}` : base;
 }

@@ -44,7 +44,7 @@ function FieldHint({ id, message }: { id: string; message?: string }) {
 }
 
 export function PackagesAndRequest() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [packagesError, setPackagesError] = useState<string | null>(null);
@@ -200,11 +200,11 @@ export function PackagesAndRequest() {
                           {t("marketing.mostPopular")}
                         </span>
                       )}
-                      <h3 className="min-h-6 pr-20 text-[16px] font-semibold">{packageName(t, pkg)}</h3>
+                      <h3 className="min-h-6 pr-20 text-[16px] font-semibold">{packageName(t, pkg, locale)}</h3>
                       <p className="package-price mt-1 min-h-9 text-[28px] font-semibold tracking-tight">
                         {isCustom ? t("marketing.custom") : formatMajorCurrency(pkg.price, pkg.currency)}
                       </p>
-                      <p className="package-description mt-2 min-h-10 line-clamp-2 text-[13px] leading-5 text-muted-foreground">{packageDescription(t, pkg)}</p>
+                      <p className="package-description mt-2 min-h-10 line-clamp-2 text-[13px] leading-5 text-muted-foreground">{packageDescription(t, pkg, locale)}</p>
                       <ul className="mt-5 flex flex-1 flex-col gap-2.5">
                         <li className="flex items-start gap-2 text-[13px]">
                           <Check className="mt-0.5 size-4 shrink-0 text-brand-sky dark:rounded-full dark:bg-brand-accent/25 dark:p-0.5 dark:text-foreground" />
@@ -273,7 +273,7 @@ export function PackagesAndRequest() {
                       */}
                       <span>
                         {selectedPackage
-                          ? `${packageName(t, selectedPackage)} — ${formatMajorCurrency(selectedPackage.price, selectedPackage.currency)}`
+                          ? `${packageName(t, selectedPackage, locale)} — ${formatMajorCurrency(selectedPackage.price, selectedPackage.currency)}`
                           : ""}
                       </span>
                     </SelectTrigger>
@@ -286,7 +286,7 @@ export function PackagesAndRequest() {
                     >
                       {standardPackages.map((pkg) => (
                         <SelectItem key={pkg.id} value={pkg.id}>
-                          {packageName(t, pkg)} — {formatMajorCurrency(pkg.price, pkg.currency)}
+                          {packageName(t, pkg, locale)} — {formatMajorCurrency(pkg.price, pkg.currency)}
                         </SelectItem>
                       ))}
                     </SelectContent>
