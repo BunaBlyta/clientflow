@@ -26,7 +26,7 @@ import { EMPTY_TABLE_FILTERS, usePreferencesStore } from "@/lib/preferences-stor
 import type { PaginatedResponse } from "@/lib/pagination";
 
 export default function ClientsPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const filters = usePreferencesStore((state) => state.tableFilters.clients) ?? EMPTY_TABLE_FILTERS;
   const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
@@ -186,7 +186,7 @@ export default function ClientsPage() {
                     {formatCurrency(client.totalBilledCents ?? 0)}
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {formatDate(client.createdAt)}
+                    {formatDate(client.createdAt, locale)}
                   </td>
                   <td className="px-2 py-3 text-right">
                     <DropdownMenu>

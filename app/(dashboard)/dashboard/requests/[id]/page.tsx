@@ -16,7 +16,7 @@ import { DashboardErrorState } from "@/components/dashboard/dashboard-error-stat
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [request, setRequest] = useState<ProjectRequestDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,8 +102,8 @@ export default function RequestDetailPage() {
     <section className="rounded-lg border border-border p-5"><dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       <div><dt className="text-[12px] text-muted-foreground">{t("common.status")}</dt><dd className={`mt-1 text-[13px] ${statusTone}`}>{t(`status.request.${request.status}`)}</dd></div>
       <div><dt className="text-[12px] text-muted-foreground">{t("projects.package")}</dt><dd className="mt-1 text-[13px] font-medium">{request.package?.name ?? t("common.unknown")}</dd><dd className="text-[12px] text-muted-foreground">{request.package ? formatMajorCurrency(request.package.price, request.package.currency) : "—"}</dd></div>
-      <div><dt className="text-[12px] text-muted-foreground">{t("projects.submitted")}</dt><dd className="mt-1 text-[13px]">{formatDate(request.createdAt)}</dd></div>
-      <div><dt className="text-[12px] text-muted-foreground">{t("request.reviewed")}</dt><dd className="mt-1 text-[13px]">{request.reviewedAt ? formatDate(request.reviewedAt) : t("request.notReviewed")}</dd></div>
+      <div><dt className="text-[12px] text-muted-foreground">{t("projects.submitted")}</dt><dd className="mt-1 text-[13px]">{formatDate(request.createdAt, locale)}</dd></div>
+      <div><dt className="text-[12px] text-muted-foreground">{t("request.reviewed")}</dt><dd className="mt-1 text-[13px]">{request.reviewedAt ? formatDate(request.reviewedAt, locale) : t("request.notReviewed")}</dd></div>
     </dl></section>
     <section className="rounded-lg border border-border p-5"><h2 className="text-[15px] font-medium">{t("project.prospectInformation")}</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2"><div><dt className="text-[12px] text-muted-foreground">{t("common.name")}</dt><dd className="mt-1 text-[13px]">{request.prospectName}</dd></div><div><dt className="text-[12px] text-muted-foreground">{t("common.email")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Mail className="size-3.5 text-muted-foreground" />{request.prospectEmail}</dd></div><div><dt className="text-[12px] text-muted-foreground">{t("common.phone")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Phone className="size-3.5 text-muted-foreground" />{request.prospectPhone ?? t("common.notAvailable")}</dd></div></dl>{request.message && <div className="mt-5 border-t border-border pt-4"><dt className="text-[12px] text-muted-foreground">{t("project.requestMessage")}</dt><dd className="mt-1 whitespace-pre-wrap text-[13px]">{request.message}</dd></div>}</section>
     <section className="flex flex-col gap-4"><h2 className="text-[15px] font-medium">{t("project.linkedClientProjects")}</h2>{request.client ? <div className="rounded-lg border border-border p-5"><p className="text-[13px]">{t("project.requestLinkedTo", { company: request.client.companyName })}</p><ProjectList projects={request.projects} /></div> : <p className="text-[13px] text-muted-foreground">{t("project.noLinkedClient")}</p>}</section>

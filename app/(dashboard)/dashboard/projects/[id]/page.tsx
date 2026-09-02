@@ -22,7 +22,7 @@ import { upsertById } from "@/lib/upsert-by-id";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const projectId = params.id;
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -274,10 +274,10 @@ export default function ProjectDetailPage() {
           </div>
           <div>
             <dt className="text-[12px] text-muted-foreground">{t("project.timeline")}</dt>
-            <dd className="mt-1 text-[13px]">Created {formatDate(project.createdAt)}</dd>
+            <dd className="mt-1 text-[13px]">Created {formatDate(project.createdAt, locale)}</dd>
             <dd className="text-[12px] text-muted-foreground">
               {project.targetLaunchDate
-                ? `Target launch ${formatDate(project.targetLaunchDate)}`
+                ? `Target launch ${formatDate(project.targetLaunchDate, locale)}`
                 : t("project.noTargetLaunchDate")}
             </dd>
           </div>
@@ -317,10 +317,10 @@ export default function ProjectDetailPage() {
                       <span className={invoiceDisplayTone(inv)}>{t(invoiceDisplayLabelKey(inv))}</span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {inv.issuedAt ? formatDate(inv.issuedAt) : "—"}
+                      {inv.issuedAt ? formatDate(inv.issuedAt, locale) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
-                      {inv.dueDate ? formatDate(inv.dueDate) : "—"}
+                      {inv.dueDate ? formatDate(inv.dueDate, locale) : "—"}
                     </td>
                     <td className="px-2 py-3 text-right">
                       <InvoiceRowActions invoice={inv} onInvoiceUpdated={handleInvoiceUpdated} />
@@ -349,7 +349,7 @@ export default function ProjectDetailPage() {
               {sortedNotes.map((note, index) => {
                 const previous = sortedNotes[index - 1];
                 const startsNewDay =
-                  !previous || formatDate(previous.createdAt) !== formatDate(note.createdAt);
+                  !previous || formatDate(previous.createdAt, locale) !== formatDate(note.createdAt, locale);
 
                 return (
                   <div key={note.id} className="flex flex-col gap-4">
@@ -357,7 +357,7 @@ export default function ProjectDetailPage() {
                       <div className="flex items-center gap-3">
                         <span className="h-px flex-1 bg-border" />
                         <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          {formatDate(note.createdAt)}
+                          {formatDate(note.createdAt, locale)}
                         </span>
                         <span className="h-px flex-1 bg-border" />
                       </div>
@@ -370,7 +370,7 @@ export default function ProjectDetailPage() {
                         </span>
                         <span className="italic">
                           {localizeSystemNote(note.body, t)}
-                          <span className="not-italic"> · {formatRelativeTime(note.createdAt)}</span>
+                          <span className="not-italic"> · {formatRelativeTime(note.createdAt, locale, t)}</span>
                         </span>
                       </div>
                     ) : (
@@ -389,7 +389,7 @@ export default function ProjectDetailPage() {
                           <div className="flex items-baseline gap-2 text-[12px] text-muted-foreground">
                             <span className="font-medium text-foreground">{note.authorName}</span>
                             <span aria-hidden="true">·</span>
-                            <span>{formatRelativeTime(note.createdAt)}</span>
+                            <span>{formatRelativeTime(note.createdAt, locale, t)}</span>
                           </div>
                           <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground/90">
                             {note.body}

@@ -40,7 +40,7 @@ const STATUS_FILTERS: { value: InvoiceStatus | "ALL" | "OVERDUE"; label: string 
 ];
 
 export default function InvoicesPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const filters = usePreferencesStore((state) => state.tableFilters.invoices) ?? EMPTY_TABLE_FILTERS;
   const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
   const search = filters.search ?? "";
@@ -243,10 +243,10 @@ export default function InvoicesPage() {
                     <span className={invoiceDisplayTone(invoice)}>{t(invoiceDisplayLabelKey(invoice))}</span>
                   </td>
                   <td className="px-5 py-3.5 text-muted-foreground">
-                    {invoice.issuedAt ? formatDate(invoice.issuedAt) : "—"}
+                    {invoice.issuedAt ? formatDate(invoice.issuedAt, locale) : "—"}
                   </td>
                   <td className="px-5 py-3.5 text-right text-muted-foreground">
-                    {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
+                    {invoice.dueDate ? formatDate(invoice.dueDate, locale) : "—"}
                   </td>
                   <td className="px-3 py-3.5 text-right">
                     <InvoiceRowActions

@@ -237,7 +237,7 @@ function PackagesSection({
 }
 
 function TeamSection({ isActive }: { isActive: boolean }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -411,7 +411,7 @@ function TeamSection({ isActive }: { isActive: boolean }) {
             <div className="min-w-0">
               <p className="truncate text-[14px] font-medium">{staffMember.name}</p>
               <p className="mt-1 truncate text-[13px] text-muted-foreground">{staffMember.email}</p>
-              <p className="mt-2 text-[13px] text-muted-foreground">{t("settings.joined")}: {formatDate(staffMember.createdAt)}</p>
+              <p className="mt-2 text-[13px] text-muted-foreground">{t("settings.joined")}: {formatDate(staffMember.createdAt, locale)}</p>
               {resendError?.staffId === staffMember.id && <p role="alert" className="mt-1 text-[11px] text-status-danger">{resendError.message}</p>}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-3">

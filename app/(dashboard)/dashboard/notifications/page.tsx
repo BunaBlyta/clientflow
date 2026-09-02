@@ -168,7 +168,7 @@ function NotificationList({
   markingId: string | null;
   onRead: (notification: Notification) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   if (notifications.length === 0) {
     return <div className="border-y border-border"><p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{emptyLabel}</p></div>;
@@ -200,7 +200,7 @@ function NotificationList({
               <p className="mt-0.5 text-[12px] leading-5 text-muted-foreground">{localized.body}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span className="text-[11px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+              <span className="text-[11px] text-muted-foreground">{formatRelativeTime(n.createdAt, locale, t)}</span>
               {!n.read && <span className="size-1.5 rounded-full bg-brand-accent" />}
             </div>
           </Link>

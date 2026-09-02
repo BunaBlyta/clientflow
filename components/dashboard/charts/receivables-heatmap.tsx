@@ -32,7 +32,7 @@ function heatColor(amountCents: number, maxAmount: number, overdue: boolean) {
 }
 
 export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleWeeks, setVisibleWeeks] = useState(8);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -85,8 +85,8 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
           <button
             type="button"
             key={day.date}
-            title={`${formatDate(day.date)}${day.amountCents ? ` · ${formatCurrency(day.amountCents)}` : ""}`}
-            aria-label={`${formatDate(day.date)}${day.amountCents ? `, ${formatCurrency(day.amountCents)} due` : ", no receivables due"}`}
+            title={`${formatDate(day.date, locale)}${day.amountCents ? ` · ${formatCurrency(day.amountCents)}` : ""}`}
+            aria-label={`${formatDate(day.date, locale)}${day.amountCents ? `, ${formatCurrency(day.amountCents)} due` : ", no receivables due"}`}
             aria-pressed={selectedDate === day.date}
             onClick={() => setSelectedDate(day.date)}
             onDoubleClick={() => setSelectedDate(null)}
@@ -104,7 +104,7 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <p className="font-medium">
-                {formatDate(selectedDay.date)}
+                {formatDate(selectedDay.date, locale)}
                 <span className="ml-2 font-normal text-muted-foreground">{formatCurrency(selectedDay.amountCents)} due</span>
               </p>
               {selectedDay.overdue && <span className="ml-2 font-normal text-status-danger">{t("dashboard.receivablesOverdue")}</span>}

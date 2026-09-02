@@ -14,7 +14,7 @@ import { DashboardErrorState } from "@/components/dashboard/dashboard-error-stat
 
 export default function InquiryDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [inquiry, setInquiry] = useState<CustomLeadDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function InquiryDetailPage() {
 
   return <div className="flex flex-col gap-6">
     <BackLink />
-    <div><h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{inquiry.name}</h1><p className="mt-1 text-[13px] text-muted-foreground">{t("inquiries.receivedOn", { date: formatDate(inquiry.createdAt) })}</p></div>
+    <div><h1 className="text-xl font-semibold tracking-tight sm:text-[22px]">{inquiry.name}</h1><p className="mt-1 text-[13px] text-muted-foreground">{t("inquiries.receivedOn", { date: formatDate(inquiry.createdAt, locale) })}</p></div>
     <section className="rounded-lg border border-border p-5"><h2 className="text-[15px] font-medium">{t("project.inquiryInformation")}</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2"><div><dt className="text-[12px] text-muted-foreground">{t("projects.prospect")}</dt><dd className="mt-1 text-[13px]">{inquiry.name}</dd></div><div><dt className="text-[12px] text-muted-foreground">{t("common.email")}</dt><dd className="mt-1 flex items-center gap-1.5 text-[13px]"><Mail className="size-3.5 text-muted-foreground" />{inquiry.email}</dd></div></dl><div className="mt-5 border-t border-border pt-4"><dt className="text-[12px] text-muted-foreground">{t("inquiries.brief")}</dt><dd className="mt-1 whitespace-pre-wrap text-[13px]">{inquiry.message}</dd></div></section>
     <section className="flex flex-col gap-4"><h2 className="text-[15px] font-medium">{t("project.conversionAndProjects")}</h2>{inquiry.client ? <div className="rounded-lg border border-border p-5"><p className="text-[13px]">{t("project.emailMatch", { company: inquiry.client.companyName })}</p><p className="mt-1 text-[12px] text-muted-foreground">{t("project.emailMatchDisclaimer")}</p><ProjectList projects={inquiry.projects} /></div> : <p className="text-[13px] text-muted-foreground">{t("project.noMatchingClient")}</p>}</section>
   </div>;

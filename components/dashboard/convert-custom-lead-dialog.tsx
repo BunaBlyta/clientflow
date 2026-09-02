@@ -24,7 +24,7 @@ export function ConvertCustomLeadDialog({
   lead: CustomLead;
   onConverted: (lead: CustomLead) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [projectName, setProjectName] = useState(`Custom build — ${lead.name}`);
@@ -103,7 +103,7 @@ export function ConvertCustomLeadDialog({
         <DialogHeader>
           <DialogTitle>{t("inquiries.convertTitle")}</DialogTitle>
           <DialogDescription>
-            {t("inquiries.receivedOn", { date: formatDate(lead.createdAt) })}
+            {t("inquiries.receivedOn", { date: formatDate(lead.createdAt, locale) })}
           </DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">

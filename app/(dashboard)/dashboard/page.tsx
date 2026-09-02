@@ -41,7 +41,7 @@ const PIPELINE_TONES: Record<ProjectStatus, string> = {
 };
 
 export default function OverviewPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
@@ -323,7 +323,7 @@ export default function OverviewPage() {
                       {t(`status.project.${project.status}`)}
                     </span>
                     <span className="whitespace-nowrap text-right text-[12px] text-muted-foreground">
-                      {project.targetLaunchDate ? formatDate(project.targetLaunchDate) : t("dashboard.notScheduled")}
+                      {project.targetLaunchDate ? formatDate(project.targetLaunchDate, locale) : t("dashboard.notScheduled")}
                     </span>
                   </Link>
                 );
@@ -356,7 +356,7 @@ export default function OverviewPage() {
                 pendingRequests.slice(0, 4).map((request) => (
                   <Link key={request.id} href={`/dashboard/requests/${request.id}`} className="flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
                     <span className="min-w-0 truncate">{request.companyName ?? request.prospectName}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(request.createdAt)}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(request.createdAt, locale)}</span>
                   </Link>
                 ))
               )}
@@ -375,7 +375,7 @@ export default function OverviewPage() {
                 customInquiries.slice(0, 4).map((inquiry) => (
                   <Link key={inquiry.id} href={`/dashboard/inquiries/${inquiry.id}`} className="flex min-h-14 min-w-0 items-center justify-between gap-3 rounded-md px-2 py-3 text-[13px] hover:bg-muted/40 hover:text-brand-accent">
                     <span className="min-w-0 truncate">{inquiry.name}</span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(inquiry.createdAt)}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{formatDate(inquiry.createdAt, locale)}</span>
                   </Link>
                 ))
               )}
