@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/locales";
 
 export const EMPTY_TABLE_FILTERS: Record<string, string> = Object.freeze({});
 

@@ -1,10 +1,14 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { usePreferencesStore } from "@/lib/preferences-store";
+import { type Locale, localeHomePath } from "@/lib/locales";
 
-export const LOCALES = ["en", "de", "sq"] as const;
-export type Locale = (typeof LOCALES)[number];
+// Re-exported so client components can keep importing them from here. Server
+// code must import from "@/lib/locales" directly — see the note in that file.
+export { LOCALES, DEFAULT_LOCALE, isLocale, localeHomePath } from "@/lib/locales";
+export type { Locale } from "@/lib/locales";
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
@@ -671,6 +675,20 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
+function createTranslator(locale: Locale): LocaleContextValue["t"] {
+  return (key, values) => {
+    const template = messages[locale][key] ?? english[key] ?? key;
+    return values
+      ? Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{${name}}`, String(replacement)), template)
+      : template;
+  };
+}
+
+/**
+ * Locale for everything that has no locale in its URL — the dashboard, the auth
+ * screens, the Stripe return pages. The persisted preference is the source of
+ * truth there.
+ */
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const locale = usePreferencesStore((state) => state.locale);
   const setLocale = usePreferencesStore((state) => state.setLocale);
@@ -682,13 +700,38 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<LocaleContextValue>(() => ({
     locale,
     setLocale,
-    t: (key, values) => {
-      const template = messages[locale][key] ?? english[key] ?? key;
-      return values
-        ? Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{${name}}`, String(replacement)), template)
-        : template;
-    },
+    t: createTranslator(locale),
   }), [locale, setLocale]);
+
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+}
+
+/**
+ * Locale for the marketing routes, where the URL is the source of truth
+ * (`/` English, `/de`, `/sq`).
+ *
+ * Nested inside the root `LocaleProvider`, so it overrides the stored
+ * preference for this subtree — the page a crawler is served always matches the
+ * URL it asked for. Switching language navigates rather than only flipping a
+ * store value, and the choice is still persisted so the dashboard and auth
+ * screens, which have no locale in their URL, follow along.
+ */
+export function RoutedLocaleProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+  const router = useRouter();
+  const setStoredLocale = usePreferencesStore((state) => state.setLocale);
+
+  useEffect(() => {
+    setStoredLocale(locale);
+  }, [locale, setStoredLocale]);
+
+  const value = useMemo<LocaleContextValue>(() => ({
+    locale,
+    setLocale: (next: Locale) => {
+      setStoredLocale(next);
+      router.push(localeHomePath(next));
+    },
+    t: createTranslator(locale),
+  }), [locale, router, setStoredLocale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
