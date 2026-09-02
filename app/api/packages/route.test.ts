@@ -34,6 +34,7 @@ describe('GET /api/packages', () => {
         currency: 'usd',
         estimatedDuration: '6–8 weeks',
         sortOrder: 2,
+        translations: { de: { name: 'Komplette Website' } },
       },
     ]);
 
@@ -50,6 +51,7 @@ describe('GET /api/packages', () => {
         currency: 'usd',
         estimatedDuration: '2–3 weeks',
         sortOrder: 1,
+        translations: {},
       },
       {
         id: 'pkg-full-website',
@@ -60,6 +62,7 @@ describe('GET /api/packages', () => {
         currency: 'usd',
         estimatedDuration: '6–8 weeks',
         sortOrder: 2,
+        translations: { de: { name: 'Komplette Website' } },
       },
     ]);
     expect(mocks.findMany).toHaveBeenCalledWith({
@@ -73,6 +76,7 @@ describe('GET /api/packages', () => {
         currency: true,
         estimatedDuration: true,
         sortOrder: true,
+        translations: true,
       },
       orderBy: { sortOrder: 'asc' },
     });

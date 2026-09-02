@@ -1,3 +1,5 @@
+import type { PackageTranslations } from "@/lib/package-translations";
+
 /**
  * Shared entity types for the dashboard + landing page, built against mock data
  * while the Prisma schema is still being defined (see AGENTS.md section 4 for
@@ -95,6 +97,7 @@ export interface ManagedPackage {
   currency: string;
   estimatedDuration: string | null;
   sortOrder: number;
+  translations?: PackageTranslations;
 }
 
 export interface ProjectRequest {

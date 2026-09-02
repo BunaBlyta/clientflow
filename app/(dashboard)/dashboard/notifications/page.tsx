@@ -7,6 +7,7 @@ import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { getNotificationDestination } from "@/lib/notification-destination";
+import { localizeNotification } from "@/lib/notification-text";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/types";
@@ -46,13 +47,13 @@ export default function NotificationsPage() {
       setActionError(
         caughtError instanceof Error
           ? caughtError.message
-          : "We couldn't mark this notification as read.",
+          : t("notifications.markReadFailed"),
       );
       return false;
     } finally {
       setMarkingId(null);
     }
-  }, [markNotificationReadRequest]);
+  }, [markNotificationReadRequest, t]);
 
   async function handleMarkAllNotificationsRead() {
     const unreadIds = unread.map((notification) => notification.id);
@@ -66,7 +67,7 @@ export default function NotificationsPage() {
       setActionError(
         caughtError instanceof Error
           ? caughtError.message
-          : "We couldn't mark all notifications as read.",
+          : t("notifications.markAllReadFailed"),
       );
       window.dispatchEvent(new Event("clientflow:notifications-refresh"));
     } finally {
@@ -167,6 +168,8 @@ function NotificationList({
   markingId: string | null;
   onRead: (notification: Notification) => void;
 }) {
+  const { t } = useLocale();
+
   if (notifications.length === 0) {
     return <div className="border-y border-border"><p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{emptyLabel}</p></div>;
   }
@@ -175,6 +178,7 @@ function NotificationList({
     <div className="border-y border-border">
       {notifications.map((n) => {
         const Icon = NOTIFICATION_ICON[n.type];
+        const localized = localizeNotification(n, t);
         return (
           <Link
             key={n.id}
@@ -192,8 +196,8 @@ function NotificationList({
           >
             <Icon className={cn("mt-0.5 size-4 shrink-0", n.read ? "text-muted-foreground/70" : "text-brand-accent")} />
             <div className="min-w-0 flex-1">
-              <p className={cn("text-[13px]", !n.read && "font-medium")}>{n.title}</p>
-              <p className="mt-0.5 text-[12px] leading-5 text-muted-foreground">{n.body}</p>
+              <p className={cn("text-[13px]", !n.read && "font-medium")}>{localized.title}</p>
+              <p className="mt-0.5 text-[12px] leading-5 text-muted-foreground">{localized.body}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-[11px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>

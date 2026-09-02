@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/locales";
+import { persistLocaleCookie } from "@/lib/locale-cookie";
 
 export const EMPTY_TABLE_FILTERS: Record<string, string> = Object.freeze({});
 
@@ -31,7 +32,11 @@ export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
       locale: initialLocale(),
-      setLocale: (locale) => set({ locale }),
+      setLocale: (locale) => {
+        // Mirrored so the middleware can act on the choice; see lib/locale-cookie.
+        persistLocaleCookie(locale);
+        set({ locale });
+      },
       tableSort: {},
       setTableSort: (table, sort) => set((state) => ({ tableSort: { ...state.tableSort, [table]: sort } })),
       tableFilters: {},

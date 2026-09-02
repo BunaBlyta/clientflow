@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { FieldHint } from "@/components/dashboard/field-hint";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import type { ManagedPackage } from "@/lib/types";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, LOCALE_LABELS } from "@/lib/i18n";
+import { TRANSLATABLE_LOCALES, type PackageTranslations } from "@/lib/package-translations";
 
 type PackageField = "name" | "price" | "currency" | "description";
 
@@ -42,6 +43,19 @@ export function EditPackageDialog({
     const description = String(form.get("description") ?? "").trim();
     const price = Number(form.get("price"));
     const currency = String(form.get("currency") ?? "").trim();
+
+    // Blank fields are simply omitted, which is how a locale is reset to English.
+    const translations: PackageTranslations = {};
+    for (const item of TRANSLATABLE_LOCALES) {
+      const localeName = String(form.get(`translations.${item}.name`) ?? "").trim();
+      const localeDescription = String(form.get(`translations.${item}.description`) ?? "").trim();
+      if (localeName || localeDescription) {
+        translations[item] = {
+          ...(localeName ? { name: localeName } : {}),
+          ...(localeDescription ? { description: localeDescription } : {}),
+        };
+      }
+    }
     const nextFieldErrors: Partial<Record<PackageField, string>> = {};
 
     if (!name) nextFieldErrors.name = t("common.required");
@@ -69,6 +83,7 @@ export function EditPackageDialog({
           price,
           currency: currency.toLowerCase(),
           estimatedDuration: String(form.get("estimatedDuration") || "").trim() || null,
+          translations: Object.keys(translations).length > 0 ? translations : null,
         }),
       });
       const result = (await response.json().catch(() => null)) as ManagedPackage | { error?: string } | null;
@@ -142,7 +157,7 @@ export function EditPackageDialog({
               {t("common.cancel")}
             </Button>
           </div>
-          <form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between gap-4">
+          <form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between gap-4 overflow-y-auto">
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label className="pl-1" htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
@@ -201,6 +216,34 @@ export function EditPackageDialog({
                 <FieldHint id={`edit-package-description-error-${pkg.id}`} message={fieldErrors.description} />
               </div>
               <Textarea id={`edit-package-description-${pkg.id}`} name="description" defaultValue={pkg.description} rows={2} className="px-3 py-3.5" style={{ paddingInline: 14, paddingBlock: 14 }} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? `edit-package-description-error-${pkg.id}` : undefined} onInput={() => setFieldErrors((current) => ({ ...current, description: undefined }))} />
+            </div>
+            <div className="flex flex-col gap-4 border-t border-border pt-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-[13px] font-medium">{t("settings.translations")}</p>
+                <p className="text-[12px] text-muted-foreground">{t("settings.translationsIntro")}</p>
+              </div>
+              {TRANSLATABLE_LOCALES.map((item) => (
+                <div key={item} className="flex flex-col gap-1.5">
+                  <Label className="pl-1 text-[12px] text-muted-foreground">{LOCALE_LABELS[item]}</Label>
+                  <Input
+                    id={`edit-package-${item}-name-${pkg.id}`}
+                    name={`translations.${item}.name`}
+                    defaultValue={pkg.translations?.[item]?.name ?? ""}
+                    placeholder={pkg.name}
+                    aria-label={`${LOCALE_LABELS[item]} — ${t("settings.packageName")}`}
+                  />
+                  <Textarea
+                    id={`edit-package-${item}-description-${pkg.id}`}
+                    name={`translations.${item}.description`}
+                    defaultValue={pkg.translations?.[item]?.description ?? ""}
+                    placeholder={pkg.description}
+                    rows={2}
+                    className="px-3 py-3.5"
+                    style={{ paddingInline: 14, paddingBlock: 14 }}
+                    aria-label={`${LOCALE_LABELS[item]} — ${t("settings.description")}`}
+                  />
+                </div>
+              ))}
             </div>
             {error && (
               <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">

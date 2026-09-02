@@ -18,6 +18,7 @@ import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { NOTIFICATION_ICON } from "@/lib/notification-meta";
 import { getNotificationDestination } from "@/lib/notification-destination";
+import { localizeNotification } from "@/lib/notification-text";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { LanguageSelect } from "@/components/language-select";
@@ -115,13 +116,13 @@ export function Topbar() {
       setNotificationActionError(
         caughtError instanceof Error
           ? caughtError.message
-          : "We couldn't mark this notification as read.",
+          : t("notifications.markReadFailed"),
       );
       return false;
     } finally {
       setMarkingNotificationId(null);
     }
-  }, [markNotificationRead]);
+  }, [markNotificationRead, t]);
 
   function handleNotificationClick(
     event: React.MouseEvent<HTMLElement>,
@@ -151,7 +152,7 @@ export function Topbar() {
     try {
       const user = await fetchJson<CurrentUser>(
         "/api/auth/me",
-        "We couldn't load your account.",
+        t("account.loadFailed"),
         signal,
       );
 
@@ -169,12 +170,12 @@ export function Topbar() {
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
       if (!signal?.aborted) {
-        setUserError(caughtError instanceof Error ? caughtError.message : "We couldn't load your account.");
+        setUserError(caughtError instanceof Error ? caughtError.message : t("account.loadFailed"));
       }
     } finally {
       if (!signal?.aborted) setIsLoadingUser(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -255,6 +256,7 @@ export function Topbar() {
             ) : (
               notifications.slice(0, 8).map((n) => {
                 const Icon = NOTIFICATION_ICON[n.type];
+                const localized = localizeNotification(n, t);
                 return (
                   <DropdownMenuItem
                     key={n.id}
@@ -268,8 +270,8 @@ export function Topbar() {
                   >
                     <Icon className={cn("notification-icon", !n.read && "notification-icon-unread")} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] leading-5 font-medium">{n.title}</p>
-                      <p className="mt-0.5 line-clamp-2 text-[12px] leading-4.5 text-muted-foreground">{n.body}</p>
+                      <p className="text-[13px] leading-5 font-medium">{localized.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[12px] leading-4.5 text-muted-foreground">{localized.body}</p>
                     </div>
                     <span className="shrink-0 self-center text-[11px] text-muted-foreground">
                       {formatRelativeTime(n.createdAt)}

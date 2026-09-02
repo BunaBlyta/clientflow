@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSelect } from "@/components/language-select";
-import { useLocale } from "@/lib/i18n";
+import { localeHomePath, useLocale } from "@/lib/i18n";
 
 const links = [
   { href: "#packages", key: "nav.packages" },
@@ -13,11 +13,11 @@ const links = [
 ];
 
 export function Navbar() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <header className="marketing-header sticky top-0 z-40 border-b border-border">
       <div className="relative flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
-        <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+        <Link href={localeHomePath(locale)} className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
           <BrandLogo />
           Clientflow
         </Link>

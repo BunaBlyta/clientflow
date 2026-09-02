@@ -1,3 +1,5 @@
+import { asPackageTranslations } from "@/lib/package-translations";
+
 type PackagePrice = number | string | { toString(): string };
 
 export type PackageSummary = {
@@ -12,6 +14,7 @@ export type PackageRecord = PackageSummary & {
   description: string;
   estimatedDuration: string | null;
   sortOrder: number;
+  translations?: unknown;
 };
 
 export function serializePackageSummary(pkg: PackageSummary) {
@@ -30,5 +33,6 @@ export function serializePackage(pkg: PackageRecord) {
     description: pkg.description,
     estimatedDuration: pkg.estimatedDuration,
     sortOrder: pkg.sortOrder,
+    translations: asPackageTranslations(pkg.translations),
   };
 }

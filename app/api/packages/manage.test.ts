@@ -86,6 +86,67 @@ describe('package write endpoints', () => {
     });
   });
 
+  it('stores translations supplied when a package is created', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
+    mocks.create.mockResolvedValue(packageRecord);
+
+    const response = await POST(request({
+      name: 'Full Website',
+      slug: 'full-website',
+      description: 'A complete multi-page marketing site.',
+      price: '6500',
+      currency: 'USD',
+      sortOrder: 2,
+      translations: {
+        de: { name: '  Komplette Website  ', description: 'Eine vollständige Website.' },
+        sq: { name: '', description: '   ' },
+      },
+    }));
+
+    expect(response.status).toBe(201);
+    // Trimmed, and the entirely blank locale is dropped rather than stored.
+    expect(mocks.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        translations: { de: { name: 'Komplette Website', description: 'Eine vollständige Website.' } },
+      }),
+      select: expect.any(Object),
+    });
+  });
+
+  it('creates a package with no translations at all', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
+    mocks.create.mockResolvedValue(packageRecord);
+
+    const response = await POST(request({
+      name: 'Full Website',
+      slug: 'full-website',
+      description: 'A complete multi-page marketing site.',
+      price: '6500',
+      currency: 'USD',
+      sortOrder: 2,
+    }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.create.mock.calls[0][0].data).not.toHaveProperty('translations');
+  });
+
+  it('rejects a translation for an unsupported locale', async () => {
+    mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
+
+    const response = await POST(request({
+      name: 'Full Website',
+      slug: 'full-website',
+      description: 'A complete multi-page marketing site.',
+      price: '6500',
+      currency: 'USD',
+      sortOrder: 2,
+      translations: { fr: { name: 'Site complet' } },
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   it('returns 409 for a duplicate slug', async () => {
     mocks.authenticate.mockResolvedValue({ id: 'staff-1', role: 'STAFF' });
     mocks.create.mockRejectedValue({ code: 'P2002' });

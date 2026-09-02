@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { LocaleText } from "@/components/locale-text";
 
 export const metadata = {
-  title: "Payment submitted · Clientflow",
+  title: "Payment submitted",
+  robots: { index: false, follow: false },
 };
 
 /**
@@ -50,6 +51,14 @@ export default async function PaymentSuccessPage({
               <LocaleText id="payment.submittedIntro" />
             </p>
             <div className="mt-6 flex justify-center">
+              {/*
+                A real navigation, not a <Link>: after paying, the dashboard has
+                to refetch rather than read the 30s invoice cache in
+                lib/dashboard-data-cache. The lint rule below is a false
+                positive — the top-level `[locale]` marketing route makes
+                no-html-link-for-pages match any two-segment path.
+              */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <Button nativeButton={false} render={<a href="/dashboard/invoices" />}>
                 <LocaleText id="payment.viewInvoices" />
               </Button>

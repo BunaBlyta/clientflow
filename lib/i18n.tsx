@@ -1,10 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { usePreferencesStore } from "@/lib/preferences-store";
+import { type Locale, localeHomePath } from "@/lib/locales";
+import { persistLocaleCookie } from "@/lib/locale-cookie";
 
-export const LOCALES = ["en", "de", "sq"] as const;
-export type Locale = (typeof LOCALES)[number];
+// Re-exported so client components can keep importing them from here. Server
+// code must import from "@/lib/locales" directly — see the note in that file.
+export { LOCALES, DEFAULT_LOCALE, isLocale, localeHomePath } from "@/lib/locales";
+export type { Locale } from "@/lib/locales";
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
@@ -481,6 +486,17 @@ const english: Messages = {
   "status.request.REJECTED": "Rejected",
   "status.filter.ALL": "All statuses",
   "status.filter.OVERDUE": "Overdue",
+  "marketing.rights": "© {year} Clientflow Studio. All rights reserved.",
+  "marketing.weeks": "weeks",
+  "marketing.week": "week",
+  "marketing.appStoreKicker": "Download on the",
+  "marketing.appStoreBadge": "Download on the App Store — coming soon",
+  "marketing.googlePlayKicker": "GET IT ON",
+  "marketing.googlePlayBadge": "Get it on Google Play — coming soon",
+  "marketing.packagesLoadFailed": "We couldn’t load the packages.",
+  "marketing.requestFailed": "We couldn’t submit your request.",
+  "marketing.requestSubmitted": "Request submitted",
+  "marketing.requestSubmittedIntro": "We’ll review it and follow up by email shortly.",
 };
 
 const german: Messages = {
@@ -493,6 +509,26 @@ const german: Messages = {
   "invoices.search": "Rechnungen suchen…", "invoices.invoice": "Rechnung", "invoices.project": "Projekt", "invoices.due": "Fällig", "invoices.noInvoices": "Noch keine Rechnungen", "invoices.noMatch": "Keine Rechnungen passen zu den Filtern.", "clients.search": "Kunden suchen…", "clients.company": "Unternehmen", "clients.contact": "Kontakt", "clients.projects": "Projekte", "clients.noClients": "Noch keine Kunden.", "notifications.unread": "Ungelesene Benachrichtigungen", "notifications.viewAll": "Alle anzeigen", "notifications.noNotifications": "Noch keine Benachrichtigungen.", "notifications.all": "Alle", "notifications.unreadTab": "Ungelesen", "notifications.markAllRead": "Alle als gelesen markieren", "notifications.marking": "Wird markiert…",
   "auth.welcome": "Willkommen zurück", "auth.signInTitle": "In deinen Arbeitsbereich einloggen", "auth.signInIntro": "Nutze deine Studio-E-Mail und dein Passwort, um fortzufahren.", "auth.signIn": "Einloggen", "auth.signingIn": "Anmeldung…", "auth.email": "E-Mail", "auth.password": "Passwort", "auth.contactAdmin": "Wende dich zum Zurücksetzen an den Admin", "auth.passwordPlaceholder": "Passwort eingeben", "auth.staffOnly": "Dieser Arbeitsbereich ist für Studio-Mitarbeiter. Bitte nutze zum Einloggen die Kunden-App.", "auth.invalidLogin": "Anmeldung nicht möglich. Prüfe deine Angaben und versuche es erneut.", "auth.loginError": "Beim Einloggen ist ein Fehler aufgetreten. Bitte versuche es erneut.", "auth.invited": "Du bist eingeladen", "auth.setupAccount": "Konto einrichten", "auth.acceptInvitation": "Einladung annehmen", "auth.invitationIntro": "Gib den sechsstelligen Code aus deiner E-Mail ein und wähle ein Passwort für das Dashboard.", "auth.invitationCode": "Sechsstelliger Einladungscode", "auth.newPassword": "Neues Passwort", "auth.passwordLength": "Mindestens 8 Zeichen", "auth.settingUp": "Konto wird eingerichtet…", "auth.accept": "Einladung annehmen", "auth.invitationError": "Einladung konnte nicht angenommen werden. Prüfe deine Angaben und versuche es erneut.", "auth.invitationUnexpected": "Beim Annehmen der Einladung ist ein Fehler aufgetreten. Bitte versuche es erneut.",
   "marketing.studio": "Webdesign- und Entwicklungsstudio", "marketing.heroTitle": "Ein klarer Weg von der Anfrage bis zum Launch — und darüber hinaus.", "marketing.heroIntro": "Wähle ein Paket, erzähl uns von deinem Projekt und verfolge es vom ersten Gespräch bis zur Live-Seite — alles an einem Ort, mit einer mobilen App, die dich auf dem Laufenden hält.", "marketing.seePackages": "Pakete ansehen", "marketing.customBuild": "Über ein individuelles Projekt sprechen", "marketing.howItWorks": "So funktioniert es", "marketing.howItWorksIntro": "Ein Weg von der ersten Anfrage bis zur fertigen Website — jederzeit sichtbar.", "marketing.step": "Schritt {number}", "marketing.trackPhone": "Verfolge dein Projekt auf dem Handy", "marketing.trackPhoneIntro": "Nach der Freigabe ist die Clientflow-App der Ort für Zahlungen, Fortschritt, Notizen und Benachrichtigungen.", "marketing.liveTracker": "Live-Projektfortschritt", "marketing.securePayment": "Rechnungen und sichere Zahlung", "marketing.pushUpdates": "Push-Benachrichtigungen bei Updates", "marketing.comingSoon": "demnächst", "marketing.mostPopular": "Am beliebtesten", "marketing.custom": "Individuell", "marketing.estimatedDelivery": "Voraussichtliche Lieferung: {duration}", "marketing.timelineScoped": "Zeitplan nach Abstimmung", "marketing.talkToUs": "Sprich mit uns", "marketing.requestPackage": "Paket anfragen", "marketing.requestPackageTitle": "Paket anfragen", "marketing.requestPackageIntro": "Erzähl uns etwas über dein Projekt. Wir prüfen deine Anfrage und melden uns per E-Mail — Kosten entstehen erst nach deiner Freigabe und Anzahlung.", "marketing.yourName": "Dein Name", "marketing.company": "Unternehmen", "marketing.messageOptional": "Was möchtest du entwickeln? (optional)", "marketing.submitRequest": "Anfrage senden", "marketing.submitting": "Wird gesendet…", "marketing.requestReceived": "Anfrage erhalten.", "marketing.requestReceivedIntro": "Wir melden uns nach der Prüfung per E-Mail. Du kannst jederzeit eine weitere Anfrage senden.", "marketing.submitAnother": "Weitere Anfrage senden", "marketing.customBuildTitle": "Individuelle Web-App", "marketing.customBuildIntro": "Jedes individuelle Projekt beginnt mit einem Gespräch. Erzähl uns, was du entwickelst — wir klären Umfang, Preis und Zeitplan gemeinsam.", "marketing.thanksInquiry": "Danke — deine Anfrage ist beim Studio eingegangen.", "marketing.thanksInquiryIntro": "Wir prüfen die Angaben und melden uns per E-Mail. Du kannst jederzeit eine weitere Anfrage senden.", "marketing.sendAnotherInquiry": "Weitere Anfrage senden", "marketing.sendInquiry": "Anfrage senden", "marketing.inquirySent": "Anfrage gesendet", "marketing.inquirySentIntro": "Wir melden uns bald per E-Mail.", "marketing.whatBuild": "Was möchtest du entwickeln?", "marketing.buildPlaceholder": "Erzähl uns vom Produkt, der Zielgruppe und wobei wir beim Launch helfen können.", "payment.submitted": "Zahlung übermittelt", "payment.cancelled": "Zahlung abgebrochen", "payment.webhook": "Stripe bestätigt deine Zahlung. Diese Seite ändert den Rechnungsstatus nicht.", "payment.returnDashboard": "Zurück zu den Rechnungen", "payment.continueApp": "Zur Web-App",
+  "marketing.rights": "© {year} Clientflow Studio. Alle Rechte vorbehalten.",
+  "marketing.weeks": "Wochen",
+  "marketing.week": "Woche",
+  "marketing.appStoreKicker": "Laden im",
+  "marketing.appStoreBadge": "Laden im App Store — demnächst",
+  "marketing.googlePlayKicker": "JETZT BEI",
+  "marketing.googlePlayBadge": "Jetzt bei Google Play — demnächst",
+  "marketing.packagesLoadFailed": "Die Pakete konnten nicht geladen werden.",
+  "marketing.requestFailed": "Deine Anfrage konnte nicht gesendet werden.",
+  "marketing.requestSubmitted": "Anfrage gesendet",
+  "marketing.requestSubmittedIntro": "Wir prüfen sie und melden uns in Kürze per E-Mail.",
+  "marketing.emailPlaceholder": "du@unternehmen.com",
+  "marketing.messagePlaceholder": "Eine Landing Page für einen Produkt-Launch im September …",
+  "marketing.noPackages": "Derzeit sind keine Pakete verfügbar.",
+  "marketing.packagesIntro": "Zwei Festpreis-Pakete, die du direkt anfragen kannst, und ein individuelles Projekt, das wir gemeinsam abstimmen.",
+  "marketing.deposit": "Anzahlung",
+  "marketing.finalPayment": "Schlusszahlung",
+  "marketing.notDue": "Noch nicht fällig",
+  "status.invoice.PAID": "Bezahlt",
+  "status.project.DESIGN": "Design",
 };
 
 const albanian: Messages = {
@@ -505,6 +541,26 @@ const albanian: Messages = {
   "invoices.search": "Kërko fatura…", "invoices.invoice": "Fatura", "invoices.project": "Projekti", "invoices.due": "Afati", "invoices.noInvoices": "Nuk ka fatura ende", "invoices.noMatch": "Asnjë faturë nuk përputhet me filtrat.", "clients.search": "Kërko klientë…", "clients.company": "Kompania", "clients.contact": "Kontakti", "clients.projects": "Projektet", "clients.noClients": "Nuk ka klientë ende.", "notifications.unread": "Njoftime të palexuara", "notifications.viewAll": "Shiko të gjitha", "notifications.noNotifications": "Nuk ka njoftime ende.", "notifications.all": "Të gjitha", "notifications.unreadTab": "Të palexuara", "notifications.markAllRead": "Shëno të gjitha si të lexuara", "notifications.marking": "Duke shënuar…",
   "auth.welcome": "Mirë se u ktheve", "auth.signInTitle": "Hyr në hapësirën tënde", "auth.signInIntro": "Përdor email-in dhe fjalëkalimin e studios për të vazhduar.", "auth.signIn": "Hyr", "auth.signingIn": "Duke hyrë…", "auth.email": "Email", "auth.password": "Fjalëkalimi", "auth.contactAdmin": "Kontakto administratorin për ta rivendosur", "auth.passwordPlaceholder": "Shkruaj fjalëkalimin", "auth.staffOnly": "Kjo hapësirë është vetëm për stafin e studios. Përdor aplikacionin e klientit për t'u identifikuar.", "auth.invalidLogin": "Hyrja dështoi. Kontrollo të dhënat dhe provo përsëri.", "auth.loginError": "Ndodhi një gabim gjatë hyrjes. Provo përsëri.", "auth.invited": "Je i ftuar", "auth.setupAccount": "Konfiguro llogarinë", "auth.acceptInvitation": "Prano ftesën", "auth.invitationIntro": "Shkruaj kodin gjashtëshifror nga email-i dhe zgjidh një fjalëkalim për panelin.", "auth.invitationCode": "Kodi gjashtëshifror i ftesës", "auth.newPassword": "Fjalëkalim i ri", "auth.passwordLength": "Të paktën 8 karaktere", "auth.settingUp": "Duke konfiguruar llogarinë…", "auth.accept": "Prano ftesën", "auth.invitationError": "Ftesa nuk u pranua. Kontrollo të dhënat dhe provo përsëri.", "auth.invitationUnexpected": "Ndodhi një gabim gjatë pranimit të ftesës. Provo përsëri.",
   "marketing.studio": "Studio dizajni dhe zhvillimi web", "marketing.heroTitle": "Një rrugë e qartë nga kërkesa te lançimi — dhe gjithçka më pas.", "marketing.heroIntro": "Zgjidh një paketë, na trego për projektin dhe ndiqe nga biseda e parë deri te faqja live — në një vend, me një aplikacion celular që të mban të informuar.", "marketing.seePackages": "Shiko paketat", "marketing.customBuild": "Flit me ne për një projekt të veçantë", "marketing.howItWorks": "Si funksionon", "marketing.howItWorksIntro": "Një rrugë nga kërkesa e parë te faqja e lançuar — e dukshme gjatë gjithë procesit.", "marketing.step": "Hapi {number}", "marketing.trackPhone": "Ndiq projektin nga telefoni", "marketing.trackPhoneIntro": "Pasi kërkesa të miratohet, aplikacioni Clientflow është vendi ku paguan, ndjek përparimin, lë shënime dhe merr njoftime.", "marketing.liveTracker": "Ndjekje live e fazës", "marketing.securePayment": "Fatura dhe pagesë e sigurt", "marketing.pushUpdates": "Njoftime për çdo përditësim", "marketing.comingSoon": "së shpejti", "marketing.mostPopular": "Më e preferuara", "marketing.custom": "E veçantë", "marketing.estimatedDelivery": "Dorëzimi i parashikuar: {duration}", "marketing.timelineScoped": "Afati caktohet pas përcaktimit", "marketing.talkToUs": "Flit me ne", "marketing.requestPackage": "Kërko këtë paketë", "marketing.requestPackageTitle": "Kërko një paketë", "marketing.requestPackageIntro": "Na trego pak për projektin. Do ta shqyrtojmë dhe do të të kontaktojmë me email — nuk ka pagesë pa miratimin dhe depozitën tënde.", "marketing.yourName": "Emri yt", "marketing.company": "Kompania", "marketing.messageOptional": "Çfarë dëshiron të ndërtosh? (opsionale)", "marketing.submitRequest": "Dërgo kërkesën", "marketing.submitting": "Duke dërguar…", "marketing.requestReceived": "Kërkesa u mor.", "marketing.requestReceivedIntro": "Do të të shkruajmë pasi ta shqyrtojmë. Mund të dërgosh një kërkesë tjetër kur të duash.", "marketing.submitAnother": "Dërgo një kërkesë tjetër", "marketing.customBuildTitle": "Ndërtim web app-i të veçantë", "marketing.customBuildIntro": "Çdo projekt i veçantë fillon me një bisedë. Na trego çfarë po ndërton dhe do ta përcaktojmë së bashku.", "marketing.thanksInquiry": "Faleminderit — kërkesa jote mbërriti në studio.", "marketing.thanksInquiryIntro": "Do ta shqyrtojmë dhe do të të kontaktojmë me email. Mund të dërgosh një kërkesë tjetër kur të duash.", "marketing.sendAnotherInquiry": "Dërgo një kërkesë tjetër", "marketing.sendInquiry": "Dërgo kërkesën", "marketing.inquirySent": "Kërkesa u dërgua", "marketing.inquirySentIntro": "Do të të kontaktojmë së shpejti me email.", "marketing.whatBuild": "Çfarë dëshiron të ndërtosh?", "marketing.buildPlaceholder": "Na trego për produktin, audiencën dhe si mund të të ndihmojmë me lançimin.", "payment.submitted": "Pagesa u dërgua", "payment.cancelled": "Pagesa u anulua", "payment.webhook": "Stripe po konfirmon pagesën. Kjo faqe nuk ndryshon statusin e faturës.", "payment.returnDashboard": "Kthehu te faturat", "payment.continueApp": "Vazhdo te aplikacioni web",
+  "marketing.rights": "© {year} Clientflow Studio. Të gjitha të drejtat e rezervuara.",
+  "marketing.weeks": "javë",
+  "marketing.week": "javë",
+  "marketing.appStoreKicker": "SHKARKO NË",
+  "marketing.appStoreBadge": "Shkarko në App Store — së shpejti",
+  "marketing.googlePlayKicker": "MERRE NË",
+  "marketing.googlePlayBadge": "Merre në Google Play — së shpejti",
+  "marketing.packagesLoadFailed": "Paketat nuk u ngarkuan dot.",
+  "marketing.requestFailed": "Kërkesa jote nuk u dërgua dot.",
+  "marketing.requestSubmitted": "Kërkesa u dërgua",
+  "marketing.requestSubmittedIntro": "Do ta shqyrtojmë dhe do të të shkruajmë me email së shpejti.",
+  "marketing.emailPlaceholder": "ti@kompania.com",
+  "marketing.messagePlaceholder": "Një faqe uljeje për një lançim produkti në shtator …",
+  "marketing.noPackages": "Për momentin nuk ka paketa të disponueshme.",
+  "marketing.packagesIntro": "Dy paketa me çmim fiks që mund t’i kërkosh direkt, dhe një projekt të veçantë që e përcaktojmë bashkë.",
+  "marketing.deposit": "Depozita",
+  "marketing.finalPayment": "Pagesa përfundimtare",
+  "marketing.notDue": "Ende pa afat",
+  "status.invoice.PAID": "Paguar",
+  "status.project.DESIGN": "Dizajn",
 };
 
 Object.assign(german, {
@@ -661,6 +717,333 @@ Object.assign(albanian, {
   "dashboard.kpiTurnaroundHint": "Nga krijimi deri në lançim",
 });
 
+
+// Dashboard, invoice, project and status strings that previously fell back to English.
+Object.assign(german, {
+  "common.logOut": "Abmelden",
+  "dashboard.noLaunches": "Noch keine Launches",
+  "settings.teammatePlaceholder": "Name des Teammitglieds",
+  "settings.slug": "Slug",
+  "settings.editPackage": "{name} bearbeiten",
+  "settings.priceCurrency": "Preis ({currency})",
+  "settings.deactivateDescription": "Entfernt das Paket aus der aktiven Preisliste und aus neuen Anfragen. Bestehende Projekte und Rechnungen behalten ihre bisherigen Paketdaten.",
+  "invoices.newInvoice": "Neue Rechnung",
+  "invoices.newInvoiceIntro": "Erstellt einen Rechnungsentwurf für den Kunden.",
+  "invoices.selectProject": "Projekt auswählen",
+  "invoices.type": "Typ",
+  "invoices.label": "Bezeichnung",
+  "invoices.amountUsd": "Betrag (USD)",
+  "invoices.creating": "Wird erstellt…",
+  "invoices.createInvoice": "Rechnung erstellen",
+  "invoices.createdIntro": "Rechnungen erscheinen hier, sobald sie für ein Projekt erstellt werden.",
+  "invoices.intro": "Jede Anzahlung, Schlussrechnung und Zusatzrechnung über alle Projekte hinweg.",
+  "clients.intro": "Jedes Unternehmen mit einem aktiven oder vergangenen Projekt.",
+  "clients.totalBilled": "Gesamt abgerechnet",
+  "clients.since": "Kunde seit",
+  "clients.resendInvitation": "App-Einladung erneut senden",
+  "clients.noMatch": "Keine Kunden passen zu deiner Suche.",
+  "clients.contactInfo": "Kontaktdaten",
+  "clients.phone": "Telefon",
+  "clients.companyPlaceholder": "Firmenname",
+  "notifications.intro": "Alles, was deine Aufmerksamkeit braucht — Anfragen, Rechnungen und Projekte.",
+  "notifications.caughtUp": "Du bist auf dem neuesten Stand.",
+  "inquiries.brief": "Briefing",
+  "inquiries.received": "Eingegangen",
+  "inquiries.converted": "Umgewandelt",
+  "inquiries.createProject": "Projekt erstellen",
+  "inquiries.convertTitle": "Anfrage in ein Projekt umwandeln",
+  "inquiries.sendInvoiceNow": "Rechnung jetzt senden",
+  "inquiries.sendInvoiceIntro": "Ohne Häkchen bleibt die Rechnung als Entwurf zur späteren Prüfung.",
+  "projects.projectName": "Projektname",
+  "projects.customProject": "Individuelles Projekt",
+  "auth.emailPlaceholder": "du@studio.com",
+  "status.updateProjectError": "Der Projektstatus konnte nicht aktualisiert werden.",
+  "status.updateInvoiceError": "Die Rechnung konnte nicht aktualisiert werden.",
+  "status.voidTitle": "Diese Rechnung stornieren?",
+  "status.voidDescription": "Diese Rechnung wird als storniert markiert und kann nicht mehr bezahlt werden. Das lässt sich nicht rückgängig machen.",
+  "project.timeline": "Zeitleiste",
+  "project.activity": "Aktivität",
+  "project.noActivity": "Noch keine Aktivität.",
+  "project.notePlaceholder": "Notiz zu diesem Projekt hinzufügen…",
+  "project.notePosted": "Notiz veröffentlicht.",
+  "project.posting": "Wird veröffentlicht…",
+  "project.postNote": "Notiz veröffentlichen",
+  "project.viewProject": "Projekt ansehen",
+  "project.noRelated": "Noch keine zugehörigen Projekte.",
+  "request.notFound": "Diese Anfrage existiert nicht.",
+  "request.from": "Projektanfrage von {name}",
+  "request.accepting": "Wird angenommen…",
+  "request.reviewed": "Geprüft",
+  "request.notReviewed": "Nicht geprüft",
+  "request.denyTitle": "Diese Anfrage ablehnen?",
+  "status.invoice.DRAFT": "Entwurf",
+  "status.invoice.SENT": "Gesendet",
+  "status.invoice.PAYMENT_PENDING": "Zahlung ausstehend",
+  "status.invoice.FAILED": "Fehlgeschlagen",
+  "status.invoice.VOIDED": "Storniert",
+  "status.invoice.REFUNDED": "Erstattet",
+  "status.invoice.OVERDUE": "Überfällig",
+  "status.request.PENDING": "Ausstehend",
+  "status.request.APPROVED": "Genehmigt",
+  "status.request.REJECTED": "Abgelehnt",
+  "status.filter.ALL": "Alle Status",
+  "status.filter.OVERDUE": "Überfällig",
+});
+
+// Dashboard, invoice, project and status strings that previously fell back to English.
+Object.assign(albanian, {
+  "common.logOut": "Dil",
+  "dashboard.noLaunches": "Ende asnjë lançim",
+  "settings.teammatePlaceholder": "Emri i kolegut",
+  "settings.slug": "Slug",
+  "settings.editPackage": "Ndrysho {name}",
+  "settings.priceCurrency": "Çmimi ({currency})",
+  "settings.deactivateDescription": "Kjo e heq paketën nga çmimet aktive dhe nga kërkesat e reja. Projektet dhe faturat ekzistuese i ruajnë të dhënat e mëparshme të paketës.",
+  "invoices.newInvoice": "Faturë e re",
+  "invoices.newInvoiceIntro": "Krijon një faturë skicë për klientin.",
+  "invoices.selectProject": "Zgjidh një projekt",
+  "invoices.type": "Lloji",
+  "invoices.label": "Etiketa",
+  "invoices.amountUsd": "Shuma (USD)",
+  "invoices.creating": "Duke krijuar…",
+  "invoices.createInvoice": "Krijo faturën",
+  "invoices.createdIntro": "Faturat shfaqen këtu sapo të krijohen për një projekt.",
+  "invoices.intro": "Çdo depozitë, pagesë përfundimtare dhe faturë shtesë në të gjitha projektet.",
+  "clients.intro": "Çdo biznes me një bashkëpunim aktiv ose të kaluar.",
+  "clients.totalBilled": "Totali i faturuar",
+  "clients.since": "Klient që nga",
+  "clients.resendInvitation": "Ridërgo ftesën e aplikacionit",
+  "clients.noMatch": "Asnjë klient nuk përputhet me kërkimin tënd.",
+  "clients.contactInfo": "Të dhënat e kontaktit",
+  "clients.phone": "Telefoni",
+  "clients.companyPlaceholder": "Emri i kompanisë",
+  "notifications.intro": "Gjithçka që kërkon vëmendjen tënde — kërkesa, fatura dhe projekte.",
+  "notifications.caughtUp": "Je në rregull me gjithçka.",
+  "inquiries.brief": "Përshkrimi",
+  "inquiries.received": "Marrë",
+  "inquiries.converted": "Konvertuar",
+  "inquiries.createProject": "Krijo projektin",
+  "inquiries.convertTitle": "Kthe kërkesën në projekt",
+  "inquiries.sendInvoiceNow": "Dërgo faturën tani",
+  "inquiries.sendInvoiceIntro": "Nëse nuk e zgjedh, fatura mbetet Skicë për shqyrtim më vonë.",
+  "projects.projectName": "Emri i projektit",
+  "projects.customProject": "Projekt i veçantë",
+  "auth.emailPlaceholder": "ti@studio.com",
+  "status.updateProjectError": "Statusi i projektit nuk u përditësua dot.",
+  "status.updateInvoiceError": "Fatura nuk u përditësua dot.",
+  "status.voidTitle": "Të anulohet kjo faturë?",
+  "status.voidDescription": "Kjo faturë do të shënohet si e anuluar dhe nuk mund të paguhet më. Ky veprim nuk kthehet mbrapsht.",
+  "project.timeline": "Kronologjia",
+  "project.activity": "Aktiviteti",
+  "project.noActivity": "Ende asnjë aktivitet.",
+  "project.notePlaceholder": "Shto një shënim për këtë projekt…",
+  "project.notePosted": "Shënimi u postua.",
+  "project.posting": "Duke postuar…",
+  "project.postNote": "Posto shënimin",
+  "project.viewProject": "Shiko projektin",
+  "project.noRelated": "Ende asnjë projekt i lidhur.",
+  "request.notFound": "Kjo kërkesë nuk ekziston.",
+  "request.from": "Kërkesë projekti nga {name}",
+  "request.accepting": "Duke pranuar…",
+  "request.reviewed": "E shqyrtuar",
+  "request.notReviewed": "E pashqyrtuar",
+  "request.denyTitle": "Të refuzohet kjo kërkesë?",
+  "status.invoice.DRAFT": "Skicë",
+  "status.invoice.SENT": "Dërguar",
+  "status.invoice.PAYMENT_PENDING": "Pagesa në pritje",
+  "status.invoice.FAILED": "Dështoi",
+  "status.invoice.VOIDED": "Anuluar",
+  "status.invoice.REFUNDED": "Rimbursuar",
+  "status.invoice.OVERDUE": "Me afat kaluar",
+  "status.request.PENDING": "Në pritje",
+  "status.request.APPROVED": "Miratuar",
+  "status.request.REJECTED": "Refuzuar",
+  "status.filter.ALL": "Të gjitha statuset",
+  "status.filter.OVERDUE": "Me afat kaluar",
+});
+
+
+// Notification and system-note templates. The server writes these into the database in
+// English, so the UI reconstructs them from the notification type and renders them
+// through these keys instead — the same mapping the mobile app uses.
+Object.assign(english, {
+  "notifications.requestSubmittedTitle": "Project request received",
+  "notifications.requestApprovedTitle": "Project request approved",
+  "notifications.requestRejectedTitle": "Project request update",
+  "notifications.newInvoiceTitle": "New invoice: {label}",
+  "notifications.invoiceReadyTitle": "Invoice ready",
+  "notifications.invoiceSentTitle": "Invoice sent",
+  "notifications.additionalInvoiceTitle": "Additional invoice ready",
+  "notifications.additionalInvoiceSentTitle": "Additional invoice sent",
+  "notifications.paymentSucceededTitle": "Payment received",
+  "notifications.paymentFailedTitle": "Payment failed",
+  "notifications.paymentUpdateTitle": "Payment update",
+  "notifications.stageChangedTitle": "{project} moved to {status}",
+  "notifications.stageUpdatedTitle": "Project status updated",
+  "notifications.newNoteTitle": "New note from {author}",
+  "notifications.newProjectNoteTitle": "New project note",
+  "notifications.requestSubmittedBody": "A new project request needs your review.",
+  "notifications.requestSubmittedDetailBody": "{requester} requested a {package}.",
+  "notifications.requestApprovedBody": "Your project request was approved.",
+  "notifications.projectReadyBody": "Your project is ready. Your deposit invoice is available to pay.",
+  "notifications.requestRejectedBody": "There is an update to your project request.",
+  "notifications.requestNotApprovedBody": "Your project request was not approved at this time.",
+  "notifications.invoiceCreatedBody": "A new invoice for {amount} was added to {project}.",
+  "notifications.invoiceReadyBody": "A new invoice is ready to review.",
+  "notifications.invoiceReadyToPayBody": "A new invoice is ready to review and pay.",
+  "notifications.invoiceDescriptionBody": "{description} is ready to review and pay.",
+  "notifications.additionalInvoiceBody": "An additional invoice is ready to review.",
+  "notifications.paymentFailedBody": "Your payment for “{invoice}” didn’t go through. Tap to try again.",
+  "notifications.paymentSucceededBody": "Thanks! Your payment for “{invoice}” was received.",
+  "notifications.paymentConfirmedBody": "Your payment was confirmed.",
+  "notifications.invoicePaymentConfirmedBody": "Your invoice payment was confirmed.",
+  "notifications.paymentIncompleteBody": "Your payment could not be completed.",
+  "notifications.invoicePaymentIncompleteBody": "Your invoice payment could not be completed.",
+  "notifications.stageChangedBody": "Your project is now in the {status} stage.",
+  "notifications.stageTransitionBody": "Your project moved from {from} to {to}.",
+  "notifications.stageUpdatedBody": "Your project status has changed.",
+  "notifications.newProjectNoteBody": "A new note was posted to your project.",
+  "notifications.projectPausedBody": "We’ve paused this project. Post a note when you’re ready to resume.",
+  "notes.statusChanged": "Project status changed from {from} to {to}.",
+  "notes.depositConfirmed": "Deposit payment confirmed. Project moved to {status}.",
+  "notes.customInvoiceConfirmed": "Custom invoice payment confirmed. Project moved to {status}.",
+  "notifications.markReadFailed": "We couldn’t mark this notification as read.",
+  "notifications.markAllReadFailed": "We couldn’t mark all notifications as read.",
+  "account.loadFailed": "We couldn’t load your account.",
+});
+
+// German notification and system-note templates (shared with the mobile app).
+Object.assign(german, {
+  "notifications.requestSubmittedTitle": "Projektanfrage eingegangen",
+  "notifications.requestApprovedTitle": "Projektanfrage genehmigt",
+  "notifications.requestRejectedTitle": "Update zur Projektanfrage",
+  "notifications.newInvoiceTitle": "Neue Rechnung: {label}",
+  "notifications.invoiceReadyTitle": "Rechnung bereit",
+  "notifications.invoiceSentTitle": "Rechnung gesendet",
+  "notifications.additionalInvoiceTitle": "Zusätzliche Rechnung bereit",
+  "notifications.additionalInvoiceSentTitle": "Zusätzliche Rechnung gesendet",
+  "notifications.paymentSucceededTitle": "Zahlung erhalten",
+  "notifications.paymentFailedTitle": "Zahlung fehlgeschlagen",
+  "notifications.paymentUpdateTitle": "Zahlungsupdate",
+  "notifications.stageChangedTitle": "{project} zu {status} verschoben",
+  "notifications.stageUpdatedTitle": "Projektstatus aktualisiert",
+  "notifications.newNoteTitle": "Neue Notiz von {author}",
+  "notifications.newProjectNoteTitle": "Neue Projektnotiz",
+  "notifications.requestSubmittedBody": "Eine neue Projektanfrage wartet auf Ihre Prüfung.",
+  "notifications.requestSubmittedDetailBody": "{requester} hat ein {package} angefragt.",
+  "notifications.requestApprovedBody": "Ihre Projektanfrage wurde genehmigt.",
+  "notifications.projectReadyBody": "Ihr Projekt ist bereit. Ihre Anzahlungsrechnung kann bezahlt werden.",
+  "notifications.requestRejectedBody": "Es gibt ein Update zu Ihrer Projektanfrage.",
+  "notifications.requestNotApprovedBody": "Ihre Projektanfrage wurde zu diesem Zeitpunkt nicht genehmigt.",
+  "notifications.invoiceCreatedBody": "Eine neue Rechnung über {amount} wurde zu {project} hinzugefügt.",
+  "notifications.invoiceReadyBody": "Eine neue Rechnung kann geprüft werden.",
+  "notifications.invoiceReadyToPayBody": "Eine neue Rechnung kann geprüft und bezahlt werden.",
+  "notifications.invoiceDescriptionBody": "{description} kann geprüft und bezahlt werden.",
+  "notifications.additionalInvoiceBody": "Eine zusätzliche Rechnung kann geprüft werden.",
+  "notifications.paymentFailedBody": "Ihre Zahlung für „{invoice}“ ist fehlgeschlagen. Tippen Sie, um es erneut zu versuchen.",
+  "notifications.paymentSucceededBody": "Danke! Ihre Zahlung für „{invoice}“ ist eingegangen.",
+  "notifications.paymentConfirmedBody": "Ihre Zahlung wurde bestätigt.",
+  "notifications.invoicePaymentConfirmedBody": "Ihre Rechnungszahlung wurde bestätigt.",
+  "notifications.paymentIncompleteBody": "Ihre Zahlung konnte nicht abgeschlossen werden.",
+  "notifications.invoicePaymentIncompleteBody": "Ihre Rechnungszahlung konnte nicht abgeschlossen werden.",
+  "notifications.stageChangedBody": "Ihr Projekt befindet sich jetzt in der Phase {status}.",
+  "notifications.stageTransitionBody": "Ihr Projekt wurde von {from} zu {to} verschoben.",
+  "notifications.stageUpdatedBody": "Ihr Projektstatus hat sich geändert.",
+  "notifications.newProjectNoteBody": "Eine neue Notiz wurde zu Ihrem Projekt veröffentlicht.",
+  "notifications.projectPausedBody": "Wir haben dieses Projekt pausiert. Schreiben Sie eine Notiz, wenn Sie fortfahren möchten.",
+  "notes.statusChanged": "Projektstatus von {from} zu {to} geändert.",
+  "notes.depositConfirmed": "Anzahlung bestätigt. Projekt zu {status} verschoben.",
+  "notes.customInvoiceConfirmed": "Zahlung der individuellen Rechnung bestätigt. Projekt zu {status} verschoben.",
+  "notifications.markReadFailed": "Diese Benachrichtigung konnte nicht als gelesen markiert werden.",
+  "notifications.markAllReadFailed": "Es konnten nicht alle Benachrichtigungen als gelesen markiert werden.",
+  "account.loadFailed": "Dein Konto konnte nicht geladen werden.",
+});
+
+// Albanian notification and system-note templates (shared with the mobile app).
+Object.assign(albanian, {
+  "notifications.requestSubmittedTitle": "Kërkesa për projekt u pranua",
+  "notifications.requestApprovedTitle": "Kërkesa për projekt u miratua",
+  "notifications.requestRejectedTitle": "Përditësim për kërkesën e projektit",
+  "notifications.newInvoiceTitle": "Faturë e re: {label}",
+  "notifications.invoiceReadyTitle": "Fatura është gati",
+  "notifications.invoiceSentTitle": "Fatura u dërgua",
+  "notifications.additionalInvoiceTitle": "Faturë shtesë gati",
+  "notifications.additionalInvoiceSentTitle": "Fatura shtesë u dërgua",
+  "notifications.paymentSucceededTitle": "Pagesa u pranua",
+  "notifications.paymentFailedTitle": "Pagesa dështoi",
+  "notifications.paymentUpdateTitle": "Përditësim pagese",
+  "notifications.stageChangedTitle": "{project} kaloi në {status}",
+  "notifications.stageUpdatedTitle": "Statusi i projektit u përditësua",
+  "notifications.newNoteTitle": "Shënim i ri nga {author}",
+  "notifications.newProjectNoteTitle": "Shënim i ri për projektin",
+  "notifications.requestSubmittedBody": "Një kërkesë e re projekti pret shqyrtimin tuaj.",
+  "notifications.requestSubmittedDetailBody": "{requester} kërkoi një {package}.",
+  "notifications.requestApprovedBody": "Kërkesa juaj për projekt u miratua.",
+  "notifications.projectReadyBody": "Projekti juaj është gati. Fatura e depozitës është gati për pagesë.",
+  "notifications.requestRejectedBody": "Ka një përditësim për kërkesën tuaj të projektit.",
+  "notifications.requestNotApprovedBody": "Kërkesa juaj për projekt nuk u miratua në këtë moment.",
+  "notifications.invoiceCreatedBody": "Një faturë e re prej {amount} iu shtua projektit {project}.",
+  "notifications.invoiceReadyBody": "Një faturë e re është gati për shqyrtim.",
+  "notifications.invoiceReadyToPayBody": "Një faturë e re është gati për shqyrtim dhe pagesë.",
+  "notifications.invoiceDescriptionBody": "{description} është gati për shqyrtim dhe pagesë.",
+  "notifications.additionalInvoiceBody": "Një faturë shtesë është gati për shqyrtim.",
+  "notifications.paymentFailedBody": "Pagesa për “{invoice}” nuk kaloi. Prekni për ta provuar përsëri.",
+  "notifications.paymentSucceededBody": "Faleminderit! Pagesa për “{invoice}” u pranua.",
+  "notifications.paymentConfirmedBody": "Pagesa juaj u konfirmua.",
+  "notifications.invoicePaymentConfirmedBody": "Pagesa e faturës u konfirmua.",
+  "notifications.paymentIncompleteBody": "Pagesa juaj nuk mund të përfundonte.",
+  "notifications.invoicePaymentIncompleteBody": "Pagesa e faturës nuk mund të përfundonte.",
+  "notifications.stageChangedBody": "Projekti juaj tani është në fazën {status}.",
+  "notifications.stageTransitionBody": "Projekti juaj kaloi nga {from} në {to}.",
+  "notifications.stageUpdatedBody": "Statusi i projektit tuaj ka ndryshuar.",
+  "notifications.newProjectNoteBody": "Një shënim i ri u postua në projektin tuaj.",
+  "notifications.projectPausedBody": "E kemi pezulluar këtë projekt. Postoni një shënim kur të jeni gati ta rifilloni.",
+  "notes.statusChanged": "Statusi i projektit ndryshoi nga {from} në {to}.",
+  "notes.depositConfirmed": "Depozita u konfirmua. Projekti kaloi te {status}.",
+  "notes.customInvoiceConfirmed": "Pagesa e faturës së personalizuar u konfirmua. Projekti kaloi te {status}.",
+  "notifications.markReadFailed": "Ky njoftim nuk u shënua dot si i lexuar.",
+  "notifications.markAllReadFailed": "Nuk u shënuan dot të gjitha njoftimet si të lexuara.",
+  "account.loadFailed": "Llogaria jote nuk u ngarkua dot.",
+});
+
+
+// Package translation editor.
+Object.assign(english, {
+  "settings.translations": "Translations",
+  "settings.translationsIntro": "Shown to visitors reading the site in that language. Leave a field blank to use the English text.",
+  "settings.packageName": "Package name",
+});
+
+// Package translation editor (German).
+Object.assign(german, {
+  "settings.translations": "Übersetzungen",
+  "settings.translationsIntro": "Wird Besuchern angezeigt, die die Seite in dieser Sprache lesen. Leer lassen, um den englischen Text zu verwenden.",
+  "settings.packageName": "Paketname",
+});
+
+// Package translation editor (Albanian).
+Object.assign(albanian, {
+  "settings.translations": "Përkthimet",
+  "settings.translationsIntro": "U shfaqet vizitorëve që e lexojnë faqen në atë gjuhë. Lëre bosh për të përdorur tekstin anglisht.",
+  "settings.packageName": "Emri i paketës",
+});
+
+
+// New-package translation hint.
+Object.assign(english, {
+  "settings.translationsOptionalIntro": "Optional. Anything you leave blank shows the English text, and you can add translations later from the package's edit form.",
+});
+
+// New-package translation hint (German).
+Object.assign(german, {
+  "settings.translationsOptionalIntro": "Optional. Leere Felder zeigen den englischen Text; Übersetzungen kannst du später im Bearbeiten-Formular ergänzen.",
+});
+
+// New-package translation hint (Albanian).
+Object.assign(albanian, {
+  "settings.translationsOptionalIntro": "Opsionale. Fushat bosh shfaqin tekstin anglisht; përkthimet mund t’i shtosh më vonë te forma e ndryshimit.",
+});
+
 const messages: Record<Locale, Messages> = { en: english, de: german, sq: albanian };
 
 type LocaleContextValue = {
@@ -671,24 +1054,65 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
+function createTranslator(locale: Locale): LocaleContextValue["t"] {
+  return (key, values) => {
+    const template = messages[locale][key] ?? english[key] ?? key;
+    return values
+      ? Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{${name}}`, String(replacement)), template)
+      : template;
+  };
+}
+
+/**
+ * Locale for everything that has no locale in its URL — the dashboard, the auth
+ * screens, the Stripe return pages. The persisted preference is the source of
+ * truth there.
+ */
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const locale = usePreferencesStore((state) => state.locale);
   const setLocale = usePreferencesStore((state) => state.setLocale);
 
   useEffect(() => {
     document.documentElement.lang = locale;
+    // Backfills the cookie for anyone whose preference predates it.
+    persistLocaleCookie(locale);
   }, [locale]);
 
   const value = useMemo<LocaleContextValue>(() => ({
     locale,
     setLocale,
-    t: (key, values) => {
-      const template = messages[locale][key] ?? english[key] ?? key;
-      return values
-        ? Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{${name}}`, String(replacement)), template)
-        : template;
-    },
+    t: createTranslator(locale),
   }), [locale, setLocale]);
+
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+}
+
+/**
+ * Locale for the marketing routes, where the URL is the source of truth
+ * (`/` English, `/de`, `/sq`).
+ *
+ * Nested inside the root `LocaleProvider`, so it overrides the stored
+ * preference for this subtree — the page a crawler is served always matches the
+ * URL it asked for. Switching language navigates rather than only flipping a
+ * store value, and the choice is still persisted so the dashboard and auth
+ * screens, which have no locale in their URL, follow along.
+ */
+export function RoutedLocaleProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+  const router = useRouter();
+  const setStoredLocale = usePreferencesStore((state) => state.setLocale);
+
+  useEffect(() => {
+    setStoredLocale(locale);
+  }, [locale, setStoredLocale]);
+
+  const value = useMemo<LocaleContextValue>(() => ({
+    locale,
+    setLocale: (next: Locale) => {
+      setStoredLocale(next);
+      router.push(localeHomePath(next));
+    },
+    t: createTranslator(locale),
+  }), [locale, router, setStoredLocale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

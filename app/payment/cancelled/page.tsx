@@ -15,7 +15,8 @@ function isValidIdentifier(value: string | string[] | undefined): value is strin
 }
 
 export const metadata = {
-  title: "Payment cancelled · Clientflow",
+  title: "Payment cancelled",
+  robots: { index: false, follow: false },
 };
 
 /**
