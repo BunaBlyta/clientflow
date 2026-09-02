@@ -257,7 +257,7 @@ export function CreatePackageDialog({
         <Plus />
         {t("settings.newPackage")}
       </DialogTrigger>
-      <DialogContent showCloseButton={false} className="sm:max-w-md">
+      <DialogContent showCloseButton={false} className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("settings.newPackage")}</DialogTitle>
           <DialogDescription>{t("settings.newPackageIntro")}</DialogDescription>

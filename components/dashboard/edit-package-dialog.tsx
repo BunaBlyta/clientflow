@@ -157,7 +157,7 @@ export function EditPackageDialog({
               {t("common.cancel")}
             </Button>
           </div>
-          <form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between gap-4">
+          <form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between gap-4 overflow-y-auto">
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
                 <Label className="pl-1" htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
