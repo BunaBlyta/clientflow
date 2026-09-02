@@ -44,7 +44,7 @@ function defaultRevenueRange(): RevenueDateRange {
 }
 
 export default function AnalyticsPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [packages, setPackages] = useState<ManagedPackage[]>([]);
@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
         "/api/analytics/insight",
         "We couldn't generate an insight right now.",
         undefined,
-        { method: "POST" },
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale }) },
       );
       if (typeof result.insight !== "string" || !result.insight.trim()) {
         throw new Error("We couldn't generate an insight right now.");
@@ -191,8 +191,8 @@ export default function AnalyticsPage() {
     );
   }
 
-  const revenueTrend = revenueOverTimeRange(invoices, revenueRange);
-  const comparisonTrend = revenueView === "compare" ? revenueOverTimeRange(invoices, comparisonRange) : [];
+  const revenueTrend = revenueOverTimeRange(invoices, revenueRange, locale);
+  const comparisonTrend = revenueView === "compare" ? revenueOverTimeRange(invoices, comparisonRange, locale) : [];
   const comparisonPointCount = Math.max(revenueTrend.length, comparisonTrend.length);
   const revenueChartData = revenueView === "compare"
     ? Array.from({ length: comparisonPointCount }, (_, index) => {

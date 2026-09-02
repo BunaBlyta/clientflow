@@ -1,3 +1,5 @@
+import { formatMonthShort } from "@/lib/format";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/locales";
 import type { Invoice, ManagedPackage, Project } from "@/lib/types";
 
 const OUTSTANDING_STATUSES: Invoice["status"][] = ["SENT", "PAYMENT_PENDING", "FAILED"];
@@ -12,7 +14,7 @@ function parseDateInput(value: string, endOfDay = false) {
   return new Date(year, month - 1, day, endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
 }
 
-export function revenueOverTimeRange(invoices: Invoice[], range: RevenueDateRange) {
+export function revenueOverTimeRange(invoices: Invoice[], range: RevenueDateRange, locale: Locale = DEFAULT_LOCALE) {
   const start = parseDateInput(range.start);
   const end = parseDateInput(range.end, true);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return [];
@@ -22,7 +24,7 @@ export function revenueOverTimeRange(invoices: Invoice[], range: RevenueDateRang
     const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
     return {
       key: `${date.getFullYear()}-${date.getMonth()}`,
-      label: date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      label: `${formatMonthShort(date, locale)} ${String(date.getFullYear()).slice(2)}`,
       revenueCents: 0,
     };
   });
@@ -39,14 +41,14 @@ export function revenueOverTimeRange(invoices: Invoice[], range: RevenueDateRang
   return buckets;
 }
 
-export function revenueOverTime(invoices: Invoice[], months = 6) {
+export function revenueOverTime(invoices: Invoice[], months = 6, locale: Locale = DEFAULT_LOCALE) {
   const now = new Date();
   const buckets: { key: string; label: string; revenueCents: number }[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     buckets.push({
       key: `${d.getFullYear()}-${d.getMonth()}`,
-      label: d.toLocaleDateString("en-US", { month: "short" }),
+      label: formatMonthShort(d, locale),
       revenueCents: 0,
     });
   }

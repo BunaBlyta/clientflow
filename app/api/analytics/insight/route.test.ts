@@ -23,8 +23,19 @@ vi.mock('@/app/api/_lib/prisma', () => ({
 
 import { POST } from './route';
 
-function request() {
-  return new Request('http://localhost/api/analytics/insight', { method: 'POST' }) as unknown as NextRequest;
+function request(locale?: string) {
+  return new Request('http://localhost/api/analytics/insight', {
+    method: 'POST',
+    ...(locale === undefined
+      ? {}
+      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify({ locale }) }),
+  }) as unknown as NextRequest;
+}
+
+function promptFrom(call: unknown) {
+  const [, init] = call as [string, RequestInit];
+  const body = JSON.parse(String(init.body)) as { messages: Array<{ content: string }> };
+  return body.messages[0].content;
 }
 
 function seedAnalyticsData() {
@@ -153,5 +164,27 @@ describe('POST /api/analytics/insight', () => {
     expect(prompt).toContain('projectsByStage');
     expect(prompt).toContain('REVIEW');
     expect(init.headers).toMatchObject({ Authorization: 'Bearer test-groq-key' });
+  });
+
+  it('asks the model for the requested language', async () => {
+    mocks.fetch.mockResolvedValue(
+      new Response(JSON.stringify({ choices: [{ message: { content: 'Der Umsatz…' } }] }), { status: 200 }),
+    );
+
+    await POST(request('de'));
+    expect(promptFrom(mocks.fetch.mock.calls[0])).toContain('German');
+  });
+
+  it('falls back to English for a missing or unsupported locale', async () => {
+    mocks.fetch.mockResolvedValue(
+      new Response(JSON.stringify({ choices: [{ message: { content: 'Revenue…' } }] }), { status: 200 }),
+    );
+
+    await POST(request('fr'));
+    expect(promptFrom(mocks.fetch.mock.calls[0])).toContain('English');
+
+    mocks.fetch.mockClear();
+    await POST(request());
+    expect(promptFrom(mocks.fetch.mock.calls[0])).toContain('English');
   });
 });

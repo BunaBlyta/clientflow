@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useLocale } from "@/lib/i18n"
+import { formatDate, formatMonthLong, weekdayInitials } from "@/lib/format"
 
 type DatePickerProps = {
   value: string
@@ -18,8 +19,6 @@ type DatePickerProps = {
   ariaLabel: string
   className?: string
 }
-
-const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"]
 
 function parseDateValue(value: string, fallback = new Date()) {
   const [year, month, day] = value.split("-").map(Number)
@@ -36,7 +35,7 @@ function monthKey(date: Date) {
 }
 
 export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, className }: DatePickerProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [open, setOpen] = React.useState(false)
   const [displayedMonth, setDisplayedMonth] = React.useState(() => parseDateValue(value))
   const selectedDate = value ? parseDateValue(value) : undefined
@@ -61,7 +60,7 @@ export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, cla
   const lastYear = maximumDate?.getFullYear() ?? new Date().getFullYear() + 10
   const years = Array.from({ length: Math.max(1, lastYear - firstYear + 1) }, (_, index) => firstYear + index)
   const displayLabel = selectedDate
-    ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(selectedDate)
+    ? formatDate(selectedDate.toISOString(), locale)
     : t("common.selectDate")
 
   return (
@@ -86,7 +85,7 @@ export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, cla
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
             <p className="text-[13px] font-medium">
-              {new Intl.DateTimeFormat(undefined, { month: "long" }).format(displayedMonth)}
+              {formatMonthLong(displayedMonth, locale)}
             </p>
             <Select
               value={String(displayedMonth.getFullYear())}
@@ -124,7 +123,7 @@ export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, cla
           </div>
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] text-muted-foreground">
-          {WEEKDAYS.map((weekday, index) => <span key={`${weekday}-${index}`}>{weekday}</span>)}
+          {weekdayInitials(locale).map((weekday, index) => <span key={`${weekday}-${index}`}>{weekday}</span>)}
         </div>
         <div className="mt-1 grid grid-cols-7 gap-1">
           {days.map((day, index) => {

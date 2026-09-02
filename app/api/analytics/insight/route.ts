@@ -12,11 +12,28 @@ import { prisma } from '@/app/api/_lib/prisma';
 import { packageSelect } from '@/app/api/packages/_lib';
 import { serializePackage } from '@/app/api/packages/serialize';
 import { serializeInvoice } from '@/app/api/invoices/serialize';
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/locales';
 
 export const runtime = 'nodejs';
 
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = 'openai/gpt-oss-120b';
+
+/**
+ * The insight is written by the model, so it cannot be translated afterwards.
+ * The language is part of the request instead.
+ */
+const LANGUAGE_NAMES: Record<Locale, string> = {
+  en: 'English',
+  de: 'German',
+  sq: 'Albanian',
+};
+
+async function readLocale(request: NextRequest): Promise<Locale> {
+  const body = await request.json().catch(() => null);
+  const requested = (body as { locale?: unknown } | null)?.locale;
+  return typeof requested === 'string' && isLocale(requested) ? requested : DEFAULT_LOCALE;
+}
 
 function serializeProject(project: {
   id: string;
@@ -53,6 +70,8 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return insightError('Analytics insights are not configured yet.', 503);
+
+  const locale = await readLocale(request);
 
   try {
     const [packageRecords, projectRecords, invoiceRecords] = await Promise.all([
@@ -105,7 +124,8 @@ export async function POST(request: NextRequest) {
 
     const prompt = [
       'You are summarizing analytics for a small web design studio.',
-      'Using only the computed dashboard numbers below, write a concise 2-3 sentence plain-English insight.',
+      `Using only the computed dashboard numbers below, write a concise 2-3 sentence insight in ${LANGUAGE_NAMES[locale]}.`,
+      `Write the entire response in ${LANGUAGE_NAMES[locale]}, including any figures' surrounding wording.`,
       'Mention the most meaningful revenue or pipeline pattern and any useful outstanding-payment or turnaround signal.',
       'Do not invent causes, recommendations, or numbers, and do not use markdown, headings, or bullet points.',
       `Computed numbers (money is in cents): ${JSON.stringify(numbers)}`,

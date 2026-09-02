@@ -54,6 +54,32 @@ export function formatDate(iso: string, locale: Locale): string {
   }).format(date);
 }
 
+/** Weekday initials for the calendar header, Monday first. */
+const WEEKDAY_INITIALS: Record<Locale, readonly string[]> = {
+  en: ["M", "T", "W", "T", "F", "S", "S"],
+  de: ["M", "D", "M", "D", "F", "S", "S"],
+  sq: ["H", "M", "M", "E", "P", "Sh", "D"],
+};
+
+export function weekdayInitials(locale: Locale): readonly string[] {
+  return WEEKDAY_INITIALS[locale];
+}
+
+/** The month name on its own, for a calendar header. */
+export function formatMonthLong(date: Date, locale: Locale): string {
+  if (locale === "sq") {
+    const name = ALBANIAN_MONTHS[date.getMonth()];
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], { month: "long" }).format(date);
+}
+
+/** The abbreviated month, for chart axes. */
+export function formatMonthShort(date: Date, locale: Locale): string {
+  if (locale === "sq") return ALBANIAN_MONTHS[date.getMonth()].slice(0, 3);
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], { month: "short" }).format(date);
+}
+
 export function formatShortDate(iso: string, locale: Locale): string {
   const date = new Date(iso);
   if (locale === "sq") return `${date.getDate()} ${ALBANIAN_MONTHS[date.getMonth()]}`;

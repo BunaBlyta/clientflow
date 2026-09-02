@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatMonthShort } from "@/lib/format";
 import { useLocale } from "@/lib/i18n";
 
 type ReceivableInvoice = {
@@ -45,7 +45,7 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
     const previousWeek = visibleWeekStarts[index - 1];
     const previousDate = previousWeek ? new Date(`${previousWeek.date}T12:00:00`) : null;
     return index === 0 || date.getMonth() !== previousDate?.getMonth()
-      ? date.toLocaleDateString("en-US", { month: "short" })
+      ? formatMonthShort(date, locale)
       : "";
   });
   const selectedDay = data.find((day) => day.date === selectedDate) ?? null;
