@@ -18,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FieldHint } from "@/components/dashboard/field-hint";
 import type { ManagedPackage } from "@/lib/types";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, LOCALE_LABELS } from "@/lib/i18n";
+import { TRANSLATABLE_LOCALES, type PackageTranslations } from "@/lib/package-translations";
 
 type PackageField = "name" | "slug" | "price" | "currency" | "description" | "sortOrder";
 
@@ -48,6 +49,20 @@ export function CreatePackageDialog({
     const price = Number(form.get("price"));
     const currency = String(form.get("currency") ?? "").trim();
     const sortOrder = Number(form.get("sortOrder"));
+
+    // Optional: a package can be created English-only and translated later
+    // from the edit dialog. Blank locales are simply not stored.
+    const translations: PackageTranslations = {};
+    for (const item of TRANSLATABLE_LOCALES) {
+      const localeName = String(form.get(`translations.${item}.name`) ?? "").trim();
+      const localeDescription = String(form.get(`translations.${item}.description`) ?? "").trim();
+      if (localeName || localeDescription) {
+        translations[item] = {
+          ...(localeName ? { name: localeName } : {}),
+          ...(localeDescription ? { description: localeDescription } : {}),
+        };
+      }
+    }
     const nextFieldErrors: Partial<Record<PackageField, string>> = {};
 
     if (!name) nextFieldErrors.name = t("common.required");
@@ -80,6 +95,7 @@ export function CreatePackageDialog({
           currency: currency.toLowerCase(),
           estimatedDuration: String(form.get("estimatedDuration") ?? "").trim() || undefined,
           sortOrder,
+          ...(Object.keys(translations).length > 0 ? { translations } : {}),
         }),
       });
       const result = (await response.json().catch(() => null)) as ManagedPackage | { error?: string } | null;
@@ -171,6 +187,28 @@ export function CreatePackageDialog({
               <FieldHint id="package-description-error" message={fieldErrors.description} />
             </div>
             <Textarea id="package-description" name="description" rows={2} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? "package-description-error" : undefined} onInput={() => setFieldErrors((current) => ({ ...current, description: undefined }))} />
+          </div>
+          <div className="flex flex-col gap-4 border-t border-border pt-4">
+            <div className="flex flex-col gap-1">
+              <p className="text-[13px] font-medium">{t("settings.translations")}</p>
+              <p className="text-[12px] text-muted-foreground">{t("settings.translationsOptionalIntro")}</p>
+            </div>
+            {TRANSLATABLE_LOCALES.map((item) => (
+              <div key={item} className="flex flex-col gap-1.5">
+                <Label className="text-[12px] text-muted-foreground">{LOCALE_LABELS[item]}</Label>
+                <Input
+                  id={`package-${item}-name`}
+                  name={`translations.${item}.name`}
+                  aria-label={`${LOCALE_LABELS[item]} — ${t("settings.packageName")}`}
+                />
+                <Textarea
+                  id={`package-${item}-description`}
+                  name={`translations.${item}.description`}
+                  rows={2}
+                  aria-label={`${LOCALE_LABELS[item]} — ${t("settings.description")}`}
+                />
+              </div>
+            ))}
           </div>
           <div className="flex flex-col gap-1.5">
             <div className="flex h-5 items-center justify-between gap-2">

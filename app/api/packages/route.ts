@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/app/api/_lib/auth';
 import { prisma } from '@/app/api/_lib/prisma';
 import { serializePackage } from './serialize';
+import { readPackageTranslations } from '@/lib/package-translations';
 import {
   invalidPackage,
   isUniqueConstraintError,
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
   const price = readPackagePrice(values.price);
   const currency = typeof values.currency === 'string' ? values.currency.trim().toLowerCase() : '';
   const sortOrder = values.sortOrder === undefined ? 0 : values.sortOrder;
+  const translations = 'translations' in values ? readPackageTranslations(values.translations) : null;
   const isActive = values.isActive === undefined ? true : values.isActive;
 
   if (!name) return invalidPackage('Name is required');
@@ -65,6 +67,9 @@ export async function POST(request: NextRequest) {
     return invalidPackage('Sort order must be a non-negative integer');
   }
   if (typeof isActive !== 'boolean') return invalidPackage('isActive must be a boolean');
+  if (translations === undefined) {
+    return invalidPackage('Translations must map a supported locale to a name and description');
+  }
 
   try {
     const createdPackage = await prisma.package.create({
@@ -77,6 +82,7 @@ export async function POST(request: NextRequest) {
         ...(estimatedDuration ? { estimatedDuration } : {}),
         sortOrder,
         isActive,
+        ...(translations ? { translations } : {}),
       },
       select: packageSelect,
     });

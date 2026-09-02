@@ -1037,6 +1037,22 @@ Object.assign(albanian, {
   "settings.packageName": "Emri i paketës",
 });
 
+
+// New-package translation hint.
+Object.assign(english, {
+  "settings.translationsOptionalIntro": "Optional. Anything you leave blank shows the English text, and you can add translations later from the package's edit form.",
+});
+
+// New-package translation hint (German).
+Object.assign(german, {
+  "settings.translationsOptionalIntro": "Optional. Leere Felder zeigen den englischen Text; Übersetzungen kannst du später im Bearbeiten-Formular ergänzen.",
+});
+
+// New-package translation hint (Albanian).
+Object.assign(albanian, {
+  "settings.translationsOptionalIntro": "Opsionale. Fushat bosh shfaqin tekstin anglisht; përkthimet mund t’i shtosh më vonë te forma e ndryshimit.",
+});
+
 const messages: Record<Locale, Messages> = { en: english, de: german, sq: albanian };
 
 type LocaleContextValue = {
