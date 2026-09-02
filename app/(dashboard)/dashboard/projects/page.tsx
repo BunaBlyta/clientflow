@@ -159,7 +159,7 @@ function ProjectsTable({
   packageFilter: string;
 }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const deferredSearch = useDeferredValue(search);
   const savedSort = usePreferencesStore((state) => state.tableSort.projects) as { key?: "name" | "status" | "updatedAt"; direction?: "asc" | "desc" } | undefined;
   const setTableSort = usePreferencesStore((state) => state.setTableSort);
@@ -305,7 +305,7 @@ function ProjectsTable({
                     />
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {formatDate(project.updatedAt)}
+                    {formatDate(project.updatedAt, locale)}
                   </td>
                 </tr>
               );
@@ -340,7 +340,7 @@ function ProjectsTable({
 
 function RequestsTable({ search }: { search: string }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const deferredSearch = useDeferredValue(search);
   const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
   const [arePackagesLoading, setArePackagesLoading] = useState(true);
@@ -558,7 +558,7 @@ function RequestsTable({ search }: { search: string }) {
                       {t(`status.request.${r.status}`)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(r.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatDate(r.createdAt, locale)}</td>
                   <td className="px-4 py-3">
                     {r.status === "PENDING" ? (
                       <div className="flex justify-end gap-1.5">
@@ -581,7 +581,7 @@ function RequestsTable({ search }: { search: string }) {
                       </div>
                     ) : (
                       <p className="text-right text-[12px] text-muted-foreground">
-                        {r.reviewedAt && formatDate(r.reviewedAt)}
+                        {r.reviewedAt && formatDate(r.reviewedAt, locale)}
                       </p>
                     )}
                   </td>

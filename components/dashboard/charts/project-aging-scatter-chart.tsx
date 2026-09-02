@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { formatDate } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
 
 type ProjectAgingPoint = {
   id: string;
@@ -29,6 +30,7 @@ export function ProjectAgingScatterChart({
   stages: string[];
   xAxisLabel: string;
 }) {
+  const { locale } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
@@ -143,7 +145,7 @@ export function ProjectAgingScatterChart({
             <p className="mt-0.5 text-muted-foreground">
               {selectedPoint.stage} · {selectedPoint.ageDays} days since update
             </p>
-            <p className="mt-1 text-muted-foreground">Updated {formatDate(selectedPoint.updatedAt)}</p>
+            <p className="mt-1 text-muted-foreground">Updated {formatDate(selectedPoint.updatedAt, locale)}</p>
           </Link>
           <div className="flex shrink-0 items-center gap-3">
             <button type="button" onClick={() => setSelectedPointId(null)} className="flex items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground" aria-label="Clear selection">

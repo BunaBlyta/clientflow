@@ -18,7 +18,7 @@ import type { PaginatedResponse } from "@/lib/pagination";
 
 export function CustomLeadsTable({ search }: { search: string }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const deferredSearch = useDeferredValue(search);
 
   const loadLeadPage = useCallback((page: number, signal?: AbortSignal) => {
@@ -111,7 +111,7 @@ export function CustomLeadsTable({ search }: { search: string }) {
               >
                 <td className="px-4 py-3"><p className="font-medium">{lead.name}</p><p className="text-[12px] text-muted-foreground">{lead.email}</p></td>
                 <td className="max-w-md px-4 py-3 text-muted-foreground"><p className="line-clamp-2">{lead.message}</p></td>
-                <td className="px-4 py-3 text-muted-foreground">{formatDate(lead.createdAt)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{formatDate(lead.createdAt, locale)}</td>
                 <td className="px-4 py-3 text-right">{lead.clientId ? <span className="text-[12px] text-status-success">{t("inquiries.converted")}</span> : <ConvertCustomLeadDialog lead={lead} onConverted={(updatedLead) => setLeads((currentLeads) => upsertById(currentLeads, updatedLead))} />}</td>
               </tr>
             ))}

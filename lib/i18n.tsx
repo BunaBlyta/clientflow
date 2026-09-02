@@ -1044,6 +1044,47 @@ Object.assign(albanian, {
   "settings.translationsOptionalIntro": "Opsionale. Fushat bosh shfaqin tekstin anglisht; përkthimet mund t’i shtosh më vonë te forma e ndryshimit.",
 });
 
+
+// Relative timestamps.
+Object.assign(english, {
+  "common.justNow": "just now",
+});
+
+// Relative timestamps (German).
+Object.assign(german, {
+  "common.justNow": "gerade eben",
+});
+
+// Relative timestamps (Albanian).
+Object.assign(albanian, {
+  "common.justNow": "sapo tani",
+});
+
+
+// Relative-time fallbacks for locales Intl may not ship.
+Object.assign(english, {
+  "time.minutesAgo": "{count}m ago",
+  "time.hoursAgo": "{count}h ago",
+  "time.daysAgo": "{count}d ago",
+  "time.monthsAgo": "{count}mo ago",
+});
+
+// Relative-time fallbacks (German).
+Object.assign(german, {
+  "time.minutesAgo": "vor {count} Min.",
+  "time.hoursAgo": "vor {count} Std.",
+  "time.daysAgo": "vor {count} Tg.",
+  "time.monthsAgo": "vor {count} Mon.",
+});
+
+// Relative-time fallbacks (Albanian).
+Object.assign(albanian, {
+  "time.minutesAgo": "{count} min më parë",
+  "time.hoursAgo": "{count} orë më parë",
+  "time.daysAgo": "{count} ditë më parë",
+  "time.monthsAgo": "{count} muaj më parë",
+});
+
 const messages: Record<Locale, Messages> = { en: english, de: german, sq: albanian };
 
 type LocaleContextValue = {

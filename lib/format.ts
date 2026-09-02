@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/locales";
+
 export function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -14,19 +16,51 @@ export function formatMajorCurrency(amount: number, currency: string): string {
   }).format(amount);
 }
 
-export function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
+export const INTL_LOCALE: Record<Locale, string> = {
+  en: "en-US",
+  de: "de-DE",
+  sq: "sq-AL",
+};
+
+const MONTH_STYLE: Record<Locale, "short" | "long"> = {
+  en: "short",
+  de: "short",
+  sq: "long",
+};
+
+/**
+ * Albanian is formatted by hand, not through Intl.
+ *
+ * Not every browser ships Albanian locale data — Chrome 151 resolves `sq-AL`
+ * to `en-US` and silently returns English month names — and Node does, so the
+ * gap never shows up in tests. Spelling the months out here makes the output
+ * identical everywhere, and full month names are what was asked for: the
+ * abbreviations ("mar" for both mars and…) read as ambiguous.
+ */
+const ALBANIAN_MONTHS = [
+  "janar", "shkurt", "mars", "prill", "maj", "qershor",
+  "korrik", "gusht", "shtator", "tetor", "nëntor", "dhjetor",
+] as const;
+
+export function formatDate(iso: string, locale: Locale): string {
+  const date = new Date(iso);
+  if (locale === "sq") {
+    return `${date.getDate()} ${ALBANIAN_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  }
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+    month: MONTH_STYLE[locale],
     day: "numeric",
     year: "numeric",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
-export function formatShortDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
+export function formatShortDate(iso: string, locale: Locale): string {
+  const date = new Date(iso);
+  if (locale === "sq") return `${date.getDate()} ${ALBANIAN_MONTHS[date.getMonth()]}`;
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+    month: MONTH_STYLE[locale],
     day: "numeric",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 export function initials(name: string): string {

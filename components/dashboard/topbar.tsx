@@ -37,7 +37,7 @@ type CurrentUser = {
 export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
@@ -274,7 +274,7 @@ export function Topbar() {
                       <p className="mt-0.5 line-clamp-2 text-[12px] leading-4.5 text-muted-foreground">{localized.body}</p>
                     </div>
                     <span className="shrink-0 self-center text-[11px] text-muted-foreground">
-                      {formatRelativeTime(n.createdAt)}
+                      {formatRelativeTime(n.createdAt, locale, t)}
                     </span>
                   </DropdownMenuItem>
                 );
