@@ -5,8 +5,9 @@ import { LoginForm } from "@/components/auth/login-form";
 import { LocaleText } from "@/components/locale-text";
 
 export const metadata: Metadata = {
-  title: "Sign in | Clientflow",
+  title: "Sign in",
   description: "Sign in to the Clientflow studio dashboard.",
+  robots: { index: false, follow: false },
 };
 
 export default function LoginPage() {

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/lib/i18n";
+import { siteDescription, siteName, siteTitle, siteUrl } from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,11 +15,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Clientflow",
-  description: "Client and project management for a web design studio.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: siteTitle,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  applicationName: siteName,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName,
+    title: siteTitle,
+    description: siteDescription,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
   icons: {
     icon: "/crm-light-logo-grey.png",
+    apple: "/light-logo.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

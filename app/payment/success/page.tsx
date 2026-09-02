@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { LocaleText } from "@/components/locale-text";
 
 export const metadata = {
-  title: "Payment submitted · Clientflow",
+  title: "Payment submitted",
+  robots: { index: false, follow: false },
 };
 
 /**

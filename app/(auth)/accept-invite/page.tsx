@@ -6,8 +6,9 @@ import { AcceptInviteForm } from "@/components/auth/accept-invite-form";
 import { LocaleText } from "@/components/locale-text";
 
 export const metadata: Metadata = {
-  title: "Accept invitation | Clientflow",
+  title: "Accept invitation",
   description: "Set up your Clientflow studio dashboard account.",
+  robots: { index: false, follow: false },
 };
 
 export default function AcceptInvitePage() {
