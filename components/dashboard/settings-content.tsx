@@ -200,8 +200,8 @@ function PackagesSection({
               ) : (
                 <>
                   <div>
-                    <p className="text-[14px] font-medium">{packageName(t, pkg, locale)}</p>
-                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{packageDescription(t, pkg, locale)}</p>
+                    <p className="text-[14px] font-medium">{packageName(pkg, locale)}</p>
+                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{packageDescription(pkg, locale)}</p>
                     <p className="mt-2 text-[13px]">
                       {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? t("settings.durationToBeScoped")}
                     </p>

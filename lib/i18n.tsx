@@ -497,9 +497,6 @@ const english: Messages = {
   "marketing.requestFailed": "We couldn’t submit your request.",
   "marketing.requestSubmitted": "Request submitted",
   "marketing.requestSubmittedIntro": "We’ll review it and follow up by email shortly.",
-  "packages.landing-page.extension": "Focused, fast, and built around one clear action.",
-  "packages.full-website.extension": "Structured for growth, content, and credibility.",
-  "packages.web-app-build.extension": "Designed around your product and your users.",
 };
 
 const german: Messages = {
@@ -523,9 +520,6 @@ const german: Messages = {
   "marketing.requestFailed": "Deine Anfrage konnte nicht gesendet werden.",
   "marketing.requestSubmitted": "Anfrage gesendet",
   "marketing.requestSubmittedIntro": "Wir prüfen sie und melden uns in Kürze per E-Mail.",
-  "packages.landing-page.extension": "Fokussiert, schnell und auf eine klare Aktion ausgerichtet.",
-  "packages.full-website.extension": "Aufgebaut für Wachstum, Inhalte und Glaubwürdigkeit.",
-  "packages.web-app-build.extension": "Rund um dein Produkt und deine Nutzer gestaltet.",
   "marketing.emailPlaceholder": "du@unternehmen.com",
   "marketing.messagePlaceholder": "Eine Landing Page für einen Produkt-Launch im September …",
   "marketing.noPackages": "Derzeit sind keine Pakete verfügbar.",
@@ -558,9 +552,6 @@ const albanian: Messages = {
   "marketing.requestFailed": "Kërkesa jote nuk u dërgua dot.",
   "marketing.requestSubmitted": "Kërkesa u dërgua",
   "marketing.requestSubmittedIntro": "Do ta shqyrtojmë dhe do të të shkruajmë me email së shpejti.",
-  "packages.landing-page.extension": "E fokusuar, e shpejtë dhe e ndërtuar rreth një veprimi të qartë.",
-  "packages.full-website.extension": "E strukturuar për rritje, përmbajtje dhe besueshmëri.",
-  "packages.web-app-build.extension": "E dizajnuar rreth produktit dhe përdoruesve të tu.",
   "marketing.emailPlaceholder": "ti@kompania.com",
   "marketing.messagePlaceholder": "Një faqe uljeje për një lançim produkti në shtator …",
   "marketing.noPackages": "Për momentin nuk ka paketa të disponueshme.",

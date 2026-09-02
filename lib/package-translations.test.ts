@@ -3,8 +3,6 @@ import { readPackageTranslations } from "@/lib/package-translations";
 import { packageDescription, packageDuration, packageName } from "@/lib/package-copy";
 import type { ManagedPackage } from "@/lib/types";
 
-const echo = (key: string) => key;
-
 function pkg(overrides: Partial<ManagedPackage> = {}): ManagedPackage {
   return {
     id: "pkg-1",
@@ -53,23 +51,23 @@ describe("readPackageTranslations", () => {
 describe("package copy", () => {
   it("uses the stored English for the default locale even when a translation exists", () => {
     const withGerman = pkg({ translations: { de: { name: "Komplette Website" } } });
-    expect(packageName(echo, withGerman, "en")).toBe("Full Website");
-    expect(packageName(echo, withGerman, "de")).toBe("Komplette Website");
+    expect(packageName(withGerman, "en")).toBe("Full Website");
+    expect(packageName(withGerman, "de")).toBe("Komplette Website");
   });
 
   it("falls back per field, so a half-translated package still reads", () => {
     const halfTranslated = pkg({ translations: { de: { name: "Komplette Website" } } });
-    expect(packageDescription(echo, halfTranslated, "de")).toBe("A complete multi-page marketing site.");
+    expect(packageDescription(halfTranslated, "de")).toBe("A complete multi-page marketing site.");
   });
 
   it("falls back to English for a locale with no entry", () => {
     const withGerman = pkg({ translations: { de: { name: "Komplette Website" } } });
-    expect(packageName(echo, withGerman, "sq")).toBe("Full Website");
+    expect(packageName(withGerman, "sq")).toBe("Full Website");
   });
 
   it("reflects an edit to the English columns in every locale that has no override", () => {
     const renamed = pkg({ name: "Marketing Site", translations: { de: { description: "Beschreibung" } } });
-    expect(packageName(echo, renamed, "de")).toBe("Marketing Site");
+    expect(packageName(renamed, "de")).toBe("Marketing Site");
   });
 
   it("translates only the unit in a duration", () => {
