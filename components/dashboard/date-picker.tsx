@@ -6,6 +6,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/lib/i18n"
 
 type DatePickerProps = {
   value: string
@@ -35,15 +36,12 @@ function monthKey(date: Date) {
 }
 
 export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, className }: DatePickerProps) {
+  const { t } = useLocale()
   const [open, setOpen] = React.useState(false)
   const [displayedMonth, setDisplayedMonth] = React.useState(() => parseDateValue(value))
   const selectedDate = value ? parseDateValue(value) : undefined
   const minimumDate = min ? parseDateValue(min) : undefined
   const maximumDate = max ? parseDateValue(max) : undefined
-
-  React.useEffect(() => {
-    if (open) setDisplayedMonth(parseDateValue(value))
-  }, [open, value])
 
   const days = React.useMemo(() => {
     const firstDay = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1)
@@ -64,10 +62,10 @@ export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, cla
   const years = Array.from({ length: Math.max(1, lastYear - firstYear + 1) }, (_, index) => firstYear + index)
   const displayLabel = selectedDate
     ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(selectedDate)
-    : "Select date"
+    : t("common.selectDate")
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (nextOpen) setDisplayedMonth(parseDateValue(value)); }}>
       <PopoverTrigger
         aria-label={ariaLabel}
         render={
@@ -107,7 +105,7 @@ export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, cla
           <div className="flex items-center gap-1">
             <button
               type="button"
-              aria-label="Previous month"
+              aria-label={t("common.previousMonth")}
               disabled={!canGoPrevious}
               onClick={() => setDisplayedMonth(new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() - 1, 1))}
               className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
@@ -116,7 +114,7 @@ export function DatePicker({ value, min, max, id, name, onChange, ariaLabel, cla
             </button>
             <button
               type="button"
-              aria-label="Next month"
+              aria-label={t("common.nextMonth")}
               disabled={!canGoNext}
               onClick={() => setDisplayedMonth(new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1, 1))}
               className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-35"

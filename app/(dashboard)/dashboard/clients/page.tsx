@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LoaderCircle, MoreHorizontal, RefreshCw } from "lucide-react";
@@ -20,59 +20,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { SortableTableHeader } from "@/components/dashboard/sortable-table-header";
-import type { Client, Invoice, Project } from "@/lib/types";
+import type { Client } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { usePreferencesStore } from "@/lib/preferences-store";
 import type { PaginatedResponse } from "@/lib/pagination";
-
-type ApiInvoice = Invoice & { clientId: string };
 
 export default function ClientsPage() {
   const { t } = useLocale();
   const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
-  const [areTotalsLoading, setAreTotalsLoading] = useState(true);
-  const [totalsError, setTotalsError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [packageFilter, setPackageFilter] = useState("ALL");
-  const [sort, setSort] = useState<{ key: "companyName" | "createdAt"; direction: "asc" | "desc" }>({ key: "companyName", direction: "asc" });
+  const filters = usePreferencesStore((state) => state.tableFilters.clients ?? {});
+  const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
+  const search = filters.search ?? "";
+  const packageFilter = filters.package ?? "ALL";
+  const setSearch = (value: string) => setTableFilter("clients", "search", value);
+  const setPackageFilter = (value: string) => setTableFilter("clients", "package", value);
+  const savedSort = usePreferencesStore((state) => state.tableSort.clients) as { key?: "companyName" | "createdAt"; direction?: "asc" | "desc" } | undefined;
+  const setTableSort = usePreferencesStore((state) => state.setTableSort);
+  const sort = useMemo(() => ({ key: savedSort?.key ?? "companyName", direction: savedSort?.direction ?? "asc" } as { key: "companyName" | "createdAt"; direction: "asc" | "desc" }), [savedSort?.direction, savedSort?.key]);
+  const setSort = (updater: (current: typeof sort) => typeof sort) => setTableSort("clients", updater(sort));
   const deferredSearch = useDeferredValue(search);
   const [resendingClientId, setResendingClientId] = useState<string | null>(null);
   const [resendError, setResendError] = useState<{ clientId: string; message: string } | null>(null);
-
-  const loadTotals = useCallback(async (signal?: AbortSignal) => {
-    setAreTotalsLoading(true);
-    setTotalsError(null);
-
-    try {
-      const [projectData, invoiceData] = await Promise.all([
-        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
-        fetchJson<ApiInvoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
-      ]);
-
-      if (!Array.isArray(projectData) || !Array.isArray(invoiceData)) {
-        throw new Error("The server returned an unexpected clients response.");
-      }
-
-      if (!signal?.aborted) {
-        setProjects(projectData);
-        setInvoices(invoiceData);
-      }
-    } catch (caughtError) {
-      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setTotalsError(caughtError instanceof Error ? caughtError.message : "We couldn't load the client totals.");
-      }
-    } finally {
-      if (!signal?.aborted) setAreTotalsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void Promise.resolve().then(() => loadTotals(controller.signal));
-    return () => controller.abort();
-  }, [loadTotals]);
 
   const loadClientPage = useCallback((page: number, signal?: AbortSignal) => {
     const query = new URLSearchParams({ page: String(page), pageSize: "20" });
@@ -87,24 +55,13 @@ export default function ClientsPage() {
   }, [deferredSearch, packageFilter, sort]);
   const clientTable = useInfiniteTable(loadClientPage);
   const clients = clientTable.items;
-  const isLoading = clientTable.isInitialLoading || areTotalsLoading;
-  const error = clientTable.error ?? totalsError;
+  const isLoading = clientTable.isInitialLoading;
+  const error = clientTable.error;
   const tableRef = useStableTableColumns(!isLoading && !error);
   const packageOptions = useMemo(
-    () => Array.from(new Map(projects.filter((project) => project.package).map((project) => [project.packageId, project.package!.name])).entries()),
-    [projects],
+    () => Array.from(new Map(clients.flatMap((client) => client.packageTypes ?? []).map((pkg) => [pkg.id, pkg.name])).entries()),
+    [clients],
   );
-
-  const billedByClient = useMemo(() => {
-    const projectClient = new Map(projects.map((project) => [project.id, project.clientId]));
-    const totals = new Map<string, number>();
-    for (const invoice of invoices) {
-      if (invoice.status !== "PAID") continue;
-      const clientId = projectClient.get(invoice.projectId) ?? invoice.clientId;
-      totals.set(clientId, (totals.get(clientId) ?? 0) + invoice.amountCents);
-    }
-    return totals;
-  }, [invoices, projects]);
 
   async function handleResendInvitation(client: Client) {
     setResendingClientId(client.id);
@@ -146,7 +103,6 @@ export default function ClientsPage() {
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => {
           clientTable.reload();
-          if (totalsError) void loadTotals();
         }}>
           <RefreshCw />
           {t("common.tryAgain")}
@@ -159,9 +115,9 @@ export default function ClientsPage() {
     <div className="flex flex-col gap-6">
       <TableToolbar search={search} onSearchChange={setSearch} placeholder={t("clients.search")}>
         <Select value={packageFilter} onValueChange={(value) => value && setPackageFilter(value)}>
-          <SelectTrigger className="w-44"><span>{packageFilter === "ALL" ? "All packages" : packageOptions.find(([id]) => id === packageFilter)?.[1]}</span></SelectTrigger>
+          <SelectTrigger className="w-44"><span>{packageFilter === "ALL" ? t("projects.allPackages") : packageOptions.find(([id]) => id === packageFilter)?.[1]}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All packages</SelectItem>
+            <SelectItem value="ALL">{t("projects.allPackages")}</SelectItem>
             {packageOptions.filter(([id]) => id).map(([id, name]) => <SelectItem key={id} value={id!}>{name}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -189,7 +145,6 @@ export default function ClientsPage() {
           </thead>
           <tbody>
             {clients.map((client) => {
-              const clientProjects = projects.filter((p) => p.clientId === client.id);
               return (
                 <tr
                   key={client.id}
@@ -226,9 +181,9 @@ export default function ClientsPage() {
                       <p role="alert" className="mt-1 text-[11px] text-status-danger">{resendError.message}</p>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{clientProjects.length}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{client.projectCount ?? 0}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatCurrency(billedByClient.get(client.id) ?? 0)}
+                    {formatCurrency(client.totalBilledCents ?? 0)}
                   </td>
                   <td className="px-4 py-3 text-right text-muted-foreground">
                     {formatDate(client.createdAt)}

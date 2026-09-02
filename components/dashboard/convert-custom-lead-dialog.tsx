@@ -40,7 +40,7 @@ export function ConvertCustomLeadDialog({
     const nextFieldErrors: Partial<Record<ConversionField, string>> = {};
     if (!projectName.trim()) nextFieldErrors.projectName = t("common.required");
     if (!description.trim()) nextFieldErrors.description = t("common.required");
-    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) nextFieldErrors.amount = "Invalid amount.";
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) nextFieldErrors.amount = t("invoices.invalidAmount");
 
     if (Object.keys(nextFieldErrors).length > 0) {
       setError(null);
@@ -78,13 +78,13 @@ export function ConvertCustomLeadDialog({
       setOpen(false);
       setFieldErrors({});
       onConverted({ ...result.lead, clientId: result.client.id });
-      toast.success("Custom project created", {
+      toast.success(t("inquiries.customProjectCreated"), {
         description:
           result.emailSent === false
-            ? "The project was created, but the invitation email failed. Resend it from Clients."
+            ? t("inquiries.projectCreatedEmailFailed")
             : result.emailSent === true
-              ? "The client was invited and the custom invoice was sent."
-              : "The custom project and invoice were created for the existing client.",
+              ? t("inquiries.clientInvitedInvoiceSent")
+              : t("inquiries.existingClientProjectCreated"),
       });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "We couldn't create the custom project.");
@@ -103,7 +103,7 @@ export function ConvertCustomLeadDialog({
         <DialogHeader>
           <DialogTitle>{t("inquiries.convertTitle")}</DialogTitle>
           <DialogDescription>
-            Inquiry received {formatDate(lead.createdAt)}.
+            {t("inquiries.receivedOn", { date: formatDate(lead.createdAt) })}
           </DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">

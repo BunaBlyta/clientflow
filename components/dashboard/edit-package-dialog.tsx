@@ -145,7 +145,7 @@ export function EditPackageDialog({
           <form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col justify-between gap-4">
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
-                <Label htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
+                <Label className="pl-1" htmlFor={`edit-package-name-${pkg.id}`}>{t("settings.name")}</Label>
                 <FieldHint id={`edit-package-name-error-${pkg.id}`} message={fieldErrors.name} />
               </div>
               <Input id={`edit-package-name-${pkg.id}`} name="name" defaultValue={pkg.name} required aria-invalid={Boolean(fieldErrors.name)} aria-describedby={fieldErrors.name ? `edit-package-name-error-${pkg.id}` : undefined} onInput={() => setFieldErrors((current) => ({ ...current, name: undefined }))} />
@@ -153,7 +153,7 @@ export function EditPackageDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <div className="flex h-5 items-center justify-between gap-2">
-                  <Label htmlFor={`edit-package-price-${pkg.id}`}>{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
+                  <Label className="pl-1" htmlFor={`edit-package-price-${pkg.id}`}>{t("settings.priceCurrency", { currency: pkg.currency.toUpperCase() })}</Label>
                   <FieldHint id={`edit-package-price-error-${pkg.id}`} message={fieldErrors.price} />
                 </div>
                 <Input
@@ -171,7 +171,7 @@ export function EditPackageDialog({
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex h-5 items-center justify-between gap-2">
-                  <Label htmlFor={`edit-package-currency-${pkg.id}`}>{t("settings.currency")}</Label>
+                  <Label className="pl-1" htmlFor={`edit-package-currency-${pkg.id}`}>{t("settings.currency")}</Label>
                   <FieldHint id={`edit-package-currency-error-${pkg.id}`} message={fieldErrors.currency} />
                 </div>
                 <Input
@@ -187,7 +187,7 @@ export function EditPackageDialog({
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`edit-package-duration-${pkg.id}`}>{t("settings.duration")}</Label>
+              <Label className="pl-1" htmlFor={`edit-package-duration-${pkg.id}`}>{t("settings.duration")}</Label>
               <Input
                 id={`edit-package-duration-${pkg.id}`}
                 name="estimatedDuration"
@@ -197,10 +197,10 @@ export function EditPackageDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex h-5 items-center justify-between gap-2">
-                <Label htmlFor={`edit-package-description-${pkg.id}`}>{t("settings.description")}</Label>
+                <Label className="pl-1" htmlFor={`edit-package-description-${pkg.id}`}>{t("settings.description")}</Label>
                 <FieldHint id={`edit-package-description-error-${pkg.id}`} message={fieldErrors.description} />
               </div>
-              <Textarea id={`edit-package-description-${pkg.id}`} name="description" defaultValue={pkg.description} rows={2} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? `edit-package-description-error-${pkg.id}` : undefined} onInput={() => setFieldErrors((current) => ({ ...current, description: undefined }))} />
+              <Textarea id={`edit-package-description-${pkg.id}`} name="description" defaultValue={pkg.description} rows={2} className="px-3 py-3.5" style={{ paddingInline: 14, paddingBlock: 14 }} required aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? `edit-package-description-error-${pkg.id}` : undefined} onInput={() => setFieldErrors((current) => ({ ...current, description: undefined }))} />
             </div>
             {error && (
               <div role="alert" className="form-warning flex items-start gap-2 border border-status-danger/30 bg-status-danger/5 px-3 py-2.5 text-[13px] leading-5 text-status-danger">
@@ -217,9 +217,9 @@ export function EditPackageDialog({
                 disabled={pending}
               >
                 <Trash2 />
-                Delete package
+                {t("settings.deletePackage")}
               </Button>
-              <Button type="submit" className="flex-1" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>
+              <Button type="submit" className="flex-1" disabled={pending}>{pending ? t("common.saving") : t("common.save")}</Button>
             </div>
           </form>
         </div>
@@ -229,7 +229,7 @@ export function EditPackageDialog({
         onOpenChange={setConfirmingDeactivation}
         title={`Delete ${pkg.name}?`}
         description={t("settings.deactivateDescription")}
-        confirmLabel="Delete package"
+        confirmLabel={t("settings.deletePackage")}
         onConfirm={handleDeactivate}
       />
     </>

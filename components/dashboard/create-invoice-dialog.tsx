@@ -28,11 +28,11 @@ import { fetchJson } from "@/lib/fetch-json";
 import type { Invoice, InvoiceKind, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 
-const KIND_LABEL: Record<InvoiceKind, string> = {
-  DEPOSIT: "Deposit",
-  FINAL: "Final payment",
-  EXTRA: "Extra charge",
-  CUSTOM: "Custom",
+const KIND_LABEL_KEY: Record<InvoiceKind, string> = {
+  DEPOSIT: "invoices.kindDeposit",
+  FINAL: "invoices.kindFinal",
+  EXTRA: "invoices.kindExtra",
+  CUSTOM: "invoices.kindCustom",
 };
 const CURRENCY_OPTIONS = ["usd", "eur", "gbp", "chf"] as const;
 
@@ -88,7 +88,7 @@ export function CreateInvoiceDialog({
       nextFieldErrors.project = t("common.required");
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      nextFieldErrors.amount = "Invalid amount.";
+      nextFieldErrors.amount = t("invoices.invalidAmount");
     }
     if (Object.keys(nextFieldErrors).length > 0) {
       setError(null);
@@ -109,7 +109,7 @@ export function CreateInvoiceDialog({
           amount,
           currency: selectedCurrency,
           dueDate: String(form.get("dueDate") ?? "") || undefined,
-          description: String(form.get("label") || KIND_LABEL[kind]),
+          description: String(form.get("label") || t(KIND_LABEL_KEY[kind])),
         }),
       });
       onCreated?.(invoice);
@@ -117,7 +117,7 @@ export function CreateInvoiceDialog({
       setDueDate("");
       setFieldErrors({});
       setOpen(false);
-      toast.success("Invoice created", { description: "The invoice is ready for the client." });
+      toast.success(t("invoices.created"), { description: t("invoices.createdDescription") });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "We couldn't create this invoice.");
     } finally {
@@ -166,9 +166,9 @@ export function CreateInvoiceDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(KIND_LABEL) as InvoiceKind[]).map((k) => (
+                {(Object.keys(KIND_LABEL_KEY) as InvoiceKind[]).map((k) => (
                   <SelectItem key={k} value={k}>
-                    {KIND_LABEL[k]}
+                    {t(KIND_LABEL_KEY[k])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -176,7 +176,7 @@ export function CreateInvoiceDialog({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="label">{t("invoices.label")}</Label>
-            <Input id="label" name="label" placeholder={KIND_LABEL[kind]} />
+            <Input id="label" name="label" placeholder={t(KIND_LABEL_KEY[kind])} />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">

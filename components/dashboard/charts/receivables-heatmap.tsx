@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
 
 type ReceivableInvoice = {
   id: string;
@@ -31,6 +32,7 @@ function heatColor(amountCents: number, maxAmount: number, overdue: boolean) {
 }
 
 export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
+  const { t } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleWeeks, setVisibleWeeks] = useState(8);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
                 {formatDate(selectedDay.date)}
                 <span className="ml-2 font-normal text-muted-foreground">{formatCurrency(selectedDay.amountCents)} due</span>
               </p>
-              {selectedDay.overdue && <span className="ml-2 font-normal text-status-danger">Overdue</span>}
+              {selectedDay.overdue && <span className="ml-2 font-normal text-status-danger">{t("dashboard.receivablesOverdue")}</span>}
               {selectedDay.invoices.length > 0 && (
                 <div className="mt-2 flex flex-col gap-1">
                   {selectedDay.invoices.map((invoice) => (
@@ -123,8 +125,8 @@ export function ReceivablesHeatmap({ data }: { data: ReceivableDay[] }) {
                 </div>
               )}
             </div>
-            <button type="button" onClick={() => setSelectedDate(null)} className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground" aria-label="Clear selection">
-              Clear <ArrowRight className="size-3.5" />
+            <button type="button" onClick={() => setSelectedDate(null)} className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground" aria-label={t("common.clearSelection")}>
+              {t("common.clear")} <ArrowRight className="size-3.5" />
             </button>
           </div>
         </div>

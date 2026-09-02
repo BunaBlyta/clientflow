@@ -23,11 +23,12 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Client, Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
+import type { Package, Project, ProjectRequest, ProjectStatus } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
 import { upsertById } from "@/lib/upsert-by-id";
+import { usePreferencesStore } from "@/lib/preferences-store";
 import type { PaginatedResponse } from "@/lib/pagination";
 
 const STATUS_FILTERS: { value: ProjectStatus | "ALL"; label: string }[] = [
@@ -48,9 +49,14 @@ function ProjectsPageInner() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab = tabParam === "requests" || tabParam === "custom" ? tabParam : "projects";
-  const [projectSearch, setProjectSearch] = useState("");
-  const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
-  const [projectPackageFilter, setProjectPackageFilter] = useState("ALL");
+  const projectFilters = usePreferencesStore((state) => state.tableFilters.projects ?? {});
+  const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
+  const projectSearch = projectFilters.search ?? "";
+  const projectStatusFilter = (projectFilters.status ?? "ALL") as ProjectStatus | "ALL";
+  const projectPackageFilter = projectFilters.package ?? "ALL";
+  const setProjectSearch = (value: string) => setTableFilter("projects", "search", value);
+  const setProjectStatusFilter = (value: ProjectStatus | "ALL") => setTableFilter("projects", "status", value);
+  const setProjectPackageFilter = (value: string) => setTableFilter("projects", "package", value);
   const [packages, setPackages] = useState<Pick<Package, "id" | "name">[]>([]);
   const [requestSearch, setRequestSearch] = useState("");
   const [customSearch, setCustomSearch] = useState("");
@@ -102,9 +108,9 @@ function ProjectsPageInner() {
                 </SelectContent>
               </Select>
               <Select value={projectPackageFilter} onValueChange={(value) => value && setProjectPackageFilter(value)}>
-                <SelectTrigger className="w-44"><span>{projectPackageFilter === "ALL" ? "All packages" : packages.find((item) => item.id === projectPackageFilter)?.name}</span></SelectTrigger>
+                <SelectTrigger className="w-44"><span>{projectPackageFilter === "ALL" ? t("projects.allPackages") : packages.find((item) => item.id === projectPackageFilter)?.name}</span></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All packages</SelectItem>
+                  <SelectItem value="ALL">{t("projects.allPackages")}</SelectItem>
                   {packages.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -155,31 +161,10 @@ function ProjectsTable({
   const router = useRouter();
   const { t } = useLocale();
   const deferredSearch = useDeferredValue(search);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [areClientsLoading, setAreClientsLoading] = useState(true);
-  const [clientsError, setClientsError] = useState<string | null>(null);
-  const [sort, setSort] = useState<{ key: "name" | "status" | "updatedAt"; direction: "asc" | "desc" }>({ key: "updatedAt", direction: "desc" });
-
-  const loadClients = useCallback(async (signal?: AbortSignal) => {
-    setAreClientsLoading(true);
-    setClientsError(null);
-    try {
-      const data = await fetchJson<Client[]>("/api/clients", "We couldn't load the client list.", signal);
-      if (!Array.isArray(data)) throw new Error("The server returned an unexpected client response.");
-      if (!signal?.aborted) setClients(data);
-    } catch (caughtError) {
-      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) setClientsError(caughtError instanceof Error ? caughtError.message : "We couldn't load the client list.");
-    } finally {
-      if (!signal?.aborted) setAreClientsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void Promise.resolve().then(() => loadClients(controller.signal));
-    return () => controller.abort();
-  }, [loadClients]);
+  const savedSort = usePreferencesStore((state) => state.tableSort.projects) as { key?: "name" | "status" | "updatedAt"; direction?: "asc" | "desc" } | undefined;
+  const setTableSort = usePreferencesStore((state) => state.setTableSort);
+  const sort = useMemo(() => ({ key: savedSort?.key ?? "updatedAt", direction: savedSort?.direction ?? "desc" } as { key: "name" | "status" | "updatedAt"; direction: "asc" | "desc" }), [savedSort?.direction, savedSort?.key]);
+  const setSort = (updater: (current: typeof sort) => typeof sort) => setTableSort("projects", updater(sort));
 
   const loadProjectPage = useCallback((page: number, signal?: AbortSignal) => {
     const query = new URLSearchParams({ page: String(page), pageSize: "20" });
@@ -196,8 +181,8 @@ function ProjectsTable({
   const projectTable = useInfiniteTable(loadProjectPage);
   const projects = projectTable.items;
   const setProjects = projectTable.setItems;
-  const isLoading = projectTable.isInitialLoading || areClientsLoading;
-  const error = projectTable.error ?? clientsError;
+  const isLoading = projectTable.isInitialLoading;
+  const error = projectTable.error;
   const tableRef = useStableTableColumns(!isLoading && !error);
   const projectMatchesFilters = useCallback((project: Project) => (
     (statusFilter === "ALL" || project.status === statusFilter) &&
@@ -225,11 +210,6 @@ function ProjectsTable({
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [projectMatchesFilters, setProjects]);
-
-  const clientNames = useMemo(
-    () => new Map(clients.map((client) => [client.id, client.companyName])),
-    [clients],
-  );
 
   const handleProjectUpdated = useCallback((updatedProject: Project) => {
     setProjects((currentProjects) => {
@@ -259,7 +239,6 @@ function ProjectsTable({
         <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
         <Button className="mt-4" variant="outline" size="sm" onClick={() => {
           projectTable.reload();
-          if (clientsError) void loadClients();
         }}>
           <RefreshCw />
           {t("common.tryAgain")}
@@ -316,7 +295,7 @@ function ProjectsTable({
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {clientNames.get(project.clientId) ?? t("common.unknown")}
+                    {project.clientName ?? t("common.unknown")}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{packageLabel}</td>
                   <td className="px-4 py-3">
@@ -564,7 +543,7 @@ function RequestsTable({ search }: { search: string }) {
                     </p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {packageNames.get(r.packageId) ?? "Unknown package"}
+                    {packageNames.get(r.packageId) ?? t("projects.unknownPackage")}
                   </td>
                   <td className="px-4 py-3">
                     <span

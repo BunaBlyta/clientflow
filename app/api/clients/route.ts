@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
     } : {}),
     ...(packageId ? { projects: { some: { packageId } } } : {}),
   };
-  const clients = await prisma.client.findMany({
+  const [clients, paidTotals] = await Promise.all([
+    prisma.client.findMany({
     where,
     select: {
       id: true,
@@ -42,6 +43,8 @@ export async function GET(request: NextRequest) {
       companyName: true,
       phone: true,
       createdAt: true,
+      _count: { select: { projects: true } },
+      projects: { select: { packageId: true, package: { select: { name: true } } } },
     },
     orderBy: sort === 'createdAt'
       ? { createdAt: direction }
@@ -51,7 +54,14 @@ export async function GET(request: NextRequest) {
           ? { companyName: 'asc' }
           : { createdAt: 'desc' },
     ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
-  });
+    }),
+    prisma.invoice.groupBy({
+      by: ['clientId'],
+      where: { status: 'PAID' },
+      _sum: { amount: true },
+    }),
+  ]);
+  const paidTotalByClient = new Map(paidTotals.map((row) => [row.clientId, Number(row._sum.amount ?? 0) * 100]));
 
   const serialized = clients.map((client) => ({
       id: client.id,
@@ -61,6 +71,9 @@ export async function GET(request: NextRequest) {
       email: client.email,
       ...(client.phone ? { phone: client.phone } : {}),
       createdAt: client.createdAt.toISOString(),
+      projectCount: client._count.projects,
+      totalBilledCents: paidTotalByClient.get(client.id) ?? 0,
+      packageTypes: Array.from(new Map(client.projects.filter((project) => project.package).map((project) => [project.packageId, { id: project.packageId!, name: project.package!.name }])).values()),
     }));
 
   if (!pagination.enabled) return NextResponse.json(serialized);

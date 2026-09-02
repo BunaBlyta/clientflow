@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
+import { usePreferencesStore } from "@/lib/preferences-store";
 
 export const LOCALES = ["en", "de", "sq"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -52,6 +53,20 @@ const english: Messages = {
   "common.sending": "Sending…",
   "common.updating": "Updating…",
   "common.working": "Working…",
+  "common.saving": "Saving…",
+  "common.selectDate": "Select date",
+  "common.previousMonth": "Previous month",
+  "common.nextMonth": "Next month",
+  "common.clearSelection": "Clear selection",
+  "common.clear": "Clear",
+  "common.expandSidebar": "Expand sidebar",
+  "common.collapseSidebar": "Collapse sidebar",
+  "common.clientflowOverview": "Clientflow overview",
+  "common.accountUnavailable": "Account unavailable",
+  "common.name": "Name",
+  "common.email": "Email",
+  "common.phone": "Phone",
+  "common.tryAgainShort": "Try again",
   "common.logOut": "Log out",
   "pagination.loadingMore": "Loading more…",
   "dashboard.overview": "Overview",
@@ -176,6 +191,17 @@ const english: Messages = {
   "settings.editPackage": "Edit {name}",
   "settings.priceCurrency": "Price ({currency})",
   "settings.deactivateDescription": "This removes the package from active pricing and new requests. Existing projects and invoices will keep their historical package details.",
+  "settings.deletePackage": "Delete package",
+  "settings.durationToBeScoped": "Duration to be scoped",
+  "settings.invitationSent": "Invitation sent",
+  "settings.invitationSentIntro": "{email} can now set up their account.",
+  "settings.invitationCreatedNoEmail": "Invitation created, but the email could not be sent",
+  "settings.invitationCreatedNoEmailIntro": "The teammate is listed below. Use Resend to try the email again.",
+  "settings.teammateRemoved": "Teammate removed",
+  "settings.invitationResent": "Invitation resent",
+  "settings.invitationResentIntro": "A fresh sign-in code was sent to {email}.",
+  "settings.admin": "Admin",
+  "settings.user": "User",
   "invoices.newInvoice": "New invoice",
   "invoices.newInvoiceIntro": "Creates a draft invoice for the client.",
   "invoices.selectProject": "Select a project",
@@ -184,6 +210,13 @@ const english: Messages = {
   "invoices.amountUsd": "Amount (USD)",
   "invoices.creating": "Creating…",
   "invoices.createInvoice": "Create invoice",
+  "invoices.kindDeposit": "Deposit",
+  "invoices.kindFinal": "Final payment",
+  "invoices.kindExtra": "Extra charge",
+  "invoices.kindCustom": "Custom",
+  "invoices.invalidAmount": "Enter a valid amount.",
+  "invoices.created": "Invoice created",
+  "invoices.createdDescription": "The invoice is ready for the client.",
   "projects.tabProjects": "Projects",
   "projects.tabRequests": "Requests",
   "projects.tabCustom": "Custom inquiries",
@@ -217,6 +250,9 @@ const english: Messages = {
   "invoices.due": "Due",
   "invoices.noInvoices": "No invoices yet",
   "invoices.noMatch": "No invoices match your filters.",
+  "invoices.allTime": "All time",
+  "invoices.lastDays": "Last {days} days",
+  "invoices.lastYear": "Last year",
   "invoices.createdIntro": "Invoices will appear here when they are created for a project.",
   "invoices.intro": "Every deposit, final, and extra invoice across all projects.",
   "clients.search": "Search clients...",
@@ -247,9 +283,52 @@ const english: Messages = {
   "inquiries.convertTitle": "Turn inquiry into a project",
   "inquiries.sendInvoiceNow": "Send invoice now",
   "inquiries.sendInvoiceIntro": "If unchecked, the invoice stays in Draft for later review.",
+  "inquiries.receivedOn": "Inquiry received {date}.",
+  "inquiries.customProjectCreated": "Custom project created",
+  "inquiries.projectCreatedEmailFailed": "The project was created, but the invitation email failed. Resend it from Clients.",
+  "inquiries.clientInvitedInvoiceSent": "The client was invited and the custom invoice was sent.",
+  "inquiries.existingClientProjectCreated": "The custom project and invoice were created for the existing client.",
   "clients.companyPlaceholder": "Company name",
   "projects.projectName": "Project name",
   "projects.customProject": "Custom project",
+  "projects.unknownPackage": "Unknown package",
+  "projects.allPackages": "All packages",
+  "project.customPricing": "Custom pricing",
+  "project.noTargetLaunchDate": "No target launch date",
+  "project.prospectInformation": "Prospect information",
+  "project.requestMessage": "Request message",
+  "project.linkedClientProjects": "Linked client and projects",
+  "project.requestLinkedTo": "This request is linked to {company}.",
+  "project.noLinkedClient": "No client has been linked to this request.",
+  "project.inquiryInformation": "Inquiry information",
+  "project.conversionAndProjects": "Conversion and projects",
+  "project.emailMatch": "A client with this inquiry's email exists: {company}.",
+  "project.emailMatchDisclaimer": "This is an email match, not proof that the inquiry itself was converted.",
+  "project.noMatchingClient": "No client currently matches this inquiry's email.",
+  "project.clientSince": "Client since {date}",
+  "project.noClientProjects": "No projects for this client yet.",
+  "project.noClientInvoices": "No invoices for this client yet.",
+  "project.requestBack": "Requests",
+  "project.inquiriesBack": "Custom inquiries",
+  "project.clientBack": "Clients",
+  "project.loadingRequest": "Loading request…",
+  "project.loadingInquiry": "Loading inquiry…",
+  "project.loadingClient": "Loading client…",
+  "project.requestNotFound": "This request doesn't exist.",
+  "project.inquiryNotFound": "This inquiry doesn't exist.",
+  "project.clientNotFound": "This client doesn't exist, or was never created.",
+  "project.requestLoadFailed": "Request couldn't load",
+  "project.inquiryLoadFailed": "Inquiry couldn't load",
+  "project.clientLoadFailed": "Client couldn't load",
+  "analytics.under14Days": "Under 14 days",
+  "analytics.days14to29": "14–29 days",
+  "analytics.days30Plus": "30+ days",
+  "analytics.lessDue": "Less due",
+  "analytics.moreDue": "More due",
+  "chart.currentPeriod": "Current period",
+  "chart.comparisonPeriod": "Comparison period",
+  "chart.average": "Average",
+  "chart.projectAgeByStage": "Project age by stage",
   "auth.welcome": "Welcome back",
   "auth.signInTitle": "Sign in to your workspace",
   "auth.signInIntro": "Use your studio email and password to continue.",
@@ -429,6 +508,16 @@ const albanian: Messages = {
 };
 
 Object.assign(german, {
+  "common.clear": "Leeren", "common.expandSidebar": "Seitenleiste ausklappen", "common.collapseSidebar": "Seitenleiste einklappen", "common.clientflowOverview": "Clientflow-Übersicht", "common.name": "Name", "common.email": "E-Mail", "common.phone": "Telefon", "common.tryAgainShort": "Erneut versuchen",
+  "settings.deletePackage": "Paket löschen", "settings.invitationCreatedNoEmail": "Einladung erstellt, aber E-Mail konnte nicht gesendet werden", "settings.invitationCreatedNoEmailIntro": "Das Teammitglied ist unten aufgeführt. Nutze „Erneut senden“, um es erneut zu versuchen.",
+  "invoices.allTime": "Gesamter Zeitraum", "invoices.lastDays": "Letzte {days} Tage", "invoices.lastYear": "Letztes Jahr",
+  "inquiries.receivedOn": "Anfrage eingegangen am {date}.", "inquiries.customProjectCreated": "Individuelles Projekt erstellt", "inquiries.projectCreatedEmailFailed": "Das Projekt wurde erstellt, aber die Einladungs-E-Mail ist fehlgeschlagen. Sende sie unter Kunden erneut.", "inquiries.clientInvitedInvoiceSent": "Der Kunde wurde eingeladen und die individuelle Rechnung gesendet.", "inquiries.existingClientProjectCreated": "Individuelles Projekt und Rechnung wurden für den bestehenden Kunden erstellt.",
+  "projects.allPackages": "Alle Pakete", "project.prospectInformation": "Informationen zum Interessenten", "project.requestMessage": "Nachricht zur Anfrage", "project.linkedClientProjects": "Verknüpfter Kunde und Projekte", "project.requestLinkedTo": "Diese Anfrage ist mit {company} verknüpft.", "project.noLinkedClient": "Mit dieser Anfrage ist kein Kunde verknüpft.", "project.inquiryInformation": "Informationen zur Anfrage", "project.conversionAndProjects": "Umwandlung und Projekte", "project.emailMatch": "Ein Kunde mit dieser E-Mail-Adresse existiert: {company}.", "project.emailMatchDisclaimer": "Dies ist ein E-Mail-Treffer, kein Beweis, dass die Anfrage selbst umgewandelt wurde.", "project.noMatchingClient": "Kein Kunde passt derzeit zu dieser E-Mail-Adresse.", "project.clientSince": "Kunde seit {date}", "project.noClientProjects": "Für diesen Kunden gibt es noch keine Projekte.", "project.noClientInvoices": "Für diesen Kunden gibt es noch keine Rechnungen.", "project.requestBack": "Anfragen", "project.inquiriesBack": "Individuelle Anfragen", "project.clientBack": "Kunden", "project.loadingRequest": "Anfrage wird geladen…", "project.loadingInquiry": "Anfrage wird geladen…", "project.loadingClient": "Kunde wird geladen…", "project.requestNotFound": "Diese Anfrage existiert nicht.", "project.inquiryNotFound": "Diese Anfrage existiert nicht.", "project.clientNotFound": "Dieser Kunde existiert nicht oder wurde nie angelegt.", "project.requestLoadFailed": "Anfrage konnte nicht geladen werden", "project.inquiryLoadFailed": "Anfrage konnte nicht geladen werden", "project.clientLoadFailed": "Kunde konnte nicht geladen werden",
+  "analytics.under14Days": "Unter 14 Tage", "analytics.days14to29": "14–29 Tage", "analytics.days30Plus": "30+ Tage", "analytics.lessDue": "Weniger fällig", "analytics.moreDue": "Mehr fällig", "chart.currentPeriod": "Aktueller Zeitraum", "chart.comparisonPeriod": "Vergleichszeitraum", "chart.average": "Durchschnitt", "chart.projectAgeByStage": "Projektalter nach Phase",
+  "common.saving": "Wird gespeichert…", "common.selectDate": "Datum auswählen", "common.previousMonth": "Vorheriger Monat", "common.nextMonth": "Nächster Monat", "common.clearSelection": "Auswahl löschen", "common.accountUnavailable": "Konto nicht verfügbar",
+  "settings.durationToBeScoped": "Dauer wird noch festgelegt", "settings.invitationSent": "Einladung gesendet", "settings.invitationSentIntro": "{email} kann jetzt das Konto einrichten.", "settings.teammateRemoved": "Teammitglied entfernt", "settings.invitationResent": "Einladung erneut gesendet", "settings.invitationResentIntro": "Ein neuer Anmeldecode wurde an {email} gesendet.", "settings.admin": "Admin", "settings.user": "Benutzer",
+  "invoices.kindDeposit": "Anzahlung", "invoices.kindFinal": "Schlusszahlung", "invoices.kindExtra": "Zusatzgebühr", "invoices.kindCustom": "Individuell", "invoices.invalidAmount": "Gib einen gültigen Betrag ein.", "invoices.created": "Rechnung erstellt", "invoices.createdDescription": "Die Rechnung ist für den Kunden bereit.",
+  "projects.unknownPackage": "Unbekanntes Paket", "project.customPricing": "Individuelle Preisgestaltung", "project.noTargetLaunchDate": "Kein Ziellaunch festgelegt",
   "auth.emailRequired": "Gib deine E-Mail-Adresse ein.",
   "auth.passwordRequired": "Gib dein Passwort ein.",
   "auth.emailPasswordRequired": "Gib eine gültige E-Mail-Adresse und ein Passwort ein.",
@@ -488,6 +577,16 @@ Object.assign(german, {
   "payment.viewInvoices": "Rechnungen ansehen", "payment.submittedIntro": "Danke — Stripe hat deine Zahlung entgegengenommen. Die Rechnung wird erst nach der Stripe-Bestätigung als bezahlt markiert.", "payment.returnToApp": "Du kannst zur Clientflow-App zurückkehren.", "payment.devLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Native App-Links folgen nach verfügbaren Builds.", "payment.cancelledIntro": "Es wurde keine Zahlung vorgenommen und die Rechnung bleibt unverändert. Du kannst sie später bezahlen.", "payment.cancelledDevLink": "Dieser Entwicklungslink öffnet die Expo-Web-App auf Port 8081. Die Rechnung bleibt unverändert.",
 });
 Object.assign(albanian, {
+  "common.clear": "Pastro", "common.expandSidebar": "Zgjero shiritin anësor", "common.collapseSidebar": "Palos shiritin anësor", "common.clientflowOverview": "Përmbledhja e Clientflow", "common.name": "Emri", "common.email": "Email", "common.phone": "Telefoni", "common.tryAgainShort": "Provo përsëri",
+  "settings.deletePackage": "Fshi paketën", "settings.invitationCreatedNoEmail": "Ftesa u krijua, por email-i nuk u dërgua", "settings.invitationCreatedNoEmailIntro": "Anëtari është listuar më poshtë. Përdor “Ridërgo” për ta provuar përsëri.",
+  "invoices.allTime": "Gjithë kohës", "invoices.lastDays": "{days} ditët e fundit", "invoices.lastYear": "Viti i fundit",
+  "inquiries.receivedOn": "Kërkesa u mor më {date}.", "inquiries.customProjectCreated": "Projekti i veçantë u krijua", "inquiries.projectCreatedEmailFailed": "Projekti u krijua, por email-i i ftesës dështoi. Ridërgoje nga Klientët.", "inquiries.clientInvitedInvoiceSent": "Klienti u ftua dhe fatura e veçantë u dërgua.", "inquiries.existingClientProjectCreated": "Projekti dhe fatura e veçantë u krijuan për klientin ekzistues.",
+  "projects.allPackages": "Të gjitha paketat", "project.prospectInformation": "Informacioni i të interesuarit", "project.requestMessage": "Mesazhi i kërkesës", "project.linkedClientProjects": "Klienti dhe projektet e lidhura", "project.requestLinkedTo": "Kjo kërkesë lidhet me {company}.", "project.noLinkedClient": "Asnjë klient nuk është lidhur me këtë kërkesë.", "project.inquiryInformation": "Informacioni i kërkesës", "project.conversionAndProjects": "Konvertimi dhe projektet", "project.emailMatch": "Ekziston një klient me këtë email: {company}.", "project.emailMatchDisclaimer": "Ky është përputhje email-i, jo provë se kërkesa u konvertua.", "project.noMatchingClient": "Asnjë klient nuk përputhet me këtë email.", "project.clientSince": "Klient që nga {date}", "project.noClientProjects": "Ky klient nuk ka ende projekte.", "project.noClientInvoices": "Ky klient nuk ka ende fatura.", "project.requestBack": "Kërkesat", "project.inquiriesBack": "Kërkesa të veçanta", "project.clientBack": "Klientët", "project.loadingRequest": "Duke ngarkuar kërkesën…", "project.loadingInquiry": "Duke ngarkuar kërkesën…", "project.loadingClient": "Duke ngarkuar klientin…", "project.requestNotFound": "Kjo kërkesë nuk ekziston.", "project.inquiryNotFound": "Kjo kërkesë nuk ekziston.", "project.clientNotFound": "Ky klient nuk ekziston ose nuk është krijuar.", "project.requestLoadFailed": "Kërkesa nuk u ngarkua", "project.inquiryLoadFailed": "Kërkesa nuk u ngarkua", "project.clientLoadFailed": "Klienti nuk u ngarkua",
+  "analytics.under14Days": "Nën 14 ditë", "analytics.days14to29": "14–29 ditë", "analytics.days30Plus": "30+ ditë", "analytics.lessDue": "Më pak për t'u paguar", "analytics.moreDue": "Më shumë për t'u paguar", "chart.currentPeriod": "Periudha aktuale", "chart.comparisonPeriod": "Periudha e krahasimit", "chart.average": "Mesatarja", "chart.projectAgeByStage": "Mosha e projektit sipas fazës",
+  "common.saving": "Duke ruajtur…", "common.selectDate": "Zgjidh datën", "common.previousMonth": "Muaji i kaluar", "common.nextMonth": "Muaji i ardhshëm", "common.clearSelection": "Pastro zgjedhjen", "common.accountUnavailable": "Llogaria nuk është e disponueshme",
+  "settings.durationToBeScoped": "Kohëzgjatja do të përcaktohet", "settings.invitationSent": "Ftesa u dërgua", "settings.invitationSentIntro": "{email} tani mund të konfigurojë llogarinë.", "settings.teammateRemoved": "Anëtari u hoq", "settings.invitationResent": "Ftesa u ridërgua", "settings.invitationResentIntro": "Një kod i ri hyrjeje u dërgua te {email}.", "settings.admin": "Admin", "settings.user": "Përdorues",
+  "invoices.kindDeposit": "Depozitë", "invoices.kindFinal": "Pagesa përfundimtare", "invoices.kindExtra": "Tarifë shtesë", "invoices.kindCustom": "E veçantë", "invoices.invalidAmount": "Shkruaj një shumë të vlefshme.", "invoices.created": "Fatura u krijua", "invoices.createdDescription": "Fatura është gati për klientin.",
+  "projects.unknownPackage": "Paketa e panjohur", "project.customPricing": "Çmim i veçantë", "project.noTargetLaunchDate": "Nuk ka datë të synuar lançimi",
   "auth.emailRequired": "Shkruaj adresën e email-it.",
   "auth.passwordRequired": "Shkruaj fjalëkalimin.",
   "auth.emailPasswordRequired": "Shkruaj një adresë email-i dhe fjalëkalim të vlefshëm.",
@@ -572,33 +671,9 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-function readInitialLocale(): Locale {
-  if (typeof window === "undefined") return "en";
-  const stored = window.localStorage.getItem("clientflow_locale");
-  if (stored && LOCALES.includes(stored as Locale)) return stored as Locale;
-  const browserLocale = window.navigator.language.toLowerCase();
-  if (browserLocale.startsWith("de")) return "de";
-  if (browserLocale.startsWith("sq")) return "sq";
-  return "en";
-}
-
-const localeListeners = new Set<() => void>();
-function subscribeToLocale(listener: () => void) {
-  localeListeners.add(listener);
-  return () => localeListeners.delete(listener);
-}
-
-function readLocaleSnapshot() {
-  return readInitialLocale();
-}
-
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const locale = useSyncExternalStore(subscribeToLocale, readLocaleSnapshot, () => "en" as Locale);
-
-  function setLocale(nextLocale: Locale) {
-    window.localStorage.setItem("clientflow_locale", nextLocale);
-    localeListeners.forEach((listener) => listener());
-  }
+  const locale = usePreferencesStore((state) => state.locale);
+  const setLocale = usePreferencesStore((state) => state.setLocale);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -613,7 +688,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
         ? Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{${name}}`, String(replacement)), template)
         : template;
     },
-  }), [locale]);
+  }), [locale, setLocale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

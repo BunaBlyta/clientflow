@@ -45,7 +45,7 @@ export function Sidebar({
             "flex min-w-0 items-center gap-2 text-[15px] font-semibold tracking-tight",
             collapsed && "shrink-0",
           )}
-          aria-label="Clientflow overview"
+          aria-label={t("common.clientflowOverview")}
         >
           <BrandLogo variant="crm" />
           <span className={cn("truncate transition-opacity duration-150", collapsed && "sr-only")}>
@@ -82,8 +82,8 @@ export function Sidebar({
           size="icon-lg"
           className="crm-sidebar-toggle h-12 w-full rounded-none hover:bg-sidebar-accent [&_svg]:size-5"
           onClick={onToggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("common.expandSidebar") : t("common.collapseSidebar")}
+          title={collapsed ? t("common.expandSidebar") : t("common.collapseSidebar")}
         >
           {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
         </Button>

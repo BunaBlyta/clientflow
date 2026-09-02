@@ -70,6 +70,9 @@ export interface Client {
   email: string;
   phone?: string;
   createdAt: string;
+  projectCount?: number;
+  totalBilledCents?: number;
+  packageTypes?: { id: string; name: string }[];
 }
 
 export interface Package {
@@ -126,6 +129,7 @@ export interface ProjectPackage {
 export interface Project {
   id: string;
   clientId: string;
+  clientName?: string;
   packageId: string | null;
   package?: ProjectPackage | null;
   name: string;
@@ -146,6 +150,8 @@ export interface Invoice {
   paidAt?: string;
   issuedAt?: string;
   createdAt: string;
+  projectName?: string;
+  clientName?: string;
 }
 
 export interface ClientDetail extends Client {

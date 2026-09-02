@@ -15,6 +15,7 @@ import {
   type RevenueDateRange,
 } from "@/lib/analytics";
 import { fetchJson } from "@/lib/fetch-json";
+import { fetchDashboardData, invalidateDashboardData } from "@/lib/dashboard-data-cache";
 import { formatCurrency } from "@/lib/format";
 import { INVOICE_STATUS_TONE, PROJECT_STATUS_TONE } from "@/lib/status";
 import { StatTile } from "@/components/dashboard/stat-tile";
@@ -64,9 +65,9 @@ export default function AnalyticsPage() {
 
     try {
       const [invoiceData, projectData, packageData] = await Promise.all([
-        fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
-        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
-        fetchJson<ManagedPackage[]>("/api/packages", "We couldn't load the packages.", signal),
+        fetchDashboardData<Invoice[]>("/api/invoices", "We couldn't load the invoices."),
+        fetchDashboardData<Project[]>("/api/projects", "We couldn't load the projects."),
+        fetchDashboardData<ManagedPackage[]>("/api/packages", "We couldn't load the packages."),
       ]);
 
       if (!Array.isArray(invoiceData) || !Array.isArray(projectData) || !Array.isArray(packageData)) {
@@ -98,6 +99,7 @@ export default function AnalyticsPage() {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
       if (detail?.entity === "invoice") {
+        invalidateDashboardData("/api/invoices");
         void fetchJson<Invoice>(
           `/api/invoices/${encodeURIComponent(detail.id)}`,
           "We couldn't refresh this invoice.",
@@ -105,6 +107,7 @@ export default function AnalyticsPage() {
           .then((invoice) => setInvoices((current) => upsertById(current, invoice)))
           .catch(() => undefined);
       } else if (detail?.entity === "project") {
+        invalidateDashboardData("/api/projects");
         void fetchJson<Project>(
           `/api/projects/${encodeURIComponent(detail.id)}`,
           "We couldn't refresh this project.",
@@ -431,9 +434,9 @@ export default function AnalyticsPage() {
                   <p className="text-[12px] text-muted-foreground">{t("dashboard.projectAgingIntro")}</p>
                 </div>
                 <div className="flex shrink-0 flex-wrap justify-end gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-accent" />Under 14 days</span>
-                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-warning" />14–29 days</span>
-                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-danger" />30+ days</span>
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-accent" />{t("analytics.under14Days")}</span>
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-warning" />{t("analytics.days14to29")}</span>
+                  <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-status-danger" />{t("analytics.days30Plus")}</span>
                 </div>
               </div>
               <div className="relative -left-1 mt-8">
@@ -472,13 +475,13 @@ export default function AnalyticsPage() {
                 <p className="text-[12px] text-muted-foreground">{t("dashboard.upcomingReceivablesIntro")}</p>
               </div>
               <div className="flex shrink-0 flex-wrap justify-end gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-2 whitespace-nowrap"><span className="size-2.5 rounded-sm bg-status-danger" />Overdue</span>
+                <span className="flex items-center gap-2 whitespace-nowrap"><span className="size-2.5 rounded-sm bg-status-danger" />{t("dashboard.receivablesOverdue")}</span>
                 <span className="flex items-center gap-2 whitespace-nowrap">
-                  <span>Less due</span>
+                  <span>{t("analytics.lessDue")}</span>
                   <span className="size-2.5 rounded-sm bg-muted" />
                   <span className="size-2.5 rounded-sm bg-brand-accent/50" />
                   <span className="size-2.5 rounded-sm bg-brand-accent" />
-                  <span>More due</span>
+                  <span>{t("analytics.moreDue")}</span>
                 </span>
               </div>
             </div>

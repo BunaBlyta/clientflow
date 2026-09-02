@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -17,11 +17,12 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import type { Client, Invoice, InvoiceStatus, Project } from "@/lib/types";
+import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { fetchJson } from "@/lib/fetch-json";
 import { upsertById } from "@/lib/upsert-by-id";
+import { usePreferencesStore } from "@/lib/preferences-store";
 import type { PaginatedResponse } from "@/lib/pagination";
 
 type ApiInvoice = Invoice & { clientId: string };
@@ -40,48 +41,19 @@ const STATUS_FILTERS: { value: InvoiceStatus | "ALL" | "OVERDUE"; label: string 
 
 export default function InvoicesPage() {
   const { t } = useLocale();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [areLookupsLoading, setAreLookupsLoading] = useState(true);
-  const [lookupsError, setLookupsError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const filters = usePreferencesStore((state) => state.tableFilters.invoices ?? {});
+  const setTableFilter = usePreferencesStore((state) => state.setTableFilter);
+  const search = filters.search ?? "";
+  const setSearch = (value: string) => setTableFilter("invoices", "search", value);
   const deferredSearch = useDeferredValue(search);
-  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "ALL" | "OVERDUE">("ALL");
-  const [timeFilter, setTimeFilter] = useState("ALL");
-  const [sort, setSort] = useState<{ key: "createdAt" | "amount" | "dueDate"; direction: "asc" | "desc" }>({ key: "createdAt", direction: "desc" });
-
-  const loadLookups = useCallback(async (signal?: AbortSignal) => {
-    setAreLookupsLoading(true);
-    setLookupsError(null);
-
-    try {
-      const [projectData, clientData] = await Promise.all([
-        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
-        fetchJson<Client[]>("/api/clients", "We couldn't load the clients.", signal),
-      ]);
-      if (!Array.isArray(projectData) || !Array.isArray(clientData)) {
-        throw new Error("The server returned an unexpected invoice response.");
-      }
-
-      if (!signal?.aborted) {
-        setProjects(projectData);
-        setClients(clientData);
-      }
-    } catch (caughtError) {
-      if (caughtError instanceof DOMException && caughtError.name === "AbortError") return;
-      if (!signal?.aborted) {
-        setLookupsError(caughtError instanceof Error ? caughtError.message : "We couldn't load invoice details.");
-      }
-    } finally {
-      if (!signal?.aborted) setAreLookupsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void Promise.resolve().then(() => loadLookups(controller.signal));
-    return () => controller.abort();
-  }, [loadLookups]);
+  const statusFilter = (filters.status ?? "ALL") as InvoiceStatus | "ALL" | "OVERDUE";
+  const timeFilter = filters.time ?? "ALL";
+  const setStatusFilter = (value: InvoiceStatus | "ALL" | "OVERDUE") => setTableFilter("invoices", "status", value);
+  const setTimeFilter = (value: string) => setTableFilter("invoices", "time", value);
+  const savedSort = usePreferencesStore((state) => state.tableSort.invoices) as { key?: "createdAt" | "amount" | "dueDate"; direction?: "asc" | "desc" } | undefined;
+  const setTableSort = usePreferencesStore((state) => state.setTableSort);
+  const sort = useMemo(() => ({ key: savedSort?.key ?? "createdAt", direction: savedSort?.direction ?? "desc" } as { key: "createdAt" | "amount" | "dueDate"; direction: "asc" | "desc" }), [savedSort?.direction, savedSort?.key]);
+  const setSort = (updater: (current: typeof sort) => typeof sort) => setTableSort("invoices", updater(sort));
 
   const loadInvoicePage = useCallback((page: number, signal?: AbortSignal) => {
     const query = new URLSearchParams({ page: String(page), pageSize: "20" });
@@ -98,8 +70,8 @@ export default function InvoicesPage() {
   const invoiceTable = useInfiniteTable(loadInvoicePage);
   const invoices = invoiceTable.items;
   const setInvoices = invoiceTable.setItems;
-  const isLoading = invoiceTable.isInitialLoading || areLookupsLoading;
-  const error = invoiceTable.error ?? lookupsError;
+  const isLoading = invoiceTable.isInitialLoading;
+  const error = invoiceTable.error;
   const tableRef = useStableTableColumns(!isLoading && !error);
   const invoiceMatchesFilters = useCallback((invoice: ApiInvoice) => {
     const matchesStatus = statusFilter === "ALL"
@@ -112,12 +84,10 @@ export default function InvoicesPage() {
       if (Number.isFinite(days) && new Date(invoice.createdAt).getTime() < Date.now() - days * 86400000) return false;
     }
 
-    const projectName = projects.find((project) => project.id === invoice.projectId)?.name ?? "";
-    const clientName = clients.find((client) => client.id === invoice.clientId)?.companyName ?? "";
-    return `${invoice.label} ${projectName} ${clientName}`
+    return `${invoice.label} ${invoice.projectName ?? ""} ${invoice.clientName ?? ""}`
       .toLowerCase()
       .includes(deferredSearch.trim().toLowerCase());
-  }, [clients, deferredSearch, projects, statusFilter, timeFilter]);
+  }, [deferredSearch, statusFilter, timeFilter]);
 
   useEffect(() => {
     const handleEntityChanged = (event: Event) => {
@@ -135,29 +105,11 @@ export default function InvoicesPage() {
               .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           }))
           .catch(() => undefined);
-      } else if (detail?.entity === "project") {
-        void fetchJson<Project>(
-          `/api/projects/${encodeURIComponent(detail.id)}`,
-          "We couldn't refresh this project.",
-        )
-          .then((updatedProject) =>
-            setProjects((currentProjects) => upsertById(currentProjects, updatedProject)),
-          )
-          .catch(() => undefined);
       }
     };
     window.addEventListener("clientflow:entity-changed", handleEntityChanged);
     return () => window.removeEventListener("clientflow:entity-changed", handleEntityChanged);
   }, [invoiceMatchesFilters, setInvoices]);
-
-  const projectNames = useMemo(
-    () => new Map(projects.map((project) => [project.id, project])),
-    [projects],
-  );
-  const clientNames = useMemo(
-    () => new Map(clients.map((client) => [client.id, client.companyName])),
-    [clients],
-  );
 
   const handleInvoiceUpdated = useCallback((updatedInvoice: Invoice) => {
     setInvoices((currentInvoices) => {
@@ -197,7 +149,6 @@ export default function InvoicesPage() {
           <p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p>
           <Button className="mt-4" variant="outline" size="sm" onClick={() => {
             invoiceTable.reload();
-            if (lookupsError) void loadLookups();
           }}>
             <RefreshCw />
           {t("common.tryAgain")}
@@ -233,11 +184,11 @@ export default function InvoicesPage() {
         <Select value={timeFilter} onValueChange={(value) => value && setTimeFilter(value)}>
           <SelectTrigger className="w-36"><span>{timeFilter === "ALL" ? "All time" : `Last ${timeFilter} days`}</span></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All time</SelectItem>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="365">Last year</SelectItem>
+            <SelectItem value="ALL">{t("invoices.allTime")}</SelectItem>
+            <SelectItem value="7">{t("invoices.lastDays", { days: "7" })}</SelectItem>
+            <SelectItem value="30">{t("invoices.lastDays", { days: "30" })}</SelectItem>
+            <SelectItem value="90">{t("invoices.lastDays", { days: "90" })}</SelectItem>
+            <SelectItem value="365">{t("invoices.lastYear")}</SelectItem>
           </SelectContent>
         </Select>
       </TableToolbar>
@@ -270,23 +221,22 @@ export default function InvoicesPage() {
           </thead>
           <tbody>
             {invoices.map((invoice) => {
-              const project = projectNames.get(invoice.projectId);
               return (
                 <tr key={invoice.id} className="border-b border-border last:border-0 hover:bg-muted/40">
                   <td className="py-3.5 pr-2 pl-5">
                     <span className="font-medium">{invoice.label}</span>
                   </td>
                   <td className="py-3.5 pr-5 pl-2 text-muted-foreground">
-                    {project ? (
-                      <Link href={`/dashboard/projects/${project.id}`} className="hover:text-brand-accent">
-                        {project.name}
+                    {invoice.projectName ? (
+                      <Link href={`/dashboard/projects/${invoice.projectId}`} className="hover:text-brand-accent">
+                        {invoice.projectName}
                       </Link>
                     ) : (
                       t("common.unknown")
                     )}
                   </td>
                   <td className="px-5 py-3.5 text-muted-foreground">
-                    {clientNames.get(invoice.clientId) ?? t("common.unknown")}
+                    {invoice.clientName ?? t("common.unknown")}
                   </td>
                   <td className="py-3.5 pr-0 pl-5 text-right tabular-nums">{formatCurrency(invoice.amountCents)}</td>
                   <td className="py-3.5 pr-5 pl-24">

@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     select: {
       id: true,
       clientId: true,
+      client: { select: { companyName: true, name: true } },
       packageId: true,
       package: {
         select: {
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
   const serialized = projects.map((project) => ({
       id: project.id,
       clientId: project.clientId,
+      ...(project.client ? { clientName: project.client.companyName ?? project.client.name } : {}),
       packageId: project.packageId,
       package: project.package ? serializePackageSummary(project.package) : null,
       name: project.name,

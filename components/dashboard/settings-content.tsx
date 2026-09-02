@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
-import { LoaderCircle, Mail, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { LoaderCircle, Mail, Plus, Trash2 } from "lucide-react";
 import { formatDate, formatMajorCurrency, initials } from "@/lib/format";
 import { EditPackageDialog } from "@/components/dashboard/edit-package-dialog";
 import { CreatePackageDialog } from "@/components/dashboard/create-package-dialog";
@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state";
 
 export type SettingsTab = "packages" | "team";
 
@@ -28,12 +29,7 @@ type SettingsContentProps = {
 };
 
 function SettingsHeaderAction({ children }: { children: ReactNode }) {
-  const [target, setTarget] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setTarget(document.querySelector<HTMLElement>("[data-settings-header-action]"));
-  }, []);
-
+  const target = typeof document === "undefined" ? null : document.querySelector<HTMLElement>("[data-settings-header-action]");
   return target ? createPortal(children, target) : null;
 }
 
@@ -206,7 +202,7 @@ function PackagesSection({
                     <p className="text-[14px] font-medium">{pkg.name}</p>
                     <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{pkg.description}</p>
                     <p className="mt-2 text-[13px]">
-                      {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? "Duration to be scoped"}
+                      {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? t("settings.durationToBeScoped")}
                     </p>
                   </div>
                   <EditPackageDialog
@@ -331,11 +327,11 @@ function TeamSection({ isActive }: { isActive: boolean }) {
         ...currentStaff.filter((staffMember) => staffMember.id !== result.user.id),
       ]);
       if (result.emailSent === false) {
-        toast.error("Invitation created, but the email could not be sent", {
-          description: "The teammate is listed below. Use Resend to try the email again.",
+        toast.error(t("settings.invitationCreatedNoEmail"), {
+          description: t("settings.invitationCreatedNoEmailIntro"),
         });
       } else {
-        toast.success("Invitation sent", { description: `${trimmedEmail} can now set up their account.` });
+        toast.success(t("settings.invitationSent"), { description: t("settings.invitationSentIntro", { email: trimmedEmail }) });
       }
     } catch (caughtError) {
       toast.error(caughtError instanceof Error ? caughtError.message : "We couldn't send the invitation.");
@@ -362,7 +358,7 @@ function TeamSection({ isActive }: { isActive: boolean }) {
     try {
       await fetchJson(`/api/staff/${encodeURIComponent(staffMember.id)}`, "We couldn't remove this teammate.", undefined, { method: "DELETE" });
       setStaff((current) => current.filter((member) => member.id !== staffMember.id));
-      toast.success("Teammate removed");
+      toast.success(t("settings.teammateRemoved"));
     } catch (caughtError) {
       toast.error(caughtError instanceof Error ? caughtError.message : "We couldn't remove this teammate.");
     } finally { setUpdatingStaffId(null); }
@@ -381,7 +377,7 @@ function TeamSection({ isActive }: { isActive: boolean }) {
       );
 
       if (!result.emailSent) throw new Error("The invitation email could not be sent. Try again.");
-      toast.success("Invitation resent", { description: `A fresh sign-in code was sent to ${staffMember.email}.` });
+      toast.success(t("settings.invitationResent"), { description: t("settings.invitationResentIntro", { email: staffMember.email }) });
     } catch (caughtError) {
       setResendError({
         staffId: staffMember.id,
@@ -431,8 +427,8 @@ function TeamSection({ isActive }: { isActive: boolean }) {
               {canManageTeam && currentUserId !== staffMember.id && (
                 <>
                   <Select value={staffMember.teamRole} onValueChange={(value) => value && void handleRoleChange(staffMember, value as "ADMIN" | "USER")}>
-                    <SelectTrigger className="w-28" disabled={updatingStaffId === staffMember.id}><span>{staffMember.teamRole === "ADMIN" ? "Admin" : "User"}</span></SelectTrigger>
-                    <SelectContent><SelectItem value="ADMIN">Admin</SelectItem><SelectItem value="USER">User</SelectItem></SelectContent>
+                    <SelectTrigger className="w-28" disabled={updatingStaffId === staffMember.id}><span>{staffMember.teamRole === "ADMIN" ? t("settings.admin") : t("settings.user")}</span></SelectTrigger>
+                    <SelectContent><SelectItem value="ADMIN">{t("settings.admin")}</SelectItem><SelectItem value="USER">{t("settings.user")}</SelectItem></SelectContent>
                   </Select>
                   <Button type="button" variant="ghost" size="icon-sm" aria-label={`Remove ${staffMember.name}`} disabled={updatingStaffId === staffMember.id} onClick={() => void handleRemove(staffMember)}><Trash2 /></Button>
                 </>
@@ -472,8 +468,8 @@ function TeamSection({ isActive }: { isActive: boolean }) {
             </div>
             <div className="border-t border-border pt-5">
               <Select value={teamRole} onValueChange={(value) => value && setTeamRole(value as "ADMIN" | "USER")}>
-                <SelectTrigger className="mb-3 w-full"><span>{teamRole === "ADMIN" ? "Admin" : "User"}</span></SelectTrigger>
-                <SelectContent><SelectItem value="ADMIN">Admin</SelectItem><SelectItem value="USER">User</SelectItem></SelectContent>
+                <SelectTrigger className="mb-3 w-full"><span>{teamRole === "ADMIN" ? t("settings.admin") : t("settings.user")}</span></SelectTrigger>
+                <SelectContent><SelectItem value="ADMIN">{t("settings.admin")}</SelectItem><SelectItem value="USER">{t("settings.user")}</SelectItem></SelectContent>
               </Select>
               <Button className="w-full" type="submit" disabled={isInviting}>{isInviting ? <LoaderCircle className="animate-spin" /> : <Mail />}{isInviting ? t("common.sending") : t("settings.sendInvite")}</Button>
             </div>
@@ -489,5 +485,5 @@ function LoadingState({ label }: { label: string }) {
 }
 
 function ErrorState({ title, error, onRetry }: { title: string; error: string; onRetry: () => void }) {
-  return <div className="flex min-h-40 flex-col items-center justify-center border border-status-danger/30 px-6 text-center"><p className="text-[13px] font-medium text-status-danger">{title}</p><p className="mt-1 max-w-sm text-[12px] text-muted-foreground">{error}</p><Button className="mt-4" variant="outline" size="sm" onClick={onRetry}><RefreshCw />Try again</Button></div>;
+  return <DashboardErrorState title={title} error={error} onRetry={onRetry} />;
 }

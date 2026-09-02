@@ -268,7 +268,7 @@ export default function ProjectDetailPage() {
             <dt className="text-[12px] text-muted-foreground">{t("projects.package")}</dt>
             <dd className="mt-1 text-[13px] font-medium">{pkg?.name ?? "—"}</dd>
             <dd className="text-[12px] text-muted-foreground">
-              {pkg ? formatMajorCurrency(pkg.price, pkg.currency) : "Custom pricing"}
+              {pkg ? formatMajorCurrency(pkg.price, pkg.currency) : t("project.customPricing")}
             </dd>
           </div>
           <div>
@@ -277,7 +277,7 @@ export default function ProjectDetailPage() {
             <dd className="text-[12px] text-muted-foreground">
               {project.targetLaunchDate
                 ? `Target launch ${formatDate(project.targetLaunchDate)}`
-                : "No target launch date"}
+                : t("project.noTargetLaunchDate")}
             </dd>
           </div>
         </dl>

@@ -308,7 +308,7 @@ export function Topbar() {
             </Avatar>
             <div className="min-w-0">
               <p className="truncate text-[13px] font-medium text-foreground">
-                {isLoadingUser ? t("common.loading") : currentUser?.name ?? "Account unavailable"}
+                {isLoadingUser ? t("common.loading") : currentUser?.name ?? t("common.accountUnavailable")}
               </p>
               <p className="truncate text-[12px] text-muted-foreground">
                 {currentUser?.email ?? t("common.unknown")}

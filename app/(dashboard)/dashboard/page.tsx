@@ -8,6 +8,7 @@ import {
   averageTurnaroundByPackage,
 } from "@/lib/analytics";
 import { fetchJson } from "@/lib/fetch-json";
+import { fetchDashboardData, invalidateDashboardData } from "@/lib/dashboard-data-cache";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { PROJECT_STATUS_TONE } from "@/lib/status";
@@ -58,11 +59,11 @@ export default function OverviewPage() {
 
     try {
       const [invoiceData, projectData, requestData, packageData, customLeadData] = await Promise.all([
-        fetchJson<Invoice[]>("/api/invoices", "We couldn't load the invoices.", signal),
-        fetchJson<Project[]>("/api/projects", "We couldn't load the projects.", signal),
-        fetchJson<ProjectRequest[]>("/api/requests", "We couldn't load project requests.", signal),
-        fetchJson<ManagedPackage[]>("/api/packages", "We couldn't load the packages.", signal),
-        fetchJson<CustomLead[]>("/api/contact-leads", "We couldn't load custom inquiries.", signal),
+        fetchDashboardData<Invoice[]>("/api/invoices", "We couldn't load the invoices."),
+        fetchDashboardData<Project[]>("/api/projects", "We couldn't load the projects."),
+        fetchDashboardData<ProjectRequest[]>("/api/requests", "We couldn't load project requests."),
+        fetchDashboardData<ManagedPackage[]>("/api/packages", "We couldn't load the packages."),
+        fetchDashboardData<CustomLead[]>("/api/contact-leads", "We couldn't load custom inquiries."),
       ]);
 
       if (
@@ -113,6 +114,7 @@ export default function OverviewPage() {
     const handleEntityChanged = (event: Event) => {
       const detail = (event as CustomEvent<EntityChangedEvent>).detail;
       if (detail?.entity === "invoice") {
+        invalidateDashboardData("/api/invoices");
         void fetchJson<Invoice>(
           `/api/invoices/${encodeURIComponent(detail.id)}`,
           "We couldn't refresh this invoice.",
@@ -120,6 +122,7 @@ export default function OverviewPage() {
           .then((invoice) => setInvoices((current) => upsertById(current, invoice)))
           .catch(() => undefined);
       } else if (detail?.entity === "project") {
+        invalidateDashboardData("/api/projects");
         void fetchJson<Project>(
           `/api/projects/${encodeURIComponent(detail.id)}`,
           "We couldn't refresh this project.",

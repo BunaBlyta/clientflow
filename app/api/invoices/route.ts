@@ -95,6 +95,8 @@ export async function GET(request: NextRequest) {
       id: true,
       projectId: true,
       clientId: true,
+      project: { select: { name: true } },
+      client: { select: { companyName: true, name: true } },
       type: true,
       description: true,
       amount: true,
@@ -108,7 +110,11 @@ export async function GET(request: NextRequest) {
     ...(pagination.enabled ? { skip: pagination.value.skip, take: pagination.value.pageSize } : {}),
   });
 
-  const serialized = invoices.map(serializeInvoice);
+  const serialized = invoices.map((invoice) => ({
+    ...serializeInvoice(invoice),
+    ...(invoice.project ? { projectName: invoice.project.name } : {}),
+    ...(invoice.client ? { clientName: invoice.client.companyName ?? invoice.client.name } : {}),
+  }));
   if (!pagination.enabled) return NextResponse.json(serialized);
   const totalItems = await prisma.invoice.count({ where });
   return NextResponse.json(paginatedResponse(serialized, pagination.value, totalItems));
