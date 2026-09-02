@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
-import { packageDescription, packageName } from "@/lib/package-copy";
+import { packageDescription, packageDuration, packageName } from "@/lib/package-copy";
 import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state";
 
 export type SettingsTab = "packages" | "team";
@@ -203,7 +203,7 @@ function PackagesSection({
                     <p className="text-[14px] font-medium">{packageName(pkg, locale)}</p>
                     <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{packageDescription(pkg, locale)}</p>
                     <p className="mt-2 text-[13px]">
-                      {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? t("settings.durationToBeScoped")}
+                      {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ? packageDuration(t, pkg.estimatedDuration) : t("settings.durationToBeScoped")}
                     </p>
                   </div>
                   <EditPackageDialog
