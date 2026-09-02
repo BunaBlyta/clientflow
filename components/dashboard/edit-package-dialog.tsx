@@ -59,7 +59,7 @@ export function EditPackageDialog({
     const nextFieldErrors: Partial<Record<PackageField, string>> = {};
 
     if (!name) nextFieldErrors.name = t("common.required");
-    if (!Number.isFinite(price) || price <= 0) nextFieldErrors.price = "Positive value required.";
+    if (!Number.isFinite(price) || price <= 0) nextFieldErrors.price = t("common.mustBePositive");
     if (!currency) nextFieldErrors.currency = t("common.required");
     if (!description) nextFieldErrors.description = t("common.required");
 

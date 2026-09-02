@@ -1085,6 +1085,28 @@ Object.assign(albanian, {
   "time.monthsAgo": "{count} muaj më parë",
 });
 
+
+// Short field-validation hints (FieldHint truncates, so keep these brief).
+Object.assign(english, {
+  "common.mustBePositive": "Must be > 0",
+  "common.wholeNumber": "Whole number",
+  "common.invalidSlug": "Invalid slug",
+});
+
+// Short field-validation hints (German).
+Object.assign(german, {
+  "common.mustBePositive": "Muss > 0 sein",
+  "common.wholeNumber": "Ganze Zahl",
+  "common.invalidSlug": "Ungültiger Slug",
+});
+
+// Short field-validation hints (Albanian).
+Object.assign(albanian, {
+  "common.mustBePositive": "Duhet > 0",
+  "common.wholeNumber": "Numër i plotë",
+  "common.invalidSlug": "Slug i gabuar",
+});
+
 const messages: Record<Locale, Messages> = { en: english, de: german, sq: albanian };
 
 type LocaleContextValue = {

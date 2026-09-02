@@ -67,11 +67,11 @@ export function CreatePackageDialog({
 
     if (!name) nextFieldErrors.name = t("common.required");
     if (!slug) nextFieldErrors.slug = t("common.required");
-    else if (!/^[a-z0-9-]+$/.test(slug)) nextFieldErrors.slug = "Invalid slug.";
-    if (!Number.isFinite(price) || price <= 0) nextFieldErrors.price = "Positive value required.";
+    else if (!/^[a-z0-9-]+$/.test(slug)) nextFieldErrors.slug = t("common.invalidSlug");
+    if (!Number.isFinite(price) || price <= 0) nextFieldErrors.price = t("common.mustBePositive");
     if (!currency) nextFieldErrors.currency = t("common.required");
     if (!description) nextFieldErrors.description = t("common.required");
-    if (!Number.isInteger(sortOrder) || sortOrder < 0) nextFieldErrors.sortOrder = "Whole number required.";
+    if (!Number.isInteger(sortOrder) || sortOrder < 0) nextFieldErrors.sortOrder = t("common.wholeNumber");
 
     if (Object.keys(nextFieldErrors).length > 0) {
       setFieldErrors(nextFieldErrors);
