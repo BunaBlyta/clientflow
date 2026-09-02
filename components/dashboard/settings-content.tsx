@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ManagedPackage, StaffMember } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { packageDescription, packageName } from "@/lib/package-copy";
 import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state";
 
 export type SettingsTab = "packages" | "team";
@@ -199,8 +200,8 @@ function PackagesSection({
               ) : (
                 <>
                   <div>
-                    <p className="text-[14px] font-medium">{pkg.name}</p>
-                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{pkg.description}</p>
+                    <p className="text-[14px] font-medium">{packageName(t, pkg)}</p>
+                    <p className="mt-1 max-w-md text-[13px] text-muted-foreground">{packageDescription(t, pkg)}</p>
                     <p className="mt-2 text-[13px]">
                       {formatMajorCurrency(pkg.price, pkg.currency)} · {pkg.estimatedDuration ?? t("settings.durationToBeScoped")}
                     </p>

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { NoteComposer } from "@/components/dashboard/note-composer";
 import type { Client, Invoice, Note, Project } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { localizeSystemNote } from "@/lib/system-note-text";
 import type { EntityChangedEvent } from "@/lib/realtime-notification-store";
 import { upsertById } from "@/lib/upsert-by-id";
 
@@ -368,7 +369,7 @@ export default function ProjectDetailPage() {
                           <ArrowRight className="size-3.5" />
                         </span>
                         <span className="italic">
-                          {note.body}
+                          {localizeSystemNote(note.body, t)}
                           <span className="not-italic"> · {formatRelativeTime(note.createdAt)}</span>
                         </span>
                       </div>
